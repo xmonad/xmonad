@@ -33,8 +33,17 @@ newtype Wm a = Wm (StateT WmState IO a)
 runWm :: Wm a -> WmState -> IO (a, WmState)
 runWm (Wm m) = runStateT m
 
+--
+-- | Lift an IO action into the Wm monad
+--
 io :: IO a -> Wm a
 io = liftIO
+
+--
+-- | Lift an IO action into the Wm monad, discarding any result
+--
+io_ :: IO a -> Wm ()
+io_ f = liftIO f >> return ()
 
 trace msg = io $ do
     hPutStrLn stderr msg

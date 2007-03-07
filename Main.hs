@@ -6,7 +6,7 @@
 -- 
 -- Maintainer  :  sjanssen@cse.unl.edu
 -- Stability   :  unstable
--- Portability :  not portable, uses cunning newtype deriving
+-- Portability :  not portable, uses mtl, X11, posix
 --
 -----------------------------------------------------------------------------
 --
@@ -27,11 +27,57 @@ import System.Exit
 
 import Wm
 
+------------------------------------------------------------------------
+
+--
+-- let's get underway
+-- 
+main :: IO ()
+main = do
+    dpy <- openDisplay ""
+    runWm realMain $ WmState
+            { display = dpy
+            , screenWidth  = displayWidth  dpy (defaultScreen dpy)
+            , screenHeight = displayHeight dpy (defaultScreen dpy)
+            , windows = Seq.empty
+            }
+    return ()
+
+--
+-- Grab the display and input, and jump into the input loop
+--
+realMain :: Wm ()
+realMain = do
+    dpy <- getDisplay
+    let screen = defaultScreen dpy
+    io $ do root <- rootWindow dpy screen
+            selectInput dpy root (substructureRedirectMask .|. substructureNotifyMask)
+            sync dpy False
+    grabkeys
+    loop
+
+--
+-- The main event handling loop
+--
+loop :: Wm ()
+loop = do
+    dpy <- getDisplay
+    forever $ do
+        e <- io $ allocaXEvent $ \ev -> nextEvent dpy ev >> getEvent ev
+        handler e
+  where
+    forever a = a >> forever a
+
+--
+-- The event handler
+-- 
 handler :: Event -> Wm ()
 handler (MapRequestEvent {window = w}) = manage w
+
 handler (DestroyWindowEvent {window = w}) = do
     modifyWindows (Seq.fromList . filter (/= w) . Fold.toList)
     refresh
+
 handler (KeyEvent {event_type = t, state = mod, keycode = code}) 
  | t == keyPress = do
     dpy <- getDisplay
@@ -41,6 +87,9 @@ handler (KeyEvent {event_type = t, state = mod, keycode = code})
         ((_, _, act):_) -> act
 handler _ = return ()
 
+--
+-- switch focus (?)
+--
 switch :: Wm ()
 switch = do
     ws' <- getWindows
@@ -50,19 +99,27 @@ switch = do
             setWindows (ws |> w)
             refresh
 
+--
+-- | spawn. Launch an external application
+--
 spawn :: String -> Wm ()
-spawn c = do
-    io $ runCommand c
-    return ()
+spawn = io_ . runCommand
 
+--
+-- | Keys we understand.
+--
 keys :: [(KeyMask, KeySym, Wm ())]
-keys = 
+keys =
     [ (mod1Mask .|. shiftMask, xK_Return, spawn "xterm")
-    , (controlMask, xK_space, spawn "gmrun")
-    , (mod1Mask, xK_Tab, switch)
-    , (mod1Mask .|. shiftMask, xK_q, io $ exitWith ExitSuccess)
+    , (controlMask,            xK_space,  spawn "gmrun")
+    , (mod1Mask,               xK_Tab,    switch)
+    , (mod1Mask .|. shiftMask, xK_q,      io $ exitWith ExitSuccess)
     ]
 
+--
+-- | grabkeys. Register key commands
+--
+grabkeys :: Wm ()
 grabkeys = do
     dpy <- getDisplay
     root <- io $ rootWindow dpy (defaultScreen dpy)
@@ -70,6 +127,9 @@ grabkeys = do
         code <- io $ keysymToKeycode dpy sym
         io $ grabKey dpy code mod root True grabModeAsync grabModeAsync
 
+--
+--
+--
 manage :: Window -> Wm ()
 manage w = do
     trace "manage"
@@ -81,6 +141,9 @@ manage w = do
         io $ mapWindow d w
         refresh
 
+--
+-- refresh the windows
+--
 refresh :: Wm ()
 refresh = do
     v  <- getWindows
@@ -90,33 +153,6 @@ refresh = do
             d  <- getDisplay
             sw <- getScreenWidth
             sh <- getScreenHeight
-            io $ moveResizeWindow d w 0 0 (fromIntegral sw) (fromIntegral sh)
-            io $ raiseWindow d w
+            io $ do moveResizeWindow d w 0 0 (fromIntegral sw) (fromIntegral sh)
+                    raiseWindow d w
 
-main = do
-    dpy <- openDisplay ""
-    runWm main' (WmState 
-                    { display = dpy 
-                    , screenWidth  = displayWidth dpy (defaultScreen dpy)
-                    , screenHeight = displayHeight dpy (defaultScreen dpy)
-                    , windows = Seq.empty
-                    })
-    return ()
-
-main' = do
-    dpy <- getDisplay
-    let screen = defaultScreen dpy
-    io $ do root <- rootWindow dpy screen
-            selectInput dpy root (substructureRedirectMask .|. substructureNotifyMask)
-            sync dpy False
-    grabkeys
-    loop
-
-loop :: Wm ()
-loop = do
-    dpy <- getDisplay
-    e <- io $ allocaXEvent $ \ev -> do
-                    nextEvent dpy ev
-                    getEvent ev
-    handler e
-    loop
