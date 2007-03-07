@@ -40,7 +40,7 @@ keys = M.fromList
     , ((mod1Mask,               xK_Tab   ), focus 1)
     , ((mod1Mask,               xK_j     ), focus 1)
     , ((mod1Mask,               xK_k     ), focus (-1))
-    , (mod1Mask  .|. shiftMask, xK_c     ), kill)
+    , ((mod1Mask  .|. shiftMask, xK_c    ), kill)
     , ((mod1Mask .|. shiftMask, xK_q     ), io $ exitWith ExitSuccess)
     ]
 
@@ -58,10 +58,10 @@ main = do
             , windows      = [] }
 
     runW initState $ do
-        root <- io $ rootWindow dpy dflt
-        io $ do selectInput dpy root (substructureRedirectMask .|. substructureNotifyMask)
+        r <- io $ rootWindow dpy dflt
+        io $ do selectInput dpy r (substructureRedirectMask .|. substructureNotifyMask)
                 sync dpy False
-        registerKeys dpy root
+        registerKeys dpy r
         go dpy
 
     return ()
@@ -72,9 +72,9 @@ main = do
         handle e
 
     -- register keys
-    registerKeys dpy root = forM_ (M.keys keys) $ \(mod,sym) -> io $ do
-        kc <- keysymToKeycode dpy sym
-        grabKey dpy kc mod root True grabModeAsync grabModeAsync
+    registerKeys dpy r = forM_ (M.keys keys) $ \(m,s) -> io $ do
+        kc <- keysymToKeycode dpy s
+        grabKey dpy kc m r True grabModeAsync grabModeAsync
 
 --
 -- The event handler
@@ -84,11 +84,13 @@ handle (MapRequestEvent {window = w})    = manage w
 handle (DestroyWindowEvent {window = w}) = unmanage w
 handle (UnmapEvent {window = w})         = unmanage w
 
-handle (KeyEvent {event_type = t, state = mod, keycode = code})
+handle (KeyEvent {event_type = t, state = m, keycode = code})
     | t == keyPress = do
         dpy <- gets display
-        sym <- io $ keycodeToKeysym dpy code 0
-        M.lookup (mod,sym) keys
+        s   <- io $ keycodeToKeysym dpy code 0
+        case M.lookup (m,s) keys of
+            Nothing -> return ()
+            Just a  -> a
 
 handle e@(ConfigureRequestEvent {}) = do
     dpy <- gets display
