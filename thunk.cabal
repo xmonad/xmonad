@@ -11,5 +11,5 @@ build-depends:  base==2.0, X11>=1.1, X11-extras==0.0, unix==1.0, mtl==1.0
 
 executable:     thunk
 main-is:        Main.hs
-ghc-options:    -O -funbox-strict-fields -Wall -Werror -optl-Wl,-s
+ghc-options:    -O -funbox-strict-fields -Wall -optl-Wl,-s
 extensions:     GeneralizedNewtypeDeriving
