@@ -115,7 +115,7 @@ spawn = io_ . runCommand
 keys :: [(KeyMask, KeySym, W ())]
 keys =
     [ (mod1Mask .|. shiftMask, xK_Return, spawn "xterm")
-    , (mod1Mask,               xK_p,      spawn "exec=`dmenu_path | dmenu` && exec $exe")
+    , (mod1Mask,               xK_p,      spawn "exe=`dmenu_path | dmenu` && exec $exe")
     , (controlMask,            xK_space,  spawn "gmrun")
     , (mod1Mask,               xK_Tab,    switch)
     , (mod1Mask .|. shiftMask, xK_q,      io $ exitWith ExitSuccess)
