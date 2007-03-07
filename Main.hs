@@ -1,4 +1,17 @@
-{-# OPTIONS_GHC -fglasgow-exts #-}
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Main.hs
+-- Copyright   :  (c) Spencer Janssen 2007
+-- License     :  BSD3-style (see LICENSE)
+-- 
+-- Maintainer  :  sjanssen@cse.unl.edu
+-- Stability   :  unstable
+-- Portability :  not portable, uses cunning newtype deriving
+--
+-----------------------------------------------------------------------------
+--
+-- thunk, a minimal window manager for X11
+--
 
 import qualified Data.Map as Map
 import Data.Map (Map)
@@ -22,7 +35,7 @@ handler (DestroyWindowEvent {window = w}) = do
 handler (KeyEvent {event_type = t, state = mod, keycode = code}) 
  | t == keyPress = do
     dpy <- getDisplay
-    sym <- l $ keycodeToKeysym dpy code 0
+    sym <- io $ keycodeToKeysym dpy code 0
     case filter (\(mod', sym', _) -> mod == mod' && sym == sym') keys of
         []              -> return ()
         ((_, _, act):_) -> act
@@ -39,7 +52,7 @@ switch = do
 
 spawn :: String -> Wm ()
 spawn c = do
-    l $ runCommand c
+    io $ runCommand c
     return ()
 
 keys :: [(KeyMask, KeySym, Wm ())]
@@ -47,15 +60,15 @@ keys =
     [ (mod1Mask .|. shiftMask, xK_Return, spawn "xterm")
     , (controlMask, xK_space, spawn "gmrun")
     , (mod1Mask, xK_Tab, switch)
-    , (mod1Mask .|. shiftMask, xK_q, l $ exitWith ExitSuccess)
+    , (mod1Mask .|. shiftMask, xK_q, io $ exitWith ExitSuccess)
     ]
 
 grabkeys = do
     dpy <- getDisplay
-    root <- l $ rootWindow dpy (defaultScreen dpy)
+    root <- io $ rootWindow dpy (defaultScreen dpy)
     forM_ keys $ \(mod, sym, _) -> do
-        code <- l $ keysymToKeycode dpy sym
-        l $ grabKey dpy code mod root True grabModeAsync grabModeAsync
+        code <- io $ keysymToKeycode dpy sym
+        io $ grabKey dpy code mod root True grabModeAsync grabModeAsync
 
 manage :: Window -> Wm ()
 manage w = do
@@ -65,7 +78,7 @@ manage w = do
     when (Fold.notElem w ws) $ do
         trace "modifying"
         modifyWindows (w <|)
-        l $ mapWindow d w
+        io $ mapWindow d w
         refresh
 
 refresh :: Wm ()
@@ -77,8 +90,8 @@ refresh = do
             d  <- getDisplay
             sw <- getScreenWidth
             sh <- getScreenHeight
-            l $ moveResizeWindow d w 0 0 (fromIntegral sw) (fromIntegral sh)
-            l $ raiseWindow d w
+            io $ moveResizeWindow d w 0 0 (fromIntegral sw) (fromIntegral sh)
+            io $ raiseWindow d w
 
 main = do
     dpy <- openDisplay ""
@@ -93,17 +106,17 @@ main = do
 main' = do
     dpy <- getDisplay
     let screen = defaultScreen dpy
-    root <- l $ rootWindow dpy screen
-    l $ selectInput dpy root (substructureRedirectMask .|. substructureNotifyMask)
-    l $ sync dpy False
+    io $ do root <- rootWindow dpy screen
+            selectInput dpy root (substructureRedirectMask .|. substructureNotifyMask)
+            sync dpy False
     grabkeys
     loop
 
 loop :: Wm ()
 loop = do
     dpy <- getDisplay
-    e <- l $ allocaXEvent $ \ev -> do
-        nextEvent dpy ev
-        getEvent ev
+    e <- io $ allocaXEvent $ \ev -> do
+                    nextEvent dpy ev
+                    getEvent ev
     handler e
     loop
