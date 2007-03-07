@@ -28,6 +28,21 @@ import Control.Monad.State
 import W
 
 --
+-- The keys list
+--
+keys :: [(KeyMask, KeySym, W ())]
+keys =
+    [ (mod1Mask .|. shiftMask, xK_Return, spawn "xterm")
+    , (mod1Mask,               xK_p,      spawn "exe=`dmenu_path | dmenu` && exec $exe")
+    , (controlMask,            xK_space,  spawn "gmrun")
+    , (mod1Mask,               xK_Tab,    focus 1)
+    , (mod1Mask,               xK_j,      focus 1)
+    , (mod1Mask,               xK_k,      focus (-1))
+    , (mod1Mask .|. shiftMask, xK_c,      kill)
+    , (mod1Mask .|. shiftMask, xK_q,      io $ exitWith ExitSuccess)
+    ]
+
+--
 -- let's get underway
 -- 
 main :: IO ()
@@ -62,17 +77,6 @@ registerKeys dpy root =
     forM_ keys $ \(mod, sym, _) -> do
         kc <- io (keysymToKeycode dpy sym)
         io $ grabKey dpy kc mod root True grabModeAsync grabModeAsync
-
-keys :: [(KeyMask, KeySym, W ())]
-keys =
-    [ (mod1Mask .|. shiftMask, xK_Return, spawn "xterm")
-    , (mod1Mask,               xK_p,      spawn "exe=`dmenu_path | dmenu` && exec $exe")
-    , (controlMask,            xK_space,  spawn "gmrun")
-    , (mod1Mask,               xK_Tab,    focus 1)
-    , (mod1Mask,               xK_j,      focus 1)
-    , (mod1Mask,               xK_k,      focus (-1))
-    , (mod1Mask .|. shiftMask, xK_q,      io $ exitWith ExitSuccess)
-    ]
 
 --
 -- The event handler
@@ -162,3 +166,16 @@ focus n = withWindows (rotate n)
 -- | spawn. Launch an external application
 spawn :: String -> W ()
 spawn = io_ . runCommand
+
+-- | Kill the currently focused client
+kill :: W ()
+kill = do
+    ws  <- gets windows
+    dpy <- gets display
+    case ws of
+        []    -> return ()
+        (w:_) -> do
+        --  if(isprotodel(sel))
+        --      sendevent(sel->win, wmatom[WMProtocols], wmatom[WMDelete]);
+            io $ xKillClient dpy w -- ignoring result
+            return ()
