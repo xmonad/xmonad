@@ -7,13 +7,8 @@ license:        BSD3
 license-file:   LICENSE
 author:         Spencer Janssen
 maintainer:     sjanssen@cse.unl.edu
-build-depends:  base >= 2.0, X11, unix, mtl
+build-depends:  base >= 2.0, X11, X11-extras, unix, mtl
 
 executable:     thunk
 main-is:        thunk.hs
-extensions:     ForeignFunctionInterface
-other-modules:  XlibExtras
 ghc-options:    -O
-include-dirs:   include
--- OpenBSD:
--- include-dirs:   include /usr/X11R6/include

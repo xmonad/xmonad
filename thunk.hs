@@ -8,11 +8,11 @@ import Data.Bits
 import Control.Monad.State
 import System.IO
 import Graphics.X11.Xlib
+import Graphics.X11.Xlib.Extras
 import System.Process (runCommand)
 import System.Exit
 
 import Wm
-import XlibExtras
 
 handler :: Event -> Wm ()
 handler (MapRequestEvent {window = w}) = manage w
