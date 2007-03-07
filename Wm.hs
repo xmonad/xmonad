@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fglasgow-exts #-}
 
-module Thunk.Wm where
+module Wm where
 
 import Data.Sequence
 import Control.Monad.State

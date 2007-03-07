@@ -1,4 +1,4 @@
-module Thunk.XlibExtras where
+module XlibExtras where
 
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Types

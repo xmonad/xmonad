@@ -12,7 +12,7 @@ build-depends:  base >= 2.0, X11, unix, mtl
 executable:     thunk
 main-is:        thunk.hs
 extensions:     ForeignFunctionInterface
-other-modules:  Thunk.XlibExtras
+other-modules:  XlibExtras
 ghc-options:    -O
 include-dirs:   include
 -- OpenBSD:

@@ -10,8 +10,9 @@ import System.IO
 import Graphics.X11.Xlib
 import System.Process (runCommand)
 import System.Exit
-import Thunk.Wm
-import Thunk.XlibExtras
+
+import Wm
+import XlibExtras
 
 handler :: Event -> Wm ()
 handler (MapRequestEvent {window = w}) = manage w
