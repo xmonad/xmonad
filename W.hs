@@ -78,10 +78,6 @@ modifyWindows f = modify $ \s -> s {windows = f (windows s)}
 forever :: (Monad m) => m a -> m b
 forever a = a >> forever a
 
--- | Add an element onto the end of a list
-snoc :: [a] -> a -> [a]
-snoc xs x = xs ++ [x]
-
 -- | Rotate a list by 'n' elements.
 --
 -- for xs = [5..8] ++ [1..4]
@@ -100,5 +96,4 @@ rotate n xs = take l . drop offset . cycle $ xs
     l      = length xs
     offset | n < 0     = l + n
            | otherwise = n
-
 
