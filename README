@@ -19,7 +19,7 @@ Building:
 
     X11-extras:     darcs get http://www.cse.unsw.edu.au/~dons/code/X11-extras
 
-    dmenu   2.5     http://suckless.org
+    dmenu   2.{5,6,7} http://www.suckless.org/download/dmenu-2.7.tar.gz
 
 Use:
 
