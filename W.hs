@@ -19,6 +19,7 @@ module W where
 import Control.Monad.State
 import System.IO
 import Graphics.X11.Xlib (Display,Window)
+import qualified Data.Sequence as S
 
 -- | WState, the window manager state.
 -- Just the display, width, height and a window list
@@ -26,18 +27,11 @@ data WState = WState
     { display       :: Display
     , screenWidth   :: !Int
     , screenHeight  :: !Int
-    , windows       :: !Windows
+    , workspace     :: !WorkSpaces      -- ^ workspace list
     }
 
---
--- Multithreaded issues:
---
---   We'll want a status bar, it will probably read from stdin
---   but will thus need to run in its own thread, and modify its status
---   bar window
---
-
-type Windows = [Window]
+type WorkSpaces = (Int, S.Seq Windows)
+type Windows    = [Window]
 
 -- | The W monad, a StateT transformer over IO encapuslating the window
 -- manager state
@@ -67,9 +61,13 @@ trace msg = io $ do
 -- ---------------------------------------------------------------------
 -- Getting at the window manager state
 
+-- | Modify the workspace list
+modifyWorkspaces   :: (WorkSpaces -> WorkSpaces) -> W ()
+modifyWorkspaces f = modify $ \s -> s { workspace = f (workspace s) }
+
 -- | Modify the current window list
-modifyWindows   :: (Windows -> Windows) -> W ()
-modifyWindows f = modify $ \s -> s {windows = f (windows s)}
+modifyWindows      :: (Windows -> Windows) -> W ()
+modifyWindows    f = modifyWorkspaces $ \(i,wk) -> (i, S.adjust f i wk)
 
 -- ---------------------------------------------------------------------
 -- Generic utilities
@@ -80,16 +78,11 @@ forever a = a >> forever a
 
 -- | Rotate a list by 'n' elements.
 --
--- for xs = [5..8] ++ [1..4]
+--  rotate 0    -->  [5,6,7,8,1,2,3,4]
+--  rotate 1    -->  [6,7,8,1,2,3,4,5]
+--  rotate (-1) -->  [4,5,6,7,8,1,2,3]
 --
---  rotate 0 
---  [5,6,7,8,1,2,3,4]
---
---  rotate 1
---  [6,7,8,1,2,3,4,5]
---
---  rotate (-1)
---  [4,5,6,7,8,1,2,3]
+--  where xs = [5..8] ++ [1..4]
 --
 rotate :: Int -> [a] -> [a]
 rotate n xs = take l . drop offset . cycle $ xs

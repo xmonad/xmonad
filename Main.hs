@@ -15,7 +15,8 @@
 
 import Data.Bits hiding (rotate)
 import Data.List
-
+import qualified Data.Sequence as S
+import qualified Data.Foldable as F
 import qualified Data.Map as M
 
 import System.IO
@@ -40,8 +41,15 @@ keys = M.fromList
     , ((mod1Mask,               xK_Tab   ), focus 1)
     , ((mod1Mask,               xK_j     ), focus 1)
     , ((mod1Mask,               xK_k     ), focus (-1))
-    , ((mod1Mask  .|. shiftMask, xK_c    ), kill)
+    , ((mod1Mask .|. shiftMask, xK_c     ), kill)
     , ((mod1Mask .|. shiftMask, xK_q     ), io $ exitWith ExitSuccess)
+
+    , ((mod1Mask,               xK_1     ), view 1)
+    , ((mod1Mask,               xK_2     ), view 2)
+    , ((mod1Mask,               xK_3     ), view 3)
+    , ((mod1Mask,               xK_4     ), view 4)
+    , ((mod1Mask,               xK_5     ), view 5)
+
     ]
 
 --
@@ -55,7 +63,8 @@ main = do
             { display      = dpy
             , screenWidth  = displayWidth  dpy dflt
             , screenHeight = displayHeight dpy dflt
-            , windows      = [] }
+            , workspace    = (0,S.fromList (replicate 5 []))
+            }
 
     runW initState $ do
         r <- io $ rootWindow dpy dflt
@@ -77,12 +86,12 @@ main = do
         grabKey dpy kc m r True grabModeAsync grabModeAsync
 
 --
--- The event handler
+-- | handle. Handle X events
 -- 
 handle :: Event -> W ()
-handle (MapRequestEvent {window = w})    = manage w
+handle (MapRequestEvent    {window = w}) = manage w
 handle (DestroyWindowEvent {window = w}) = unmanage w
-handle (UnmapEvent {window = w})         = unmanage w
+handle (UnmapEvent         {window = w}) = unmanage w
 
 handle (KeyEvent {event_type = t, state = m, keycode = code})
     | t == keyPress = do
@@ -116,14 +125,17 @@ handle _ = return ()
 --
 refresh :: W ()
 refresh = do
-    ws <- gets windows
+    (n,wks) <- gets workspace
+    let ws = wks `S.index` n
     case ws of
-        []    -> return ()
+        []    -> return ()  -- do nothing. hmm. so no empty workspaces?
+                            -- we really need to hide all non-visible windows
+                            -- ones on other screens
         (w:_) -> do
             d  <- gets display
             sw <- liftM fromIntegral (gets screenWidth)
             sh <- liftM fromIntegral (gets screenHeight)
-            io $ do moveResizeWindow d w 0 0 sw sh
+            io $ do moveResizeWindow d w 0 0 sw sh -- size
                     raiseWindow d w
 
 -- | Modify the current window list with a pure funtion, and refresh
@@ -132,23 +144,26 @@ withWindows f = do
     modifyWindows f
     refresh
 
--- | manage. Add a new window to be managed. Bring it into focus.
+-- | manage. Add a new window to be managed in the current workspace. Bring it into focus.
 manage :: Window -> W ()
 manage w = do
     d  <- gets display
     io $ mapWindow d w
     withWindows (nub . (w :))
 
--- | unmanage, a window no longer exists, remove it from the stack
+-- | unmanage. A window no longer exists, remove it from the window
+-- list, on whatever workspace
 unmanage :: Window -> W ()
 unmanage w = do
-    ws <- gets windows
-    when (w `elem` ws) $ do
-        dpy <- gets display
-        io $ do grabServer dpy
-                sync dpy False
-                ungrabServer dpy
-        withWindows $ filter (/= w)
+    (_,wks) <- gets workspace
+    mapM_ rm (F.toList wks)
+  where
+    rm ws = when (w `elem` ws) $ do
+                dpy     <- gets display
+                io $ do grabServer dpy
+                        sync dpy False
+                        ungrabServer dpy
+                withWindows $ filter (/= w)
 
 -- | focus. focus to window at offset 'n' in list.
 -- The currently focused window is always the head of the list
@@ -162,8 +177,9 @@ spawn = io_ . runCommand
 -- | Kill the currently focused client
 kill :: W ()
 kill = do
-    ws  <- gets windows
-    dpy <- gets display
+    dpy     <- gets display
+    (n,wks) <- gets workspace
+    let ws = wks `S.index` n
     case ws of
         []    -> return ()
         (w:_) -> do
@@ -171,3 +187,25 @@ kill = do
         --      sendevent(sel->win, wmatom[WMProtocols], wmatom[WMDelete]);
             io $ killClient dpy w -- ignoring result
             return ()
+
+-- | Change the current workspace to workspce at offset 'n-1'.
+view :: Int -> W ()
+view n = return ()
+
+--
+-- So the problem is that I don't quite understand X here.
+-- The following code will set the right list of windows to be current,
+-- according to our view of things.
+--
+-- We just need to tell X that it is only those in the current window
+-- list that are indeed visible, and everything else is hidden.
+--
+-- In particular, if we switch to a new empty workspace, nothing should
+-- be visible but the root. So: how do we hide windows?
+--
+{- do
+    let m = n-1
+    modifyWorkspaces $ \old@(_,wks) ->
+        if m < S.length wks && m >= 0 then (m,wks) else old
+    refresh
+-}
