@@ -19,6 +19,8 @@ Building:
 
     X11-extras:     darcs get http://www.cse.unsw.edu.au/~dons/code/X11-extras
 
+    dmenu   2.5     http://suckless.org
+
 Use:
 
     add: 

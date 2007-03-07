@@ -92,7 +92,7 @@ handler (KeyEvent {event_type = t, state = mod, keycode = code})
 handler _ = return ()
 
 --
--- switch focus (?)
+-- switch focus to next window in list.
 --
 switch :: W ()
 switch = do
@@ -115,6 +115,7 @@ spawn = io_ . runCommand
 keys :: [(KeyMask, KeySym, W ())]
 keys =
     [ (mod1Mask .|. shiftMask, xK_Return, spawn "xterm")
+    , (mod1Mask,               xK_p,      spawn "exec=`dmenu_path | dmenu` && exec $exe")
     , (controlMask,            xK_space,  spawn "gmrun")
     , (mod1Mask,               xK_Tab,    switch)
     , (mod1Mask .|. shiftMask, xK_q,      io $ exitWith ExitSuccess)
