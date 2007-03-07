@@ -1,0 +1,12 @@
+Name:           thunk
+Version:        0.0
+Description:    A lightweight X11 window manager.
+Author:         Spencer Janssen
+Maintainer:     sjanssen@cse.unl.edu
+Build-Depends:  base >= 2.0, X11, unix, mtl
+
+Executable:     thunk
+Main-Is:        thunk.hs
+Extensions:     ForeignFunctionInterface
+Other-Modules:  Thunk.XlibExtras
+Include-Dirs:   include
