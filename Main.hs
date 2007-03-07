@@ -96,7 +96,7 @@ handle (KeyEvent {event_type = t, state = mod, keycode = code})
 handle e@(ConfigureRequestEvent {}) = do
     dpy <- gets display
     io $ configureWindow dpy (window e) (value_mask e) $
-        WindowChanges 
+        WindowChanges
             { wcX = x e
             , wcY = y e
             , wcWidth = width e
