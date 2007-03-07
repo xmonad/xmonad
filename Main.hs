@@ -78,8 +78,12 @@ handle :: Event -> W ()
 handle (MapRequestEvent {window = w}) = manage w
 
 handle (DestroyWindowEvent {window = w}) = do
-    modifyWindows (filter (/= w))
-    refresh
+    ws <- getWindows
+    when (elem w ws) (unmanage w)
+
+handle (UnmapEvent {window = w}) = do
+    ws <- getWindows
+    when (elem w ws) (unmanage w)
 
 handle (KeyEvent {event_type = t, state = mod, keycode = code})
     | t == keyPress = do
@@ -88,6 +92,20 @@ handle (KeyEvent {event_type = t, state = mod, keycode = code})
         case filter (\(mod', sym', _) -> mod == mod' && sym == sym') keys of
             []              -> return ()
             ((_, _, act):_) -> act
+
+handle e@(ConfigureRequestEvent {}) = do
+    dpy <- getDisplay
+    io $ configureWindow dpy (window e) (value_mask e) $
+        WindowChanges 
+            { wcX = x e
+            , wcY = y e
+            , wcWidth = width e
+            , wcHeight = height e
+            , wcBorderWidth = border_width e
+            , wcSibling = above e
+            , wcStackMode = detail e
+            }
+    io $ sync dpy False
 
 handle _ = return ()
 
@@ -130,6 +148,17 @@ manage w = do
     withWindows $ \ws -> if w `elem` ws then ws else w:ws -- a set
     io $ mapWindow d w
 
+--
+-- | unmanage, a window no longer exists, remove it from the stack
+--
+unmanage :: Window -> W ()
+unmanage w = do
+    dpy <- getDisplay
+    io $ grabServer dpy
+    modifyWindows (filter (/= w))
+    io $ sync dpy False
+    io $ ungrabServer dpy
+    refresh
 
 --
 -- | switch. switch focus to next window in list.
