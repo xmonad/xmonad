@@ -15,15 +15,20 @@
 
 import qualified Data.Map as Map
 import Data.Map (Map)
+
 import Data.Sequence as Seq
 import qualified Data.Foldable as Fold
+
 import Data.Bits
-import Control.Monad.State
+
 import System.IO
-import Graphics.X11.Xlib
-import Graphics.X11.Xlib.Extras
 import System.Process (runCommand)
 import System.Exit
+
+import Graphics.X11.Xlib
+import Graphics.X11.Xlib.Extras
+
+import Control.Monad.State
 
 import W
 
@@ -65,8 +70,6 @@ loop = do
     forever $ do
         e <- io $ allocaXEvent $ \ev -> nextEvent dpy ev >> getEvent ev
         handler e
-  where
-    forever a = a >> forever a
 
 --
 -- The event handler
@@ -78,13 +81,14 @@ handler (DestroyWindowEvent {window = w}) = do
     modifyWindows (Seq.fromList . filter (/= w) . Fold.toList)
     refresh
 
-handler (KeyEvent {event_type = t, state = mod, keycode = code}) 
- | t == keyPress = do
-    dpy <- getDisplay
-    sym <- io $ keycodeToKeysym dpy code 0
-    case filter (\(mod', sym', _) -> mod == mod' && sym == sym') keys of
-        []              -> return ()
-        ((_, _, act):_) -> act
+handler (KeyEvent {event_type = t, state = mod, keycode = code})
+    | t == keyPress = do
+        dpy <- getDisplay
+        sym <- io $ keycodeToKeysym dpy code 0
+        case filter (\(mod', sym', _) -> mod == mod' && sym == sym') keys of
+            []              -> return ()
+            ((_, _, act):_) -> act
+
 handler _ = return ()
 
 --

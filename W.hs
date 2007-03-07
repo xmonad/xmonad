@@ -10,7 +10,8 @@
 --
 -----------------------------------------------------------------------------
 --
--- The W monad, a state monad transformer over IO, for the window manager state.
+-- The W monad, a state monad transformer over IO, for the window
+-- manager state, and support routines.
 --
 
 module W where
@@ -69,6 +70,12 @@ trace :: String -> W ()
 trace msg = io $ do
     hPutStrLn stderr msg
     hFlush stderr
+
+--
+-- | Run an action forever
+--
+forever :: (Monad m) => m a -> m b
+forever a = a >> forever a
 
 -- ---------------------------------------------------------------------
 -- Getting at the window manager state
