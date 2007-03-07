@@ -34,7 +34,7 @@ type Windows = [Window]
 -- | The W monad, a StateT transformer over IO encapuslating the window
 -- manager state
 newtype W a = W { unW :: StateT WState IO a }
-    deriving (Functor, Monad, MonadIO)
+    deriving (Functor, Monad, MonadIO, MonadState WState)
 
 -- | Run the W monad, given a chunk of W monad code, and an initial state
 -- Return the result, and final state
@@ -59,29 +59,9 @@ trace msg = io $ do
 -- ---------------------------------------------------------------------
 -- Getting at the window manager state
 
--- | Return the current dispaly
-getDisplay          :: W Display
-getDisplay          = W (gets display)
-
--- | Return the current windows
-getWindows          :: W Windows
-getWindows          = W (gets windows)
-
--- | Return the screen width
-getScreenWidth      :: W Int
-getScreenWidth      = W (gets screenWidth)
-
--- | Return the screen height
-getScreenHeight     :: W Int
-getScreenHeight     = W (gets screenHeight)
-
--- | Set the current window list
-setWindows          ::Windows -> W ()
-setWindows x        = W (modify (\s -> s {windows = x}))
-
 -- | Modify the current window list
-modifyWindows       :: (Windows -> Windows) -> W ()
-modifyWindows f     = W (modify (\s -> s {windows = f (windows s)}))
+modifyWindows   :: (Windows -> Windows) -> W ()
+modifyWindows f = modify $ \s -> s {windows = f (windows s)}
 
 -- ---------------------------------------------------------------------
 -- Generic utilities

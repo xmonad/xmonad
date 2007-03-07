@@ -78,23 +78,23 @@ handle :: Event -> W ()
 handle (MapRequestEvent {window = w}) = manage w
 
 handle (DestroyWindowEvent {window = w}) = do
-    ws <- getWindows
+    ws <- gets windows
     when (elem w ws) (unmanage w)
 
 handle (UnmapEvent {window = w}) = do
-    ws <- getWindows
+    ws <- gets windows
     when (elem w ws) (unmanage w)
 
 handle (KeyEvent {event_type = t, state = mod, keycode = code})
     | t == keyPress = do
-        dpy <- getDisplay
+        dpy <- gets display
         sym <- io $ keycodeToKeysym dpy code 0
         case filter (\(mod', sym', _) -> mod == mod' && sym == sym') keys of
             []              -> return ()
             ((_, _, act):_) -> act
 
 handle e@(ConfigureRequestEvent {}) = do
-    dpy <- getDisplay
+    dpy <- gets display
     io $ configureWindow dpy (window e) (value_mask e) $
         WindowChanges 
             { wcX = x e
@@ -121,7 +121,7 @@ withWindows f = do
 -- |  Run an action on the currently focused window
 withCurrent :: (Window -> W ()) -> W ()
 withCurrent f = do
-    ws <- getWindows
+    ws <- gets windows
     case ws of
         []    -> return ()
         (w:_) -> f w
@@ -132,9 +132,9 @@ withCurrent f = do
 --
 refresh :: W ()
 refresh = withCurrent $ \w -> do
-    d  <- getDisplay
-    sw <- getScreenWidth
-    sh <- getScreenHeight
+    d  <- gets display
+    sw <- gets screenWidth
+    sh <- gets screenHeight
     io $ do moveResizeWindow d w 0 0 (fromIntegral sw) (fromIntegral sh)
             raiseWindow d w
 
@@ -144,7 +144,7 @@ refresh = withCurrent $ \w -> do
 manage :: Window -> W ()
 manage w = do
     trace "manage"
-    d  <- getDisplay
+    d  <- gets display
     withWindows $ \ws -> if w `elem` ws then ws else w:ws -- a set
     io $ mapWindow d w
 
@@ -153,7 +153,7 @@ manage w = do
 --
 unmanage :: Window -> W ()
 unmanage w = do
-    dpy <- getDisplay
+    dpy <- gets display
     io $ grabServer dpy
     modifyWindows (filter (/= w))
     io $ sync dpy False
