@@ -104,13 +104,13 @@ handle e@(ConfigureRequestEvent {}) = do
     dpy <- gets display
     io $ configureWindow dpy (window e) (value_mask e) $
         WindowChanges
-            { wcX = x e
-            , wcY = y e
-            , wcWidth = width e
-            , wcHeight = height e
+            { wcX           = x e
+            , wcY           = y e
+            , wcWidth       = width e
+            , wcHeight      = height e
             , wcBorderWidth = border_width e
-            , wcSibling = above e
-            , wcStackMode = detail e
+            , wcSibling     = above e
+            , wcStackMode   = detail e
             }
     io $ sync dpy False
 
@@ -141,13 +141,12 @@ withWindows f = do
     modifyWindows f
     refresh
 
--- | manage. Add a new window to be managed
+-- | manage. Add a new window to be managed. Bring it into focus.
 manage :: Window -> W ()
 manage w = do
-    trace "manage"
     d  <- gets display
-    withWindows (nub . (w :))
     io $ mapWindow d w
+    withWindows (nub . (w :))
 
 -- | unmanage, a window no longer exists, remove it from the stack
 unmanage :: Window -> W ()
