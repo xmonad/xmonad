@@ -176,5 +176,5 @@ kill = do
         (w:_) -> do
         --  if(isprotodel(sel))
         --      sendevent(sel->win, wmatom[WMProtocols], wmatom[WMDelete]);
-            io $ xKillClient dpy w -- ignoring result
+            io $ killClient dpy w -- ignoring result
             return ()
