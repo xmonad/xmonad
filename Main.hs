@@ -25,7 +25,7 @@ import Graphics.X11.Xlib.Extras
 import System.Process (runCommand)
 import System.Exit
 
-import Wm
+import W
 
 ------------------------------------------------------------------------
 
@@ -35,7 +35,7 @@ import Wm
 main :: IO ()
 main = do
     dpy <- openDisplay ""
-    runWm realMain $ WmState
+    runW realMain $ WState
             { display = dpy
             , screenWidth  = displayWidth  dpy (defaultScreen dpy)
             , screenHeight = displayHeight dpy (defaultScreen dpy)
@@ -46,7 +46,7 @@ main = do
 --
 -- Grab the display and input, and jump into the input loop
 --
-realMain :: Wm ()
+realMain :: W ()
 realMain = do
     dpy <- getDisplay
     let screen = defaultScreen dpy
@@ -59,7 +59,7 @@ realMain = do
 --
 -- The main event handling loop
 --
-loop :: Wm ()
+loop :: W ()
 loop = do
     dpy <- getDisplay
     forever $ do
@@ -71,7 +71,7 @@ loop = do
 --
 -- The event handler
 -- 
-handler :: Event -> Wm ()
+handler :: Event -> W ()
 handler (MapRequestEvent {window = w}) = manage w
 
 handler (DestroyWindowEvent {window = w}) = do
@@ -90,7 +90,7 @@ handler _ = return ()
 --
 -- switch focus (?)
 --
-switch :: Wm ()
+switch :: W ()
 switch = do
     ws' <- getWindows
     case viewl ws' of
@@ -102,13 +102,13 @@ switch = do
 --
 -- | spawn. Launch an external application
 --
-spawn :: String -> Wm ()
+spawn :: String -> W ()
 spawn = io_ . runCommand
 
 --
 -- | Keys we understand.
 --
-keys :: [(KeyMask, KeySym, Wm ())]
+keys :: [(KeyMask, KeySym, W ())]
 keys =
     [ (mod1Mask .|. shiftMask, xK_Return, spawn "xterm")
     , (controlMask,            xK_space,  spawn "gmrun")
@@ -119,7 +119,7 @@ keys =
 --
 -- | grabkeys. Register key commands
 --
-grabkeys :: Wm ()
+grabkeys :: W ()
 grabkeys = do
     dpy <- getDisplay
     root <- io $ rootWindow dpy (defaultScreen dpy)
@@ -130,7 +130,7 @@ grabkeys = do
 --
 --
 --
-manage :: Window -> Wm ()
+manage :: Window -> W ()
 manage w = do
     trace "manage"
     d <- getDisplay
@@ -144,7 +144,7 @@ manage w = do
 --
 -- refresh the windows
 --
-refresh :: Wm ()
+refresh :: W ()
 refresh = do
     v  <- getWindows
     case viewl v of
