@@ -16,10 +16,9 @@
 
 module W where
 
-import Data.Sequence
-import Control.Monad.State
-import System.IO (hFlush, hPutStrLn, stderr)
+import System.IO
 import Graphics.X11.Xlib
+import Control.Monad.State
 
 --
 -- | WState, the window manager state.
@@ -29,8 +28,10 @@ data WState = WState
     { display       :: Display
     , screenWidth   :: !Int
     , screenHeight  :: !Int
-    , windows       :: Seq Window
+    , windows       :: Windows
     }
+
+type Windows = [Window]
 
 -- | The W monad, a StateT transformer over IO encapuslating the window
 -- manager state
@@ -85,7 +86,7 @@ getDisplay          :: W Display
 getDisplay          = W (gets display)
 
 -- | Return the current windows
-getWindows          :: W (Seq Window)
+getWindows          :: W Windows
 getWindows          = W (gets windows)
 
 -- | Return the screen width
@@ -97,9 +98,9 @@ getScreenHeight     :: W Int
 getScreenHeight     = W (gets screenHeight)
 
 -- | Set the current window list
-setWindows          :: Seq Window -> W ()
+setWindows          ::Windows -> W ()
 setWindows x        = W (modify (\s -> s {windows = x}))
 
 -- | Modify the current window list
-modifyWindows       :: (Seq Window -> Seq Window) -> W ()
+modifyWindows       :: (Windows -> Windows) -> W ()
 modifyWindows f     = W (modify (\s -> s {windows = f (windows s)}))

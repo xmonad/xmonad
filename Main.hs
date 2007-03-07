@@ -16,9 +16,6 @@
 import qualified Data.Map as Map
 import Data.Map (Map)
 
-import Data.Sequence as Seq
-import qualified Data.Foldable as Fold
-
 import Data.Bits
 
 import System.IO
@@ -44,7 +41,7 @@ main = do
             { display = dpy
             , screenWidth  = displayWidth  dpy (defaultScreen dpy)
             , screenHeight = displayHeight dpy (defaultScreen dpy)
-            , windows = Seq.empty
+            , windows      = []
             }
     return ()
 
@@ -78,7 +75,7 @@ handler :: Event -> W ()
 handler (MapRequestEvent {window = w}) = manage w
 
 handler (DestroyWindowEvent {window = w}) = do
-    modifyWindows (Seq.fromList . filter (/= w) . Fold.toList)
+    modifyWindows (filter (/= w))
     refresh
 
 handler (KeyEvent {event_type = t, state = mod, keycode = code})
@@ -96,11 +93,11 @@ handler _ = return ()
 --
 switch :: W ()
 switch = do
-    ws' <- getWindows
-    case viewl ws' of
-        EmptyL -> return ()
-        (w :< ws) -> do
-            setWindows (ws |> w)
+    ws <- getWindows
+    case ws of
+        []     -> return ()
+        (x:xs) -> do
+            setWindows (xs++[x]) -- snoc. polish this.
             refresh
 
 --
@@ -140,9 +137,9 @@ manage w = do
     trace "manage"
     d <- getDisplay
     ws <- getWindows
-    when (Fold.notElem w ws) $ do
+    when (w `notElem` ws) $ do
         trace "modifying"
-        modifyWindows (w <|)
+        modifyWindows (w :)
         io $ mapWindow d w
         refresh
 
@@ -151,10 +148,10 @@ manage w = do
 --
 refresh :: W ()
 refresh = do
-    v  <- getWindows
-    case viewl v of
-        EmptyL   -> return ()
-        (w :< _) -> do
+    ws <- getWindows
+    case ws of
+        []    -> return ()
+        (w:_) -> do
             d  <- getDisplay
             sw <- getScreenWidth
             sh <- getScreenHeight
