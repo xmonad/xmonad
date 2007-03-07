@@ -13,10 +13,7 @@
 -- thunk, a minimal window manager for X11
 --
 
-import qualified Data.Map as Map
-import Data.Map (Map)
-
-import Data.Bits
+import Data.Bits hiding (rotate)
 
 import System.IO
 import System.Process (runCommand)
@@ -29,86 +26,42 @@ import Control.Monad.State
 
 import W
 
-------------------------------------------------------------------------
-
 --
 -- let's get underway
 -- 
 main :: IO ()
 main = do
     dpy <- openDisplay ""
-    runW realMain $ WState
-            { display = dpy
-            , screenWidth  = displayWidth  dpy (defaultScreen dpy)
-            , screenHeight = displayHeight dpy (defaultScreen dpy)
-            , windows      = []
-            }
+    let dflt      = defaultScreen dpy
+        initState = WState
+            { display      = dpy
+            , screenWidth  = displayWidth  dpy dflt
+            , screenHeight = displayHeight dpy dflt
+            , windows      = [] }
+
+    runW initState $ do
+        root <- io $ rootWindow dpy dflt
+        io $ do selectInput dpy root (substructureRedirectMask .|. substructureNotifyMask)
+                sync dpy False
+        registerKeys dpy root
+        go dpy
+
     return ()
-
---
--- Grab the display and input, and jump into the input loop
---
-realMain :: W ()
-realMain = do
-    dpy <- getDisplay
-    let screen = defaultScreen dpy
-    io $ do root <- rootWindow dpy screen
-            selectInput dpy root (substructureRedirectMask .|. substructureNotifyMask)
-            sync dpy False
-    grabkeys
-    loop
-
---
--- The main event handling loop
---
-loop :: W ()
-loop = do
-    dpy <- getDisplay
-    forever $ do
+  where
+    -- The main loop
+    go dpy = forever $ do
         e <- io $ allocaXEvent $ \ev -> nextEvent dpy ev >> getEvent ev
-        handler e
+        handle e
 
 --
--- The event handler
--- 
-handler :: Event -> W ()
-handler (MapRequestEvent {window = w}) = manage w
-
-handler (DestroyWindowEvent {window = w}) = do
-    modifyWindows (filter (/= w))
-    refresh
-
-handler (KeyEvent {event_type = t, state = mod, keycode = code})
-    | t == keyPress = do
-        dpy <- getDisplay
-        sym <- io $ keycodeToKeysym dpy code 0
-        case filter (\(mod', sym', _) -> mod == mod' && sym == sym') keys of
-            []              -> return ()
-            ((_, _, act):_) -> act
-
-handler _ = return ()
-
+-- | grabkeys. Register key commands
 --
--- switch focus to next window in list.
---
-switch :: W ()
-switch = do
-    ws <- getWindows
-    case ws of
-        []     -> return ()
-        (x:xs) -> do
-            setWindows (xs++[x]) -- snoc. polish this.
-            refresh
+registerKeys :: Display -> Window -> W ()
+registerKeys dpy root =
+    forM_ keys $ \(mod, sym, _) -> do
+        kc <- io (keysymToKeycode dpy sym)
+        io $ grabKey dpy kc mod root True grabModeAsync grabModeAsync
 
---
--- | spawn. Launch an external application
---
-spawn :: String -> W ()
-spawn = io_ . runCommand
-
---
--- | Keys we understand.
---
 keys :: [(KeyMask, KeySym, W ())]
 keys =
     [ (mod1Mask .|. shiftMask, xK_Return, spawn "xterm")
@@ -119,42 +72,74 @@ keys =
     ]
 
 --
--- | grabkeys. Register key commands
---
-grabkeys :: W ()
-grabkeys = do
-    dpy <- getDisplay
-    root <- io $ rootWindow dpy (defaultScreen dpy)
-    forM_ keys $ \(mod, sym, _) -> do
-        code <- io $ keysymToKeycode dpy sym
-        io $ grabKey dpy code mod root True grabModeAsync grabModeAsync
+-- The event handler
+-- 
+handle :: Event -> W ()
+handle (MapRequestEvent {window = w}) = manage w
+
+handle (DestroyWindowEvent {window = w}) = do
+    modifyWindows (filter (/= w))
+    refresh
+
+handle (KeyEvent {event_type = t, state = mod, keycode = code})
+    | t == keyPress = do
+        dpy <- getDisplay
+        sym <- io $ keycodeToKeysym dpy code 0
+        case filter (\(mod', sym', _) -> mod == mod' && sym == sym') keys of
+            []              -> return ()
+            ((_, _, act):_) -> act
+
+handle _ = return ()
+
+-- ---------------------------------------------------------------------
+-- Managing windows
+
+-- | Modify the current window list with a pure funtion, and refresh
+withWindows :: (Windows -> Windows) -> W ()
+withWindows f = do
+    modifyWindows f
+    refresh
+
+-- |  Run an action on the currently focused window
+withCurrent :: (Window -> W ()) -> W ()
+withCurrent f = do
+    ws <- getWindows
+    case ws of
+        []    -> return ()
+        (w:_) -> f w
 
 --
+-- | refresh. Refresh the currently focused window. Resizes to full
+-- screen and raises the window.
 --
+refresh :: W ()
+refresh = withCurrent $ \w -> do
+    d  <- getDisplay
+    sw <- getScreenWidth
+    sh <- getScreenHeight
+    io $ do moveResizeWindow d w 0 0 (fromIntegral sw) (fromIntegral sh)
+            raiseWindow d w
+
+--
+-- | manage. Add a new window to be managed
 --
 manage :: Window -> W ()
 manage w = do
     trace "manage"
-    d <- getDisplay
-    ws <- getWindows
-    when (w `notElem` ws) $ do
-        trace "modifying"
-        modifyWindows (w :)
-        io $ mapWindow d w
-        refresh
+    d  <- getDisplay
+    withWindows $ \ws -> if w `elem` ws then ws else w:ws -- a set
+    io $ mapWindow d w
+
 
 --
--- refresh the windows
+-- | switch. switch focus to next window in list.
+-- The currently focused window is always the head of the list
 --
-refresh :: W ()
-refresh = do
-    ws <- getWindows
-    case ws of
-        []    -> return ()
-        (w:_) -> do
-            d  <- getDisplay
-            sw <- getScreenWidth
-            sh <- getScreenHeight
-            io $ do moveResizeWindow d w 0 0 (fromIntegral sw) (fromIntegral sh)
-                    raiseWindow d w
+switch :: W ()
+switch = withWindows rotate
 
+--
+-- | spawn. Launch an external application
+--
+spawn :: String -> W ()
+spawn = io_ . runCommand
