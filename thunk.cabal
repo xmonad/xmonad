@@ -1,12 +1,17 @@
-Name:           thunk
-Version:        0.0
-Description:    A lightweight X11 window manager.
-Author:         Spencer Janssen
-Maintainer:     sjanssen@cse.unl.edu
-Build-Depends:  base >= 2.0, X11, unix, mtl
+name:           thunk
+version:        0.0
+description:    A lightweight X11 window manager.
+synopsis:       A lightweight X11 window manager.
+category:       System
+author:         Spencer Janssen
+maintainer:     sjanssen@cse.unl.edu
+build-depends:  base >= 2.0, X11, unix, mtl
 
-Executable:     thunk
-Main-Is:        thunk.hs
-Extensions:     ForeignFunctionInterface
-Other-Modules:  Thunk.XlibExtras
-Include-Dirs:   include
+executable:     thunk
+main-is:        thunk.hs
+extensions:     ForeignFunctionInterface
+other-modules:  Thunk.XlibExtras
+ghc-options:    -O
+include-dirs:   include
+-- OpenBSD:
+-- include-dirs:   include /usr/X11R6/include
