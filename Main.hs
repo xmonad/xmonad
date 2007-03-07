@@ -14,6 +14,7 @@
 --
 
 import Data.Bits hiding (rotate)
+import Data.List
 
 import System.IO
 import System.Process (runCommand)
