@@ -1,0 +1,16 @@
+- think about the statusbar/multithreading.
+    Three shared TVars:
+        windowTitle :: TVar String
+        workspace   :: TVar Int
+        statusText  :: TVar String
+    Three threads:
+        Main thread, handles all of the events that it handles now.  When
+        necessary, it writes to workspace or windowTitle
+
+        Status IO thread, the algorithm is something like this:
+            forever $ do
+                s <- getLine
+                atomic (writeTVar statusText s)
+
+        Statusbar drawing thread, waits for changes in all three TVars, and
+        redraws whenever it finds a change.
