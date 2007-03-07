@@ -77,6 +77,10 @@ main = do
         io $ do selectInput dpy r (substructureRedirectMask .|. substructureNotifyMask)
                 sync dpy False
         registerKeys dpy r
+        (_, _, ws) <- io $ queryTree dpy r
+        forM_ ws $ \w -> do
+            wa <- io $ getWindowAttributes dpy w
+            when (waMapState wa == waIsViewable) (manage w)
         go dpy
 
     return ()
