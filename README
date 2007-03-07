@@ -1,2 +1,33 @@
-Motivation
-----------
+            thunk : a lightweight X11 window manager.
+
+Motivation:
+
+    dwm is great, but we can do better, building a more robust,
+    more correct window manager in less lines of code, using strong
+    static typing. Enter Haskell.
+
+    If the aim of dwm is to fit in under 2000 lines of C, the aim of dwm
+    is to fit in under 500 lines of Haskell with similar functionality.
+
+Building:
+
+    Get the dependencies
+
+    X11             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-1.2
+    unix            http://hackage.haskell.org/cgi-bin/hackage-scripts/package/unix-2.0
+    mtl             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/mtl-1.0
+
+    X11-extras:     darcs get http://www.cse.unsw.edu.au/~dons/code/X11-extras
+
+Use:
+
+    add: 
+
+         exec /home/dons/bin/thunk
+
+    as the last line of your .xsession file
+
+Authors:
+
+    Spencer Janssen
+    Don Stewart
