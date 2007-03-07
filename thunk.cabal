@@ -3,6 +3,8 @@ version:        0.0
 description:    A lightweight X11 window manager.
 synopsis:       A lightweight X11 window manager.
 category:       System
+license:        BSD3
+license-file:   LICENSE
 author:         Spencer Janssen
 maintainer:     sjanssen@cse.unl.edu
 build-depends:  base >= 2.0, X11, unix, mtl
