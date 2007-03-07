@@ -16,9 +16,9 @@
 
 module W where
 
-import System.IO
-import Graphics.X11.Xlib
 import Control.Monad.State
+import System.IO
+import Graphics.X11.Xlib (Display,Window)
 
 -- | WState, the window manager state.
 -- Just the display, width, height and a window list

@@ -16,6 +16,8 @@
 import Data.Bits hiding (rotate)
 import Data.List
 
+import qualified Data.Map as M
+
 import System.IO
 import System.Process (runCommand)
 import System.Exit
@@ -30,16 +32,16 @@ import W
 --
 -- The keys list
 --
-keys :: [(KeyMask, KeySym, W ())]
-keys =
-    [ (mod1Mask .|. shiftMask, xK_Return, spawn "xterm")
-    , (mod1Mask,               xK_p,      spawn "exe=`dmenu_path | dmenu` && exec $exe")
-    , (controlMask,            xK_space,  spawn "gmrun")
-    , (mod1Mask,               xK_Tab,    focus 1)
-    , (mod1Mask,               xK_j,      focus 1)
-    , (mod1Mask,               xK_k,      focus (-1))
-    , (mod1Mask .|. shiftMask, xK_c,      kill)
-    , (mod1Mask .|. shiftMask, xK_q,      io $ exitWith ExitSuccess)
+keys :: M.Map (KeyMask, KeySym) (W ())
+keys = M.fromList
+    [ ((mod1Mask .|. shiftMask, xK_Return), spawn "xterm")
+    , ((mod1Mask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && exec $exe")
+    , ((controlMask,            xK_space ), spawn "gmrun")
+    , ((mod1Mask,               xK_Tab   ), focus 1)
+    , ((mod1Mask,               xK_j     ), focus 1)
+    , ((mod1Mask,               xK_k     ), focus (-1))
+    , (mod1Mask  .|. shiftMask, xK_c     ), kill)
+    , ((mod1Mask .|. shiftMask, xK_q     ), io $ exitWith ExitSuccess)
     ]
 
 --
@@ -69,41 +71,28 @@ main = do
         e <- io $ allocaXEvent $ \ev -> nextEvent dpy ev >> getEvent ev
         handle e
 
---
--- | grabkeys. Register key commands
---
-registerKeys :: Display -> Window -> W ()
-registerKeys dpy root =
-    forM_ keys $ \(mod, sym, _) -> do
-        kc <- io (keysymToKeycode dpy sym)
-        io $ grabKey dpy kc mod root True grabModeAsync grabModeAsync
+    -- register keys
+    registerKeys dpy root = forM_ (M.keys keys) $ \(mod,sym) -> io $ do
+        kc <- keysymToKeycode dpy sym
+        grabKey dpy kc mod root True grabModeAsync grabModeAsync
 
 --
 -- The event handler
 -- 
 handle :: Event -> W ()
-handle (MapRequestEvent {window = w}) = manage w
-
-handle (DestroyWindowEvent {window = w}) = do
-    ws <- gets windows
-    when (elem w ws) (unmanage w)
-
-handle (UnmapEvent {window = w}) = do
-    ws <- gets windows
-    when (elem w ws) (unmanage w)
+handle (MapRequestEvent {window = w})    = manage w
+handle (DestroyWindowEvent {window = w}) = unmanage w
+handle (UnmapEvent {window = w})         = unmanage w
 
 handle (KeyEvent {event_type = t, state = mod, keycode = code})
     | t == keyPress = do
         dpy <- gets display
         sym <- io $ keycodeToKeysym dpy code 0
-        case filter (\(mod', sym', _) -> mod == mod' && sym == sym') keys of
-            []              -> return ()
-            ((_, _, act):_) -> act
+        M.lookup (mod,sym) keys
 
 handle e@(ConfigureRequestEvent {}) = do
     dpy <- gets display
-    io $ configureWindow dpy (window e) (value_mask e) $
-        WindowChanges
+    io $ configureWindow dpy (window e) (value_mask e) $ WindowChanges
             { wcX           = x e
             , wcY           = y e
             , wcWidth       = width e
@@ -151,11 +140,13 @@ manage w = do
 -- | unmanage, a window no longer exists, remove it from the stack
 unmanage :: Window -> W ()
 unmanage w = do
-    dpy <- gets display
-    io $ do grabServer dpy
-            sync dpy False
-            ungrabServer dpy
-    withWindows $ filter (/= w)
+    ws <- gets windows
+    when (w `elem` ws) $ do
+        dpy <- gets display
+        io $ do grabServer dpy
+                sync dpy False
+                ungrabServer dpy
+        withWindows $ filter (/= w)
 
 -- | focus. focus to window at offset 'n' in list.
 -- The currently focused window is always the head of the list
