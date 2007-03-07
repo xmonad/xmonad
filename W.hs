@@ -29,6 +29,14 @@ data WState = WState
     , windows       :: !Windows
     }
 
+--
+-- Multithreaded issues:
+--
+--   We'll want a status bar, it will probably read from stdin
+--   but will thus need to run in its own thread, and modify its status
+--   bar window
+--
+
 type Windows = [Window]
 
 -- | The W monad, a StateT transformer over IO encapuslating the window
@@ -74,6 +82,23 @@ forever a = a >> forever a
 snoc :: [a] -> a -> [a]
 snoc xs x = xs ++ [x]
 
--- | Rotate a list one element
-rotate []     = []
-rotate (x:xs) = xs `snoc` x
+-- | Rotate a list by 'n' elements.
+--
+-- for xs = [5..8] ++ [1..4]
+--
+--  rotate 0 
+--  [5,6,7,8,1,2,3,4]
+--
+--  rotate 1
+--  [6,7,8,1,2,3,4,5]
+--
+--  rotate (-1)
+--  [4,5,6,7,8,1,2,3]
+--
+rotate n xs = take l . drop offset . cycle $ xs
+  where
+    l      = length xs
+    offset | n < 0     = l + n
+           | otherwise = n
+
+

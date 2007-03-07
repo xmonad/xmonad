@@ -67,7 +67,9 @@ keys =
     [ (mod1Mask .|. shiftMask, xK_Return, spawn "xterm")
     , (mod1Mask,               xK_p,      spawn "exe=`dmenu_path | dmenu` && exec $exe")
     , (controlMask,            xK_space,  spawn "gmrun")
-    , (mod1Mask,               xK_Tab,    switch)
+    , (mod1Mask,               xK_Tab,    focus 1)
+    , (mod1Mask,               xK_j,      focus 1)
+    , (mod1Mask,               xK_k,      focus (-1))
     , (mod1Mask .|. shiftMask, xK_q,      io $ exitWith ExitSuccess)
     ]
 
@@ -112,63 +114,50 @@ handle _ = return ()
 -- ---------------------------------------------------------------------
 -- Managing windows
 
+--
+-- | refresh. Refresh the currently focused window. Resizes to full
+-- screen and raises the window.
+--
+refresh :: W ()
+refresh = do
+    ws <- gets windows
+    case ws of
+        []    -> return ()
+        (w:_) -> do
+            d  <- gets display
+            sw <- liftM fromIntegral (gets screenWidth)
+            sh <- liftM fromIntegral (gets screenHeight)
+            io $ do moveResizeWindow d w 0 0 sw sh
+                    raiseWindow d w
+
 -- | Modify the current window list with a pure funtion, and refresh
 withWindows :: (Windows -> Windows) -> W ()
 withWindows f = do
     modifyWindows f
     refresh
 
--- |  Run an action on the currently focused window
-withCurrent :: (Window -> W ()) -> W ()
-withCurrent f = do
-    ws <- gets windows
-    case ws of
-        []    -> return ()
-        (w:_) -> f w
-
---
--- | refresh. Refresh the currently focused window. Resizes to full
--- screen and raises the window.
---
-refresh :: W ()
-refresh = withCurrent $ \w -> do
-    d  <- gets display
-    sw <- gets screenWidth
-    sh <- gets screenHeight
-    io $ do moveResizeWindow d w 0 0 (fromIntegral sw) (fromIntegral sh)
-            raiseWindow d w
-
---
 -- | manage. Add a new window to be managed
---
 manage :: Window -> W ()
 manage w = do
     trace "manage"
     d  <- gets display
-    withWindows $ \ws -> if w `elem` ws then ws else w:ws -- a set
+    withWindows (nub . (w :))
     io $ mapWindow d w
 
---
 -- | unmanage, a window no longer exists, remove it from the stack
---
 unmanage :: Window -> W ()
 unmanage w = do
     dpy <- gets display
-    io $ grabServer dpy
-    modifyWindows (filter (/= w))
-    io $ sync dpy False
-    io $ ungrabServer dpy
-    refresh
+    io $ do grabServer dpy
+            sync dpy False
+            ungrabServer dpy
+    withWindows $ filter (/= w)
 
---
--- | switch. switch focus to next window in list.
+-- | focus. focus to window at offset 'n' in list.
 -- The currently focused window is always the head of the list
---
-switch :: W ()
-switch = withWindows rotate
+focus :: Int -> W ()
+focus n = withWindows (rotate n)
 
---
 -- | spawn. Launch an external application
---
 spawn :: String -> W ()
 spawn = io_ . runCommand
