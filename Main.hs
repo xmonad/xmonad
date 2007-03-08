@@ -50,6 +50,12 @@ keys = M.fromList
     , ((mod1Mask,               xK_4     ), view 4)
     , ((mod1Mask,               xK_5     ), view 5)
 
+    , ((mod1Mask .|. shiftMask, xK_1     ), tag 1)
+    , ((mod1Mask .|. shiftMask, xK_2     ), tag 2)
+    , ((mod1Mask .|. shiftMask, xK_3     ), tag 3)
+    , ((mod1Mask .|. shiftMask, xK_4     ), tag 4)
+    , ((mod1Mask .|. shiftMask, xK_5     ), tag 5)
+
     ]
 
 --
@@ -187,6 +193,22 @@ kill = do
         --      sendevent(sel->win, wmatom[WMProtocols], wmatom[WMDelete]);
             io $ killClient dpy w -- ignoring result
             return ()
+
+-- | tag. associate a window with a new workspace
+tag :: Int -> W ()
+tag n = do
+    let new = n-1
+    (old,wks) <- gets workspace
+    when (new /= old && new >= 0 && new < S.length wks) $ do
+        let this = wks `S.index` old
+        if null this
+            then return ()  -- no client to retag
+            else do let (t:_) = this
+                    modifyWorkspaces $ \(i,w) ->
+                         let w'  = S.adjust tail old w
+                             w'' = S.adjust (t:) new w' in (i,w'')
+                    hideWindows [t]
+                    refresh
 
 -- | Change the current workspace to workspce at offset 'n-1'.
 view :: Int -> W ()
