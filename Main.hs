@@ -124,7 +124,7 @@ handle e@(ConfigureRequestEvent {}) = do
             }
     io $ sync dpy False
 
-handle _ = return ()
+handle e = trace (eventName e) -- return ()
 
 -- ---------------------------------------------------------------------
 -- Managing windows
