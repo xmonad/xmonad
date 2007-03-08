@@ -189,24 +189,26 @@ kill = do
             return ()
 
 -- | Change the current workspace to workspce at offset 'n-1'.
--- Todo: refactor
 view :: Int -> W ()
 view n = do
-    let m = n-1
-    modifyWorkspaces $ \old@(_,wks) ->
-        if m < S.length wks && m >= 0 then (m,wks) else old
+    let new = n-1
+    (old,wks) <- gets workspace
+    when (new /= old && new >= 0 && new < S.length wks) $ do
+        modifyWorkspaces $ \_ -> (new,wks)
+        hideWindows (wks `S.index` old)
+        showWindows (wks `S.index` new)
+        refresh
 
+-- | Hide a list of windows by moving them offscreen.
+hideWindows :: Windows -> W ()
+hideWindows ws = do
     dpy     <- gets display
     sw      <- liftM fromIntegral (gets screenWidth)
     sh      <- liftM fromIntegral (gets screenHeight)
-    (i,wks) <- gets workspace
+    forM_ ws $ \w -> io $ moveWindow dpy w (2*sw) (2*sh)
 
-    -- clear the screen: remove all window stacks
-    forM_ (concat $ F.toList wks) $ \win -> do
-        io $ moveWindow dpy win (2*sw) (2*sh)
-
-    -- expose just the visible stack
-    forM_ (wks `S.index` i) $ \win -> do
-        io $ moveWindow dpy win 0 0
-
-    refresh
+-- | Expose a list of windows, moving them on screen
+showWindows :: Windows -> W ()
+showWindows ws = do
+    dpy     <- gets display
+    forM_ ws $ \w -> io $ moveWindow dpy w 0 0
