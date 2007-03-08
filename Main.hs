@@ -63,7 +63,7 @@ main = do
             { display      = dpy
             , screenWidth  = displayWidth  dpy dflt
             , screenHeight = displayHeight dpy dflt
-            , workspace    = (0,S.fromList (replicate 5 []))
+            , workspace    = (0,S.fromList (replicate 5 [])) -- 5 empty workspaces
             }
 
     runW initState $ do
@@ -135,7 +135,7 @@ refresh = do
             d  <- gets display
             sw <- liftM fromIntegral (gets screenWidth)
             sh <- liftM fromIntegral (gets screenHeight)
-            io $ do moveResizeWindow d w 0 0 sw sh -- size
+            io $ do moveResizeWindow d w 0 0 sw sh -- fullscreen
                     raiseWindow d w
 
 -- | Modify the current window list with a pure funtion, and refresh
@@ -152,7 +152,7 @@ manage w = do
     withWindows (nub . (w :))
 
 -- | unmanage. A window no longer exists, remove it from the window
--- list, on whatever workspace
+-- list, on whatever workspace it is.
 unmanage :: Window -> W ()
 unmanage w = do
     (_,wks) <- gets workspace
@@ -189,23 +189,24 @@ kill = do
             return ()
 
 -- | Change the current workspace to workspce at offset 'n-1'.
+-- Todo: refactor
 view :: Int -> W ()
-view n = return ()
-
---
--- So the problem is that I don't quite understand X here.
--- The following code will set the right list of windows to be current,
--- according to our view of things.
---
--- We just need to tell X that it is only those in the current window
--- list that are indeed visible, and everything else is hidden.
---
--- In particular, if we switch to a new empty workspace, nothing should
--- be visible but the root. So: how do we hide windows?
---
-{- do
+view n = do
     let m = n-1
     modifyWorkspaces $ \old@(_,wks) ->
         if m < S.length wks && m >= 0 then (m,wks) else old
+
+    dpy     <- gets display
+    sw      <- liftM fromIntegral (gets screenWidth)
+    sh      <- liftM fromIntegral (gets screenHeight)
+    (i,wks) <- gets workspace
+
+    -- clear the screen: remove all window stacks
+    forM_ (concat $ F.toList wks) $ \win -> do
+        io $ moveWindow dpy win (2*sw) (2*sh)
+
+    -- expose just the visible stack
+    forM_ (wks `S.index` i) $ \win -> do
+        io $ moveWindow dpy win 0 0
+
     refresh
--}
