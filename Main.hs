@@ -31,10 +31,16 @@ import Control.Monad.State
 import W
 
 --
+-- The number of workspaces:
+--
+workspaces :: Int
+workspaces = 5
+
+--
 -- The keys list
 --
 keys :: M.Map (KeyMask, KeySym) (W ())
-keys = M.fromList
+keys = M.fromList $
     [ ((mod1Mask .|. shiftMask, xK_Return), spawn "xterm")
     , ((mod1Mask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && exec $exe")
     , ((controlMask,            xK_space ), spawn "gmrun")
@@ -43,20 +49,12 @@ keys = M.fromList
     , ((mod1Mask,               xK_k     ), focus (-1))
     , ((mod1Mask .|. shiftMask, xK_c     ), kill)
     , ((mod1Mask .|. shiftMask, xK_q     ), io $ exitWith ExitSuccess)
+    ] ++
+    -- generate keybindings for each workspace:
+    [((m .|. mod1Mask, xK_0 + fromIntegral i), f i)
+        | i <- [1 .. workspaces]
+        , (f, m) <- [(view, 0), (tag, shiftMask)]]
 
-    , ((mod1Mask,               xK_1     ), view 1)
-    , ((mod1Mask,               xK_2     ), view 2)
-    , ((mod1Mask,               xK_3     ), view 3)
-    , ((mod1Mask,               xK_4     ), view 4)
-    , ((mod1Mask,               xK_5     ), view 5)
-
-    , ((mod1Mask .|. shiftMask, xK_1     ), tag 1)
-    , ((mod1Mask .|. shiftMask, xK_2     ), tag 2)
-    , ((mod1Mask .|. shiftMask, xK_3     ), tag 3)
-    , ((mod1Mask .|. shiftMask, xK_4     ), tag 4)
-    , ((mod1Mask .|. shiftMask, xK_5     ), tag 5)
-
-    ]
 
 --
 -- let's get underway
@@ -69,7 +67,7 @@ main = do
             { display      = dpy
             , screenWidth  = displayWidth  dpy dflt
             , screenHeight = displayHeight dpy dflt
-            , workspace    = (0,S.fromList (replicate 5 [])) -- 5 empty workspaces
+            , workspace    = (0,S.fromList (replicate workspaces [])) -- empty workspaces
             }
 
     runW initState $ do
