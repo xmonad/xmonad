@@ -72,7 +72,7 @@ main = do
         r <- io $ rootWindow dpy dflt
         io $ do selectInput dpy r (substructureRedirectMask .|. substructureNotifyMask)
                 sync dpy False
-        registerKeys dpy r
+        grabKeys dpy r
         (_, _, ws) <- io $ queryTree dpy r
         forM_ ws $ \w -> do
             wa <- io $ getWindowAttributes dpy w
@@ -86,18 +86,41 @@ main = do
         e <- io $ allocaXEvent $ \ev -> nextEvent dpy ev >> getEvent ev
         handle e
 
-    -- register keys
-    registerKeys dpy r = forM_ (M.keys keys) $ \(m,s) -> io $ do
-        kc <- keysymToKeycode dpy s
-        grabKey dpy kc m r True grabModeAsync grabModeAsync
+-- | Grab the keys back
+grabKeys :: Display -> Window -> W ()
+grabKeys dpy r = forM_ (M.keys keys) $ \(m,s) -> io $ do
+    kc <- keysymToKeycode dpy s
+    grabKey dpy kc m r True grabModeAsync grabModeAsync
 
 --
 -- | handle. Handle X events
+-- dwm handles:
+--
+--    [ButtonPress] = buttonpress,
+--    [ConfigureRequest] = configurerequest,
+--    [DestroyNotify] = destroynotify,
+--    [EnterNotify] = enternotify,
+--    [LeaveNotify] = leavenotify,
+--    [Expose] = expose,
+--    [KeyPress] = keypress,
+--    [MappingNotify] = mappingnotify,
+--    [MapRequest] = maprequest,
+--    [PropertyNotify] = propertynotify,
+--    [UnmapNotify] = unmapnotify
 -- 
 handle :: Event -> W ()
 handle (MapRequestEvent    {window = w}) = manage w
 handle (DestroyWindowEvent {window = w}) = unmanage w
 handle (UnmapEvent         {window = w}) = unmanage w
+
+handle (MappingNotifyEvent {window = w}) = do
+    trace $ "Got mapping notify event for window: " ++ show w
+
+{-
+, mapping= m@(r,_,_)}) = do
+    io $ refreshKeyboardMapping m
+    when (r == mappingKeyboard) $ withDisplay $ \d -> grabKeys d w
+-}
 
 handle (KeyEvent {event_type = t, state = m, keycode = code})
     | t == keyPress = withDisplay $ \dpy -> do
@@ -117,7 +140,15 @@ handle e@(ConfigureRequestEvent {}) = do
             }
     io $ sync dpy False
 
-handle e = trace (eventName e) -- return ()
+-- Typical events I see still unhandled:
+--      ConfigureNotify
+--      MapNotify
+--      CreateNotify
+--      KeyRelease
+--
+-- In particular, ConfigureNotify and MapNotify a lot on firefox
+--
+handle e = trace (eventName e)
 
 -- ---------------------------------------------------------------------
 -- Managing windows
