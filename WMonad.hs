@@ -67,6 +67,18 @@ trace msg = io $ do
     hPutStrLn stderr msg
     hFlush stderr
 
+-- | Run a monad action with the current display settings
+withDisplay :: (Display -> W ()) -> W ()
+withDisplay f = gets display >>= f
+
+-- | Run a monadic action with the display, screen width and height
+withScreen  :: ((Display,Int,Int) -> W ()) -> W ()
+withScreen f = do
+    d  <- gets display
+    sw <- gets screenWidth
+    sh <- gets screenHeight
+    f (d,sw,sh)
+
 -- | Modify the workspace list.
 modifyWorkspace :: (WorkSpace -> WorkSpace) -> W ()
 modifyWorkspace f = do

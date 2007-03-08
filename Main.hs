@@ -100,8 +100,7 @@ handle (DestroyWindowEvent {window = w}) = unmanage w
 handle (UnmapEvent         {window = w}) = unmanage w
 
 handle (KeyEvent {event_type = t, state = m, keycode = code})
-    | t == keyPress = do
-        dpy <- gets display
+    | t == keyPress = withDisplay $ \dpy -> do
         s   <- io $ keycodeToKeysym dpy code 0
         maybe (return ()) id (M.lookup (m,s) keys)
 
@@ -126,32 +125,22 @@ handle e = trace (eventName e) -- return ()
 -- | refresh. Refresh the currently focused window. Resizes to full
 -- screen and raises the window.
 refresh :: W ()
-refresh = whenJust W.peek $ \w -> do
-    d  <- gets display
-    sw <- liftM fromIntegral (gets screenWidth)
-    sh <- liftM fromIntegral (gets screenHeight)
-    io $ do moveResizeWindow d w 0 0 sw sh -- fullscreen
-            raiseWindow d w
+refresh = whenJust W.peek $ \w -> withScreen $ \(d,sw,sh) -> io $ do
+    moveResizeWindow d w 0 0 (fromIntegral sw) (fromIntegral sh) -- fullscreen
+    raiseWindow d w
 
 -- | hide. Hide a list of windows by moving them offscreen.
 hide :: Window -> W ()
-hide w = do
-    dpy     <- gets display
-    sw      <- liftM fromIntegral (gets screenWidth)
-    sh      <- liftM fromIntegral (gets screenHeight)
-    io $ moveWindow dpy w (2*sw) (2*sh)
+hide w = withScreen $ \(dpy,sw,sh) -> io $
+    moveWindow dpy w (2*fromIntegral sw) (2*fromIntegral sh)
 
 -- | reveal. Expose a list of windows, moving them on screen
 reveal :: Window -> W ()
-reveal w = do
-    dpy     <- gets display
-    io $ moveWindow dpy w 0 0
+reveal w = withDisplay $ \d -> io $ moveWindow d w 0 0
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WorkSpace -> WorkSpace) -> W ()
-windows f = do
-    modifyWorkspace f
-    refresh
+windows f = modifyWorkspace f >> refresh
 
 -- ---------------------------------------------------------------------
 -- Window operations
@@ -159,10 +148,8 @@ windows f = do
 -- | manage. Add a new window to be managed in the current workspace. Bring it into focus.
 -- If the window is already under management, it is just raised.
 manage :: Window -> W ()
-manage w = do
-    d  <- gets display
-    io $ mapWindow d w
-    windows $ W.push w
+manage w = do withDisplay $ \d -> io $ mapWindow d w
+              windows $ W.push w
 
 -- | unmanage. A window no longer exists, remove it from the window
 -- list, on whatever workspace it is.
@@ -170,10 +157,7 @@ unmanage :: Window -> W ()
 unmanage w = do
     ws <- gets workspace
     when (W.member w ws) $ do
-        dpy <- gets display
-        io $ do grabServer dpy
-                sync dpy False
-                ungrabServer dpy
+        withDisplay $ \d -> io $ withServer d $ sync d False
         windows $ W.delete w
 
 -- | focus. focus to window at offset 'n' in list.
@@ -183,9 +167,7 @@ focus = windows . W.rotate
 
 -- | Kill the currently focused client
 kill :: W ()
-kill = do
-    dpy <- gets display
-    whenJust W.peek $ io_ . killClient dpy
+kill = withDisplay $ \d -> whenJust W.peek $ io_ . killClient d
 
 -- | tag. Move a window to a new workspace
 tag :: Int -> W ()
