@@ -14,7 +14,7 @@
 -- manager state, and support routines.
 --
 
-module W where
+module WMonad where
 
 import StackSet
 

@@ -25,7 +25,7 @@ import Graphics.X11.Xlib.Extras
 
 import Control.Monad.State
 
-import W
+import WMonad
 import qualified StackSet as W
 
 --
