@@ -67,14 +67,15 @@ trace msg = io $ do
     hPutStrLn stderr msg
     hFlush stderr
 
--- | Modify the workspace list
+-- | Modify the workspace list.
 modifyWorkspace :: (WorkSpace -> WorkSpace) -> W ()
 modifyWorkspace f = do
     modify $ \s -> s { workspace = f (workspace s) }
     ws <- gets workspace
-    trace (show $ ws)
+    trace (show ws) -- log state changes to stderr
 
--- | Like 'when' but for (WorkSpace -> Maybe a)
+-- | Run a side effecting action with the current workspace. Like 'when' but
+-- for (WorkSpace -> Maybe a).
 whenJust :: (WorkSpace -> Maybe a) -> (a -> W ()) -> W ()
 whenJust mg f = do
     ws <- gets workspace
