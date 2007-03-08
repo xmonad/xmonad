@@ -16,22 +16,23 @@
 
 module W where
 
+import StackSet
+
 import Control.Monad.State
 import System.IO
+import System.Process (runCommand)
 import Graphics.X11.Xlib (Display,Window)
-import qualified Data.Sequence as S
 
 -- | WState, the window manager state.
 -- Just the display, width, height and a window list
 data WState = WState
     { display       :: Display
-    , screenWidth   :: !Int
-    , screenHeight  :: !Int
-    , workspace     :: !WorkSpaces      -- ^ workspace list
+    , screenWidth   :: {-# UNPACK #-} !Int
+    , screenHeight  :: {-# UNPACK #-} !Int
+    , workspace     :: {-# UNPACK #-} !WorkSpace      -- ^ workspace list
     }
 
-type WorkSpaces = (Int, S.Seq Windows)
-type Windows    = [Window]
+type WorkSpace = StackSet Window
 
 -- | The W monad, a StateT transformer over IO encapuslating the window
 -- manager state
@@ -51,6 +52,14 @@ io = liftIO
 io_ :: IO a -> W ()
 io_ f = liftIO f >> return ()
 
+-- | Run an action forever
+forever :: (Monad m) => m a -> m b
+forever a = a >> forever a
+
+-- | spawn. Launch an external application
+spawn :: String -> W ()
+spawn = io_ . runCommand
+
 -- | A 'trace' for the W monad. Logs a string to stderr. The result may
 -- be found in your .xsession-errors file
 trace :: String -> W ()
@@ -58,36 +67,18 @@ trace msg = io $ do
     hPutStrLn stderr msg
     hFlush stderr
 
--- ---------------------------------------------------------------------
--- Getting at the window manager state
-
 -- | Modify the workspace list
-modifyWorkspaces   :: (WorkSpaces -> WorkSpaces) -> W ()
-modifyWorkspaces f = modify $ \s -> s { workspace = f (workspace s) }
+modifyWorkspace :: (WorkSpace -> WorkSpace) -> W ()
+modifyWorkspace f = do
+    modify $ \s -> s { workspace = f (workspace s) }
+    ws <- gets workspace
+    trace (show $ ws)
 
--- | Modify the current window list
-modifyWindows      :: (Windows -> Windows) -> W ()
-modifyWindows    f = modifyWorkspaces $ \(i,wk) -> (i, S.adjust f i wk)
-
--- ---------------------------------------------------------------------
--- Generic utilities
-
--- | Run an action forever
-forever :: (Monad m) => m a -> m b
-forever a = a >> forever a
-
--- | Rotate a list by 'n' elements.
---
---  rotate 0    -->  [5,6,7,8,1,2,3,4]
---  rotate 1    -->  [6,7,8,1,2,3,4,5]
---  rotate (-1) -->  [4,5,6,7,8,1,2,3]
---
---  where xs = [5..8] ++ [1..4]
---
-rotate :: Int -> [a] -> [a]
-rotate n xs = take l . drop offset . cycle $ xs
-  where
-    l      = length xs
-    offset | n < 0     = l + n
-           | otherwise = n
+-- | Like 'when' but for (WorkSpace -> Maybe a)
+whenJust :: (WorkSpace -> Maybe a) -> (a -> W ()) -> W ()
+whenJust mg f = do
+    ws <- gets workspace
+    case mg ws of
+        Nothing -> return ()
+        Just w  -> f w
 

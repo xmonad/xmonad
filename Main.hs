@@ -13,14 +13,11 @@
 -- thunk, a minimal window manager for X11
 --
 
-import Data.Bits hiding (rotate)
 import Data.List
-import qualified Data.Sequence as S
-import qualified Data.Foldable as F
+import Data.Bits hiding (rotate)
 import qualified Data.Map as M
 
 import System.IO
-import System.Process (runCommand)
 import System.Exit
 
 import Graphics.X11.Xlib
@@ -29,6 +26,7 @@ import Graphics.X11.Xlib.Extras
 import Control.Monad.State
 
 import W
+import qualified StackSet as W
 
 --
 -- The number of workspaces:
@@ -44,13 +42,13 @@ keys = M.fromList $
     [ ((mod1Mask .|. shiftMask, xK_Return), spawn "xterm")
     , ((mod1Mask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && exec $exe")
     , ((controlMask,            xK_space ), spawn "gmrun")
-    , ((mod1Mask,               xK_Tab   ), focus 1)
-    , ((mod1Mask,               xK_j     ), focus 1)
-    , ((mod1Mask,               xK_k     ), focus (-1))
+    , ((mod1Mask,               xK_Tab   ), focus GT)
+    , ((mod1Mask,               xK_j     ), focus GT)
+    , ((mod1Mask,               xK_k     ), focus LT)
     , ((mod1Mask .|. shiftMask, xK_c     ), kill)
     , ((mod1Mask .|. shiftMask, xK_q     ), io $ exitWith ExitSuccess)
     ] ++
-    -- generate keybindings for each workspace:
+    -- generate keybindings to each workspace:
     [((m .|. mod1Mask, xK_0 + fromIntegral i), f i)
         | i <- [1 .. workspaces]
         , (f, m) <- [(view, 0), (tag, shiftMask)]]
@@ -67,7 +65,7 @@ main = do
             { display      = dpy
             , screenWidth  = displayWidth  dpy dflt
             , screenHeight = displayHeight dpy dflt
-            , workspace    = (0,S.fromList (replicate workspaces [])) -- empty workspaces
+            , workspace    = W.empty workspaces
             }
 
     runW initState $ do
@@ -105,9 +103,7 @@ handle (KeyEvent {event_type = t, state = m, keycode = code})
     | t == keyPress = do
         dpy <- gets display
         s   <- io $ keycodeToKeysym dpy code 0
-        case M.lookup (m,s) keys of
-            Nothing -> return ()
-            Just a  -> a
+        maybe (return ()) id (M.lookup (m,s) keys)
 
 handle e@(ConfigureRequestEvent {}) = do
     dpy <- gets display
@@ -127,112 +123,88 @@ handle e = trace (eventName e) -- return ()
 -- ---------------------------------------------------------------------
 -- Managing windows
 
--- | spawn. Launch an external application
-spawn :: String -> W ()
-spawn = io_ . runCommand
-
---
 -- | refresh. Refresh the currently focused window. Resizes to full
 -- screen and raises the window.
---
 refresh :: W ()
-refresh = do
-    (n,wks) <- gets workspace
-    let ws = wks `S.index` n
-    case ws of
-        []    -> return ()  -- do nothing. hmm. so no empty workspaces?
-                            -- we really need to hide all non-visible windows
-                            -- ones on other screens
-        (w:_) -> do
-            d  <- gets display
-            sw <- liftM fromIntegral (gets screenWidth)
-            sh <- liftM fromIntegral (gets screenHeight)
-            io $ do moveResizeWindow d w 0 0 sw sh -- fullscreen
-                    raiseWindow d w
+refresh = whenJust W.peek $ \w -> do
+    d  <- gets display
+    sw <- liftM fromIntegral (gets screenWidth)
+    sh <- liftM fromIntegral (gets screenHeight)
+    io $ do moveResizeWindow d w 0 0 sw sh -- fullscreen
+            raiseWindow d w
 
--- | Modify the current window list with a pure funtion, and refresh
-withWindows :: (Windows -> Windows) -> W ()
-withWindows f = do
-    modifyWindows f
+-- | hide. Hide a list of windows by moving them offscreen.
+hide :: Window -> W ()
+hide w = do
+    dpy     <- gets display
+    sw      <- liftM fromIntegral (gets screenWidth)
+    sh      <- liftM fromIntegral (gets screenHeight)
+    io $ moveWindow dpy w (2*sw) (2*sh)
+
+-- | reveal. Expose a list of windows, moving them on screen
+reveal :: Window -> W ()
+reveal w = do
+    dpy     <- gets display
+    io $ moveWindow dpy w 0 0
+
+-- | windows. Modify the current window list with a pure function, and refresh
+windows :: (WorkSpace -> WorkSpace) -> W ()
+windows f = do
+    modifyWorkspace f
     refresh
 
+-- ---------------------------------------------------------------------
+-- Window operations
+
 -- | manage. Add a new window to be managed in the current workspace. Bring it into focus.
+-- If the window is already under management, it is just raised.
 manage :: Window -> W ()
 manage w = do
     d  <- gets display
     io $ mapWindow d w
-    withWindows (nub . (w :))
+    windows $ W.push w
 
 -- | unmanage. A window no longer exists, remove it from the window
 -- list, on whatever workspace it is.
 unmanage :: Window -> W ()
 unmanage w = do
-    (_,wks) <- gets workspace
-    mapM_ rm (F.toList wks)
-  where
-    rm ws = when (w `elem` ws) $ do
-                dpy     <- gets display
-                io $ do grabServer dpy
-                        sync dpy False
-                        ungrabServer dpy
-                withWindows $ filter (/= w)
+    ws <- gets workspace
+    when (W.member w ws) $ do
+        dpy <- gets display
+        io $ do grabServer dpy
+                sync dpy False
+                ungrabServer dpy
+        windows $ W.delete w
 
 -- | focus. focus to window at offset 'n' in list.
 -- The currently focused window is always the head of the list
-focus :: Int -> W ()
-focus n = withWindows (rotate n)
+focus :: Ordering -> W ()
+focus = windows . W.rotate
 
 -- | Kill the currently focused client
 kill :: W ()
 kill = do
-    dpy     <- gets display
-    (n,wks) <- gets workspace
-    let ws = wks `S.index` n
-    case ws of
-        []    -> return ()
-        (w:_) -> do
-        --  if(isprotodel(sel))
-        --      sendevent(sel->win, wmatom[WMProtocols], wmatom[WMDelete]);
-            io $ killClient dpy w -- ignoring result
-            return ()
+    dpy <- gets display
+    whenJust W.peek $ io_ . killClient dpy
 
--- | tag. associate a window with a new workspace
+-- | tag. Move a window to a new workspace
 tag :: Int -> W ()
-tag n = do
-    let new = n-1
-    (old,wks) <- gets workspace
-    when (new /= old && new >= 0 && new < S.length wks) $ do
-        let this = wks `S.index` old
-        if null this
-            then return ()  -- no client to retag
-            else do let (t:_) = this
-                    modifyWorkspaces $ \(i,w) ->
-                         let w'  = S.adjust tail old w
-                             w'' = S.adjust (t:) new w' in (i,w'')
-                    hideWindows [t]
-                    refresh
+tag o = do
+    ws <- gets workspace
+    when (n /= W.cursor ws) $
+        whenJust W.peek $ \w -> do
+            hide w
+            windows $ W.shift n
+    where n = o -1
 
--- | Change the current workspace to workspce at offset 'n-1'.
+-- | view. Change the current workspace to workspce at offset 'n-1'.
 view :: Int -> W ()
-view n = do
-    let new = n-1
-    (old,wks) <- gets workspace
-    when (new /= old && new >= 0 && new < S.length wks) $ do
-        modifyWorkspaces $ \_ -> (new,wks)
-        hideWindows (wks `S.index` old)
-        showWindows (wks `S.index` new)
-        refresh
+view o = do
+    ws <- gets workspace
+    when (n /= W.cursor ws) $
+        whenJust (flip W.index n) $ \new -> do
+            mapM_ hide (W.stack ws)
+            mapM_ reveal new
+            windows $ W.view n
+    where n = o-1
 
--- | Hide a list of windows by moving them offscreen.
-hideWindows :: Windows -> W ()
-hideWindows ws = do
-    dpy     <- gets display
-    sw      <- liftM fromIntegral (gets screenWidth)
-    sh      <- liftM fromIntegral (gets screenHeight)
-    forM_ ws $ \w -> io $ moveWindow dpy w (2*sw) (2*sh)
-
--- | Expose a list of windows, moving them on screen
-showWindows :: Windows -> W ()
-showWindows ws = do
-    dpy     <- gets display
-    forM_ ws $ \w -> io $ moveWindow dpy w 0 0
