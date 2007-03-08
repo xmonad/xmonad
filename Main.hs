@@ -127,6 +127,10 @@ handle e = trace (eventName e) -- return ()
 -- ---------------------------------------------------------------------
 -- Managing windows
 
+-- | spawn. Launch an external application
+spawn :: String -> W ()
+spawn = io_ . runCommand
+
 --
 -- | refresh. Refresh the currently focused window. Resizes to full
 -- screen and raises the window.
@@ -177,10 +181,6 @@ unmanage w = do
 -- The currently focused window is always the head of the list
 focus :: Int -> W ()
 focus n = withWindows (rotate n)
-
--- | spawn. Launch an external application
-spawn :: String -> W ()
-spawn = io_ . runCommand
 
 -- | Kill the currently focused client
 kill :: W ()
