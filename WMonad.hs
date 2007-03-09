@@ -15,8 +15,7 @@
 --
 
 module WMonad (
-    W, WorkSpace, WState(..),
-    runW, withDisplay, io, spawn, trace, whenJust
+    W, WorkSpace, WState(..),runW, withDisplay, io, spawn, trace, whenJust
   ) where
 
 import StackSet (StackSet)
