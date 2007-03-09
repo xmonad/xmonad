@@ -109,18 +109,17 @@ grabKeys dpy r = forM_ (M.keys keys) $ \(m,s) -> io $ do
 --    [UnmapNotify] = unmapnotify
 -- 
 handle :: Event -> W ()
-handle (MapRequestEvent    {window = w}) = manage w
+handle (MapRequestEvent    {window = w}) = withDisplay $ \dpy -> do
+    wa <- io $ getWindowAttributes dpy w
+    when (not (waOverrideRedirect wa)) $ manage w
+
 handle (DestroyWindowEvent {window = w}) = unmanage w
 handle (UnmapEvent         {window = w}) = unmanage w
 
-handle (MappingNotifyEvent {window = w}) = do
-    trace $ "Got mapping notify event for window: " ++ show w
-
-{-
-, mapping= m@(r,_,_)}) = do
+handle e@(MappingNotifyEvent {window = w}) = do
+    let m = (request e, first_keycode e, count e)
     io $ refreshKeyboardMapping m
-    when (r == mappingKeyboard) $ withDisplay $ \d -> grabKeys d w
--}
+    when (request e == mappingKeyboard) $ withDisplay $ flip grabKeys w
 
 handle (KeyEvent {event_type = t, state = m, keycode = code})
     | t == keyPress = withDisplay $ \dpy -> do
