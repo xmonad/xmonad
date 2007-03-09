@@ -11,7 +11,12 @@
 -----------------------------------------------------------------------------
 --
 -- The 'StackSet' data type encodes a set of stacks. A given stack in the
--- set is always current.
+-- set is always current. Elements may appear only once in the entire
+-- stack set.
+--
+-- A StackSet provides a nice datastructure for multiscreen
+-- windowmanagers, where each screen has a stack of windows, and a window
+-- may be on only 1 screen at any given time.
 --
 
 module StackSet (
