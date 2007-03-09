@@ -14,7 +14,10 @@
 -- manager state, and support routines.
 --
 
-module WMonad where
+module WMonad (
+    W, WorkSpace, WState(..),
+    runW, withDisplay, io, io_, forever, spawn, trace, whenJust
+  ) where
 
 import StackSet (StackSet)
 
@@ -36,13 +39,19 @@ type WorkSpace = StackSet Window
 
 -- | The W monad, a StateT transformer over IO encapuslating the window
 -- manager state
-newtype W a = W { unW :: StateT WState IO a }
+newtype W a = W (StateT WState IO a)
     deriving (Functor, Monad, MonadIO, MonadState WState)
 
 -- | Run the W monad, given a chunk of W monad code, and an initial state
 -- Return the result, and final state
 runW :: WState -> W a -> IO (a, WState)
-runW st a = runStateT (unW a) st
+runW st (W a) = runStateT a st
+
+-- | Run a monad action with the current display settings
+withDisplay :: (Display -> W ()) -> W ()
+withDisplay f = gets display >>= f
+
+------------------------------------------------------------------------
 
 -- | Lift an IO action into the W monad
 io :: IO a -> W a
@@ -60,33 +69,12 @@ forever a = a >> forever a
 spawn :: String -> W ()
 spawn = io_ . runCommand
 
--- | A 'trace' for the W monad. Logs a string to stderr. The result may
--- be found in your .xsession-errors file
-trace :: String -> W ()
-trace msg = io $ do
-    hPutStrLn stderr msg
-    hFlush stderr
-
--- | Run a monad action with the current display settings
-withDisplay :: (Display -> W ()) -> W ()
-withDisplay f = gets display >>= f
-
--- | Run a monadic action with the display, screen width and height
-withScreen  :: ((Display,Int,Int) -> W ()) -> W ()
-withScreen f = do
-    d  <- gets display
-    sw <- gets screenWidth
-    sh <- gets screenHeight
-    f (d,sw,sh)
-
--- | Modify the workspace list.
-modifyWorkspace :: (WorkSpace -> WorkSpace) -> W ()
-modifyWorkspace f = do
-    modify $ \s -> s { workspace = f (workspace s) }
-    ws <- gets workspace
-    trace (show ws) -- log state changes to stderr
-
 -- | Run a side effecting action with the current workspace. Like 'when' but
 whenJust :: Maybe a -> (a -> W ()) -> W ()
 whenJust mg f = maybe (return ()) f mg
 
+
+-- | A 'trace' for the W monad. Logs a string to stderr. The result may
+-- be found in your .xsession-errors file
+trace :: String -> W ()
+trace msg = io $ do hPutStrLn stderr msg; hFlush stderr

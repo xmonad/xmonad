@@ -147,14 +147,18 @@ refresh :: W ()
 refresh = do
     ws <- gets workspace
     whenJust (W.peek ws) $ \w ->
-        withScreen $ \(d,sw,sh) -> io $ do
-            moveResizeWindow d w 0 0 (fromIntegral sw) (fromIntegral sh) -- fullscreen
-            raiseWindow d w
+        withDisplay $ \d -> do
+            sw <- gets screenWidth
+            sh <- gets screenHeight
+            io $ do moveResizeWindow d w 0 0 (fromIntegral sw) (fromIntegral sh) -- fullscreen
+                    raiseWindow d w
 
 -- | hide. Hide a list of windows by moving them offscreen.
 hide :: Window -> W ()
-hide w = withScreen $ \(dpy,sw,sh) -> io $
-    moveWindow dpy w (2*fromIntegral sw) (2*fromIntegral sh)
+hide w = withDisplay $ \d -> do
+    sw <- gets screenWidth
+    sh <- gets screenHeight
+    io $ moveWindow d w (2*fromIntegral sw) (2*fromIntegral sh)
 
 -- | reveal. Expose a list of windows, moving them on screen
 reveal :: Window -> W ()
@@ -162,7 +166,11 @@ reveal w = withDisplay $ \d -> io $ moveWindow d w 0 0
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WorkSpace -> WorkSpace) -> W ()
-windows f = modifyWorkspace f >> refresh
+windows f = do
+    modify $ \s -> s { workspace = f (workspace s) }
+    ws <- gets workspace
+    refresh
+    trace (show ws) -- log state changes to stderr
 
 -- ---------------------------------------------------------------------
 -- Window operations
