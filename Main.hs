@@ -67,14 +67,15 @@ main = do
             , workspace    = W.empty workspaces
             }
 
-    runW initState $ do
+    allocaXEvent $ \ev ->
+     runW initState $ do
         r <- io $ rootWindow dpy dflt
-        io $ do selectInput dpy r $  substructureRedirectMask
-                                     .|. substructureNotifyMask
-                                     .|. enterWindowMask
-                                     .|. leaveWindowMask
+        io $ sync dpy False
+        io $ selectInput dpy r $  substructureRedirectMask
+                               .|. substructureNotifyMask
+                               .|. enterWindowMask
+                               .|. leaveWindowMask
 
-                sync dpy False
         grabKeys dpy r
         (_, _, ws) <- io $ queryTree dpy r
 
@@ -84,8 +85,9 @@ main = do
             when (not (waOverrideRedirect wa) && waMapState wa == waIsViewable)
                     (manage w)
 
-        forever $ handle =<< io (allocaXEvent $ \ev ->
-                                    nextEvent dpy ev >> getEvent ev)
+        io $ sync dpy False
+        forever $ handle =<< io (nextEvent dpy ev >> getEvent ev)
+
     return ()
   where
     forever a = a >> forever a
