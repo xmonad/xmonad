@@ -19,33 +19,10 @@
 -- may be on only 1 screen at any given time.
 --
 
-module StackSet (
-
-    StackSet,           -- abstract, deriving Show,Eq
-
-    -- * Introduction
-    empty,              -- :: Int -> StackSet a
-    fromList,           -- :: Ord a => (Int,[[a]]) -> StackSet a
-    toList,             -- :: StackSet a -> (Int,[[a]])
-
-    -- * Inspection
-    size,               -- :: StackSet a -> Int
-    peek,               -- :: StackSet a -> Maybe a
-    index,              -- :: Int -> StackSet a -> [a]
-    member,             -- :: Ord a => a -> StackSet a -> Bool
-    current,            -- :: StackSet a -> Int
-
-    -- * Modification
-    push,               -- :: Ord a => a -> StackSet a -> StackSet a
-    rotate,             -- :: Ordering -> StackSet a -> StackSet a
-    shift,              -- :: Ord a => Int -> StackSet a -> StackSet a
-    delete,             -- :: Ord a => a -> StackSet a -> StackSet a
-    view,               -- :: Int -> StackSet a -> StackSet a
-
-  ) where
+module StackSet {- everything -} where
 
 import Data.Maybe
-import qualified Data.List     as L
+import qualified Data.List     as L (nub,delete)
 import qualified Data.Map      as M
 import qualified Data.IntMap   as I
 
@@ -55,7 +32,6 @@ import qualified Data.IntMap   as I
 data StackSet a =
     StackSet
         { current:: {-# UNPACK #-} !Int             -- ^ the currently visible stack
-        , size   :: {-# UNPACK #-} !Int             -- ^ size of the stack list
         , stacks :: {-# UNPACK #-} !(I.IntMap [a])  -- ^ the separate stacks
         , cache  :: {-# UNPACK #-} !(M.Map a Int)   -- ^ a cache of windows back to their stacks
         } deriving Eq
@@ -67,47 +43,41 @@ instance Show a => Show (StackSet a) where
 --
 -- The cache is used to check on insertion that we don't already have
 -- this window managed on another stack
---
--- Currently stacks are of a fixed size. There's no firm reason to
--- do this (new empty stacks could be created on the fly).
 
 ------------------------------------------------------------------------
 
 -- | /O(n)/. Create a new empty stacks of size 'n', indexed from 0. The
 -- 0-indexed stack will be current.
 empty :: Int -> StackSet a
-empty n = StackSet { current= 0
-                   , size   = n -- constant
-                   , stacks = I.fromList (zip [0..n-1] (repeat []))
-                   , cache  = M.empty
-                   }
+empty n = StackSet { current = 0
+                   , stacks  = I.fromList (zip [0..n-1] (repeat []))
+                   , cache   = M.empty }
 
 -- | /O(log w)/. True if x is somewhere in the StackSet
 member :: Ord a => a -> StackSet a -> Bool
 member a w = M.member a (cache w)
+
+-- | /O(n)/. Number of stacks
+size :: StackSet a -> Int
+size = I.size . stacks
 
 ------------------------------------------------------------------------
 
 -- | fromList. Build a new StackSet from a list of list of elements
 -- If there are duplicates in the list, the last occurence wins.
 fromList :: Ord a => (Int,[[a]]) -> StackSet a
-fromList (_,[])
-    = error "Cannot build a StackSet from an empty list"
+fromList (_,[]) = error "Cannot build a StackSet from an empty list"
 
-fromList (n,xs)
-    | n < 0 || n >= length xs
-    = error $ "Cursor index is out of range: " ++ show (n, length xs)
+fromList (n,xs) | n < 0 || n >= length xs
+                = error $ "Cursor index is out of range: " ++ show (n, length xs)
 
-fromList (o,xs) = view o $
-    foldr (\(i,ys) s ->
-        foldr (\a t -> insert a i t) s ys)
-            (empty (length xs)) (zip [0..] xs)
+fromList (o,xs) = view o $ foldr (\(i,ys) s ->
+                                foldr (\a t -> insert a i t) s ys)
+                                    (empty (length xs)) (zip [0..] xs)
 
 -- | toList. Flatten a stackset to a list of lists
 toList  :: StackSet a -> (Int,[[a]])
 toList x = (current x, map snd $ I.toList (stacks x))
-
-------------------------------------------------------------------------
 
 -- | Push. Insert an element onto the top of the current stack. 
 -- If the element is already in the current stack, it is moved to the top.
@@ -129,8 +99,8 @@ index k w = fromJust (I.lookup k (stacks w))
 -- | /O(1)/. view. Set the stack specified by the Int argument as being the
 -- current StackSet. If the index is out of range an exception is thrown.
 view :: Int -> StackSet a -> StackSet a
-view n w | n >= 0 && n < size w = w { current = n }
-         | otherwise            = error $ "view: index out of bounds: " ++ show n
+view n w | n >= 0 && n < I.size (stacks w) = w { current = n }
+         | otherwise                       = error $ "view: index out of bounds: " ++ show n
 
 -- | /O(log n)/. rotate. cycle the current window list up or down.
 --
@@ -142,12 +112,10 @@ view n w | n >= 0 && n < size w = w { current = n }
 --
 rotate :: Ordering -> StackSet a -> StackSet a
 rotate o w = w { stacks = I.adjust rot (current w) (stacks w) }
-    where
-        rot s = take l . drop offset . cycle $ s
-           where
-              n      = fromEnum o - 1
-              l      = length s
-              offset = if n < 0 then l + n else n
+    where rot s = take l . drop offset . cycle $ s
+           where n      = fromEnum o - 1
+                 l      = length s
+                 offset = if n < 0 then l + n else n
 
 -- | /O(log n)/. shift. move the client on top of the current stack to
 -- the top of stack 'n'. If the stack to move to is not valid, and

@@ -43,15 +43,13 @@ prop_viewview r  x   =
     let n  = current x
         sz = size x
         i  = r `mod` sz
-    in
-        view n (view i x) == x
+    in view n (view i x) == x
 
     where _ = x :: StackSet Int
 
 prop_shiftshift r x =
     let n  = current x
-    in
-        shift n (shift r x) == x
+    in shift n (shift r x) == x
     where _ = x :: StackSet Int
 
 ------------------------------------------------------------------------
