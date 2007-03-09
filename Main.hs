@@ -54,7 +54,7 @@ keys = M.fromList $
         , (f, m) <- [(view, 0), (tag, shiftMask)]]
 
 --
--- let's get underway
+-- The main entry point
 -- 
 main :: IO ()
 main = do
@@ -76,14 +76,11 @@ main = do
         forM_ ws $ \w -> do
             wa <- io $ getWindowAttributes dpy w
             when (waMapState wa == waIsViewable) (manage w)
-        go dpy
-
+        forever $ handle =<< io (allocaXEvent $ \ev ->
+                                    nextEvent dpy ev >> getEvent ev)
     return ()
   where
-    -- The main loop
-    go dpy = forever $ do
-        e <- io $ allocaXEvent $ \ev -> nextEvent dpy ev >> getEvent ev
-        handle e
+    forever a = a >> forever a
 
 -- | Grab the keys back
 grabKeys :: Display -> Window -> W ()
@@ -168,9 +165,9 @@ reveal w = withDisplay $ \d -> io $ moveWindow d w 0 0
 windows :: (WorkSpace -> WorkSpace) -> W ()
 windows f = do
     modify $ \s -> s { workspace = f (workspace s) }
-    ws <- gets workspace
     refresh
-    trace (show ws) -- log state changes to stderr
+    -- ws <- gets workspace
+    -- trace (show ws) -- log state changes to stderr
 
 -- ---------------------------------------------------------------------
 -- Window operations
@@ -200,7 +197,7 @@ focus = windows . W.rotate
 kill :: W ()
 kill = withDisplay $ \d -> do
     ws <- gets workspace
-    whenJust (W.peek ws) $ io_ . killClient d
+    whenJust (W.peek ws) $ \w -> io (killClient d w) >> return ()
 
 -- | tag. Move a window to a new workspace
 tag :: Int -> W ()

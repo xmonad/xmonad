@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      :  W.hs
+-- Module      :  WMonad.hs
 -- Copyright   :  (c) Spencer Janssen 2007
 -- License     :  BSD3-style (see LICENSE)
 -- 
@@ -16,7 +16,7 @@
 
 module WMonad (
     W, WorkSpace, WState(..),
-    runW, withDisplay, io, io_, forever, spawn, trace, whenJust
+    runW, withDisplay, io, spawn, trace, whenJust
   ) where
 
 import StackSet (StackSet)
@@ -57,22 +57,13 @@ withDisplay f = gets display >>= f
 io :: IO a -> W a
 io = liftIO
 
--- | Lift an IO action into the W monad, discarding any result
-io_ :: IO a -> W ()
-io_ f = liftIO f >> return ()
-
--- | Run an action forever
-forever :: (Monad m) => m a -> m b
-forever a = a >> forever a
-
 -- | spawn. Launch an external application
 spawn :: String -> W ()
-spawn = io_ . runCommand
+spawn x = io (runCommand x) >> return ()
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
 whenJust :: Maybe a -> (a -> W ()) -> W ()
 whenJust mg f = maybe (return ()) f mg
-
 
 -- | A 'trace' for the W monad. Logs a string to stderr. The result may
 -- be found in your .xsession-errors file
