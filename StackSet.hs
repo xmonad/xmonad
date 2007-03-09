@@ -21,32 +21,25 @@
 
 module StackSet (
 
-    StackSet,           -- abstract
+    StackSet,           -- abstract, deriving Show,Eq
 
     -- * Introduction
     empty,              -- :: Int -> StackSet a
-    fromList,           -- :: [[a]] -> StackSet a
-    toList,             -- :: StackSet -> [[a]]
+    fromList,           -- :: Ord a => (Int,[[a]]) -> StackSet a
+    toList,             -- :: StackSet a -> (Int,[[a]])
 
     -- * Inspection
-    size,               -- :: StackSet -> Int
-    member,             -- :: Ord a => a -> StackSet a -> Bool
+    size,               -- :: StackSet a -> Int
     peek,               -- :: StackSet a -> Maybe a
-    stack,              -- :: StackSet a -> [a]
-    cursor,             -- :: StackSet a -> Int
-    index,              -- :: StackSet a -> Int -> Maybe [a]
+    index,              -- :: Int -> StackSet a -> Maybe [a]
+    member,             -- :: Ord a => a -> StackSet a -> Bool
+    current,            -- :: StackSet a -> Int
 
-    -- * Modification to the current stack
+    -- * Modification
     push,               -- :: Ord a => a -> StackSet a -> StackSet a
-    pop,                -- :: Ord a => StackSet a -> StackSet a
     rotate,             -- :: Ordering -> StackSet a -> StackSet a
     shift,              -- :: Ord a => Int -> StackSet a -> StackSet a
-
-    -- * Modification to arbitrary stacks
     delete,             -- :: Ord a => a -> StackSet a -> StackSet a
-    insert,             -- :: Ord a => a -> Int -> StackSet a -> StackSet a
-
-    -- * Changing which stack is 'current'
     view,               -- :: Int -> StackSet a -> StackSet a
 
   ) where
@@ -59,16 +52,17 @@ import qualified Data.Sequence as S
 
 ------------------------------------------------------------------------
 
--- | The StackSet data structure. A table of stacks, with a cursor
+-- | The StackSet data structure. A table of stacks, with a current pointer
 data StackSet a =
     StackSet
-        { cursor :: {-# UNPACK #-} !Int             -- ^ the currently visible stack
+        { current:: {-# UNPACK #-} !Int             -- ^ the currently visible stack
         , size   :: {-# UNPACK #-} !Int             -- ^ size of the stack list
         , stacks :: {-# UNPACK #-} !(S.Seq [a])     -- ^ the separate stacks
         , cache  :: {-# UNPACK #-} !(M.Map a Int)   -- ^ a cache of windows back to their stacks
         } deriving Eq
 
-instance Show a => Show (StackSet a) where show = show . toList
+instance Show a => Show (StackSet a) where
+    showsPrec p s r = showsPrec p (show . toList $ s) r
 
 -- Ord a constraint on 'a' as we use it as a key.
 --
@@ -83,7 +77,7 @@ instance Show a => Show (StackSet a) where show = show . toList
 -- | Create a new empty stacks of size 'n', indexed from 0. The
 -- 0-indexed stack will be current.
 empty :: Int -> StackSet a
-empty n = StackSet { cursor = 0
+empty n = StackSet { current= 0
                    , size   = n -- constant
                    , stacks = S.fromList (replicate n [])
                    , cache  = M.empty
@@ -112,7 +106,7 @@ fromList (o,xs) = view o $
 
 -- | toList. Flatten a stackset to a list of lists
 toList  :: StackSet a -> (Int,[[a]])
-toList x = (cursor x, F.toList (stacks x))
+toList x = (current x, F.toList (stacks x))
 
 ------------------------------------------------------------------------
 
@@ -121,32 +115,18 @@ toList x = (cursor x, F.toList (stacks x))
 -- If the element is managed on another stack, it is removed from that
 -- stack first.
 push :: Ord a => a -> StackSet a -> StackSet a
-push k w = insert k (cursor w) w
-
--- | Pop. Pop the element off the top of the stack and discard it.
--- A new StackSet is returned. If the current stack is empty, the
--- original StackSet is returned unchanged.
-pop :: Ord a => StackSet a -> StackSet a
-pop w = case peek w of
-            Nothing -> w
-            Just t  -> delete t w
+push k w = insert k (current w) w
 
 -- | Extract the element on the top of the current stack. If no such
 -- element exists, Nothing is returned.
 peek :: StackSet a -> Maybe a
-peek = listToMaybe . stack
+peek w = listToMaybe . fromJust $ index (current w) w
 
 -- | Index. Extract stack at index 'n'. If the index is invalid,
 -- Nothing is returned.
-index :: StackSet a -> Int -> Maybe [a]
-index w n | n < 0 || n >= size w = Nothing
+index :: Int -> StackSet a -> Maybe [a]
+index n w | n < 0 || n >= size w = Nothing
           | otherwise            = Just (stacks w `S.index` n)
-
--- | Return the current stack
-stack :: StackSet a -> [a]
-stack w = case index w (cursor w) of
-    Just s  -> s
-    Nothing -> error $ "current: no 'current' stack in StackSet: " ++ show (cursor w) -- can't happen
 
 -- | rotate. cycle the current window list up or down.
 --
@@ -171,7 +151,7 @@ rotate o = unsafeModify rot -- safe, since 'rot' is guaranteed to only permute t
 -- current StackSet. If the index is out of range, the original
 -- StackSet is returned. StackSet are indexed from 0.
 view :: Int -> StackSet a -> StackSet a
-view n w | n >= 0 && n < size w = w { cursor = n }
+view n w | n >= 0 && n < size w = w { current = n }
          | otherwise            = w
 
 -- | shift. move the client on top of the current stack to the top of stack 'n'.
@@ -217,5 +197,10 @@ delete k w = case M.lookup k (cache w) of
 -- and must not add or remove elements, or duplicate elements.
 --
 unsafeModify :: ([a] -> [a]) -> StackSet a -> StackSet a
-unsafeModify f w = w { stacks = S.adjust f (cursor w) (stacks w) }
+unsafeModify f w = w { stacks = S.adjust f (current w) (stacks w) }
 
+-- | Pop. Pop the element off the top of the stack and discard it.
+-- A new StackSet is returned. If the current stack is empty, the
+-- original StackSet is returned unchanged.
+pop :: Ord a => StackSet a -> StackSet a
+pop w = maybe w (flip delete w) (peek w)
