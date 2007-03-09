@@ -20,7 +20,7 @@
 --
 
 module StackSet (
-    StackSet,          -- abstract
+     StackSet,          -- abstract
 
      -- * Introduction and elimination
      empty,             -- :: Int -> StackSet a
@@ -47,7 +47,6 @@ module StackSet (
 import Data.Maybe
 import qualified Data.List     as L (nub,delete)
 import qualified Data.Map      as M
-import qualified Data.IntMap   as I
 
 ------------------------------------------------------------------------
 
@@ -59,9 +58,9 @@ import qualified Data.IntMap   as I
 -- | The StackSet data structure. A table of stacks, with a current pointer
 data StackSet a =
     StackSet
-        { current:: {-# UNPACK #-} !Int             -- ^ the currently visible stack
-        , stacks :: {-# UNPACK #-} !(I.IntMap [a])  -- ^ the separate stacks
-        , cache  :: {-# UNPACK #-} !(M.Map a Int)   -- ^ a cache of windows back to their stacks
+        { current:: {-# UNPACK #-} !Int              -- ^ the currently visible stack
+        , stacks :: {-# UNPACK #-} !(M.Map Int [a])  -- ^ the separate stacks
+        , cache  :: {-# UNPACK #-} !(M.Map a Int)    -- ^ a cache of windows back to their stacks
         } deriving Eq
 
 instance Show a => Show (StackSet a) where
@@ -78,7 +77,7 @@ instance Show a => Show (StackSet a) where
 -- 0-indexed stack will be current.
 empty :: Int -> StackSet a
 empty n = StackSet { current = 0
-                   , stacks  = I.fromList (zip [0..n-1] (repeat []))
+                   , stacks  = M.fromList (zip [0..n-1] (repeat []))
                    , cache   = M.empty }
 
 -- | /O(log w)/. True if x is somewhere in the StackSet
@@ -87,7 +86,7 @@ member a w = M.member a (cache w)
 
 -- | /O(n)/. Number of stacks
 size :: StackSet a -> Int
-size = I.size . stacks
+size = M.size . stacks
 
 ------------------------------------------------------------------------
 
@@ -105,7 +104,7 @@ fromList (o,xs) = view o $ foldr (\(i,ys) s ->
 
 -- | toList. Flatten a stackset to a list of lists
 toList  :: StackSet a -> (Int,[[a]])
-toList x = (current x, map snd $ I.toList (stacks x))
+toList x = (current x, map snd $ M.toList (stacks x))
 
 -- | Push. Insert an element onto the top of the current stack. 
 -- If the element is already in the current stack, it is moved to the top.
@@ -122,12 +121,12 @@ peek w = listToMaybe $ index (current w) w
 -- | /O(log s)/. Index. Extract the stack at index 'n'.
 -- If the index is invalid, an exception is thrown.
 index :: Int -> StackSet a -> [a]
-index k w = fromJust (I.lookup k (stacks w))
+index k w = fromJust (M.lookup k (stacks w))
 
 -- | /O(1)/. view. Set the stack specified by the Int argument as being the
 -- current StackSet. If the index is out of range an exception is thrown.
 view :: Int -> StackSet a -> StackSet a
-view n w | n >= 0 && n < I.size (stacks w) = w { current = n }
+view n w | n >= 0 && n < M.size (stacks w) = w { current = n }
          | otherwise                       = error $ "view: index out of bounds: " ++ show n
 
 -- | /O(log n)/. rotate. cycle the current window list up or down.
@@ -139,7 +138,7 @@ view n w | n >= 0 && n < I.size (stacks w) = w { current = n }
 --  where xs = [5..8] ++ [1..4]
 --
 rotate :: Ordering -> StackSet a -> StackSet a
-rotate o w = w { stacks = I.adjust rot (current w) (stacks w) }
+rotate o w = w { stacks = M.adjust rot (current w) (stacks w) }
     where rot s = take l . drop offset . cycle $ s
            where n      = fromEnum o - 1
                  l      = length s
@@ -159,7 +158,7 @@ shift n w = maybe w (\k -> insert k n (delete k w)) (peek w)
 --
 insert :: Ord a => a -> Int -> StackSet a -> StackSet a
 insert k n old = new { cache  = M.insert k n (cache new)
-                     , stacks = I.adjust (L.nub . (k:)) n (stacks new) }
+                     , stacks = M.adjust (L.nub . (k:)) n (stacks new) }
     where new = delete k old
 
 -- | /O(log n)/. Delete an element entirely from from the StackSet.
@@ -168,4 +167,4 @@ insert k n old = new { cache  = M.insert k n (cache new)
 delete :: Ord a => a -> StackSet a -> StackSet a
 delete k w = maybe w tweak (M.lookup k (cache w))
   where tweak i = w { cache  = M.delete k (cache w)
-                    , stacks = I.adjust (L.delete k) i (stacks w) }
+                    , stacks = M.adjust (L.delete k) i (stacks w) }
