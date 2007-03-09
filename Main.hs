@@ -94,9 +94,14 @@ main = do
 
 -- | Grab the keys back
 grabKeys :: Display -> Window -> W ()
-grabKeys dpy r = forM_ (M.keys keys) $ \(m,s) -> io $ do
-    kc <- keysymToKeycode dpy s
-    grabKey dpy kc m r True grabModeAsync grabModeAsync
+grabKeys dpy root = do
+    io $ ungrabKey dpy '\0' {-AnyKey-} anyModifier root
+    forM_ (M.keys keys) $ \(mask,s) -> io $ do
+        kc <- keysymToKeycode dpy s
+        let grab m = grabKey dpy kc m root True grabModeAsync grabModeAsync
+        grab mask
+        grab (mask .|. lockMask)
+        -- no numlock
 
 -- ---------------------------------------------------------------------
 -- Event handler
