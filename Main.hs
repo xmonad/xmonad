@@ -210,11 +210,9 @@ view :: Int -> W ()
 view o = do
     ws <- gets workspace
     let m = W.current ws
-    when (n /= m) $
-        whenJust (W.index n ws) $ \new ->
-        whenJust (W.index m ws) $ \old -> do
-            mapM_ hide   old
-            mapM_ reveal new
-            windows $ W.view n
+    when (n /= m) $ do
+        mapM_ hide   (W.index m ws)
+        mapM_ reveal (W.index n ws)
+        windows $ W.view n
     where n = o-1
 

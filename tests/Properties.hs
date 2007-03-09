@@ -15,9 +15,7 @@ import Data.List            (sort,group,sort,intersperse)
 
 -- | Height of stack 'n'
 height :: Int -> StackSet a -> Int
-height i w = case index i w of
-                Nothing -> error $ "height: i out of range: " ++ show i
-                Just ss -> length ss
+height i w = length (index i w)
 
 -- build (non-empty) StackSets with between 1 and 100 stacks
 instance (Ord a, Arbitrary a) => Arbitrary (StackSet a) where

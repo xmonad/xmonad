@@ -14,8 +14,8 @@
 -- set is always current. Elements may appear only once in the entire
 -- stack set.
 --
--- A StackSet provides a nice datastructure for multiscreen
--- windowmanagers, where each screen has a stack of windows, and a window
+-- A StackSet provides a nice data structure for multiscreen
+-- window managers, where each screen has a stack of windows, and a window
 -- may be on only 1 screen at any given time.
 --
 
@@ -31,7 +31,7 @@ module StackSet (
     -- * Inspection
     size,               -- :: StackSet a -> Int
     peek,               -- :: StackSet a -> Maybe a
-    index,              -- :: Int -> StackSet a -> Maybe [a]
+    index,              -- :: Int -> StackSet a -> [a]
     member,             -- :: Ord a => a -> StackSet a -> Bool
     current,            -- :: StackSet a -> Int
 
@@ -120,13 +120,18 @@ push k w = insert k (current w) w
 -- | Extract the element on the top of the current stack. If no such
 -- element exists, Nothing is returned.
 peek :: StackSet a -> Maybe a
-peek w = listToMaybe . fromJust $ index (current w) w
+peek w = listToMaybe $ index (current w) w
 
--- | Index. Extract stack at index 'n'. If the index is invalid,
--- Nothing is returned.
-index :: Int -> StackSet a -> Maybe [a]
-index n w | n < 0 || n >= size w = Nothing
-          | otherwise            = Just (stacks w `S.index` n)
+-- | Index. Extract the stack at index 'n'.
+-- If the index is invalid, an exception is thrown.
+index :: Int -> StackSet a -> [a]
+index n w = stacks w `S.index` n
+
+-- | view. Set the stack specified by the Int argument as being the
+-- current StackSet. If the index is out of range an exception is thrown.
+view :: Int -> StackSet a -> StackSet a
+view n w | n >= 0 && n < size w = w { current = n }
+         | otherwise            = error $ "view: index out of bounds: " ++ show n
 
 -- | rotate. cycle the current window list up or down.
 --
@@ -137,7 +142,7 @@ index n w | n < 0 || n >= size w = Nothing
 --  where xs = [5..8] ++ [1..4]
 --
 rotate :: Ordering -> StackSet a -> StackSet a
-rotate o = unsafeModify rot -- safe, since 'rot' is guaranteed to only permute the list
+rotate o w = w { stacks = S.adjust rot (current w) (stacks w) }
     where
         rot s = take l . drop offset . cycle $ s
            where
@@ -145,62 +150,26 @@ rotate o = unsafeModify rot -- safe, since 'rot' is guaranteed to only permute t
               l      = length s
               offset = if n < 0 then l + n else n
 
--- ---------------------------------------------------------------------
-
--- | view. Set the stack specified by the Int argument as being the
--- current StackSet. If the index is out of range, the original
--- StackSet is returned. StackSet are indexed from 0.
-view :: Int -> StackSet a -> StackSet a
-view n w | n >= 0 && n < size w = w { current = n }
-         | otherwise            = w
-
 -- | shift. move the client on top of the current stack to the top of stack 'n'.
--- The new StackSet is returned.
---
--- If the stack to move to is not valid, the original StackSet is returned.
--- If there are no elements in the current stack, nothing changes.
+-- If the stack to move to is not valid, and exception is thrown.
 --
 shift :: Ord a => Int -> StackSet a -> StackSet a
-shift n w | n < 0 || n >= size w = w
-          | otherwise            = case peek w of
-                Nothing -> w    -- nothing to do
-                Just k  -> insert k n (pop w)
-
-------------------------------------------------------------------------
+shift n w = maybe w (\k -> insert k n (delete k w)) (peek w)
 
 -- | Insert an element onto the top of stack 'n'.
--- If the index is wrong, the original StackSet is returned unchanged.
 -- If the element is already in the stack 'n', it is moved to the top.
 -- If the element exists on another stack, it is removed from that stack.
+-- If the index is wrong an exception is thrown.
 --
 insert :: Ord a => a -> Int -> StackSet a -> StackSet a
-insert k n old
-    | n < 0 || n >= size old = old
-    | otherwise              = new { cache  = M.insert k n (cache new)
-                                   , stacks = S.adjust (L.nub . (k:)) n (stacks new) }
+insert k n old = new { cache  = M.insert k n (cache new)
+                     , stacks = S.adjust (L.nub . (k:)) n (stacks new) }
     where new = delete k old
 
 -- | Delete an element entirely from from the StackSet.
 -- This can be used to ensure that a given element is not managed elsewhere.
 -- If the element doesn't exist, the original StackSet is returned unmodified.
 delete :: Ord a => a -> StackSet a -> StackSet a
-delete k w = case M.lookup k (cache w) of
-    Nothing -> w -- we don't know about this window
-    Just i  -> w { cache  = M.delete k (cache w)
-                 , stacks = S.adjust (L.delete k) i (stacks w) }
-
--- ---------------------------------------------------------------------
--- Internal functions
-
--- | modify the current stack with a pure function. This function is
--- unsafe: the argument function must only permute the current stack,
--- and must not add or remove elements, or duplicate elements.
---
-unsafeModify :: ([a] -> [a]) -> StackSet a -> StackSet a
-unsafeModify f w = w { stacks = S.adjust f (current w) (stacks w) }
-
--- | Pop. Pop the element off the top of the stack and discard it.
--- A new StackSet is returned. If the current stack is empty, the
--- original StackSet is returned unchanged.
-pop :: Ord a => StackSet a -> StackSet a
-pop w = maybe w (flip delete w) (peek w)
+delete k w = maybe w tweak (M.lookup k (cache w))
+  where tweak i = w { cache  = M.delete k (cache w)
+                    , stacks = S.adjust (L.delete k) i (stacks w) }
