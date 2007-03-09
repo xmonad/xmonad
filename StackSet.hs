@@ -45,7 +45,7 @@ module StackSet (
   ) where
 
 import Data.Maybe
-import qualified Data.List     as L (nub,delete)
+import qualified Data.List     as L (delete)
 import qualified Data.Map      as M
 
 ------------------------------------------------------------------------
@@ -158,7 +158,7 @@ shift n w = maybe w (\k -> insert k n (delete k w)) (peek w)
 --
 insert :: Ord a => a -> Int -> StackSet a -> StackSet a
 insert k n old = new { cache  = M.insert k n (cache new)
-                     , stacks = M.adjust (L.nub . (k:)) n (stacks new) }
+                     , stacks = M.adjust (k:) n (stacks new) }
     where new = delete k old
 
 -- | /O(log n)/. Delete an element entirely from from the StackSet.
