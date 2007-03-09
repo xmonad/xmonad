@@ -1,6 +1,7 @@
 
 import StackSet
 
+import Data.Maybe
 import System.Environment
 import Control.Exception    (assert)
 import Control.Monad
@@ -8,7 +9,7 @@ import Test.QuickCheck
 import System.IO
 import System.Random
 import Text.Printf
-import Data.List            (sort,group,sort,intersperse)
+import Data.List            (nub,sort,group,sort,intersperse)
 
 -- ---------------------------------------------------------------------
 -- QuickCheck properties for the StackSet
@@ -27,17 +28,44 @@ instance (Ord a, Arbitrary a) => Arbitrary (StackSet a) where
     coarbitrary = error "no coarbitrary for StackSet"
 
 prop_id x = fromList (toList x) == x
-    where _ = x :: StackSet Int
+    where _ = x :: T
+
+prop_member1 i n = member i (push i x)
+    where x = empty n :: T
+
+prop_member2 i x = not (member i (delete i x))
+    where _ = x :: T
+
+prop_member3 i n = member i (empty n :: T) == False
+
+prop_sizepush is n = n > 0 ==> size (foldr push x is ) == n
+    where x  = empty n :: T
+
+prop_currentpush is n = n > 0 ==>
+    height (current x) (foldr push x js) == length js
+    where
+        js = nub is
+        x = empty n :: T
+
+prop_pushpeek x is = not (null is) ==> fromJust (peek (foldr push x is)) == head is
+    where _ = x :: T
+
+prop_peekmember x = case peek x of
+                            Just w  -> member w x
+                            Nothing -> True {- then we don't know anything -}
+    where _ = x :: T
+
+type T = StackSet Int
 
 prop_delete_uniq i x = not (member i x) ==> delete i x == x
-    where _ = x :: StackSet Int
+    where _ = x :: T
 
 prop_delete2 i x =
     delete i x == delete i (delete i x)
-    where _ = x :: StackSet Int
+    where _ = x :: T
 
 prop_rotaterotate x   = rotate LT (rotate GT x) == x
-    where _ = x :: StackSet Int
+    where _ = x :: T
 
 prop_viewview r  x   =
     let n  = current x
@@ -45,12 +73,12 @@ prop_viewview r  x   =
         i  = r `mod` sz
     in view n (view i x) == x
 
-    where _ = x :: StackSet Int
+    where _ = x :: T
 
 prop_shiftshift r x =
     let n  = current x
     in shift n (shift r x) == x
-    where _ = x :: StackSet Int
+    where _ = x :: T
 
 ------------------------------------------------------------------------
 
@@ -64,6 +92,13 @@ main = do
 
     tests =
         [("read.show        ", mytest prop_id)
+        ,("member/push      ", mytest prop_member1)
+        ,("member/peek      ", mytest prop_peekmember)
+        ,("member/delete    ", mytest prop_member2)
+        ,("member/empty     ", mytest prop_member3)
+        ,("size/push        ", mytest prop_sizepush)
+        ,("height/push      ", mytest prop_currentpush)
+        ,("push/peek        ", mytest prop_pushpeek)
         ,("delete/not.member", mytest prop_delete_uniq)
         ,("delete idempotent", mytest prop_delete2)
         ,("rotate/rotate    ", mytest prop_rotaterotate)
