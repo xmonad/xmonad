@@ -51,6 +51,11 @@ import qualified Data.IntMap   as I
 
 ------------------------------------------------------------------------
 
+--
+-- N.B we probably want to think about strict 'adjust' and inserts on
+-- these data structures in the long run.
+--
+
 -- | The StackSet data structure. A table of stacks, with a current pointer
 data StackSet a =
     StackSet
