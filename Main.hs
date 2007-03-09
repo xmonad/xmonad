@@ -73,9 +73,13 @@ main = do
                 sync dpy False
         grabKeys dpy r
         (_, _, ws) <- io $ queryTree dpy r
+
+        -- scan for initial windows
         forM_ ws $ \w -> do
             wa <- io $ getWindowAttributes dpy w
-            when (waMapState wa == waIsViewable) (manage w)
+            when (not (waOverrideRedirect wa) && waMapState wa == waIsViewable)
+                    (manage w)
+
         forever $ handle =<< io (allocaXEvent $ \ev ->
                                     nextEvent dpy ev >> getEvent ev)
     return ()
