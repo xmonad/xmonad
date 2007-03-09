@@ -69,7 +69,11 @@ main = do
 
     runW initState $ do
         r <- io $ rootWindow dpy dflt
-        io $ do selectInput dpy r (substructureRedirectMask .|. substructureNotifyMask)
+        io $ do selectInput dpy r $  substructureRedirectMask
+                                     .|. substructureNotifyMask
+                                     .|. enterWindowMask
+                                     .|. leaveWindowMask
+
                 sync dpy False
         grabKeys dpy r
         (_, _, ws) <- io $ queryTree dpy r
@@ -110,6 +114,10 @@ handle :: Event -> W ()
 handle (MapRequestEvent    {window = w}) = withDisplay $ \dpy -> do
     wa <- io $ getWindowAttributes dpy w
     when (not (waOverrideRedirect wa)) $ manage w
+
+-- XCreateWindowEvent(3X11)
+-- Window manager clients normally should ignore this window if the
+-- override_redirect member is True.
 
 handle (DestroyWindowEvent {window = w}) = unmanage w
 handle (UnmapEvent         {window = w}) = unmanage w
