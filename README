@@ -17,7 +17,7 @@ Building:
     unix            http://hackage.haskell.org/cgi-bin/hackage-scripts/package/unix-2.0
     mtl             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/mtl-1.0
 
-    X11-extras:     darcs get http://www.cse.unsw.edu.au/~dons/code/X11-extras
+    X11-extras:     darcs get http://darcs.haskell.org/~sjanssen/X11-extras
 
     dmenu   2.{5,6,7} http://www.suckless.org/download/dmenu-2.7.tar.gz
 
