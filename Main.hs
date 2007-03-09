@@ -77,9 +77,9 @@ main = do
                                .|. leaveWindowMask
 
         grabKeys dpy r
-        (_, _, ws) <- io $ queryTree dpy r
 
         -- scan for initial windows
+        (_, _, ws) <- io $ queryTree dpy r
         forM_ ws $ \w -> do
             wa <- io $ getWindowAttributes dpy w
             when (not (waOverrideRedirect wa) && waMapState wa == waIsViewable)
@@ -94,11 +94,11 @@ main = do
 
 -- | Grab the keys back
 grabKeys :: Display -> Window -> W ()
-grabKeys dpy root = do
-    io $ ungrabKey dpy '\0' {-AnyKey-} anyModifier root
+grabKeys dpy r = do
+    io $ ungrabKey dpy '\0' {-AnyKey-} anyModifier r
     forM_ (M.keys keys) $ \(mask,s) -> io $ do
         kc <- keysymToKeycode dpy s
-        let grab m = grabKey dpy kc m root True grabModeAsync grabModeAsync
+        let grab m = grabKey dpy kc m r True grabModeAsync grabModeAsync
         grab mask
         grab (mask .|. lockMask)
         -- no numlock
@@ -118,13 +118,12 @@ grabKeys dpy root = do
 -- 
 handle :: Event -> W ()
 
-handle (MapRequestEvent    {window = w}) = withDisplay $ \dpy -> do
-    wa <- io $ getWindowAttributes dpy w
-    when (not (waOverrideRedirect wa)) $ manage w
-
 -- XCreateWindowEvent(3X11)
 -- Window manager clients normally should ignore this window if the
 -- override_redirect member is True.
+handle (MapRequestEvent    {window = w}) = withDisplay $ \dpy -> do
+    wa <- io $ getWindowAttributes dpy w
+    when (not (waOverrideRedirect wa)) $ manage w
 
 handle (DestroyWindowEvent {window = w}) = unmanage w
 handle (UnmapEvent         {window = w}) = unmanage w
@@ -141,15 +140,22 @@ handle (KeyEvent {event_type = t, state = m, keycode = code})
 
 handle e@(ConfigureRequestEvent {}) = do
     dpy <- gets display
+    ws  <- gets workspace
+    let w = window e
+
+    when (W.member w ws) $ -- already managed, reconfigure (see client:configure() 
+        trace ("Reconfigure already managed window: " ++ show w)
+
     io $ configureWindow dpy (window e) (value_mask e) $ WindowChanges
-            { wcX           = x e
-            , wcY           = y e
-            , wcWidth       = width e
-            , wcHeight      = height e
-            , wcBorderWidth = border_width e
-            , wcSibling     = above e
-            , wcStackMode   = detail e
-            }
+        { wcX           = x e
+        , wcY           = y e
+        , wcWidth       = width e
+        , wcHeight      = height e
+        , wcBorderWidth = border_width e
+        , wcSibling     = above e
+        , wcStackMode   = detail e
+        }
+
     io $ sync dpy False
 
 handle e = trace (eventName e)
