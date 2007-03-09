@@ -45,10 +45,9 @@ module StackSet (
   ) where
 
 import Data.Maybe
-import qualified Data.Foldable as F
 import qualified Data.List     as L
 import qualified Data.Map      as M
-import qualified Data.Sequence as S
+import qualified Data.IntMap   as I
 
 ------------------------------------------------------------------------
 
@@ -57,7 +56,7 @@ data StackSet a =
     StackSet
         { current:: {-# UNPACK #-} !Int             -- ^ the currently visible stack
         , size   :: {-# UNPACK #-} !Int             -- ^ size of the stack list
-        , stacks :: {-# UNPACK #-} !(S.Seq [a])     -- ^ the separate stacks
+        , stacks :: {-# UNPACK #-} !(I.IntMap [a])  -- ^ the separate stacks
         , cache  :: {-# UNPACK #-} !(M.Map a Int)   -- ^ a cache of windows back to their stacks
         } deriving Eq
 
@@ -74,16 +73,16 @@ instance Show a => Show (StackSet a) where
 
 ------------------------------------------------------------------------
 
--- | Create a new empty stacks of size 'n', indexed from 0. The
+-- | /O(n)/. Create a new empty stacks of size 'n', indexed from 0. The
 -- 0-indexed stack will be current.
 empty :: Int -> StackSet a
 empty n = StackSet { current= 0
                    , size   = n -- constant
-                   , stacks = S.fromList (replicate n [])
+                   , stacks = I.fromList (zip [0..n-1] (repeat []))
                    , cache  = M.empty
                    }
 
--- | True if x is somewhere in the StackSet
+-- | /O(log w)/. True if x is somewhere in the StackSet
 member :: Ord a => a -> StackSet a -> Bool
 member a w = M.member a (cache w)
 
@@ -106,7 +105,7 @@ fromList (o,xs) = view o $
 
 -- | toList. Flatten a stackset to a list of lists
 toList  :: StackSet a -> (Int,[[a]])
-toList x = (current x, F.toList (stacks x))
+toList x = (current x, map snd $ I.toList (stacks x))
 
 ------------------------------------------------------------------------
 
@@ -117,23 +116,23 @@ toList x = (current x, F.toList (stacks x))
 push :: Ord a => a -> StackSet a -> StackSet a
 push k w = insert k (current w) w
 
--- | Extract the element on the top of the current stack. If no such
+-- | /O(log s)/. Extract the element on the top of the current stack. If no such
 -- element exists, Nothing is returned.
 peek :: StackSet a -> Maybe a
 peek w = listToMaybe $ index (current w) w
 
--- | Index. Extract the stack at index 'n'.
+-- | /O(log s)/. Index. Extract the stack at index 'n'.
 -- If the index is invalid, an exception is thrown.
 index :: Int -> StackSet a -> [a]
-index n w = stacks w `S.index` n
+index k w = fromJust (I.lookup k (stacks w))
 
--- | view. Set the stack specified by the Int argument as being the
+-- | /O(1)/. view. Set the stack specified by the Int argument as being the
 -- current StackSet. If the index is out of range an exception is thrown.
 view :: Int -> StackSet a -> StackSet a
 view n w | n >= 0 && n < size w = w { current = n }
          | otherwise            = error $ "view: index out of bounds: " ++ show n
 
--- | rotate. cycle the current window list up or down.
+-- | /O(log n)/. rotate. cycle the current window list up or down.
 --
 --  rotate EQ   -->  [5,6,7,8,1,2,3,4]
 --  rotate GT   -->  [6,7,8,1,2,3,4,5]
@@ -142,7 +141,7 @@ view n w | n >= 0 && n < size w = w { current = n }
 --  where xs = [5..8] ++ [1..4]
 --
 rotate :: Ordering -> StackSet a -> StackSet a
-rotate o w = w { stacks = S.adjust rot (current w) (stacks w) }
+rotate o w = w { stacks = I.adjust rot (current w) (stacks w) }
     where
         rot s = take l . drop offset . cycle $ s
            where
@@ -150,26 +149,27 @@ rotate o w = w { stacks = S.adjust rot (current w) (stacks w) }
               l      = length s
               offset = if n < 0 then l + n else n
 
--- | shift. move the client on top of the current stack to the top of stack 'n'.
--- If the stack to move to is not valid, and exception is thrown.
+-- | /O(log n)/. shift. move the client on top of the current stack to
+-- the top of stack 'n'. If the stack to move to is not valid, and
+-- exception is thrown.
 --
 shift :: Ord a => Int -> StackSet a -> StackSet a
 shift n w = maybe w (\k -> insert k n (delete k w)) (peek w)
 
--- | Insert an element onto the top of stack 'n'.
+-- | /O(log n)/. Insert an element onto the top of stack 'n'.
 -- If the element is already in the stack 'n', it is moved to the top.
 -- If the element exists on another stack, it is removed from that stack.
 -- If the index is wrong an exception is thrown.
 --
 insert :: Ord a => a -> Int -> StackSet a -> StackSet a
 insert k n old = new { cache  = M.insert k n (cache new)
-                     , stacks = S.adjust (L.nub . (k:)) n (stacks new) }
+                     , stacks = I.adjust (L.nub . (k:)) n (stacks new) }
     where new = delete k old
 
--- | Delete an element entirely from from the StackSet.
+-- | /O(log n)/. Delete an element entirely from from the StackSet.
 -- This can be used to ensure that a given element is not managed elsewhere.
 -- If the element doesn't exist, the original StackSet is returned unmodified.
 delete :: Ord a => a -> StackSet a -> StackSet a
 delete k w = maybe w tweak (M.lookup k (cache w))
   where tweak i = w { cache  = M.delete k (cache w)
-                    , stacks = S.adjust (L.delete k) i (stacks w) }
+                    , stacks = I.adjust (L.delete k) i (stacks w) }
