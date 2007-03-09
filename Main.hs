@@ -155,11 +155,11 @@ hide :: Window -> W ()
 hide w = withDisplay $ \d -> do
     sw <- gets screenWidth
     sh <- gets screenHeight
-    io $ moveWindow d w (2*fromIntegral sw) (2*fromIntegral sh)
+    io $! moveWindow d w (2*fromIntegral sw) (2*fromIntegral sh)
 
 -- | reveal. Expose a list of windows, moving them on screen
 reveal :: Window -> W ()
-reveal w = withDisplay $ \d -> io $ moveWindow d w 0 0
+reveal w = withDisplay $ \d -> io $! moveWindow d w 0 0
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WorkSpace -> WorkSpace) -> W ()

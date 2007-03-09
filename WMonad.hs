@@ -68,4 +68,4 @@ whenJust mg f = maybe (return ()) f mg
 -- | A 'trace' for the W monad. Logs a string to stderr. The result may
 -- be found in your .xsession-errors file
 trace :: String -> W ()
-trace msg = io $ do hPutStrLn stderr msg; hFlush stderr
+trace msg = io $! do hPutStrLn stderr msg; hFlush stderr
