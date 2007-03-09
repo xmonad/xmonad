@@ -7,7 +7,7 @@ license:        BSD3
 license-file:   LICENSE
 author:         Spencer Janssen
 maintainer:     sjanssen@cse.unl.edu
-build-depends:  base==2.0, X11>=1.1, X11-extras==0.0, unix==1.0, mtl==1.0
+build-depends:  base==2.0, X11>=1.1, X11-extras==0.0, mtl==1.0
 
 executable:     thunk
 main-is:        Main.hs
