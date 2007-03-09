@@ -72,9 +72,9 @@ main = do
         r <- io $ rootWindow dpy dflt
         io $ sync dpy False
         io $ selectInput dpy r $  substructureRedirectMask
-                               .|. substructureNotifyMask
-                               .|. enterWindowMask
-                               .|. leaveWindowMask
+                              .|. substructureNotifyMask
+                              .|. enterWindowMask
+                              .|. leaveWindowMask
 
         grabKeys dpy r
 
@@ -115,6 +115,11 @@ grabKeys dpy r = do
 --    [LeaveNotify]    = leavenotify,
 --    [Expose]         = expose,
 --    [PropertyNotify] = propertynotify,
+--
+-- on EnterNotify we should SetFocus to the window we're entering,
+-- on LeaveNotify, we set it back to root.
+--
+-- Needs XCrossing support
 -- 
 handle :: Event -> W ()
 
@@ -199,10 +204,17 @@ windows f = do
 
 -- | manage. Add a new window to be managed in the current workspace. Bring it into focus.
 -- If the window is already under management, it is just raised.
+--
+-- When we start to manage a window, it gains focus.
+--
 manage :: Window -> W ()
 manage w = do
-    withDisplay $ io . flip mapWindow w
+    withDisplay $ \d -> io $ do
+        mapWindow d w
+        -- setInputFocus d w revertToPointerRoot 0 -- CurrentTime
     windows $ W.push w
+
+
 
 -- | unmanage. A window no longer exists, remove it from the window
 -- list, on whatever workspace it is.
