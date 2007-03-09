@@ -15,7 +15,7 @@ import Data.List            (sort,group,sort,intersperse)
 
 -- | Height of stack 'n'
 height :: Int -> StackSet a -> Int
-height i w = case index w i of
+height i w = case index i w of
                 Nothing -> error $ "height: i out of range: " ++ show i
                 Just ss -> length ss
 
@@ -31,44 +31,18 @@ instance (Ord a, Arbitrary a) => Arbitrary (StackSet a) where
 prop_id x = fromList (toList x) == x
     where _ = x :: StackSet Int
 
-prop_uniq_pushpop i x = not (member i x) ==>
-    (pop . push i) x == x
-    where _ = x :: StackSet Int
-
-prop_pushpop i x =
-    (pop . push i) x == delete i x
-    where _ = x :: StackSet Int
-
--- popping an empty stack leaves an empty stack
-prop_popempty x = height (cursor x) x == 0 ==> pop x == x
-    where _ = x :: StackSet Int
-
-prop_popone   x =
-    let l = height (cursor x) x
-    in l > 0 ==> height (cursor x) (pop x) == l-1
-    where _ = x :: StackSet Int
-
-prop_delete_uniq i x = not (member i x) ==>
-    delete i x == x
+prop_delete_uniq i x = not (member i x) ==> delete i x == x
     where _ = x :: StackSet Int
 
 prop_delete2 i x =
     delete i x == delete i (delete i x)
     where _ = x :: StackSet Int
 
-prop_uniq_insertdelete i n x = not (member i x) ==>
-    delete i (insert i n x) == x
-    where _ = x :: StackSet Int
-
-prop_insertdelete i n x =
-    delete i (insert i n x) == delete i x
-    where _ = x :: StackSet Int
-
 prop_rotaterotate x   = rotate LT (rotate GT x) == x
     where _ = x :: StackSet Int
 
 prop_viewview r  x   =
-    let n  = cursor x
+    let n  = current x
         sz = size x
         i  = r `mod` sz
     in
@@ -77,7 +51,7 @@ prop_viewview r  x   =
     where _ = x :: StackSet Int
 
 prop_shiftshift r x =
-    let n  = cursor x
+    let n  = current x
     in
         shift n (shift r x) == x
     where _ = x :: StackSet Int
@@ -93,16 +67,10 @@ main = do
     n = 100
 
     tests =
-        [("fromList.toList  ", mytest prop_id)
-        ,("pop/push         ", mytest prop_uniq_pushpop)
-        ,("pop/push/delete  ", mytest prop_pushpop)
-        ,("pop/empty        ", mytest prop_popempty)
+        [("read.show        ", mytest prop_id)
         ,("delete/not.member", mytest prop_delete_uniq)
         ,("delete idempotent", mytest prop_delete2)
-        ,("delete/insert new", mytest prop_uniq_insertdelete)
-        ,("delete/insert    ", mytest prop_insertdelete)
         ,("rotate/rotate    ", mytest prop_rotaterotate)
-        ,("pop one          ", mytest prop_popone)
         ,("view/view        ", mytest prop_viewview)
         ]
 
