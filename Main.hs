@@ -53,7 +53,6 @@ keys = M.fromList $
         | i <- [1 .. workspaces]
         , (f, m) <- [(view, 0), (tag, shiftMask)]]
 
-
 --
 -- let's get underway
 -- 
@@ -92,23 +91,21 @@ grabKeys dpy r = forM_ (M.keys keys) $ \(m,s) -> io $ do
     kc <- keysymToKeycode dpy s
     grabKey dpy kc m r True grabModeAsync grabModeAsync
 
+-- ---------------------------------------------------------------------
+-- Event handler
 --
 -- | handle. Handle X events
--- dwm handles:
 --
---    [ButtonPress] = buttonpress,
---    [ConfigureRequest] = configurerequest,
---    [DestroyNotify] = destroynotify,
---    [EnterNotify] = enternotify,
---    [LeaveNotify] = leavenotify,
---    [Expose] = expose,
---    [KeyPress] = keypress,
---    [MappingNotify] = mappingnotify,
---    [MapRequest] = maprequest,
+-- Events dwm handles that we don't:
+--
+--    [ButtonPress]    = buttonpress,
+--    [EnterNotify]    = enternotify,
+--    [LeaveNotify]    = leavenotify,
+--    [Expose]         = expose,
 --    [PropertyNotify] = propertynotify,
---    [UnmapNotify] = unmapnotify
 -- 
 handle :: Event -> W ()
+
 handle (MapRequestEvent    {window = w}) = withDisplay $ \dpy -> do
     wa <- io $ getWindowAttributes dpy w
     when (not (waOverrideRedirect wa)) $ manage w
@@ -139,14 +136,6 @@ handle e@(ConfigureRequestEvent {}) = do
             }
     io $ sync dpy False
 
--- Typical events I see still unhandled:
---      ConfigureNotify
---      MapNotify
---      CreateNotify
---      KeyRelease
---
--- In particular, ConfigureNotify and MapNotify a lot on firefox
---
 handle e = trace (eventName e)
 
 -- ---------------------------------------------------------------------
