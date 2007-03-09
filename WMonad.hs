@@ -56,6 +56,7 @@ withDisplay f = gets display >>= f
 -- | Lift an IO action into the W monad
 io :: IO a -> W a
 io = liftIO
+{-# INLINE io #-}
 
 -- | spawn. Launch an external application
 spawn :: String -> W ()
