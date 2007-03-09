@@ -3,7 +3,7 @@
 Motivation:
 
     dwm is great, but we can do better, building a more robust,
-    more correct window manager in less lines of code, using strong
+    more correct window manager in fewer lines of code, using strong
     static typing. Enter Haskell.
 
     If the aim of dwm is to fit in under 2000 lines of C, the aim of dwm
