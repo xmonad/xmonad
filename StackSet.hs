@@ -19,7 +19,30 @@
 -- may be on only 1 screen at any given time.
 --
 
-module StackSet {- everything -} where
+module StackSet (
+    StackSet,          -- abstract
+
+     -- * Introduction and elimination
+     empty,             -- :: Int -> StackSet a
+     fromList,          -- :: Ord a => (Int,[[a]]) -> StackSet a
+     toList,            -- :: StackSet a -> (Int,[[a]])
+     index,             -- :: Int -> StackSet a -> [a]
+     current,           -- :: StackSet a -> Int
+
+     -- * Queries
+     member,            -- :: Ord a => a -> StackSet a -> Bool
+     size,              -- :: StackSet a -> Int
+     peek,              -- :: StackSet a -> Maybe a
+
+     -- * Modifcations
+    push,               -- :: Ord a => a -> StackSet a -> StackSet a
+    view,               -- :: Int -> StackSet a -> StackSet a
+    rotate,             -- :: Ordering -> StackSet a -> StackSet a
+    shift,              -- :: Ord a => Int -> StackSet a -> StackSet a
+    insert,             -- :: Ord a => a -> Int -> StackSet a -> StackSet a
+    delete,             -- :: Ord a => a -> StackSet a -> StackSet a
+
+  ) where
 
 import Data.Maybe
 import qualified Data.List     as L (nub,delete)
