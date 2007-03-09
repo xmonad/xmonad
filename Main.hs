@@ -144,9 +144,12 @@ handle e = trace (eventName e)
 -- | refresh. Refresh the currently focused window. Resizes to full
 -- screen and raises the window.
 refresh :: W ()
-refresh = whenJust W.peek $ \w -> withScreen $ \(d,sw,sh) -> io $ do
-    moveResizeWindow d w 0 0 (fromIntegral sw) (fromIntegral sh) -- fullscreen
-    raiseWindow d w
+refresh = do
+    ws <- gets workspace
+    whenJust (W.peek ws) $ \w ->
+        withScreen $ \(d,sw,sh) -> io $ do
+            moveResizeWindow d w 0 0 (fromIntegral sw) (fromIntegral sh) -- fullscreen
+            raiseWindow d w
 
 -- | hide. Hide a list of windows by moving them offscreen.
 hide :: Window -> W ()
@@ -167,8 +170,9 @@ windows f = modifyWorkspace f >> refresh
 -- | manage. Add a new window to be managed in the current workspace. Bring it into focus.
 -- If the window is already under management, it is just raised.
 manage :: Window -> W ()
-manage w = do withDisplay $ \d -> io $ mapWindow d w
-              windows $ W.push w
+manage w = do
+    withDisplay $ io . flip mapWindow w
+    windows $ W.push w
 
 -- | unmanage. A window no longer exists, remove it from the window
 -- list, on whatever workspace it is.
@@ -186,25 +190,30 @@ focus = windows . W.rotate
 
 -- | Kill the currently focused client
 kill :: W ()
-kill = withDisplay $ \d -> whenJust W.peek $ io_ . killClient d
+kill = withDisplay $ \d -> do
+    ws <- gets workspace
+    whenJust (W.peek ws) $ io_ . killClient d
 
 -- | tag. Move a window to a new workspace
 tag :: Int -> W ()
 tag o = do
     ws <- gets workspace
-    when (n /= W.cursor ws) $
-        whenJust W.peek $ \w -> do
+    let m = W.current ws
+    when (n /= m) $
+        whenJust (W.peek ws) $ \w -> do
             hide w
             windows $ W.shift n
-    where n = o -1
+    where n = o-1
 
 -- | view. Change the current workspace to workspce at offset 'n-1'.
 view :: Int -> W ()
 view o = do
     ws <- gets workspace
-    when (n /= W.cursor ws) $
-        whenJust (flip W.index n) $ \new -> do
-            mapM_ hide (W.stack ws)
+    let m = W.current ws
+    when (n /= m) $
+        whenJust (W.index n ws) $ \new ->
+        whenJust (W.index m ws) $ \old -> do
+            mapM_ hide   old
             mapM_ reveal new
             windows $ W.view n
     where n = o-1

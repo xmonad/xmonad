@@ -16,7 +16,7 @@
 
 module WMonad where
 
-import StackSet
+import StackSet (StackSet)
 
 import Control.Monad.State
 import System.IO
@@ -87,11 +87,6 @@ modifyWorkspace f = do
     trace (show ws) -- log state changes to stderr
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
--- for (WorkSpace -> Maybe a).
-whenJust :: (WorkSpace -> Maybe a) -> (a -> W ()) -> W ()
-whenJust mg f = do
-    ws <- gets workspace
-    case mg ws of
-        Nothing -> return ()
-        Just w  -> f w
+whenJust :: Maybe a -> (a -> W ()) -> W ()
+whenJust mg f = maybe (return ()) f mg
 
