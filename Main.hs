@@ -23,6 +23,7 @@ import System.Exit
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras
 
+import Numeric
 import Control.Monad.State
 
 import WMonad
@@ -242,6 +243,7 @@ windows f = do
 --
 manage :: Window -> W ()
 manage w = do
+    trace ("Managing window: 0x" ++ showHex w (", " ++ show w))
     withDisplay $ \d -> io $ do
         selectInput d w $ structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
         mapWindow d w
@@ -266,7 +268,9 @@ raise = windows . W.rotate
 kill :: W ()
 kill = withDisplay $ \d -> do
     ws <- gets workspace
-    whenJust (W.peek ws) $ \w -> io (killClient d w) >> return ()
+    whenJust (W.peek ws) $ \w -> do
+        trace ("Attempting to kill window: 0x" ++ showHex w (", " ++ show w))
+        io (killClient d w) >> return ()
 
 -- | tag. Move a window to a new workspace
 tag :: Int -> W ()
