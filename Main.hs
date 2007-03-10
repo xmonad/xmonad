@@ -26,7 +26,7 @@ import Graphics.X11.Xlib.Extras
 import Numeric
 import Control.Monad.State
 
-import WMonad
+import XMonad
 import qualified StackSet as W
 
 --
@@ -38,7 +38,7 @@ workspaces = 9
 --
 -- The keys list
 --
-keys :: M.Map (KeyMask, KeySym) (W ())
+keys :: M.Map (KeyMask, KeySym) (X ())
 keys = M.fromList $
     [ ((mod1Mask .|. shiftMask, xK_Return), spawn "xterm")
     , ((mod1Mask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && exec $exe")
@@ -61,7 +61,7 @@ main :: IO ()
 main = do
     dpy <- openDisplay ""
     let dflt = defaultScreen dpy
-        st   = WState
+        st   = XState
             { display      = dpy
             , screenWidth  = displayWidth  dpy dflt
             , screenHeight = displayHeight dpy dflt
@@ -80,7 +80,7 @@ main = do
 
     ws   <- scan dpy rootw
     allocaXEvent $ \e ->
-        runW st $ do
+        runX st $ do
             mapM_ manage ws
             forever $ handle =<< xevent dpy e
       where
@@ -89,7 +89,7 @@ main = do
         forever a = a >> forever a
 
 -- ---------------------------------------------------------------------
--- IO stuff. Doesn't require any W state
+-- IO stuff. Doesn't require any X state
 -- Most of these things run only on startup (bar grabkeys)
 
 -- | scan for any initial windows to manage
@@ -123,18 +123,18 @@ grabKeys dpy rootw = do
 --    [Expose]         = expose,
 --    [PropertyNotify] = propertynotify,
 --
--- Todo: seperate IO from W monad stuff. We want to be able to test the
+-- Todo: seperate IO from X monad stuff. We want to be able to test the
 -- handler, and client functions, with dummy X interface ops, in QuickCheck
 --
--- Will require an abstract interpreter from Event -> W Action, which
--- modifies the internal W state, and then produces an IO action to
+-- Will require an abstract interpreter from Event -> X Action, which
+-- modifies the internal X state, and then produces an IO action to
 -- evaluate.
 --
 -- XCreateWindowEvent(3X11)
 -- Window manager clients normally should ignore this window if the
 -- override_redirect member is True.
 -- 
-handle :: Event -> W ()
+handle :: Event -> X ()
 
 handle (MapRequestEvent    {window = w}) = withDisplay $ \dpy -> do
     wa <- io $ getWindowAttributes dpy w
@@ -204,7 +204,7 @@ handle e = trace (eventName e) -- ignoring
 
 -- | refresh. Refresh the currently focused window. Resizes to full
 -- screen and raises the window.
-refresh :: W ()
+refresh :: X ()
 refresh = do
     ws <- gets workspace
     whenJust (W.peek ws) $ \w ->
@@ -215,18 +215,18 @@ refresh = do
                     raiseWindow d w
 
 -- | hide. Hide a list of windows by moving them offscreen.
-hide :: Window -> W ()
+hide :: Window -> X ()
 hide w = withDisplay $ \d -> do
     sw <- gets screenWidth
     sh <- gets screenHeight
     io $! moveWindow d w (2*fromIntegral sw) (2*fromIntegral sh)
 
 -- | reveal. Expose a list of windows, moving them on screen
-reveal :: Window -> W ()
+reveal :: Window -> X ()
 reveal w = withDisplay $ \d -> io $! moveWindow d w 0 0
 
 -- | windows. Modify the current window list with a pure function, and refresh
-windows :: (WorkSpace -> WorkSpace) -> W ()
+windows :: (WorkSpace -> WorkSpace) -> X ()
 windows f = do
     modify $ \s -> s { workspace = f (workspace s) }
     refresh
@@ -241,7 +241,7 @@ windows f = do
 --
 -- When we start to manage a window, it gains focus.
 --
-manage :: Window -> W ()
+manage :: Window -> X ()
 manage w = do
     trace ("Managing window: 0x" ++ showHex w (", " ++ show w))
     withDisplay $ \d -> io $ do
@@ -252,7 +252,7 @@ manage w = do
 
 -- | unmanage. A window no longer exists, remove it from the window
 -- list, on whatever workspace it is.
-unmanage :: Window -> W ()
+unmanage :: Window -> X ()
 unmanage w = do
     ws <- gets workspace
     when (W.member w ws) $ do
@@ -261,11 +261,11 @@ unmanage w = do
 
 -- | raise. focus to window at offset 'n' in list.
 -- The currently focused window is always the head of the list
-raise :: Ordering -> W ()
+raise :: Ordering -> X ()
 raise = windows . W.rotate
 
 -- | Kill the currently focused client
-kill :: W ()
+kill :: X ()
 kill = withDisplay $ \d -> do
     ws <- gets workspace
     whenJust (W.peek ws) $ \w -> do
@@ -273,7 +273,7 @@ kill = withDisplay $ \d -> do
         io (killClient d w) >> return ()
 
 -- | tag. Move a window to a new workspace
-tag :: Int -> W ()
+tag :: Int -> X ()
 tag o = do
     ws <- gets workspace
     let m = W.current ws
@@ -284,7 +284,7 @@ tag o = do
     where n = o-1
 
 -- | view. Change the current workspace to workspce at offset 'n-1'.
-view :: Int -> W ()
+view :: Int -> X ()
 view o = do
     ws <- gets workspace
     let m = W.current ws
