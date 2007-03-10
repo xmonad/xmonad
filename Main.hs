@@ -32,7 +32,7 @@ import qualified StackSet as W
 -- The number of workspaces:
 --
 workspaces :: Int
-workspaces = 5
+workspaces = 9
 
 --
 -- The keys list
