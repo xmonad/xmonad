@@ -1,4 +1,4 @@
-            thunk : a lightweight X11 window manager.
+            xmonad : a lightweight X11 window manager.
 
 Motivation:
 
@@ -24,7 +24,7 @@ Use:
 
     add: 
 
-         exec /home/dons/bin/thunk
+         exec /home/dons/bin/xmonad
 
     as the last line of your .xsession file
 

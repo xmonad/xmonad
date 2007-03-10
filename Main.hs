@@ -10,7 +10,7 @@
 --
 -----------------------------------------------------------------------------
 --
--- thunk, a minimal window manager for X11
+-- xmonad, a minimal window manager for X11
 --
 
 import Data.List
