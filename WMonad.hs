@@ -43,8 +43,8 @@ newtype W a = W (StateT WState IO a)
 
 -- | Run the W monad, given a chunk of W monad code, and an initial state
 -- Return the result, and final state
-runW :: WState -> W a -> IO (a, WState)
-runW st (W a) = runStateT a st
+runW :: WState -> W a -> IO ()
+runW st (W a) = runStateT a st >> return ()
 
 -- | Run a monad action with the current display settings
 withDisplay :: (Display -> W ()) -> W ()

@@ -59,49 +59,56 @@ keys = M.fromList $
 main :: IO ()
 main = do
     dpy <- openDisplay ""
-    let dflt      = defaultScreen dpy
-        initState = WState
+    let dflt = defaultScreen dpy
+        st   = WState
             { display      = dpy
             , screenWidth  = displayWidth  dpy dflt
             , screenHeight = displayHeight dpy dflt
             , workspace    = W.empty workspaces
             }
 
-    allocaXEvent $ \ev ->
-     runW initState $ do
-        r <- io $ rootWindow dpy dflt
-        io $ sync dpy False
-        io $ selectInput dpy r $  substructureRedirectMask
-                              .|. substructureNotifyMask
-                              .|. enterWindowMask
-                              .|. leaveWindowMask
+    -- setup initial X environment
+    rootw <- rootWindow dpy dflt
+    sync dpy False
+    selectInput dpy rootw $  substructureRedirectMask
+                         .|. substructureNotifyMask
+                         .|. enterWindowMask
+                         .|. leaveWindowMask
+    grabKeys dpy rootw
+    sync dpy False
 
-        grabKeys dpy r
+    ws   <- scan dpy rootw
+    allocaXEvent $ \e ->
+        runW st $ do
+            mapM_ manage ws
+            forever $ handle =<< xevent dpy e
+      where
+        xevent d e = io (nextEvent d e >> getEvent e)
+        forever a = a >> forever a
 
-        -- scan for initial windows
-        (_, _, ws) <- io $ queryTree dpy r
-        forM_ ws $ \w -> do
-            wa <- io $ getWindowAttributes dpy w
-            when (not (waOverrideRedirect wa) && waMapState wa == waIsViewable)
-                    (manage w)
+-- ---------------------------------------------------------------------
+-- IO stuff. Doesn't require any W state
+-- Most of these things run only on startup (bar grabkeys)
 
-        io $ sync dpy False
-        forever $ handle =<< io (nextEvent dpy ev >> getEvent ev)
-
-    return ()
+-- | scan for any initial windows to manage
+scan :: Display -> Window -> IO [Window]
+scan dpy rootw = do
+    (_, _, ws) <- queryTree dpy rootw
+    filterM ok ws
   where
-    forever a = a >> forever a
+    ok w = do wa <- getWindowAttributes dpy w
+              return $ not (waOverrideRedirect wa)
+                     && waMapState wa == waIsViewable
 
 -- | Grab the keys back
-grabKeys :: Display -> Window -> W ()
-grabKeys dpy r = do
-    io $ ungrabKey dpy '\0' {-AnyKey-} anyModifier r
-    forM_ (M.keys keys) $ \(mask,s) -> io $ do
-        kc <- keysymToKeycode dpy s
-        let grab m = grabKey dpy kc m r True grabModeAsync grabModeAsync
-        grab mask
-        grab (mask .|. lockMask)
-        -- no numlock
+grabKeys :: Display -> Window -> IO ()
+grabKeys dpy rootw = do
+    ungrabKey dpy '\0' {-AnyKey-} anyModifier rootw
+    forM_ (M.keys keys) $ \(mask,sym) -> do
+         kc <- keysymToKeycode dpy sym
+         mapM_ (grab kc) [mask, mask .|. lockMask] -- note: no numlock
+  where
+    grab kc m = grabKey dpy kc m rootw True grabModeAsync grabModeAsync
 
 -- ---------------------------------------------------------------------
 -- Event handler
@@ -120,6 +127,13 @@ grabKeys dpy r = do
 -- on LeaveNotify, we set it back to root.
 --
 -- Needs XCrossing support
+--
+-- Todo: seperate IO from W monad stuff. We want to be able to test the
+-- handler, and client functions, with dummy X interface ops, in QuickCheck
+--
+-- Will require an abstract interpreter from Event -> W Action, which
+-- modifies the internal W state, and then produces an IO action to
+-- evaluate.
 -- 
 handle :: Event -> W ()
 
@@ -136,7 +150,7 @@ handle (UnmapEvent         {window = w}) = unmanage w
 handle e@(MappingNotifyEvent {window = w}) = do
     let m = (request e, first_keycode e, count e)
     io $ refreshKeyboardMapping m
-    when (request e == mappingKeyboard) $ withDisplay $ flip grabKeys w
+    when (request e == mappingKeyboard) $ withDisplay $ io . flip grabKeys w
 
 handle (KeyEvent {event_type = t, state = m, keycode = code})
     | t == keyPress = withDisplay $ \dpy -> do
@@ -213,8 +227,6 @@ manage w = do
         mapWindow d w
         -- setInputFocus d w revertToPointerRoot 0 -- CurrentTime
     windows $ W.push w
-
-
 
 -- | unmanage. A window no longer exists, remove it from the window
 -- list, on whatever workspace it is.
