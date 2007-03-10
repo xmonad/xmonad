@@ -285,8 +285,8 @@ view o = do
     ws <- gets workspace
     let m = W.current ws
     when (n /= m) $ do
-        mapM_ hide   (W.index m ws)
         mapM_ reveal (W.index n ws)
+        mapM_ hide   (W.index m ws)
         windows $ W.view n
     where n = o-1
 
