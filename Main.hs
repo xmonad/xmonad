@@ -42,9 +42,9 @@ keys = M.fromList $
     [ ((mod1Mask .|. shiftMask, xK_Return), spawn "xterm")
     , ((mod1Mask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && exec $exe")
     , ((controlMask,            xK_space ), spawn "gmrun")
-    , ((mod1Mask,               xK_Tab   ), focus GT)
-    , ((mod1Mask,               xK_j     ), focus GT)
-    , ((mod1Mask,               xK_k     ), focus LT)
+    , ((mod1Mask,               xK_Tab   ), raise GT)
+    , ((mod1Mask,               xK_j     ), raise GT)
+    , ((mod1Mask,               xK_k     ), raise LT)
     , ((mod1Mask .|. shiftMask, xK_c     ), kill)
     , ((mod1Mask .|. shiftMask, xK_q     ), io $ exitWith ExitSuccess)
     ] ++
@@ -84,6 +84,7 @@ main = do
             forever $ handle =<< xevent dpy e
       where
         xevent d e = io (nextEvent d e >> getEvent e)
+
         forever a = a >> forever a
 
 -- ---------------------------------------------------------------------
@@ -118,15 +119,8 @@ grabKeys dpy rootw = do
 -- Events dwm handles that we don't:
 --
 --    [ButtonPress]    = buttonpress,
---    [EnterNotify]    = enternotify,
---    [LeaveNotify]    = leavenotify,
 --    [Expose]         = expose,
 --    [PropertyNotify] = propertynotify,
---
--- on EnterNotify we should SetFocus to the window we're entering,
--- on LeaveNotify, we set it back to root.
---
--- Needs XCrossing support
 --
 -- Todo: seperate IO from W monad stuff. We want to be able to test the
 -- handler, and client functions, with dummy X interface ops, in QuickCheck
@@ -134,12 +128,13 @@ grabKeys dpy rootw = do
 -- Will require an abstract interpreter from Event -> W Action, which
 -- modifies the internal W state, and then produces an IO action to
 -- evaluate.
--- 
-handle :: Event -> W ()
-
+--
 -- XCreateWindowEvent(3X11)
 -- Window manager clients normally should ignore this window if the
 -- override_redirect member is True.
+-- 
+handle :: Event -> W ()
+
 handle (MapRequestEvent    {window = w}) = withDisplay $ \dpy -> do
     wa <- io $ getWindowAttributes dpy w
     when (not (waOverrideRedirect wa)) $ manage w
@@ -156,6 +151,30 @@ handle (KeyEvent {event_type = t, state = m, keycode = code})
     | t == keyPress = withDisplay $ \dpy -> do
         s   <- io $ keycodeToKeysym dpy code 0
         maybe (return ()) id (M.lookup (m,s) keys)
+
+handle e@(CrossingEvent {event_type = t})
+    | t == enterNotify  && mode e == notifyNormal && detail e /= notifyInferior
+    = withDisplay $ \d -> do
+        let w = window e
+        ws <- gets workspace
+        -- note: we get enter events for what appear to be subwindows of
+        -- ones under managment. we need to ignore those. hence we check either for
+        -- root, or for ismember.
+        if W.member w ws
+            then io $ setInputFocus d w revertToPointerRoot 0 -- it is ours, manage it
+            else do let dflt = defaultScreen d
+                    rootw <- io $ rootWindow d dflt -- should be in state
+                    when (w == rootw) $ do
+                       let w' = maybe rootw id (W.peek ws) -- focus to the top of the stack
+                       io $ setInputFocus d w' revertToPointerRoot 0
+
+handle e@(CrossingEvent {event_type = t})
+    | t == leaveNotify
+    = withDisplay $ \d -> do
+        let dflt = defaultScreen d
+        rootw <- io $ rootWindow d dflt
+        when (window e == rootw && not (same_screen e)) $
+          io $ setInputFocus d rootw revertToPointerRoot 0
 
 handle e@(ConfigureRequestEvent {}) = do
     dpy <- gets display
@@ -177,7 +196,7 @@ handle e@(ConfigureRequestEvent {}) = do
 
     io $ sync dpy False
 
-handle e = trace (eventName e)
+handle e = trace (eventName e) -- ignoring
 
 -- ---------------------------------------------------------------------
 -- Managing windows
@@ -210,8 +229,8 @@ windows :: (WorkSpace -> WorkSpace) -> W ()
 windows f = do
     modify $ \s -> s { workspace = f (workspace s) }
     refresh
-    -- ws <- gets workspace
-    -- trace (show ws) -- log state changes to stderr
+    ws <- gets workspace
+    trace (show ws) -- log state changes to stderr
 
 -- ---------------------------------------------------------------------
 -- Window operations
@@ -224,8 +243,9 @@ windows f = do
 manage :: Window -> W ()
 manage w = do
     withDisplay $ \d -> io $ do
+        selectInput d w $ structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
         mapWindow d w
-        -- setInputFocus d w revertToPointerRoot 0 -- CurrentTime
+        setInputFocus d w revertToPointerRoot 0 -- CurrentTime
     windows $ W.push w
 
 -- | unmanage. A window no longer exists, remove it from the window
@@ -237,10 +257,10 @@ unmanage w = do
         withDisplay $ \d -> io $ withServer d $ sync d False
         windows $ W.delete w
 
--- | focus. focus to window at offset 'n' in list.
+-- | raise. focus to window at offset 'n' in list.
 -- The currently focused window is always the head of the list
-focus :: Ordering -> W ()
-focus = windows . W.rotate
+raise :: Ordering -> W ()
+raise = windows . W.rotate
 
 -- | Kill the currently focused client
 kill :: W ()
