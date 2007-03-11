@@ -23,7 +23,6 @@ import System.Exit
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras
 
-import Numeric
 import Control.Monad.State
 
 import XMonad
@@ -59,19 +58,26 @@ keys = M.fromList $
 -- 
 main :: IO ()
 main = do
-    dpy <- openDisplay ""
+    dpy   <- openDisplay ""
     let dflt = defaultScreen dpy
-        st   = XState
+    rootw  <- rootWindow dpy dflt
+    wmdelt <- internAtom dpy "WM_DELETE_WINDOW" False
+    wmprot <- internAtom dpy "WM_PROTOCOLS"     False
+
+    let st = XState
             { display      = dpy
-            , screenWidth  = displayWidth  dpy dflt
-            , screenHeight = displayHeight dpy dflt
+            , screen       = dflt
+            , theRoot      = rootw
+            , wmdelete     = wmdelt
+            , wmprotocols  = wmprot
+            , dimensions   = (displayWidth  dpy dflt, displayHeight dpy dflt)
             , workspace    = W.empty workspaces
             }
 
-    -- setup initial X environment
-    rootw <- rootWindow dpy dflt
-    sync dpy False
+    xSetErrorHandler -- in C, I'm too lazy to write the binding
 
+    -- setup initial X environment
+    sync dpy False
     selectInput dpy rootw $  substructureRedirectMask
                          .|. substructureNotifyMask
                          .|. enterWindowMask
@@ -79,16 +85,13 @@ main = do
     grabKeys dpy rootw
     sync dpy False
 
-    ws   <- scan dpy rootw
+    ws <- scan dpy rootw
     allocaXEvent $ \e ->
         runX st $ do
             mapM_ manage ws
             forever $ handle =<< xevent dpy e
       where
-        xevent d e = do ev <- io (nextEvent d e >> getEvent e)
-                        trace ("GOT: " ++ eventName ev)
-                        return ev
-
+        xevent d e = io (nextEvent d e >> getEvent e)
         forever a = a >> forever a
 
 -- ---------------------------------------------------------------------
@@ -156,30 +159,17 @@ handle (KeyEvent {event_type = t, state = m, keycode = code})
         s   <- io $ keycodeToKeysym dpy code 0
         maybe (return ()) id (M.lookup (m,s) keys)
 
---
--- there's a race here, we might enter a window (e.g. on firefox
--- exiting), just as firefox destroys the window anyway. Setting focus
--- here will just trigger an error
---
 handle e@(CrossingEvent {event_type = t})
     | t == enterNotify  && mode e == notifyNormal && detail e /= notifyInferior
     = withDisplay $ \d -> do
         let w = window e
         ws <- gets workspace
-        -- note: we get enter events for what appear to be subwindows of
-        -- ones under managment. we need to ignore those. hence we check either for
-        -- root, or for ismember.
-        trace $ "Got enter notify message for: " ++ show w
         if W.member w ws
-            then do trace $ "It's one of ours, set input focus"
-                    -- it might have already disappeared (firefox close event)
-                    io $ setInputFocus d w revertToPointerRoot 0 -- it is ours, manage it
-            else do let dflt = defaultScreen d
-                    rootw <- io $ rootWindow d dflt -- should be in state
+            then io $ setInputFocus d w revertToPointerRoot 0 -- it is ours, manage it
+            else do rootw <- gets theRoot
                     when (w == rootw) $ do
-                       let w' = maybe rootw id (W.peek ws) -- focus to the top of the stack
-                       trace $ "It's not one of ours, set focus to: " ++ show w'
-                       io $ setInputFocus d w' revertToPointerRoot 0
+                       let new_w = maybe rootw id (W.peek ws) -- focus to the top of the stack
+                       io $ setInputFocus d new_w revertToPointerRoot 0
         io $ sync d False
 
 handle e@(CrossingEvent {event_type = t})
@@ -210,7 +200,7 @@ handle e@(ConfigureRequestEvent {}) = do
 
     io $ sync dpy False
 
-handle e = trace ("IGNORING: " ++ eventName e) -- ignoring
+handle e = trace (eventName e) -- ignoring
 
 -- ---------------------------------------------------------------------
 -- Managing windows
@@ -220,23 +210,10 @@ handle e = trace ("IGNORING: " ++ eventName e) -- ignoring
 refresh :: X ()
 refresh = do
     ws <- gets workspace
-    whenJust (W.peek ws) $ \w ->
-        withDisplay $ \d -> do
-            sw <- gets screenWidth
-            sh <- gets screenHeight
-            io $ do moveResizeWindow d w 0 0 (fromIntegral sw) (fromIntegral sh) -- fullscreen
-                    raiseWindow d w
-
--- | hide. Hide a list of windows by moving them offscreen.
-hide :: Window -> X ()
-hide w = withDisplay $ \d -> do
-    sw <- gets screenWidth
-    sh <- gets screenHeight
-    io $! moveWindow d w (2*fromIntegral sw) (2*fromIntegral sh)
-
--- | reveal. Expose a list of windows, moving them on screen
-reveal :: Window -> X ()
-reveal w = withDisplay $ \d -> io $! moveWindow d w 0 0
+    whenJust (W.peek ws) $ \w -> withDisplay $ \d -> do
+        (sw,sh) <- gets dimensions
+        io $ do moveResizeWindow d w 0 0 (fromIntegral sw) (fromIntegral sh) -- fullscreen
+                raiseWindow d w
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WorkSpace -> WorkSpace) -> X ()
@@ -245,6 +222,16 @@ windows f = do
     refresh
     ws <- gets workspace
     trace (show ws) -- log state changes to stderr
+
+-- | hide. Hide a list of windows by moving them offscreen.
+hide :: Window -> X ()
+hide w = withDisplay $ \d -> do
+    (sw,sh) <- gets dimensions
+    io $! moveWindow d w (2*fromIntegral sw) (2*fromIntegral sh)
+
+-- | reveal. Expose a list of windows, moving them on screen
+reveal :: Window -> X ()
+reveal w = withDisplay $ \d -> io $! moveWindow d w 0 0
 
 -- ---------------------------------------------------------------------
 -- Window operations
@@ -266,27 +253,21 @@ manage w = do
 -- list, on whatever workspace it is.
 unmanage :: Window -> X ()
 unmanage w = do
-    trace $ "Asked to unmanage: " ++ show w
-    -- 
-    -- quitting firefox will ask us to unmange one of its subwindows
-    -- then there'll be an EnterNotify event for the main window, which
-    -- will already have disappeared. leading to bad XsetFocus errors
-    --
     ws <- gets workspace
-    when (W.member w ws) $ withDisplay $ \d ->
-      withServerX d $ do -- be sure to set focus on unmanaging
+    when (W.member w ws) $ withDisplay $ \d -> withServerX d $ do
+        -- xseterrorhandler(dummy)
         modify $ \s -> s { workspace = W.delete w (workspace s) }
-        ws' <- gets workspace
-        case W.peek ws' of
-            Just w' -> io $ setInputFocus d w' revertToPointerRoot 0
-            Nothing -> do
-                let dflt = defaultScreen d
-                rootw <- io $ rootWindow d dflt
+        new_ws <- gets workspace
+        case W.peek new_ws of
+            Just new -> io $ setInputFocus d new revertToPointerRoot 0
+            Nothing  -> do
+                rootw <- gets theRoot
                 io $ setInputFocus d rootw revertToPointerRoot 0
 
         io (sync d False)
+        -- xseterrorhandler(error)
 
--- Grab the X server (lock it) from the X monad
+-- | Grab the X server (lock it) from the X monad
 withServerX :: Display -> X () -> X ()
 withServerX dpy f = do
     io $ grabServer dpy
@@ -303,13 +284,13 @@ kill :: X ()
 kill = withDisplay $ \d -> do
     ws <- gets workspace
     whenJust (W.peek ws) $ \w -> do
-        protocols   <- io $ getWMProtocols d w
-        wmdelete    <- io $ internAtom d "WM_DELETE_WINDOW" False -- stick in X state
-        wmprotocols <- io $ internAtom d "WM_PROTOCOLS"     False
-        if wmdelete `elem` protocols
+        protocols <- io $ getWMProtocols d w
+        wmdelt    <- gets wmdelete
+        wmprot    <- gets wmprotocols
+        if wmdelt `elem` protocols
             then io $ allocaXEvent $ \ev -> do
                     setEventType ev clientMessage
-                    setClientMessageEvent ev w wmprotocols 32 wmdelete 0
+                    setClientMessageEvent ev w wmprot 32 wmdelt 0
                     sendEvent d w False noEventMask ev
             else io (killClient d w) >> return ()
 

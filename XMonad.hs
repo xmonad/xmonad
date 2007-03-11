@@ -23,14 +23,17 @@ import StackSet (StackSet)
 import Control.Monad.State
 import System.IO
 import System.Process (runCommand)
-import Graphics.X11.Xlib (Display,Window)
+import Graphics.X11.Xlib
 
 -- | XState, the window manager state.
 -- Just the display, width, height and a window list
 data XState = XState
     { display       :: Display
-    , screenWidth   :: {-# UNPACK #-} !Int
-    , screenHeight  :: {-# UNPACK #-} !Int
+    , screen        :: {-# UNPACK #-} !ScreenNumber
+    , theRoot       :: {-# UNPACK #-} !Window
+    , wmdelete      :: {-# UNPACK #-} !Atom
+    , wmprotocols   :: {-# UNPACK #-} !Atom
+    , dimensions    :: {-# UNPACK #-} !(Int,Int)
     , workspace     :: {-# UNPACK #-} !WorkSpace      -- ^ workspace list
     }
 
