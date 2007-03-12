@@ -26,6 +26,7 @@ import Control.Monad.State
 import System.IO
 import System.Process (runCommand)
 import Graphics.X11.Xlib
+import Control.Exception
 
 -- | XState, the window manager state.
 -- Just the display, width, height and a window list
@@ -72,7 +73,8 @@ io = liftIO
 
 -- | spawn. Launch an external application
 spawn :: String -> X ()
-spawn x = io (runCommand x) >> return ()
+spawn x = do v <- io $ handle (return . Just) (runCommand x >> return Nothing)
+             whenJust v $ \e -> trace $ "xmonad:spawn: unable to fork "++show x++": "++show e
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
 whenJust :: Maybe a -> (a -> X ()) -> X ()
