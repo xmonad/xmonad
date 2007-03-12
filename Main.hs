@@ -157,33 +157,24 @@ handle e@(MappingNotifyEvent {window = w}) = do
 handle (KeyEvent {event_type = t, state = m, keycode = code})
     | t == keyPress = withDisplay $ \dpy -> do
         s   <- io $ keycodeToKeysym dpy code 0
-        maybe (return ()) id (M.lookup (m,s) keys)
+        whenJust (M.lookup (m,s) keys) id
 
-handle e@(CrossingEvent {event_type = t})
+handle e@(CrossingEvent {window = w, event_type = t})
     | t == enterNotify  && mode e == notifyNormal && detail e /= notifyInferior
-    = withDisplay $ \d -> do
-        let w = window e
-        ws <- gets workspace
-        if W.member w ws
-            then io $ setInputFocus d w revertToPointerRoot 0 -- it is ours, manage it
-            else do rootw <- gets theRoot
-                    when (w == rootw) $ do
-                       let new_w = maybe rootw id (W.peek ws) -- focus to the top of the stack
-                       io $ setInputFocus d new_w revertToPointerRoot 0
-        io $ sync d False
+    = do ws <- gets workspace
+         if W.member w ws
+            then setFocus w
+            else do b <- isRoot w
+                    when b setTopFocus
 
 handle e@(CrossingEvent {event_type = t})
     | t == leaveNotify
-    = withDisplay $ \d -> do
-        let dflt = defaultScreen d
-        rootw <- io $ rootWindow d dflt
-        when (window e == rootw && not (same_screen e)) $
-          io $ setInputFocus d rootw revertToPointerRoot 0
+    = do rootw <- gets theRoot
+         when (window e == rootw && not (same_screen e)) $ setFocus rootw
 
-handle e@(ConfigureRequestEvent {}) = do
+handle e@(ConfigureRequestEvent {window = w}) = do
     dpy <- gets display
     ws  <- gets workspace
-    let w = window e
 
     when (W.member w ws) $ -- already managed, reconfigure (see client:configure() 
         trace ("Reconfigure already managed window: " ++ show w)
@@ -246,7 +237,7 @@ manage w = do
     withDisplay $ \d -> io $ do
         selectInput d w $ structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
         mapWindow d w
-        setInputFocus d w revertToPointerRoot 0 -- CurrentTime
+    setFocus w
     windows $ W.push w
 
 -- | unmanage. A window no longer exists, remove it from the window
@@ -254,18 +245,28 @@ manage w = do
 unmanage :: Window -> X ()
 unmanage w = do
     ws <- gets workspace
-    when (W.member w ws) $ withDisplay $ \d -> withServerX d $ do
-        -- xseterrorhandler(dummy)
+    when (W.member w ws) $ do
         modify $ \s -> s { workspace = W.delete w (workspace s) }
-        new_ws <- gets workspace
-        case W.peek new_ws of
-            Just new -> io $ setInputFocus d new revertToPointerRoot 0
-            Nothing  -> do
-                rootw <- gets theRoot
-                io $ setInputFocus d rootw revertToPointerRoot 0
+        withDisplay $ \d ->
+           withServerX d $ do
+              setTopFocus
+              io (sync d False)
 
-        io (sync d False)
-        -- xseterrorhandler(error)
+-- | Explicitly set the keyboard focus to the given window
+setFocus :: Window -> X ()
+setFocus w = withDisplay $ \d -> io $ setInputFocus d w revertToPointerRoot 0
+
+-- | Set the focus to the window on top of the stack, or root
+setTopFocus :: X ()
+setTopFocus = do
+    ws <- gets workspace
+    case W.peek ws of
+        Just new -> setFocus new
+        Nothing  -> gets theRoot >>= setFocus
+
+-- | True if the given window is the root window
+isRoot :: Window -> X Bool
+isRoot w = liftM (w==) (gets theRoot)
 
 -- | Grab the X server (lock it) from the X monad
 withServerX :: Display -> X () -> X ()
