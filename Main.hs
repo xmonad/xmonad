@@ -142,23 +142,31 @@ grabKeys dpy rootw = do
 -- 
 handle :: Event -> X ()
 
+-- run window manager command
+handle (KeyEvent {event_type = t, state = m, keycode = code})
+    | t == keyPress
+    = withDisplay $ \dpy -> do
+        s   <- io $ keycodeToKeysym dpy code 0
+        whenJust (M.lookup (m,s) keys) id
+
+-- manage a new window
 handle (MapRequestEvent    {window = w}) = withDisplay $ \dpy -> do
-    wa <- io $ getWindowAttributes dpy w
+    wa <- io $ getWindowAttributes dpy w -- ignore override windows
     when (not (waOverrideRedirect wa)) $ manage w
 
-handle (DestroyWindowEvent {window = w}) = unmanage w
-handle (UnmapEvent         {window = w}) = unmanage w
+-- window destroyed, unmanage it
+handle (DestroyWindowEvent {window = w}) = do b <- isClient w; when b $ unmanage w
 
+-- window gone, unmanage it
+handle (UnmapEvent         {window = w}) = do b <- isClient w; when b $ unmanage w
+
+-- set keyboard mapping
 handle e@(MappingNotifyEvent {window = w}) = do
     let m = (request e, first_keycode e, count e)
     io $ refreshKeyboardMapping m
     when (request e == mappingKeyboard) $ withDisplay $ io . flip grabKeys w
 
-handle (KeyEvent {event_type = t, state = m, keycode = code})
-    | t == keyPress = withDisplay $ \dpy -> do
-        s   <- io $ keycodeToKeysym dpy code 0
-        whenJust (M.lookup (m,s) keys) id
-
+-- entered a normal window
 handle e@(CrossingEvent {window = w, event_type = t})
     | t == enterNotify  && mode e == notifyNormal && detail e /= notifyInferior
     = do ws <- gets workspace
@@ -167,11 +175,13 @@ handle e@(CrossingEvent {window = w, event_type = t})
             else do b <- isRoot w
                     when b setTopFocus
 
+-- left a window, check if we need to focus root
 handle e@(CrossingEvent {event_type = t})
     | t == leaveNotify
     = do rootw <- gets theRoot
          when (window e == rootw && not (same_screen e)) $ setFocus rootw
 
+-- configure a window
 handle e@(ConfigureRequestEvent {window = w}) = do
     dpy <- gets display
     ws  <- gets workspace
@@ -244,12 +254,11 @@ manage w = do
 -- list, on whatever workspace it is.
 unmanage :: Window -> X ()
 unmanage w = do
-    ws <- gets workspace
-    when (W.member w ws) $ do
-        modify $ \s -> s { workspace = W.delete w (workspace s) }
-        withServerX $ do
-          setTopFocus
-          withDisplay $ \d -> io (sync d False) -- TODO, everything operates on the current display, so wrap it up.
+    modify $ \s -> s { workspace = W.delete w (workspace s) }
+    withServerX $ do
+      setTopFocus
+      withDisplay $ \d -> io (sync d False)
+      -- TODO, everything operates on the current display, so wrap it up.
 
 -- | Grab the X server (lock it) from the X monad
 withServerX :: X () -> X ()
@@ -312,3 +321,7 @@ view o = do
         windows $ W.view n
     where n = o-1
 
+
+-- | True if window is under management by us
+isClient :: Window -> X Bool
+isClient w = liftM (W.member w) (gets workspace)
