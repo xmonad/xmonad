@@ -15,7 +15,9 @@
 --
 
 module XMonad (
-    X, WorkSpace, XState(..),runX, withDisplay, io, spawn, trace, whenJust
+    X, WorkSpace, XState(..),runX,
+    io, withDisplay, isRoot,
+    spawn, trace, whenJust
   ) where
 
 import StackSet (StackSet)
@@ -49,11 +51,19 @@ newtype X a = X (StateT XState IO a)
 runX :: XState -> X a -> IO ()
 runX st (X a) = runStateT a st >> return ()
 
+-- ---------------------------------------------------------------------
+-- Convenient wrappers to state
+
 -- | Run a monad action with the current display settings
 withDisplay :: (Display -> X ()) -> X ()
 withDisplay f = gets display >>= f
 
-------------------------------------------------------------------------
+-- | True if the given window is the root window
+isRoot :: Window -> X Bool
+isRoot w = liftM (w==) (gets theRoot)
+
+-- ---------------------------------------------------------------------
+-- Utilities
 
 -- | Lift an IO action into the X monad
 io :: IO a -> X a

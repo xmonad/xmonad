@@ -270,10 +270,6 @@ setTopFocus = do
         Just new -> setFocus new
         Nothing  -> gets theRoot >>= setFocus
 
--- | True if the given window is the root window
-isRoot :: Window -> X Bool
-isRoot w = liftM (w==) (gets theRoot)
-
 -- | raise. focus to window at offset 'n' in list.
 -- The currently focused window is always the head of the list
 raise :: Ordering -> X ()
