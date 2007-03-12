@@ -218,11 +218,11 @@ windows f = do
 hide :: Window -> X ()
 hide w = withDisplay $ \d -> do
     (sw,sh) <- gets dimensions
-    io $! moveWindow d w (2*fromIntegral sw) (2*fromIntegral sh)
+    io $ moveWindow d w (2*fromIntegral sw) (2*fromIntegral sh)
 
 -- | reveal. Expose a list of windows, moving them on screen
 reveal :: Window -> X ()
-reveal w = withDisplay $ \d -> io $! moveWindow d w 0 0
+reveal w = withDisplay $ \d -> io $ moveWindow d w 0 0
 
 -- ---------------------------------------------------------------------
 -- Window operations
@@ -247,10 +247,16 @@ unmanage w = do
     ws <- gets workspace
     when (W.member w ws) $ do
         modify $ \s -> s { workspace = W.delete w (workspace s) }
-        withDisplay $ \d ->
-           withServerX d $ do
-              setTopFocus
-              io (sync d False)
+        withServerX $ do
+          setTopFocus
+          withDisplay $ \d -> io (sync d False) -- TODO, everything operates on the current display, so wrap it up.
+
+-- | Grab the X server (lock it) from the X monad
+withServerX :: X () -> X ()
+withServerX f = withDisplay $ \dpy -> do
+    io $ grabServer dpy
+    f
+    io $ ungrabServer dpy
 
 -- | Explicitly set the keyboard focus to the given window
 setFocus :: Window -> X ()
@@ -267,13 +273,6 @@ setTopFocus = do
 -- | True if the given window is the root window
 isRoot :: Window -> X Bool
 isRoot w = liftM (w==) (gets theRoot)
-
--- | Grab the X server (lock it) from the X monad
-withServerX :: Display -> X () -> X ()
-withServerX dpy f = do
-    io $ grabServer dpy
-    f
-    io $ ungrabServer dpy
 
 -- | raise. focus to window at offset 'n' in list.
 -- The currently focused window is always the head of the list
