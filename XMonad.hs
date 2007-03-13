@@ -24,7 +24,7 @@ import StackSet (StackSet)
 
 import Control.Monad.State
 import System.IO
-import System.Posix.Process (newSession, executeFile)
+import System.Posix.Process (createSession, executeFile, forkProcess)
 import Graphics.X11.Xlib
 import Control.Exception
 
@@ -73,7 +73,9 @@ io = liftIO
 
 -- | spawn. Launch an external application
 spawn :: String -> X ()
-spawn x = io $ forkProcess (do newSession; executeFile "/bin/sh" False ["-c", x] Nothing)
+spawn x = do
+    io $ forkProcess $ do createSession; executeFile "/bin/sh" False ["-c", x] Nothing
+    return ()
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
 whenJust :: Maybe a -> (a -> X ()) -> X ()
