@@ -24,7 +24,8 @@ import StackSet (StackSet)
 
 import Control.Monad.State
 import System.IO
-import System.Posix.Process (createSession, executeFile, forkProcess)
+import System.Posix.Process (executeFile, forkProcess, getProcessStatus)
+import System.Exit
 import Graphics.X11.Xlib
 import Control.Exception
 
@@ -73,8 +74,12 @@ io = liftIO
 
 -- | spawn. Launch an external application
 spawn :: String -> X ()
-spawn x = do
-    io $ forkProcess $ do createSession; executeFile "/bin/sh" False ["-c", x] Nothing
+spawn x = io $ do
+    pid <- forkProcess $ do
+        forkProcess (executeFile "/bin/sh" False ["-c", x] Nothing)
+        exitWith ExitSuccess
+        return ()
+    getProcessStatus True False pid
     return ()
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
