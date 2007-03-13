@@ -24,7 +24,7 @@ import StackSet (StackSet)
 
 import Control.Monad.State
 import System.IO
-import System.Process (runCommand)
+import System.Posix.Process (newSession, executeFile)
 import Graphics.X11.Xlib
 import Control.Exception
 
@@ -73,8 +73,7 @@ io = liftIO
 
 -- | spawn. Launch an external application
 spawn :: String -> X ()
-spawn x = do v <- io $ handle (return . Just) (runCommand x >> return Nothing)
-             whenJust v $ \e -> trace $ "xmonad:spawn: unable to fork "++show x++": "++show e
+spawn x = io $ forkProcess (do newSession; executeFile "/bin/sh" False ["-c", x] Nothing)
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
 whenJust :: Maybe a -> (a -> X ()) -> X ()

@@ -15,6 +15,7 @@ Building:
 
     X11             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-1.2
     mtl             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/mtl-1.0
+    unix            http://hackage.haskell.org/cgi-bin/hackage-scripts/package/unix-2.0 (included with ghc)
 
     X11-extras:     darcs get http://darcs.haskell.org/~sjanssen/X11-extras
 
