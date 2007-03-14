@@ -14,3 +14,18 @@
 
         Statusbar drawing thread, waits for changes in all three TVars, and
         redraws whenever it finds a change.
+
+- tiling:
+    - StackSet currently holds one stack, it needs to hold two.  One stack
+      contains focus info, the top of that stack is always the window that
+      is in the foreground and has focus.
+
+      The other stack keeps track of window layout order.  In tiling mode,
+      the first window in the stack is in the master area.  In both tiling
+      and full screen mode, window cycling follows the order in this stack.
+
+    - Layout calculation: a simple function from number of windows to list
+      of coordinates.
+
+    - state components, key combos, etc. for changing the current layout
+      scheme
