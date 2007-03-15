@@ -1,3 +1,8 @@
+- tasks before 0.1:
+    - tiling
+    - Refactor to make user configuration reasonable.  There should be one
+      file (Config.hs) with all the knobs a user can twist.
+
 - think about the statusbar/multithreading.
     Three shared TVars:
         windowTitle :: TVar String
