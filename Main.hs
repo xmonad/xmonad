@@ -35,21 +35,26 @@ workspaces :: Int
 workspaces = 9
 
 --
+-- modMask lets you easily change which modkey you use.
+--
+modMask = mod1Mask
+
+--
 -- The keys list
 --
 keys :: M.Map (KeyMask, KeySym) (X ())
 keys = M.fromList $
-    [ ((mod1Mask .|. shiftMask, xK_Return), spawn "xterm")
-    , ((mod1Mask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && exec $exe")
+    [ ((modMask .|. shiftMask, xK_Return), spawn "xterm")
+    , ((modMask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && exec $exe")
     , ((controlMask,            xK_space ), spawn "gmrun")
-    , ((mod1Mask,               xK_Tab   ), raise GT)
-    , ((mod1Mask,               xK_j     ), raise GT)
-    , ((mod1Mask,               xK_k     ), raise LT)
-    , ((mod1Mask .|. shiftMask, xK_c     ), kill)
-    , ((mod1Mask .|. shiftMask, xK_q     ), io $ exitWith ExitSuccess)
+    , ((modMask,               xK_Tab   ), raise GT)
+    , ((modMask,               xK_j     ), raise GT)
+    , ((modMask,               xK_k     ), raise LT)
+    , ((modMask .|. shiftMask, xK_c     ), kill)
+    , ((modMask .|. shiftMask, xK_q     ), io $ exitWith ExitSuccess)
     ] ++
     -- generate keybindings to each workspace:
-    [((m .|. mod1Mask, xK_0 + fromIntegral i), f i)
+    [((m .|. modMask, xK_0 + fromIntegral i), f i)
         | i <- [1 .. workspaces]
         , (f, m) <- [(view, 0), (tag, shiftMask)]]
 
