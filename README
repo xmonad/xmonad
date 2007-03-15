@@ -7,7 +7,7 @@ Motivation:
     static typing. Enter Haskell.
 
     If the aim of dwm is to fit in under 2000 lines of C, the aim of 
-    thunk is to fit in under 400 lines of Haskell with similar functionality.
+    xmonad is to fit in under 400 lines of Haskell with similar functionality.
 
 Building:
 
