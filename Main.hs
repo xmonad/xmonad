@@ -37,6 +37,7 @@ workspaces = 9
 --
 -- modMask lets you easily change which modkey you use.
 --
+modMask :: KeyMask
 modMask = mod1Mask
 
 --

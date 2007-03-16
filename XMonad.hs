@@ -27,7 +27,6 @@ import System.IO
 import System.Posix.Process (executeFile, forkProcess, getProcessStatus)
 import System.Exit
 import Graphics.X11.Xlib
-import Control.Exception
 
 -- | XState, the window manager state.
 -- Just the display, width, height and a window list
