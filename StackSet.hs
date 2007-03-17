@@ -61,6 +61,10 @@ empty n = StackSet { current = 0
 member :: Ord a => a -> StackSet a -> Bool
 member a w = M.member a (cache w)
 
+-- | /O(log n)/. Looks up the stack that x is in, if it is in the StackSet
+lookup :: (Monad m, Ord a) => a -> StackSet a -> m Int
+lookup x w = M.lookup x (cache w)
+
 -- | /O(n)/. Number of stacks
 size :: StackSet a -> Int
 size = M.size . stacks

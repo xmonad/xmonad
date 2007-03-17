@@ -15,7 +15,7 @@
 --
 
 module XMonad (
-    X, WorkSpace, XState(..),runX,
+    X, WorkSpace, XState(..), runX,
     io, withDisplay, isRoot,
     spawn, trace, whenJust
   ) where
@@ -28,11 +28,18 @@ import System.Posix.Process (executeFile, forkProcess, getProcessStatus)
 import System.Exit
 import Graphics.X11.Xlib
 
+import Graphics.X11.Xinerama
+
+import qualified Data.Map as M
+
 -- | XState, the window manager state.
 -- Just the display, width, height and a window list
 data XState = XState
     { display       :: Display
     , screen        :: {-# UNPACK #-} !ScreenNumber
+    , xineScreens   :: {-# UNPACK #-} ![XineramaScreenInfo]
+    -- a mapping of workspaces to xinerama screen numbers
+    , wsOnScreen    :: {-# UNPACK #-} !(M.Map Int Int)
     , theRoot       :: {-# UNPACK #-} !Window
     , wmdelete      :: {-# UNPACK #-} !Atom
     , wmprotocols   :: {-# UNPACK #-} !Atom

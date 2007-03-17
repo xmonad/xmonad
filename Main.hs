@@ -14,6 +14,7 @@
 --
 
 import Data.List
+import Data.Maybe
 import Data.Bits hiding (rotate)
 import qualified Data.Map as M
 
@@ -22,6 +23,7 @@ import System.Exit
 
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras
+import Graphics.X11.Xinerama
 
 import Control.Monad.State
 
@@ -69,10 +71,13 @@ main = do
     rootw  <- rootWindow dpy dflt
     wmdelt <- internAtom dpy "WM_DELETE_WINDOW" False
     wmprot <- internAtom dpy "WM_PROTOCOLS"     False
+    xinesc <- getScreenInfo dpy
 
     let st = XState
             { display      = dpy
             , screen       = dflt
+	    , xineScreens  = xinesc
+	    , wsOnScreen   = M.fromList $ map ((\n -> (n,n)) . fromIntegral . xsi_screen_number) xinesc 
             , theRoot      = rootw
             , wmdelete     = wmdelt
             , wmprotocols  = wmprot
@@ -176,10 +181,11 @@ handle e@(MappingNotifyEvent {window = w}) = do
 handle e@(CrossingEvent {window = w, event_type = t})
     | t == enterNotify  && mode e == notifyNormal && detail e /= notifyInferior
     = do ws <- gets workspace
-         if W.member w ws
-            then setFocus w
-            else do b <- isRoot w
-                    when b setTopFocus
+	 case W.lookup w ws of
+	      Just n  -> do setFocus w
+			    windows $ W.view n
+	      Nothing -> do b <- isRoot w
+			    when b setTopFocus
 
 -- left a window, check if we need to focus root
 handle e@(CrossingEvent {event_type = t})
@@ -217,10 +223,17 @@ handle e = trace (eventName e) -- ignoring
 refresh :: X ()
 refresh = do
     ws <- gets workspace
-    whenJust (W.peek ws) $ \w -> withDisplay $ \d -> do
-        (sw,sh) <- gets dimensions
-        io $ do moveResizeWindow d w 0 0 (fromIntegral sw) (fromIntegral sh) -- fullscreen
-                raiseWindow d w
+    ws2sc <- gets wsOnScreen
+    xinesc <- gets xineScreens
+    forM_ (M.assocs ws2sc) $ \(n, scn) -> 
+	whenJust (listToMaybe $ W.index n ws) $ \w -> withDisplay $ \d -> do
+	    let sc = xinesc !! scn
+	    io $ do moveResizeWindow d w (fromIntegral $ xsi_x_org sc) 
+					 (fromIntegral $ xsi_y_org sc)
+					 (fromIntegral $ xsi_width sc)
+					 (fromIntegral $ xsi_height sc) -- fullscreen
+		    raiseWindow d w
+    whenJust (W.peek ws) setFocus
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WorkSpace -> WorkSpace) -> X ()
@@ -230,15 +243,11 @@ windows f = do
     ws <- gets workspace
     trace (show ws) -- log state changes to stderr
 
--- | hide. Hide a list of windows by moving them offscreen.
+-- | hide. Hide a window by moving it offscreen.
 hide :: Window -> X ()
 hide w = withDisplay $ \d -> do
     (sw,sh) <- gets dimensions
     io $ moveWindow d w (2*fromIntegral sw) (2*fromIntegral sh)
-
--- | reveal. Expose a list of windows, moving them on screen
-reveal :: Window -> X ()
-reveal w = withDisplay $ \d -> io $ moveWindow d w 0 0
 
 -- ---------------------------------------------------------------------
 -- Window operations
@@ -312,7 +321,7 @@ tag o = do
     let m = W.current ws
     when (n /= m) $
         whenJust (W.peek ws) $ \w -> do
-            hide w
+	    hide w
             windows $ W.shift n
     where n = o-1
 
@@ -320,13 +329,21 @@ tag o = do
 view :: Int -> X ()
 view o = do
     ws <- gets workspace
+    ws2sc <- gets wsOnScreen
     let m = W.current ws
     when (n /= m) $ do
-        mapM_ reveal (W.index n ws)
-        mapM_ hide   (W.index m ws)
-        windows $ W.view n
+	-- is the workspace we want to switch to currently visible?
+	if M.member n ws2sc
+	    then windows $ W.view n
+	    else do 
+		-- This assumes that the current workspace is visible.
+		-- Is that always going to be true?
+		let Just curscreen = M.lookup m ws2sc
+		modify $ \s -> s { wsOnScreen = M.insert n curscreen (M.delete m ws2sc) }
+		windows $ W.view n
+		mapM_ hide (W.index m ws)
+	setTopFocus
     where n = o-1
-
 
 -- | True if window is under management by us
 isClient :: Window -> X Bool
