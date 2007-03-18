@@ -269,7 +269,7 @@ manage w = do
 -- list, on whatever workspace it is.
 unmanage :: Window -> X ()
 unmanage w = do
-    modify $ \s -> s { workspace = W.delete w (workspace s) }
+    windows $ W.delete w
     withServerX $ do
       setTopFocus
       withDisplay $ \d -> io (sync d False)
