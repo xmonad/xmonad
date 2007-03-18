@@ -336,10 +336,13 @@ view o = do
 	if M.member n ws2sc
 	    then windows $ W.view n
 	    else do 
-		-- This assumes that the current workspace is visible.
-		-- Is that always going to be true?
-		let Just curscreen = M.lookup m ws2sc
-		modify $ \s -> s { wsOnScreen = M.insert n curscreen (M.delete m ws2sc) }
+		sc <- case M.lookup m ws2sc of
+		    Nothing -> do 
+			trace "Current workspace isn't visible! This should never happen!"
+		        -- we don't know what screen to use, just use the first one.
+		        return 0
+		    Just sc -> return sc
+		modify $ \s -> s { wsOnScreen = M.insert n sc (M.filter (/=sc) ws2sc) }
 		windows $ W.view n
 		mapM_ hide (W.index m ws)
 	setTopFocus
