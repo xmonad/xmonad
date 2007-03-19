@@ -342,6 +342,7 @@ view o = do
 		        return 0
 		    Just sc -> return sc
 		modify $ \s -> s { wsOnScreen = M.insert n sc (M.filter (/=sc) ws2sc) }
+		gets wsOnScreen >>= trace . show
 		windows $ W.view n
 		mapM_ hide (W.index m ws)
 	setTopFocus
