@@ -181,11 +181,10 @@ handle e@(MappingNotifyEvent {window = w}) = do
 handle e@(CrossingEvent {window = w, event_type = t})
     | t == enterNotify  && mode e == notifyNormal && detail e /= notifyInferior
     = do ws <- gets workspace
-	 case W.lookup w ws of
-	      Just n  -> do setFocus w
-			    windows $ W.view n
-	      Nothing -> do b <- isRoot w
-			    when b setTopFocus
+         if W.member w ws
+            then setFocus w
+            else do b <- isRoot w
+                    when b setTopFocus
 
 -- left a window, check if we need to focus root
 handle e@(CrossingEvent {event_type = t})
