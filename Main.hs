@@ -62,6 +62,12 @@ keys = M.fromList $
         | i <- [1 .. workspaces]
         , (f, m) <- [(view, 0), (tag, shiftMask)]]
 
+--
+-- The mask for the numlock key.  You may need to change this on some systems.
+--
+numlockMask :: KeySym
+numlockMask = lockMask
+
 ratio :: Rational
 ratio = 0.5
 
@@ -130,7 +136,7 @@ grabKeys dpy rootw = do
     ungrabKey dpy '\0' {-AnyKey-} anyModifier rootw
     forM_ (M.keys keys) $ \(mask,sym) -> do
          kc <- keysymToKeycode dpy sym
-         mapM_ (grab kc) [mask, mask .|. lockMask] -- note: no numlock
+         mapM_ (grab kc) [mask, mask .|. numlockMask] -- note: no numlock
   where
     grab kc m = grabKey dpy kc m rootw True grabModeAsync grabModeAsync
 
