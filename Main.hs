@@ -76,8 +76,8 @@ main = do
     let st = XState
             { display      = dpy
             , screen       = dflt
-	    , xineScreens  = xinesc
-	    , wsOnScreen   = M.fromList $ map (\n -> (n,n)) [0..((length xinesc)-1)]
+            , xineScreens  = xinesc
+            , wsOnScreen   = M.fromList $ map (\n -> (n,n)) [0..((length xinesc)-1)]
             , theRoot      = rootw
             , wmdelete     = wmdelt
             , wmprotocols  = wmprot
@@ -225,13 +225,13 @@ refresh = do
     ws2sc <- gets wsOnScreen
     xinesc <- gets xineScreens
     forM_ (M.assocs ws2sc) $ \(n, scn) -> 
-	whenJust (W.peekStack n ws) $ \w -> withDisplay $ \d -> do
-	    let sc = xinesc !! scn
-	    io $ do moveResizeWindow d w (rect_x sc)
-					 (rect_y sc)
-					 (rect_width sc)
-					 (rect_height sc)
-		    raiseWindow d w
+            whenJust (W.peekStack n ws) $ \w -> withDisplay $ \d -> do
+            let sc = xinesc !! scn
+            io $ do moveResizeWindow d w (rect_x sc)
+                                         (rect_y sc)
+                                         (rect_width sc)
+                                         (rect_height sc)
+            raiseWindow d w
     whenJust (W.peek ws) setFocus
 
 -- | windows. Modify the current window list with a pure function, and refresh
@@ -320,7 +320,7 @@ tag o = do
     let m = W.current ws
     when (n /= m) $
         whenJust (W.peek ws) $ \w -> do
-	    hide w
+            hide w
             windows $ W.shift n
     where n = o-1
 
@@ -331,21 +331,21 @@ view o = do
     ws2sc <- gets wsOnScreen
     let m = W.current ws
     when (n /= m) $ do
-	-- is the workspace we want to switch to currently visible?
-	if M.member n ws2sc
-	    then windows $ W.view n
-	    else do 
-		sc <- case M.lookup m ws2sc of
-		    Nothing -> do 
-			trace "Current workspace isn't visible! This should never happen!"
-		        -- we don't know what screen to use, just use the first one.
-		        return 0
-		    Just sc -> return sc
-		modify $ \s -> s { wsOnScreen = M.insert n sc (M.filter (/=sc) ws2sc) }
-		gets wsOnScreen >>= trace . show
-		windows $ W.view n
-		mapM_ hide (W.index m ws)
-	setTopFocus
+        -- is the workspace we want to switch to currently visible?
+        if M.member n ws2sc
+            then windows $ W.view n
+            else do 
+                sc <- case M.lookup m ws2sc of
+                    Nothing -> do 
+                        trace "Current workspace isn't visible! This should never happen!"
+                        -- we don't know what screen to use, just use the first one.
+                        return 0
+                    Just sc -> return sc
+                modify $ \s -> s { wsOnScreen = M.insert n sc (M.filter (/=sc) ws2sc) }
+                gets wsOnScreen >>= trace . show
+                windows $ W.view n
+                mapM_ hide (W.index m ws)
+        setTopFocus
     where n = o-1
 
 -- | True if window is under management by us
