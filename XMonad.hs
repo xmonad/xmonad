@@ -15,8 +15,8 @@
 --
 
 module XMonad (
-    X, WorkSpace, XState(..), runX,
-    io, withDisplay, isRoot,
+    X, WorkSpace, XState(..), Layout(..),
+    runX, io, withDisplay, isRoot,
     spawn, trace, whenJust
   ) where
 
@@ -43,9 +43,13 @@ data XState = XState
     , wmprotocols   :: {-# UNPACK #-} !Atom
     , dimensions    :: {-# UNPACK #-} !(Int,Int)
     , workspace     :: {-# UNPACK #-} !WorkSpace      -- ^ workspace list
+    , layout        :: {-# UNPACK #-} !Layout
     }
 
 type WorkSpace = StackSet Window
+
+-- | The different layout modes
+data Layout = Full | Tile
 
 -- | The X monad, a StateT transformer over IO encapuslating the window
 -- manager state

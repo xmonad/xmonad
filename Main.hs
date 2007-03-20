@@ -55,11 +55,15 @@ keys = M.fromList $
     , ((modMask,               xK_k     ), raise LT)
     , ((modMask .|. shiftMask, xK_c     ), kill)
     , ((modMask .|. shiftMask, xK_q     ), io $ exitWith ExitSuccess)
+    , ((modMask,               xK_space ), switchLayout)
     ] ++
     -- generate keybindings to each workspace:
     [((m .|. modMask, xK_0 + fromIntegral i), f i)
         | i <- [1 .. workspaces]
         , (f, m) <- [(view, 0), (tag, shiftMask)]]
+
+ratio :: Rational
+ratio = 0.5
 
 --
 -- The main entry point
@@ -83,6 +87,7 @@ main = do
             , wmprotocols  = wmprot
             , dimensions   = (displayWidth  dpy dflt, displayHeight dpy dflt)
             , workspace    = W.empty workspaces
+            , layout       = Full
             }
 
     xSetErrorHandler -- in C, I'm too lazy to write the binding
@@ -224,15 +229,38 @@ refresh = do
     ws <- gets workspace
     ws2sc <- gets wsOnScreen
     xinesc <- gets xineScreens
-    forM_ (M.assocs ws2sc) $ \(n, scn) -> 
-            whenJust (W.peekStack n ws) $ \w -> withDisplay $ \d -> do
-            let sc = xinesc !! scn
-            io $ do moveResizeWindow d w (rect_x sc)
-                                         (rect_y sc)
-                                         (rect_width sc)
-                                         (rect_height sc)
-                    raiseWindow d w
+    d <- gets display
+    l <- gets layout
+    let move w a b c e = io $ moveResizeWindow d w a b c e
+    forM_ (M.assocs ws2sc) $ \(n, scn) -> do
+        let sc = xinesc !! scn
+            sx = rect_x sc
+            sy = rect_y sc
+            sw = rect_width sc
+            sh = rect_height sc
+        case l of
+            Full -> whenJust (W.peekStack n ws) $ \w -> do
+                                                            move w sx sy sw sh
+                                                            io $ raiseWindow d w
+            Tile -> case W.index n ws of
+                []    -> return ()
+                [w]   -> do move w sx sy sw sh; io $ raiseWindow d w
+                (w:s) -> do
+                    let lw = floor $ fromIntegral sw * ratio
+                        rw = sw - fromIntegral lw
+                        rh = fromIntegral sh `div` fromIntegral (length s)
+                    move w sx sy (fromIntegral lw) sh
+                    zipWithM_ (\i a -> move a (sx + lw) (sy + i * rh) rw (fromIntegral rh)) [0..] s
+                    whenJust (W.peek ws) (io . raiseWindow d) -- this is always Just
     whenJust (W.peek ws) setFocus
+
+-- | switchLayout.  Switch to another layout scheme.
+switchLayout :: X ()
+switchLayout = do
+    modify (\s -> s {layout = case layout s of
+                                Full -> Tile
+                                Tile -> Full })
+    refresh
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WorkSpace -> WorkSpace) -> X ()

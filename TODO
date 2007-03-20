@@ -2,6 +2,8 @@
     - tiling
     - Refactor to make user configuration reasonable.  There should be one
       file (Config.hs) with all the knobs a user can twist.
+    - Code clean up after tiling and StackSet changes
+    - Make sure the quickchecks make sense with the new StackSet
 
 - think about the statusbar/multithreading.
     Three shared TVars:
@@ -21,16 +23,9 @@
         redraws whenever it finds a change.
 
 - tiling:
-    - StackSet currently holds one stack, it needs to hold two.  One stack
-      contains focus info, the top of that stack is always the window that
-      is in the foreground and has focus.
-
-      The other stack keeps track of window layout order.  In tiling mode,
-      the first window in the stack is in the master area.  In both tiling
-      and full screen mode, window cycling follows the order in this stack.
-
-    - Layout calculation: a simple function from number of windows to list
-      of coordinates.
-
-    - state components, key combos, etc. for changing the current layout
-      scheme
+    - Layout calculation: the current algorithm is crude, windows overlap
+    - make focus remain between workspace switches
+    - change focus in the StackSet structure on EnterNotify
+    - operations to change window order (like dwm's mod+enter)
+    - add 'ratio' to XState, add bindings to change it on the fly
+    - borders (low priority, maybe wait until 0.2)
