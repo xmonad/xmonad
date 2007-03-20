@@ -225,7 +225,7 @@ refresh = do
     ws2sc <- gets wsOnScreen
     xinesc <- gets xineScreens
     forM_ (M.assocs ws2sc) $ \(n, scn) -> 
-	whenJust (listToMaybe $ W.index n ws) $ \w -> withDisplay $ \d -> do
+	whenJust (W.peekStack n ws) $ \w -> withDisplay $ \d -> do
 	    let sc = xinesc !! scn
 	    io $ do moveResizeWindow d w (fromIntegral $ xsi_x_org sc) 
 					 (fromIntegral $ xsi_y_org sc)

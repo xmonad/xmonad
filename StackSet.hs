@@ -37,6 +37,7 @@ data StackSet a =
     StackSet
         { current:: {-# UNPACK #-} !Int              -- ^ the currently visible stack
         , stacks :: {-# UNPACK #-} !(M.Map Int [a])  -- ^ the separate stacks
+        , focus  :: {-# UNPACK #-} !(M.Map Int a)    -- ^ the window focused in each stack
         , cache  :: {-# UNPACK #-} !(M.Map a Int)    -- ^ a cache of windows back to their stacks
         } deriving Eq
 
@@ -55,6 +56,7 @@ instance Show a => Show (StackSet a) where
 empty :: Int -> StackSet a
 empty n = StackSet { current = 0
                    , stacks  = M.fromList (zip [0..n-1] (repeat []))
+                   , focus   = M.empty
                    , cache   = M.empty }
 
 -- | /O(log w)/. True if x is somewhere in the StackSet
@@ -97,7 +99,12 @@ push k w = insert k (current w) w
 -- | /O(log s)/. Extract the element on the top of the current stack. If no such
 -- element exists, Nothing is returned.
 peek :: StackSet a -> Maybe a
-peek w = listToMaybe $ index (current w) w
+peek w = peekStack (current w) w
+
+-- | /O(log s)/. Extract the element on the top of the given stack. If no such
+-- element exists, Nothing is returned.
+peekStack :: Int -> StackSet a -> Maybe a
+peekStack n w = M.lookup n (focus w)
 
 -- | /O(log s)/. Index. Extract the stack at index 'n'.
 -- If the index is invalid, an exception is thrown.
@@ -118,12 +125,15 @@ view n w | n >= 0 && n < M.size (stacks w) = w { current = n }
 --
 --  where xs = [5..8] ++ [1..4]
 --
-rotate :: Ordering -> StackSet a -> StackSet a
-rotate o w = w { stacks = M.adjust rot (current w) (stacks w) }
-    where rot s = take l . drop offset . cycle $ s
-           where n      = fromEnum o - 1
-                 l      = length s
-                 offset = if n < 0 then l + n else n
+rotate :: Eq a => Ordering -> StackSet a -> StackSet a
+rotate o w = maybe w id $ do
+    f <- M.lookup (current w) (focus w)
+    s <- M.lookup (current w) (stacks w)
+    ea <- case o of
+            EQ -> Nothing
+            GT -> elemAfter f s
+            LT -> elemAfter f (reverse s)
+    return (w { focus = M.insert (current w) ea (focus w) })
 
 -- | /O(log n)/. shift. move the client on top of the current stack to
 -- the top of stack 'n'. If the stack to move to is not valid, and
@@ -139,7 +149,8 @@ shift n w = maybe w (\k -> insert k n (delete k w)) (peek w)
 --
 insert :: Ord a => a -> Int -> StackSet a -> StackSet a
 insert k n old = new { cache  = M.insert k n (cache new)
-                     , stacks = M.adjust (k:) n (stacks new) }
+                     , stacks = M.adjust (k:) n (stacks new)
+                     , focus  = M.insert n k (focus new) }
     where new = delete k old
 
 -- | /O(log n)/. Delete an element entirely from from the StackSet.
@@ -148,4 +159,8 @@ insert k n old = new { cache  = M.insert k n (cache new)
 delete :: Ord a => a -> StackSet a -> StackSet a
 delete k w = maybe w tweak (M.lookup k (cache w))
   where tweak i = w { cache  = M.delete k (cache w)
-                    , stacks = M.adjust (L.delete k) i (stacks w) }
+                    , stacks = M.adjust (L.delete k) i (stacks w)
+                    , focus  = M.update (\k' -> if k == k' then elemAfter k (stacks w M.! i) else Just k') i (focus w) }
+
+elemAfter :: Eq a => a -> [a] -> Maybe a
+elemAfter w ws = listToMaybe . filter (/= w) . dropWhile (/= w) $ ws ++ ws
