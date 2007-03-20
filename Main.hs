@@ -231,7 +231,7 @@ refresh = do
                                          (rect_y sc)
                                          (rect_width sc)
                                          (rect_height sc)
-            raiseWindow d w
+                    raiseWindow d w
     whenJust (W.peek ws) setFocus
 
 -- | windows. Modify the current window list with a pure function, and refresh
