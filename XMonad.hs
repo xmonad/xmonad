@@ -28,8 +28,6 @@ import System.Posix.Process (executeFile, forkProcess, getProcessStatus)
 import System.Exit
 import Graphics.X11.Xlib
 
-import Graphics.X11.Xinerama
-
 import qualified Data.Map as M
 
 -- | XState, the window manager state.
@@ -37,7 +35,7 @@ import qualified Data.Map as M
 data XState = XState
     { display       :: Display
     , screen        :: {-# UNPACK #-} !ScreenNumber
-    , xineScreens   :: {-# UNPACK #-} ![XineramaScreenInfo]
+    , xineScreens   :: {-# UNPACK #-} ![Rectangle]
     -- a mapping of workspaces to xinerama screen numbers
     , wsOnScreen    :: {-# UNPACK #-} !(M.Map Int Int)
     , theRoot       :: {-# UNPACK #-} !Window

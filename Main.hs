@@ -77,7 +77,7 @@ main = do
             { display      = dpy
             , screen       = dflt
 	    , xineScreens  = xinesc
-	    , wsOnScreen   = M.fromList $ map ((\n -> (n,n)) . fromIntegral . xsi_screen_number) xinesc 
+	    , wsOnScreen   = M.fromList $ map (\n -> (n,n)) [0..((length xinesc)-1)]
             , theRoot      = rootw
             , wmdelete     = wmdelt
             , wmprotocols  = wmprot
@@ -227,10 +227,10 @@ refresh = do
     forM_ (M.assocs ws2sc) $ \(n, scn) -> 
 	whenJust (W.peekStack n ws) $ \w -> withDisplay $ \d -> do
 	    let sc = xinesc !! scn
-	    io $ do moveResizeWindow d w (fromIntegral $ xsi_x_org sc) 
-					 (fromIntegral $ xsi_y_org sc)
-					 (fromIntegral $ xsi_width sc)
-					 (fromIntegral $ xsi_height sc) -- fullscreen
+	    io $ do moveResizeWindow d w (rect_x sc)
+					 (rect_y sc)
+					 (rect_width sc)
+					 (rect_height sc)
 		    raiseWindow d w
     whenJust (W.peek ws) setFocus
 
