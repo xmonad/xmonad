@@ -73,7 +73,7 @@ keys = M.fromList $
 
 -- The default size for the left pane
 defaultLeftWidth :: Rational
-defaultLeftWidth = 3%5
+defaultLeftWidth = 1%2
 
 -- How much to change the size of the windows on the left by default
 defaultDelta :: Rational
