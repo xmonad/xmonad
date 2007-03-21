@@ -61,6 +61,12 @@ keys = M.fromList $
     [((m .|. modMask, xK_0 + fromIntegral i), f i)
         | i <- [1 .. workspaces]
         , (f, m) <- [(view, 0), (tag, shiftMask)]]
+    -- generate keybindings to each screen:
+    ++
+    [((m .|. modMask, key), screenWS sc >>= f)
+        | (key, sc) <- zip [xK_w, xK_e, xK_r] [1..]
+        , (f, m) <- [(view, 0), (tag, shiftMask)]]
+
 
 --
 -- The mask for the numlock key.  You may need to change this on some systems.
@@ -385,3 +391,12 @@ view o = do
 -- | True if window is under management by us
 isClient :: Window -> X Bool
 isClient w = liftM (W.member w) (gets workspace)
+
+-- | screenWS. Returns the workspace currently visible on screen n
+screenWS :: Int -> X Int
+screenWS n = do
+    ws2sc <- gets wsOnScreen
+    -- FIXME: It's ugly to have to query this way. We need a different way to
+    -- keep track of screen <-> workspace mappings.
+    let ws = fmap fst $ find (\(_, scn) -> scn == (n-1)) (M.assocs ws2sc)
+    return $ (fromMaybe 0 ws) + 1
