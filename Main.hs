@@ -71,6 +71,10 @@ keys = M.fromList $
         , (f, m) <- [(view, 0), (tag, shiftMask)]]
 
 
+-- The default size for the left pane
+defaultLeftWidth :: Rational
+defaultLeftWidth = 3%5
+
 -- How much to change the size of the windows on the left by default
 defaultDelta :: Rational
 defaultDelta = 3%100
@@ -104,7 +108,7 @@ main = do
             , dimensions   = (displayWidth  dpy dflt, displayHeight dpy dflt)
             , workspace    = W.empty workspaces
             , layout       = Full
-            , leftWidth    = 3%5
+            , leftWidth    = defaultLeftWidth
             }
 
     xSetErrorHandler -- in C, I'm too lazy to write the binding
