@@ -140,7 +140,7 @@ scan dpy rootw = do
 grabKeys :: Display -> Window -> IO ()
 grabKeys dpy rootw = do
     ungrabKey dpy '\0' {-AnyKey-} anyModifier rootw
-    forM_ (M.keys keys) $ \(mask,sym) -> do
+    flip mapM_ (M.keys keys) $ \(mask,sym) -> do
          kc <- keysymToKeycode dpy sym
          mapM_ (grab kc) [mask, mask .|. numlockMask] -- note: no numlock
   where
@@ -244,7 +244,7 @@ refresh = do
     d <- gets display
     l <- gets layout
     let move w a b c e = io $ moveResizeWindow d w a b c e
-    forM_ (M.assocs ws2sc) $ \(n, scn) -> do
+    flip mapM_ (M.assocs ws2sc) $ \(n, scn) -> do
         let sc = xinesc !! scn
             sx = rect_x sc
             sy = rect_y sc
