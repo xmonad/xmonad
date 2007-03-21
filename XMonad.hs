@@ -44,6 +44,8 @@ data XState = XState
     , dimensions    :: {-# UNPACK #-} !(Int,Int)
     , workspace     :: {-# UNPACK #-} !WorkSpace      -- ^ workspace list
     , layout        :: {-# UNPACK #-} !Layout
+    -- how much of the screen the main window should take
+    , leftWidth     :: {-# UNPACK #-} !Rational
     }
 
 type WorkSpace = StackSet Window

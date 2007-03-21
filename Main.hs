@@ -15,6 +15,7 @@
 
 import Data.List
 import Data.Maybe
+import Data.Ratio
 import Data.Bits hiding (rotate)
 import qualified Data.Map as M
 
@@ -53,6 +54,8 @@ keys = M.fromList $
     , ((modMask,               xK_Tab   ), raise GT)
     , ((modMask,               xK_j     ), raise GT)
     , ((modMask,               xK_k     ), raise LT)
+    , ((modMask,               xK_h     ), changeWidth (negate defaultDelta))
+    , ((modMask,               xK_l     ), changeWidth defaultDelta)
     , ((modMask .|. shiftMask, xK_c     ), kill)
     , ((modMask .|. shiftMask, xK_q     ), io $ exitWith ExitSuccess)
     , ((modMask,               xK_space ), switchLayout)
@@ -68,14 +71,15 @@ keys = M.fromList $
         , (f, m) <- [(view, 0), (tag, shiftMask)]]
 
 
+-- How much to change the size of the windows on the left by default
+defaultDelta :: Rational
+defaultDelta = 3%100
+
 --
 -- The mask for the numlock key.  You may need to change this on some systems.
 --
 numlockMask :: KeySym
 numlockMask = lockMask
-
-ratio :: Rational
-ratio = 0.5
 
 --
 -- The main entry point
@@ -100,6 +104,7 @@ main = do
             , dimensions   = (displayWidth  dpy dflt, displayHeight dpy dflt)
             , workspace    = W.empty workspaces
             , layout       = Full
+            , leftWidth    = 3%5
             }
 
     xSetErrorHandler -- in C, I'm too lazy to write the binding
@@ -243,6 +248,7 @@ refresh = do
     xinesc <- gets xineScreens
     d <- gets display
     l <- gets layout
+    ratio <- gets leftWidth
     let move w a b c e = io $ moveResizeWindow d w a b c e
     flip mapM_ (M.assocs ws2sc) $ \(n, scn) -> do
         let sc = xinesc !! scn
@@ -272,6 +278,12 @@ switchLayout = do
     modify (\s -> s {layout = case layout s of
                                 Full -> Tile
                                 Tile -> Full })
+    refresh
+
+-- | changeWidth.  Change the width of the main window in tiling mode.
+changeWidth :: Rational -> X ()
+changeWidth delta = do
+    modify (\s -> s {leftWidth = leftWidth s + delta})
     refresh
 
 -- | windows. Modify the current window list with a pure function, and refresh
