@@ -59,6 +59,7 @@ keys = M.fromList $
     , ((modMask .|. shiftMask, xK_c     ), kill)
     , ((modMask .|. shiftMask, xK_q     ), io $ exitWith ExitSuccess)
     , ((modMask,               xK_space ), switchLayout)
+    , ((modMask,               xK_Return), promote)
     ] ++
     -- generate keybindings to each workspace:
     [((m .|. modMask, xK_0 + fromIntegral i), f i)
@@ -353,6 +354,10 @@ setTopFocus = do
 -- The currently focused window is always the head of the list
 raise :: Ordering -> X ()
 raise = windows . W.rotate
+
+-- | promote.  Make the focused window the master window in its workspace
+promote :: X ()
+promote = windows (\w -> maybe w (\k -> W.promote k w) (W.peek w))
 
 -- | Kill the currently focused client
 kill :: X ()
