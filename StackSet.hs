@@ -169,5 +169,11 @@ raiseFocus k w = case M.lookup k (cache w) of
     Nothing -> w
     Just i  -> w { focus = M.insert i k (focus w) }
 
+-- | Move a window to the top of its workspace.
+promote :: Ord a => a -> StackSet a -> StackSet a
+promote k w = case M.lookup k (cache w) of
+    Nothing -> w
+    Just i  -> w { stacks = M.adjust (\ks -> k : filter (/= k) ks) i (stacks w) }
+
 elemAfter :: Eq a => a -> [a] -> Maybe a
 elemAfter w ws = listToMaybe . filter (/= w) . dropWhile (/= w) $ ws ++ ws
