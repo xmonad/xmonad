@@ -28,6 +28,9 @@ import Graphics.X11.Xinerama
 
 import Control.Monad.State
 
+import System.Posix.Process
+import System.Environment
+
 import XMonad
 import qualified StackSet as W
 
@@ -58,6 +61,7 @@ keys = M.fromList $
     , ((modMask,               xK_l     ), changeWidth defaultDelta)
     , ((modMask .|. shiftMask, xK_c     ), kill)
     , ((modMask .|. shiftMask, xK_q     ), io $ exitWith ExitSuccess)
+    , ((modMask .|. shiftMask, xK_F12   ), io restart)
     , ((modMask,               xK_space ), switchLayout)
     , ((modMask,               xK_Return), promote)
     ] ++
@@ -155,6 +159,13 @@ grabKeys dpy rootw = do
          mapM_ (grab kc) [mask, mask .|. numlockMask] -- note: no numlock
   where
     grab kc m = grabKey dpy kc m rootw True grabModeAsync grabModeAsync
+
+-- | Restart xmonad by exec()'ing self. This doesn't save state and xmonad has
+-- to be in PATH for this to work.
+restart :: IO ()
+restart = do prog <- getProgName
+             args <- getArgs
+             executeFile prog True args Nothing
 
 -- ---------------------------------------------------------------------
 -- Event handler
