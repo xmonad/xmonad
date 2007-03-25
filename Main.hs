@@ -402,22 +402,21 @@ view o = do
     ws <- gets workspace
     ws2sc <- gets wsOnScreen
     let m = W.current ws
-    when (n /= m) $ do
-        -- is the workspace we want to switch to currently visible?
-        if M.member n ws2sc
-            then windows $ W.view n
-            else do 
-                sc <- case M.lookup m ws2sc of
-                    Nothing -> do 
-                        trace "Current workspace isn't visible! This should never happen!"
-                        -- we don't know what screen to use, just use the first one.
-                        return 0
-                    Just sc -> return sc
-                modify $ \s -> s { wsOnScreen = M.insert n sc (M.filter (/=sc) ws2sc) }
-                gets wsOnScreen >>= trace . show
-                windows $ W.view n
-                mapM_ hide (W.index m ws)
-        setTopFocus
+    -- is the workspace we want to switch to currently visible?
+    if M.member n ws2sc
+        then windows $ W.view n
+        else do 
+            sc <- case M.lookup m ws2sc of
+                Nothing -> do 
+                    trace "Current workspace isn't visible! This should never happen!"
+                    -- we don't know what screen to use, just use the first one.
+                    return 0
+                Just sc -> return sc
+            modify $ \s -> s { wsOnScreen = M.insert n sc (M.filter (/=sc) ws2sc) }
+            gets wsOnScreen >>= trace . show
+            windows $ W.view n
+            mapM_ hide (W.index m ws)
+    setTopFocus
     where n = o-1
 
 -- | True if window is under management by us
