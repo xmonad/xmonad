@@ -32,5 +32,4 @@
       are very strange)
     - let click events/scrollwheel events change the focus
 
-* Don't resize past end of screen
 * Tile vertically/ resize height.
