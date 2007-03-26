@@ -24,12 +24,12 @@ import qualified StackSet as W
 -- screen and raises the window.
 refresh :: X ()
 refresh = do
-    ws <- gets workspace
-    ws2sc <- gets wsOnScreen
+    ws     <- gets workspace
+    ws2sc  <- gets wsOnScreen
     xinesc <- gets xineScreens
-    d <- gets display
-    l <- gets layout
-    ratio <- gets leftWidth
+    d      <- gets display
+    l      <- gets layout
+    ratio  <- gets leftWidth
     let move w a b c e = io $ moveResizeWindow d w a b c e
     flip mapM_ (M.assocs ws2sc) $ \(n, scn) -> do
         let sc = xinesc !! scn
@@ -165,7 +165,7 @@ tag o = do
 -- | view. Change the current workspace to workspce at offset 'n-1'.
 view :: Int -> X ()
 view o = do
-    ws <- gets workspace
+    ws    <- gets workspace
     ws2sc <- gets wsOnScreen
     let m = W.current ws
     -- is the workspace we want to switch to currently visible?

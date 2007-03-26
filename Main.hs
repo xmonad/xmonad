@@ -182,4 +182,3 @@ handle e@(ConfigureRequestEvent {window = w}) = do
     io $ sync dpy False
 
 handle e = trace (eventName e) -- ignoring
-
