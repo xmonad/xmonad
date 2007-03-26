@@ -64,7 +64,8 @@ switchLayout = do
 -- | changeWidth.  Change the width of the main window in tiling mode.
 changeWidth :: Rational -> X ()
 changeWidth delta = do
-    modify (\s -> s {leftWidth = leftWidth s + delta})
+    -- the min/max stuff is to make sure that  0 <= leftWidth <= 1
+    modify (\s -> s {leftWidth = min 1 $ max 0 $ leftWidth s + delta})
     refresh
 
 -- | windows. Modify the current window list with a pure function, and refresh
