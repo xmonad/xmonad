@@ -117,7 +117,11 @@ withServerX f = withDisplay $ \dpy -> do
 
 -- | Explicitly set the keyboard focus to the given window
 setFocus :: Window -> X ()
-setFocus w = withDisplay $ \d -> io $ setInputFocus d w revertToPointerRoot 0
+setFocus w = do
+    withDisplay $ \d -> io $ setInputFocus d w revertToPointerRoot 0
+    -- This does not use 'windows' intentionally.  'windows' calls refresh,
+    -- which means infinite loops.
+    modify (\s -> s { workspace = W.raiseFocus w (workspace s) })
 
 -- | Set the focus to the window on top of the stack, or root
 setTopFocus :: X ()
