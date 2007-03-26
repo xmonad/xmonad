@@ -61,6 +61,10 @@ defaultDelta = 3%100
 numlockMask :: KeySym
 numlockMask = lockMask
 
+-- What layout to start in. See the definition of Layout in XMonad.hs for options.
+defaultLayout :: Layout
+defaultLayout = Full
+
 -- The keys list.
 keys :: M.Map (KeyMask, KeySym) (X ())
 keys = M.fromList $

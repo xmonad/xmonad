@@ -50,7 +50,7 @@ main = do
             , wmprotocols  = wmprot
             , dimensions   = (displayWidth  dpy dflt, displayHeight dpy dflt)
             , workspace    = W.empty workspaces
-            , layout       = Full
+            , layout       = defaultLayout
             , leftWidth    = defaultLeftWidth
             }
 
