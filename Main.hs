@@ -41,17 +41,17 @@ main = do
     xinesc <- getScreenInfo dpy
 
     let st = XState
-            { display      = dpy
-            , screen       = dflt
-            , xineScreens  = xinesc
-            , wsOnScreen   = M.fromList $ map (\n -> (n,n)) [0..((length xinesc)-1)]
-            , theRoot      = rootw
-            , wmdelete     = wmdelt
-            , wmprotocols  = wmprot
-            , dimensions   = (displayWidth  dpy dflt, displayHeight dpy dflt)
-            , workspace    = W.empty workspaces
-            , layout       = defaultLayout
-            , leftWidth    = defaultLeftWidth
+            { display       = dpy
+            , screen        = dflt
+            , xineScreens   = xinesc
+            , wsOnScreen    = M.fromList $ map (\n -> (n,n)) [0..((length xinesc)-1)]
+            , theRoot       = rootw
+            , wmdelete      = wmdelt
+            , wmprotocols   = wmprot
+            , dimensions    = (displayWidth  dpy dflt, displayHeight dpy dflt)
+            , workspace     = W.empty workspaces
+            , defaultLayoutDesc = startingLayoutDesc
+            , layoutDescs   = M.empty
             }
 
     xSetErrorHandler -- in C, I'm too lazy to write the binding

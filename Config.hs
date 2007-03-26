@@ -49,10 +49,6 @@ workspaces = 9
 modMask :: KeyMask
 modMask = mod1Mask
 
--- The default size for the left pane.
-defaultLeftWidth :: Rational
-defaultLeftWidth = 1%2
-
 -- How much to change the size of the windows on the left by default.
 defaultDelta :: Rational
 defaultDelta = 3%100
@@ -61,16 +57,25 @@ defaultDelta = 3%100
 numlockMask :: KeySym
 numlockMask = lockMask
 
--- What layout to start in. See the definition of Layout in XMonad.hs for options.
-defaultLayout :: Layout
-defaultLayout = Full
+
+
+-- What layout to start in, and what the default proportion for the
+-- left pane should be in the tiled layout.  See LayoutDesc and
+-- friends in XMonad.hs for options.
+startingLayoutDesc :: LayoutDesc
+startingLayoutDesc = LayoutDesc { layoutType = Full
+                                , tileFraction = 1%2
+                                }
+
+
 
 -- The keys list.
 keys :: M.Map (KeyMask, KeySym) (X ())
 keys = M.fromList $
     [ ((modMask .|. shiftMask, xK_Return), spawn "xterm")
     , ((modMask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && exec $exe")
-    , ((controlMask,           xK_space ), spawn "gmrun")
+-- Stealing Ctrl + Space is evil.
+--    , ((controlMask,           xK_space ), spawn "gmrun")
     , ((modMask,               xK_Tab   ), raise GT)
     , ((modMask,               xK_j     ), raise GT)
     , ((modMask,               xK_k     ), raise LT)

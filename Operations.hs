@@ -17,6 +17,7 @@ import XMonad
 
 import qualified StackSet as W
 
+
 -- ---------------------------------------------------------------------
 -- Managing windows
 
@@ -28,8 +29,10 @@ refresh = do
     ws2sc  <- gets wsOnScreen
     xinesc <- gets xineScreens
     d      <- gets display
-    l      <- gets layout
-    ratio  <- gets leftWidth
+    fls    <- gets layoutDescs
+    dfltfl <- gets defaultLayoutDesc
+    --    l      <- gets layout
+    --    ratio  <- gets leftWidth
     let move w a b c e = io $ moveResizeWindow d w a b c e
     flip mapM_ (M.assocs ws2sc) $ \(n, scn) -> do
         let sc = xinesc !! scn
@@ -37,6 +40,9 @@ refresh = do
             sy = rect_y sc
             sw = rect_width sc
             sh = rect_height sc
+            fl = M.findWithDefault dfltfl n fls
+            l  = layoutType fl
+            ratio = tileFraction fl
         case l of
             Full -> whenJust (W.peekStack n ws) $ \w -> do
                                                             move w sx sy sw sh
@@ -53,20 +59,25 @@ refresh = do
                     whenJust (W.peek ws) (io . raiseWindow d) -- this is always Just
     whenJust (W.peek ws) setFocus
 
--- | switchLayout.  Switch to another layout scheme.
+-- | switchLayout.  Switch to another layout scheme.  Switches the current workspace.
 switchLayout :: X ()
-switchLayout = do
-    modify (\s -> s {layout = case layout s of
-                                Full -> Tile
-                                Tile -> Full })
-    refresh
+switchLayout = layout $ \fl -> fl { layoutType = case layoutType fl of
+                                                   Full -> Tile
+                                                   Tile -> Full }
 
 -- | changeWidth.  Change the width of the main window in tiling mode.
 changeWidth :: Rational -> X ()
 changeWidth delta = do
-    -- the min/max stuff is to make sure that  0 <= leftWidth <= 1
-    modify (\s -> s {leftWidth = min 1 $ max 0 $ leftWidth s + delta})
-    refresh
+    layout $ \fl -> fl { tileFraction = min 1 $ max 0 $ tileFraction fl + delta }
+
+-- | layout. Modify the current workspace's layout with a pure function and refresh.
+layout :: (LayoutDesc -> LayoutDesc) -> X ()
+layout f = do modify $ \s -> let fls = layoutDescs s
+                                 n   = W.current . workspace $ s
+                                 fl  = M.findWithDefault (defaultLayoutDesc s) n fls
+                             in s { layoutDescs = M.insert n (f fl) fls }
+              refresh
+              
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WorkSpace -> WorkSpace) -> X ()
@@ -208,3 +219,5 @@ restart :: IO ()
 restart = do prog <- getProgName
              args <- getArgs
              executeFile prog True args Nothing
+
+

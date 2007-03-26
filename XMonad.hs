@@ -15,7 +15,7 @@
 --
 
 module XMonad (
-    X, WorkSpace, XState(..), Layout(..),
+    X, WorkSpace, XState(..), Layout(..), LayoutDesc(..),
     runX, io, withDisplay, isRoot,
     spawn, trace, whenJust
   ) where
@@ -43,15 +43,27 @@ data XState = XState
     , wmprotocols   :: {-# UNPACK #-} !Atom
     , dimensions    :: {-# UNPACK #-} !(Int,Int)
     , workspace     :: {-# UNPACK #-} !WorkSpace      -- ^ workspace list
-    , layout        :: {-# UNPACK #-} !Layout
+    , defaultLayoutDesc :: {-# UNPACK #-} !LayoutDesc
+    , layoutDescs   :: {-# UNPACK #-} !(M.Map Int LayoutDesc)
+    -- ^ mapping of workspaces to descriptions of their layouts
+
+    --    , layout        :: {-# UNPACK #-} !Layout
     -- how much of the screen the main window should take
-    , leftWidth     :: {-# UNPACK #-} !Rational
+    -- , leftWidth     :: {-# UNPACK #-} !Rational
     }
 
 type WorkSpace = StackSet Window
 
 -- | The different layout modes
 data Layout = Full | Tile
+
+-- | A full description of a particular workspace's layout parameters.
+data LayoutDesc = LayoutDesc { layoutType   :: !Layout
+                             , tileFraction :: !Rational
+                             }
+
+
+
 
 -- | The X monad, a StateT transformer over IO encapuslating the window
 -- manager state
