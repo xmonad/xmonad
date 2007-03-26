@@ -29,3 +29,6 @@
     - operations to change window order (like dwm's mod+enter)
     - add 'ratio' to XState, add bindings to change it on the fly
     - borders (low priority, maybe wait until 0.2)
+
+* Don't resize past end of screen
+* Tile vertically/ resize height.

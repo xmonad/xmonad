@@ -21,13 +21,17 @@ Building:
 
     dmenu   2.{5,6,7} http://www.suckless.org/download/dmenu-2.7.tar.gz
 
-Use:
+And then build with Cabal:
 
-    add: 
+    runhaskell Setup.lhs configure --prefix=/home/dons
+    runhaskell Setup.lhs build
+    runhaskell Setup.lhs install
+
+Then add: 
 
          exec /home/dons/bin/xmonad
 
-    as the last line of your .xsession file
+    to the last line of your .xsession file
 
 Authors:
 
