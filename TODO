@@ -1,5 +1,4 @@
 - tasks before 0.1:
-    - tiling
     - Code clean up after tiling and StackSet changes
     - Make sure the quickchecks make sense with the new StackSet
 
