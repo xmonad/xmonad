@@ -57,8 +57,6 @@ defaultDelta = 3%100
 numlockMask :: KeySym
 numlockMask = lockMask
 
-
-
 -- What layout to start in, and what the default proportion for the
 -- left pane should be in the tiled layout.  See LayoutDesc and
 -- friends in XMonad.hs for options.
@@ -66,8 +64,6 @@ startingLayoutDesc :: LayoutDesc
 startingLayoutDesc = LayoutDesc { layoutType = Full
                                 , tileFraction = 1%2
                                 }
-
-
 
 -- The keys list.
 keys :: M.Map (KeyMask, KeySym) (X ())
