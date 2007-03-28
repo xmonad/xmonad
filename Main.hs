@@ -142,7 +142,9 @@ handle (UnmapEvent         {window = w}) = do b <- isClient w; when b $ unmanage
 
 -- set keyboard mapping
 handle e@(MappingNotifyEvent {window = w}) = do
-    let m = (request e, first_keycode e, count e)
+    -- this fromIntegral is only necessary with the old X11 version that uses
+    -- Int instead of CInt.  TODO delete it when there is a new release of X11
+    let m = (request e, first_keycode e, fromIntegral $ count e)
     io $ refreshKeyboardMapping m
     when (request e == mappingKeyboard) $ withDisplay $ io . flip grabKeys w
 
@@ -176,7 +178,9 @@ handle e@(ConfigureRequestEvent {window = w}) = do
         , wcHeight      = height e
         , wcBorderWidth = border_width e
         , wcSibling     = above e
-        , wcStackMode   = detail e
+        -- this fromIntegral is only necessary with the old X11 version that uses
+        -- Int instead of CInt.  TODO delete it when there is a new release of X11
+        , wcStackMode   = fromIntegral $ detail e
         }
 
     io $ sync dpy False
