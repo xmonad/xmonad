@@ -16,7 +16,7 @@
 import Data.Bits
 import qualified Data.Map as M
 
-import Graphics.X11.Xlib
+import Graphics.X11.Xlib hiding (refreshKeyboardMapping)
 import Graphics.X11.Xlib.Extras
 import Graphics.X11.Xinerama
 
@@ -153,7 +153,7 @@ handle e@(MappingNotifyEvent {window = w}) = do
     -- this fromIntegral is only necessary with the old X11 version that uses
     -- Int instead of CInt.  TODO delete it when there is a new release of X11
     let m = (request e, first_keycode e, fromIntegral $ count e)
-    io $ refreshKeyboardMapping m
+    withDisplay $ \d -> io $ refreshKeyboardMapping d m
     when (request e == mappingKeyboard) $ withDisplay $ io . flip grabKeys w
 
 -- click on an unfocussed window
