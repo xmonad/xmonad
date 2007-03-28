@@ -25,8 +25,8 @@
     - change focus in the StackSet structure on EnterNotify
     - let mod+enter demote a master window
     - borders (low priority, maybe wait until 0.2)
-    - get this to play nicely with Xinerama (at least under TwinView, things
-      are very strange)
-    - let click events/scrollwheel events change the focus
+    - let focus-follows-mouse also change the active workspace (not just the
+      active window); note that this currently also makes click-to-focus appear
+      slightly buggy, since sometimes, the wrong window is exempted from setButtonGrab
 
 * Tile vertically/ resize height.

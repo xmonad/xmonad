@@ -31,8 +31,6 @@ refresh = do
     d      <- gets display
     fls    <- gets layoutDescs
     dfltfl <- gets defaultLayoutDesc
-    --    l      <- gets layout
-    --    ratio  <- gets leftWidth
     let move w a b c e = io $ moveResizeWindow d w a b c e
     flip mapM_ (M.assocs ws2sc) $ \(n, scn) -> do
         let sc = xinesc !! scn
@@ -43,6 +41,9 @@ refresh = do
             fl = M.findWithDefault dfltfl n fls
             l  = layoutType fl
             ratio = tileFraction fl
+        mapM_ (setButtonGrab True) (W.index n ws)
+        when (n == W.current ws) $
+            maybe (return ()) (setButtonGrab False) (W.peekStack n ws)
         case l of
             Full -> whenJust (W.peekStack n ws) $ \w -> do
                                                             move w sx sy sw sh
@@ -95,6 +96,18 @@ hide w = withDisplay $ \d -> do
 
 -- ---------------------------------------------------------------------
 -- Window operations
+
+-- | setButtonGrab. Tell whether or not to intercept clicks on a given window
+buttonsToGrab :: [ButtonMask]
+buttonsToGrab = [button1, button2, button3]
+
+setButtonGrab :: Bool -> Window -> X ()
+setButtonGrab True  w = withDisplay $ \d -> io $ flip mapM_ buttonsToGrab (\b ->
+                            grabButton d b anyModifier w False
+                                       (buttonPressMask .|. buttonReleaseMask)
+                                       grabModeAsync grabModeSync none none)
+setButtonGrab False w = withDisplay $ \d -> io $ flip mapM_ buttonsToGrab (\b ->
+                            ungrabButton d b anyModifier w)
 
 -- | manage. Add a new window to be managed in the current workspace. Bring it into focus.
 -- If the window is already under management, it is just raised.
@@ -219,5 +232,3 @@ restart :: IO ()
 restart = do prog <- getProgName
              args <- getArgs
              executeFile prog True args Nothing
-
-

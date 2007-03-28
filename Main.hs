@@ -120,6 +120,14 @@ grabKeys dpy rootw = do
 -- Window manager clients normally should ignore this window if the
 -- override_redirect member is True.
 -- 
+
+safeFocus :: Window -> X ()
+safeFocus w = do ws <- gets workspace
+                 if W.member w ws
+                    then setFocus w
+                    else do b <- isRoot w
+                            when b setTopFocus
+
 handle :: Event -> X ()
 
 -- run window manager command
@@ -148,14 +156,15 @@ handle e@(MappingNotifyEvent {window = w}) = do
     io $ refreshKeyboardMapping m
     when (request e == mappingKeyboard) $ withDisplay $ io . flip grabKeys w
 
+-- click on an unfocussed window
+handle (ButtonEvent {window = w, event_type = t})
+    | t == buttonPress
+    = safeFocus w
+
 -- entered a normal window
 handle e@(CrossingEvent {window = w, event_type = t})
     | t == enterNotify  && mode e == notifyNormal && detail e /= notifyInferior
-    = do ws <- gets workspace
-         if W.member w ws
-            then setFocus w
-            else do b <- isRoot w
-                    when b setTopFocus
+    = safeFocus w
 
 -- left a window, check if we need to focus root
 handle e@(CrossingEvent {event_type = t})

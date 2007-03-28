@@ -46,10 +46,6 @@ data XState = XState
     , defaultLayoutDesc :: {-# UNPACK #-} !LayoutDesc
     , layoutDescs   :: {-# UNPACK #-} !(M.Map Int LayoutDesc)
     -- ^ mapping of workspaces to descriptions of their layouts
-
-    --    , layout        :: {-# UNPACK #-} !Layout
-    -- how much of the screen the main window should take
-    -- , leftWidth     :: {-# UNPACK #-} !Rational
     }
 
 type WorkSpace = StackSet Window
