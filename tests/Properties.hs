@@ -10,6 +10,7 @@ import System.IO
 import System.Random
 import Text.Printf
 import Data.List            (nub,sort,group,sort,intersperse)
+import Data.Map             (keys,elems)
 
 -- ---------------------------------------------------------------------
 -- QuickCheck properties for the StackSet
@@ -80,6 +81,11 @@ prop_shiftshift r x =
     in shift n (shift r x) == x
     where _ = x :: T
 
+prop_fullcache x = cached == allvals where
+    cached  = sort . keys $ cache x
+    allvals = sort . concat . elems $ stacks x
+    _       = x :: T
+
 ------------------------------------------------------------------------
 
 main :: IO ()
@@ -103,6 +109,7 @@ main = do
         ,("delete idempotent", mytest prop_delete2)
         ,("rotate/rotate    ", mytest prop_rotaterotate)
         ,("view/view        ", mytest prop_viewview)
+        ,("fullcache        ", mytest prop_fullcache)
         ]
 
 debug = False
