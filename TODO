@@ -24,6 +24,5 @@
     - make focus remain between workspace switches
     - change focus in the StackSet structure on EnterNotify
     - let mod+enter demote a master window
-    - borders (low priority, maybe wait until 0.2)
 
 * Tile vertically/ resize height.

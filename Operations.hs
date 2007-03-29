@@ -142,10 +142,16 @@ withServerX f = withDisplay $ \dpy -> do
 -- | Explicitly set the keyboard focus to the given window
 setFocus :: Window -> X ()
 setFocus w = do
+    -- Remove the border for the window no longer in focus.
+    ws <- gets workspace
+    whenJust (W.peek ws) (\oldw -> setBorder oldw 0xdddddd)
+    -- Set focus to the given window.
     withDisplay $ \d -> io $ setInputFocus d w revertToPointerRoot 0
     -- This does not use 'windows' intentionally.  'windows' calls refresh,
     -- which means infinite loops.
     modify (\s -> s { workspace = W.raiseFocus w (workspace s) })
+    -- Set new border for raised window.
+    setBorder w 0xff0000
 
 -- | Set the focus to the window on top of the stack, or root
 setTopFocus :: X ()
@@ -154,6 +160,10 @@ setTopFocus = do
     case W.peek ws of
         Just new -> setFocus new
         Nothing  -> gets theRoot >>= setFocus
+
+-- | Set the border color for a particular window.
+setBorder :: Window -> Pixel -> X ()
+setBorder w p = withDisplay $ \d -> io $ setWindowBorder d w p
 
 -- | raise. focus to window at offset 'n' in list.
 -- The currently focused window is always the head of the list
