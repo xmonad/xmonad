@@ -14,6 +14,9 @@ Building:
     Get the dependencies
 
     X11             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-1.2
+        (Unfortunately X11-1.2 does not work correctly on AMD64.  The latest
+         darcs version from http://darcs.haskell.org/packages/X11 does.)
+
     mtl             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/mtl-1.0
     unix            http://hackage.haskell.org/cgi-bin/hackage-scripts/package/unix-2.0 (included with ghc)
 
