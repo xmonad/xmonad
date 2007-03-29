@@ -98,7 +98,7 @@ hide w = withDisplay $ \d -> do
 -- Window operations
 
 -- | setButtonGrab. Tell whether or not to intercept clicks on a given window
-buttonsToGrab :: [ButtonMask]
+buttonsToGrab :: [Button]
 buttonsToGrab = [button1, button2, button3]
 
 setButtonGrab :: Bool -> Window -> X ()
