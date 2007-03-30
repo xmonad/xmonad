@@ -41,9 +41,6 @@ refresh = do
             fl = M.findWithDefault dfltfl n fls
             l  = layoutType fl
             ratio = tileFraction fl
-        mapM_ (setButtonGrab True) (W.index n ws)
-        when (n == W.current ws) $
-            maybe (return ()) (setButtonGrab False) (W.peekStack n ws)
         case l of
             Full -> whenJust (W.peekStack n ws) $ \w -> do
                                                             move w sx sy sw sh
@@ -59,6 +56,16 @@ refresh = do
                     zipWithM_ (\i a -> move a (sx + lw) (sy + i * rh) rw (fromIntegral rh)) [0..] s
                     whenJust (W.peek ws) (io . raiseWindow d) -- this is always Just
     whenJust (W.peek ws) setFocus
+    refocus
+
+refocus :: X ()
+refocus = do
+    ws2sc <- gets wsOnScreen
+    ws    <- gets workspace
+    flip mapM_ (M.keys ws2sc) $ \n -> do
+        mapM_ (setButtonGrab True) (W.index n ws)
+        when (n == W.current ws) $
+            maybe (return ()) (setButtonGrab False) (W.peekStack n ws)
 
 -- | switchLayout.  Switch to another layout scheme.  Switches the current workspace.
 switchLayout :: X ()
