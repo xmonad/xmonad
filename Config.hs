@@ -70,7 +70,7 @@ keys :: M.Map (KeyMask, KeySym) (X ())
 keys = M.fromList $
     [ ((modMask .|. shiftMask, xK_Return), spawn "xterm")
     , ((modMask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && exec $exe")
-    , ((controlMask,           xK_space ), spawn "gmrun")
+--    , ((modMask .|. shiftMask, xK_F11   ), spawn "gmrun")
     , ((modMask,               xK_Tab   ), raise GT)
     , ((modMask,               xK_j     ), raise GT)
     , ((modMask,               xK_k     ), raise LT)
