@@ -121,13 +121,6 @@ grabKeys dpy rootw = do
 -- override_redirect member is True.
 -- 
 
-safeFocus :: Window -> X ()
-safeFocus w = do ws <- gets workspace
-                 if W.member w ws
-                    then setFocus w
-                    else do b <- isRoot w
-                            when b setTopFocus
-
 handle :: Event -> X ()
 
 -- run window manager command

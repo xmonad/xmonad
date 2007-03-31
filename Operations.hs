@@ -136,6 +136,13 @@ withServerX f = withDisplay $ \dpy -> do
     f
     io $ ungrabServer dpy
 
+safeFocus :: Window -> X ()
+safeFocus w = do ws <- gets workspace
+                 if W.member w ws
+                    then setFocus w
+                    else do b <- isRoot w
+                            when b setTopFocus
+
 -- | Explicitly set the keyboard focus to the given window
 setFocus :: Window -> X ()
 setFocus w = do
