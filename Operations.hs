@@ -56,16 +56,6 @@ refresh = do
                     zipWithM_ (\i a -> move a (sx + lw) (sy + i * rh) rw (fromIntegral rh)) [0..] s
                     whenJust (W.peek ws) (io . raiseWindow d) -- this is always Just
     whenJust (W.peek ws) setFocus
-    refocus
-
-refocus :: X ()
-refocus = do
-    ws2sc <- gets wsOnScreen
-    ws    <- gets workspace
-    flip mapM_ (M.keys ws2sc) $ \n -> do
-        mapM_ (setButtonGrab True) (W.index n ws)
-        when (n == W.current ws) $
-            maybe (return ()) (setButtonGrab False) (W.peekStack n ws)
 
 -- | switchLayout.  Switch to another layout scheme.  Switches the current workspace.
 switchLayout :: X ()
@@ -149,16 +139,20 @@ withServerX f = withDisplay $ \dpy -> do
 -- | Explicitly set the keyboard focus to the given window
 setFocus :: Window -> X ()
 setFocus w = do
-    -- Remove the border for the window no longer in focus.
     ws <- gets workspace
-    whenJust (W.peek ws) (\oldw -> setBorder oldw 0xdddddd)
-    -- Set focus to the given window.
+    ws2sc <- gets wsOnScreen
+    -- clear mouse button grab and border on other windows
+    flip mapM_ (M.keys ws2sc) $ \n -> do
+        flip mapM_ (W.index n ws) $ \otherw -> do
+            setButtonGrab True otherw
+            setBorder otherw 0xdddddd
+
     withDisplay $ \d -> io $ setInputFocus d w revertToPointerRoot 0
+    setButtonGrab False w
+    setBorder w 0xff0000
     -- This does not use 'windows' intentionally.  'windows' calls refresh,
     -- which means infinite loops.
     modify (\s -> s { workspace = W.raiseFocus w (workspace s) })
-    -- Set new border for raised window.
-    setBorder w 0xff0000
 
 -- | Set the focus to the window on top of the stack, or root
 setTopFocus :: X ()

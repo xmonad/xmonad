@@ -127,7 +127,6 @@ safeFocus w = do ws <- gets workspace
                     then setFocus w
                     else do b <- isRoot w
                             when b setTopFocus
-                 refocus
 
 handle :: Event -> X ()
 
