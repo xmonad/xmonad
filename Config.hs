@@ -67,31 +67,36 @@ keys :: M.Map (KeyMask, KeySym) (X ())
 keys = M.fromList $
     [ ((modMask .|. shiftMask, xK_Return), spawn "xterm")
     , ((modMask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && exec $exe")
-    , ((modMask .|. shiftMask, xK_F11   ), spawn "gmrun")
+    , ((modMask .|. shiftMask, xK_p     ), spawn "gmrun")
     , ((modMask,               xK_space ), switchLayout)
+
+    , ((modMask,               xK_Tab   ), raise GT)
+    , ((modMask,               xK_j     ), raise GT)
+    , ((modMask,               xK_k     ), raise LT)
 
     , ((modMask,               xK_h     ), changeHorz (negate defaultDelta))
     , ((modMask,               xK_l     ), changeHorz defaultDelta)
     , ((modMask .|. shiftMask, xK_j     ), changeVert defaultDelta)
     , ((modMask .|. shiftMask, xK_k     ), changeVert (negate defaultDelta))
 
-    , ((modMask,               xK_Tab   ), raise GT)
-    , ((modMask,               xK_j     ), raise GT)
-    , ((modMask,               xK_k     ), raise LT)
-
     , ((modMask .|. shiftMask, xK_c     ), kill)
-    , ((modMask .|. shiftMask, xK_q     ), io $ exitWith ExitSuccess)
-    , ((modMask .|. shiftMask, xK_r     ), io restart)
 
+    , ((modMask .|. shiftMask, xK_q                     ), io $ exitWith ExitSuccess)
+    , ((modMask .|. shiftMask .|. controlMask, xK_q     ), io restart)
+
+    -- more focused window into master position in tiling mode.
     , ((modMask,               xK_Return), promote)
 
     ] ++
-    -- Keybindings to each workspace:
+    -- Keybindings to get to each workspace:
     [((m .|. modMask, xK_0 + fromIntegral i), f i)
         | i <- [1 .. workspaces]
         , (f, m) <- [(view, 0), (tag, shiftMask)]]
-    -- Keybindings to each screen:
+
+    -- Keybindings to each screen :
+    -- mod-wer (underneath 123) swtiches to physical/Xinerama screens 1 2 and 3
     ++
     [((m .|. modMask, key), screenWS sc >>= f)
-        | (key, sc) <- zip [xK_e, xK_r, xK_t] [1..]
+        | (key, sc) <- zip [xK_w, xK_e, xK_r] [1..]
         , (f, m) <- [(view, 0), (tag, shiftMask)]]
+
