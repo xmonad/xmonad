@@ -158,9 +158,13 @@ insert k n old = new { cache  = M.insert k n (cache new)
 -- If the element doesn't exist, the original StackSet is returned unmodified.
 delete :: Ord a => a -> StackSet a -> StackSet a
 delete k w = maybe w tweak (M.lookup k (cache w))
-  where tweak i = w { cache  = M.delete k (cache w)
-                    , stacks = M.adjust (L.delete k) i (stacks w)
-                    , focus  = M.update (\k' -> if k == k' then elemAfter k (stacks w M.! i) else Just k') i (focus w) }
+  where
+    tweak i = w { cache  = M.delete k (cache w)
+                , stacks = M.adjust (L.delete k) i (stacks w)
+                , focus  = M.update (\k' -> if k == k' then elemAfter k (stacks w M.! i)
+                                                       else Just k') i
+                                    (focus w)
+                }
 
 -- | /O(log n)/. If the given window is contained in a workspace, make it the
 -- focused window of that workspace, and make that workspace the current one.
@@ -175,5 +179,6 @@ promote k w = case M.lookup k (cache w) of
     Nothing -> w
     Just i  -> w { stacks = M.adjust (\ks -> k : filter (/= k) ks) i (stacks w) }
 
+-- |
 elemAfter :: Eq a => a -> [a] -> Maybe a
 elemAfter w ws = listToMaybe . filter (/= w) . dropWhile (/= w) $ ws ++ ws
