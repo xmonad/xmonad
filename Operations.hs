@@ -244,7 +244,11 @@ setBorder w p = withDisplay $ \d -> io $ setWindowBorder d w p
 raise :: Ordering -> X ()
 raise = windows . W.rotate
 
--- | promote.  Make the focused window the master window in its workspace
+-- | promote.  Make the focused window the master window in its
+-- workspace , in non-fullscreen mode.
+--
+-- TODO: generic cycling clockwise and anticlockwise
+--
 promote :: X ()
 promote = windows $ \w -> maybe w (\k -> W.promote k w) (W.peek w)
 

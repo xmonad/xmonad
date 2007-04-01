@@ -68,18 +68,23 @@ keys = M.fromList $
     [ ((modMask .|. shiftMask, xK_Return), spawn "xterm")
     , ((modMask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && exec $exe")
     , ((modMask .|. shiftMask, xK_F11   ), spawn "gmrun")
-    , ((modMask,               xK_Tab   ), raise GT)
-    , ((modMask,               xK_j     ), changeVert defaultDelta)
-    , ((modMask,               xK_k     ), changeVert (negate defaultDelta))
+    , ((modMask,               xK_space ), switchLayout)
+
     , ((modMask,               xK_h     ), changeHorz (negate defaultDelta))
     , ((modMask,               xK_l     ), changeHorz defaultDelta)
-    , ((modMask,               xK_F10   ), changeSize sizeDelta          (1%100))
-    , ((modMask,               xK_F9    ), changeSize (negate sizeDelta) (1%100))
+    , ((modMask .|. shiftMask, xK_j     ), changeVert defaultDelta)
+    , ((modMask .|. shiftMask, xK_k     ), changeVert (negate defaultDelta))
+
+    , ((modMask,               xK_Tab   ), raise GT)
+    , ((modMask,               xK_j     ), raise GT)
+    , ((modMask,               xK_k     ), raise LT)
+
     , ((modMask .|. shiftMask, xK_c     ), kill)
     , ((modMask .|. shiftMask, xK_q     ), io $ exitWith ExitSuccess)
-    , ((modMask .|. shiftMask, xK_F12   ), io restart)
-    , ((modMask,               xK_space ), switchLayout)
+    , ((modMask .|. shiftMask, xK_r     ), io restart)
+
     , ((modMask,               xK_Return), promote)
+
     ] ++
     -- Keybindings to each workspace:
     [((m .|. modMask, xK_0 + fromIntegral i), f i)
