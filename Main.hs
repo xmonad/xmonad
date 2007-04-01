@@ -3,7 +3,7 @@
 -- Module      :  Main.hs
 -- Copyright   :  (c) Spencer Janssen 2007
 -- License     :  BSD3-style (see LICENSE)
--- 
+--
 -- Maintainer  :  sjanssen@cse.unl.edu
 -- Stability   :  unstable
 -- Portability :  not portable, uses mtl, X11, posix
@@ -30,7 +30,7 @@ import Config
 
 --
 -- The main entry point
--- 
+--
 main :: IO ()
 main = do
     dpy   <- openDisplay ""
@@ -121,7 +121,7 @@ grabKeys dpy rootw = do
 -- XCreateWindowEvent(3X11)
 -- Window manager clients normally should ignore this window if the
 -- override_redirect member is True.
--- 
+--
 
 handle :: Event -> X ()
 
@@ -172,7 +172,7 @@ handle e@(ConfigureRequestEvent {window = w}) = do
     dpy <- gets display
     ws  <- gets workspace
 
-    when (W.member w ws) $ -- already managed, reconfigure (see client:configure() 
+    when (W.member w ws) $ -- already managed, reconfigure (see client:configure()
         trace ("Reconfigure already managed window: " ++ show w)
 
     io $ configureWindow dpy (window e) (value_mask e) $ WindowChanges

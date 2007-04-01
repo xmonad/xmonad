@@ -3,7 +3,7 @@
 -- Module      :  StackSet
 -- Copyright   :  (c) Don Stewart 2007
 -- License     :  BSD3-style (see LICENSE)
--- 
+--
 -- Maintainer  :  dons@cse.unsw.edu.au
 -- Stability   :  stable
 -- Portability :  portable, needs GHC 6.6
@@ -89,7 +89,7 @@ fromList (o,xs) = view o $ foldr (\(i,ys) s ->
 toList  :: StackSet a -> (Int,[[a]])
 toList x = (current x, map snd $ M.toList (stacks x))
 
--- | Push. Insert an element onto the top of the current stack. 
+-- | Push. Insert an element onto the top of the current stack.
 -- If the element is already in the current stack, it is moved to the top.
 -- If the element is managed on another stack, it is removed from that
 -- stack first.

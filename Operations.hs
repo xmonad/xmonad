@@ -40,7 +40,7 @@ refresh = do
             fullWindow w = move w sc >> io (raiseWindow d w)
 
             -- runRects draws the windows, figuring out their rectangles.
-            -- The code here is for a horizontal split, and tr is possibly 
+            -- The code here is for a horizontal split, and tr is possibly
             -- used to convert to the vertical case.  The comments
             -- speak in terms of the horizontal case.
             runRects :: Rectangle -> (Rectangle -> Rectangle)
@@ -58,7 +58,7 @@ refresh = do
                   ns = map (/ sum ds) ds -- normalized ratios for rhs.
 
               -- Normalize dispositions while we have the opportunity.
-              -- This is bad.  Rational numbers might space leak each 
+              -- This is bad.  Rational numbers might space leak each
               -- time we make an adjustment.  Floating point numbers are
               -- better here.  I am being paranoid.
               zipWithM_ (\ratio a -> disposeW a (dfix ratio)) ns s
@@ -103,7 +103,7 @@ refresh = do
     whenJust (W.peek ws) setFocus
 
 -- | switchLayout.  Switch to another layout scheme.  Switches the
--- current workspace. 
+-- current workspace.
 switchLayout :: X ()
 switchLayout = layout $ \fl -> fl { layoutType = rot (layoutType fl) }
 
@@ -111,7 +111,7 @@ switchLayout = layout $ \fl -> fl { layoutType = rot (layoutType fl) }
 changeVert :: Rational -> X ()
 changeVert delta = do
   l <- gets (layoutType . currentDesc)
-  case l of 
+  case l of
     Vert -> layout $ \d -> d {vertTileFrac = min 1 $
                                              max 0 $
                                              vertTileFrac d + delta}
@@ -127,7 +127,7 @@ changeHorz delta = do
                                             horzTileFrac d + delta}
    _    -> return ()
 
--- | changeSize.  Changes the size of the window, except in Full mode, with the 
+-- | changeSize.  Changes the size of the window, except in Full mode, with the
 -- size remaining above the given mini-mum.
 changeSize :: Rational -> Rational -> X ()
 changeSize delta mini = do
@@ -143,7 +143,7 @@ changeSize delta mini = do
     refresh
 
 -- | layout. Modify the current workspace's layout with a pure
--- function and refresh. 
+-- function and refresh.
 layout :: (LayoutDesc -> LayoutDesc) -> X ()
 layout f = do
     modify $ \s ->

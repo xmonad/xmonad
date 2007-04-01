@@ -6,7 +6,7 @@ Motivation:
     more correct window manager in fewer lines of code, using strong
     static typing. Enter Haskell.
 
-    If the aim of dwm is to fit in under 2000 lines of C, the aim of 
+    If the aim of dwm is to fit in under 2000 lines of C, the aim of
     xmonad is to fit in under 400 lines of Haskell with similar functionality.
 
 Building:
@@ -30,7 +30,7 @@ And then build with Cabal:
     runhaskell Setup.lhs build
     runhaskell Setup.lhs install
 
-Then add: 
+Then add:
 
          exec /home/dons/bin/xmonad
 

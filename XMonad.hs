@@ -3,7 +3,7 @@
 -- Module      :  XMonad.hs
 -- Copyright   :  (c) Spencer Janssen 2007
 -- License     :  BSD3-style (see LICENSE)
--- 
+--
 -- Maintainer  :  sjanssen@cse.unl.edu
 -- Stability   :  unstable
 -- Portability :  not portable, uses cunning newtype deriving
