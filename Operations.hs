@@ -41,8 +41,10 @@ refresh = do
 
             -- runRects draws the windows, figuring out their rectangles.
             -- The code here is for a horizontal split, and tr is possibly 
-            -- used to convert to the vertical case.
-            runRects :: Rectangle -> (Rectangle -> Rectangle) -> (Rational -> Disposition -> Disposition)
+            -- used to convert to the vertical case.  The comments
+            -- speak in terms of the horizontal case.
+            runRects :: Rectangle -> (Rectangle -> Rectangle)
+                     -> (Rational -> Disposition -> Disposition)
                      -> (Disposition -> Rational) -> Rational -> [Window] -> X ()
             runRects _ _ _ _ _ [] = return () -- impossible
             runRects (Rectangle sx sy sw sh) tr dfix fracFn tf (w:s) = do
@@ -83,12 +85,25 @@ refresh = do
                 []  -> return ()
                 [w] -> fullWindow w
                 s   -> case l of
-                         Horz -> runRects sc id (\r dp -> dp {horzFrac = r}) horzFrac (horzTileFrac fl) s
-                         Vert -> runRects (flipRect sc) flipRect (\r dp -> dp {vertFrac = r}) vertFrac (vertTileFrac fl) s
-                         _    -> error "Operations.refresh: the absurdly impossible happened.  Please complain about this."
+                         Horz -> (runRects sc
+                                           id
+                                           (\r dp -> dp {horzFrac = r})
+                                           horzFrac
+                                           (horzTileFrac fl)
+                                           s)
+                         Vert -> (runRects (flipRect sc)
+                                           flipRect
+                                           (\r dp -> dp {vertFrac = r})
+                                           vertFrac
+                                           (vertTileFrac fl)
+                                           s)
+                         _    -> error "Operations.refresh: the absurdly \
+                                       \impossible happened.  Please \
+                                       \complain about this."
     whenJust (W.peek ws) setFocus
 
--- | switchLayout.  Switch to another layout scheme.  Switches the current workspace.
+-- | switchLayout.  Switch to another layout scheme.  Switches the
+-- current workspace. 
 switchLayout :: X ()
 switchLayout = layout $ \fl -> fl { layoutType = rot (layoutType fl) }
 
@@ -97,7 +112,9 @@ changeVert :: Rational -> X ()
 changeVert delta = do
   l <- gets (layoutType . currentDesc)
   case l of 
-    Vert -> layout $ \d -> d {vertTileFrac = min 1 $ max 0 $ vertTileFrac d + delta}
+    Vert -> layout $ \d -> d {vertTileFrac = min 1 $
+                                             max 0 $
+                                             vertTileFrac d + delta}
     _    -> return ()
 
 -- | changeHorz.  Changes the horizontal split, if it's visible.
@@ -105,7 +122,9 @@ changeHorz :: Rational -> X ()
 changeHorz delta = do
   l <- gets (layoutType . currentDesc)
   case l of
-   Horz -> layout $ \d -> d {horzTileFrac = min 1 $ max 0 $ horzTileFrac d + delta}
+   Horz -> layout $ \d -> d {horzTileFrac = min 1 $
+                                            max 0 $
+                                            horzTileFrac d + delta}
    _    -> return ()
 
 -- | changeSize.  Changes the size of the window, except in Full mode, with the 
@@ -114,14 +133,17 @@ changeSize :: Rational -> Rational -> X ()
 changeSize delta mini = do
   l <- gets (layoutType . currentDesc)
   mw <- gets (W.peek . workspace)
-  whenJust mw $ \w -> do
-    case l of -- This is always Just.
+  whenJust mw $ \w -> do  -- This is always Just.
+    case l of
       Full -> return ()
-      Horz -> disposeW w $ \d -> d {horzFrac = max mini $ horzFrac d + delta}
-      Vert -> disposeW w $ \d -> d {vertFrac = max mini $ vertFrac d + delta} -- hrm...
+      Horz -> disposeW w $ \d -> d {horzFrac = max mini $
+                                               horzFrac d + delta}
+      Vert -> disposeW w $ \d -> d {vertFrac = max mini $
+                                               vertFrac d + delta} -- hrm...
     refresh
 
--- | layout. Modify the current workspace's layout with a pure function and refresh.
+-- | layout. Modify the current workspace's layout with a pure
+-- function and refresh. 
 layout :: (LayoutDesc -> LayoutDesc) -> X ()
 layout f = do
     modify $ \s ->
