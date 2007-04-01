@@ -50,8 +50,8 @@ main = do
             , wmprotocols   = wmprot
             , dimensions    = (displayWidth  dpy dflt, displayHeight dpy dflt)
             , workspace     = W.empty workspaces
-            , defaultLayoutDesc = startingLayoutDesc
             , layoutDescs   = M.empty
+            , dispositions  = M.empty
             }
 
     xSetErrorHandler -- in C, I'm too lazy to write the binding

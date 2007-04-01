@@ -49,9 +49,13 @@ workspaces = 9
 modMask :: KeyMask
 modMask = mod1Mask
 
--- How much to change the size of the windows on the left by default.
+-- How much to change the horizontal/vertical split bar by defalut.
 defaultDelta :: Rational
 defaultDelta = 3%100
+
+-- How much to change the size of a tiled window, by default.
+sizeDelta :: Rational
+sizeDelta = 3%100
 
 -- The mask for the numlock key. You may need to change this on some systems.
 numlockMask :: KeySym
@@ -61,21 +65,23 @@ numlockMask = lockMask
 -- left pane should be in the tiled layout.  See LayoutDesc and
 -- friends in XMonad.hs for options.
 startingLayoutDesc :: LayoutDesc
-startingLayoutDesc =
-    LayoutDesc { layoutType   = Full
-               , tileFraction = 1%2  }
+startingLayoutDesc = LayoutDesc { layoutType = Full
+                                , tileFraction = 1%2
+                                }
 
 -- The keys list.
 keys :: M.Map (KeyMask, KeySym) (X ())
 keys = M.fromList $
     [ ((modMask .|. shiftMask, xK_Return), spawn "xterm")
     , ((modMask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && exec $exe")
---    , ((modMask .|. shiftMask, xK_F11   ), spawn "gmrun")
+    , ((modMask .|. shiftMask, xK_F11   ), spawn "gmrun")
     , ((modMask,               xK_Tab   ), raise GT)
-    , ((modMask,               xK_j     ), raise GT)
-    , ((modMask,               xK_k     ), raise LT)
-    , ((modMask,               xK_h     ), changeWidth (negate defaultDelta))
-    , ((modMask,               xK_l     ), changeWidth defaultDelta)
+    , ((modMask,               xK_j     ), changeVert defaultDelta)
+    , ((modMask,               xK_k     ), changeVert (negate defaultDelta))
+    , ((modMask,               xK_h     ), changeHorz (negate defaultDelta))
+    , ((modMask,               xK_l     ), changeHorz defaultDelta)
+    , ((modMask,               xK_F10   ), changeSize sizeDelta          (1%100))
+    , ((modMask,               xK_F9    ), changeSize (negate sizeDelta) (1%100))
     , ((modMask .|. shiftMask, xK_c     ), kill)
     , ((modMask .|. shiftMask, xK_q     ), io $ exitWith ExitSuccess)
     , ((modMask .|. shiftMask, xK_F12   ), io restart)

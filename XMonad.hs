@@ -15,12 +15,15 @@
 --
 
 module XMonad (
-    X, WorkSpace, XState(..), Layout(..), LayoutDesc(..),
+    X, WorkSpace, XState(..), Layout(..), LayoutDesc(..), Disposition(..),
+    basicLayoutDesc, currentDesc, disposition,
     runX, io, withDisplay, isRoot,
     spawn, trace, whenJust, swap
   ) where
 
 import StackSet (StackSet)
+import qualified StackSet as W
+import Data.Ratio
 
 import Control.Monad.State
 import System.IO
@@ -43,15 +46,27 @@ data XState = XState
     , wmprotocols   :: {-# UNPACK #-} !Atom
     , dimensions    :: {-# UNPACK #-} !(Int,Int)
     , workspace     :: {-# UNPACK #-} !WorkSpace      -- ^ workspace list
-    , defaultLayoutDesc :: {-# UNPACK #-} !LayoutDesc
     , layoutDescs   :: {-# UNPACK #-} !(M.Map Int LayoutDesc)
+    , dispositions  :: {-# UNPACK #-} !(M.Map Window Disposition)
     -- ^ mapping of workspaces to descriptions of their layouts
     }
 
 type WorkSpace = StackSet Window
 
+
+-- ---------------------------------------------------------------------
+-- Dispositions and Layout
+
+-- | Disposition.  Short for 'Display Position,' it describes how much
+-- of the screen a window would like to occupy, when tiled with others.
+data Disposition
+    = Disposition { vertFrac, horzFrac :: {-# UNPACK #-} !Rational }
+
+basicDisposition :: Disposition
+basicDisposition = Disposition (1%3) (1%3)
+
 -- | The different layout modes
-data Layout = Full | Tile
+data Layout = Full | Horz | Vert
 
 -- | 'not' for Layout.
 swap :: Layout -> Layout
@@ -59,10 +74,23 @@ swap Full = Tile
 swap _    = Full
 
 -- | A full description of a particular workspace's layout parameters.
-data LayoutDesc = LayoutDesc { layoutType   :: !Layout
-                             , tileFraction :: !Rational
-                             }
+data LayoutDesc = LayoutDesc { layoutType   :: !Layout,
+                               horzTileFrac :: !Rational,
+                               vertTileFrac :: !Rational }
 
+basicLayoutDesc :: LayoutDesc
+basicLayoutDesc = LayoutDesc { layoutType = Full,
+                               horzTileFrac = 1%2,
+                               vertTileFrac = 1%2 }
+
+-- | disposition. Gets the disposition of a particular window.
+disposition :: Window -> XState -> Disposition
+disposition w s = M.findWithDefault basicDisposition w (dispositions s)
+
+-- | Gets the current layoutDesc.
+currentDesc :: XState -> LayoutDesc
+currentDesc s =  M.findWithDefault basicLayoutDesc n (layoutDescs s)
+    where n = (W.current . workspace $ s)
 
 
 
@@ -86,6 +114,8 @@ withDisplay f = gets display >>= f
 -- | True if the given window is the root window
 isRoot :: Window -> X Bool
 isRoot w = liftM (w==) (gets theRoot)
+
+
 
 -- ---------------------------------------------------------------------
 -- Utilities

@@ -14,6 +14,7 @@ import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras
 
 import XMonad
+import Data.Ratio
 
 import qualified StackSet as W
 
@@ -30,20 +31,56 @@ refresh = do
     xinesc <- gets xineScreens
     d      <- gets display
     fls    <- gets layoutDescs
-    dfltfl <- gets defaultLayoutDesc
-    let move w a b c e = io $ moveResizeWindow d w a b c e
+    let move w (Rectangle p q r s) = io $ moveResizeWindow d w p q r s
+        flipRect (Rectangle p q r s) = Rectangle q p s r
     flip mapM_ (M.assocs ws2sc) $ \(n, scn) -> do
         let sc = xinesc !! scn
-            sx = rect_x sc
-            sy = rect_y sc
-            sw = rect_width sc
-            sh = rect_height sc
-            fl = M.findWithDefault dfltfl n fls
+            fl = M.findWithDefault basicLayoutDesc n fls
             l  = layoutType fl
-            ratio = tileFraction fl
+            fullWindow w = move w sc >> io (raiseWindow d w)
+
+            -- runRects draws the windows, figuring out their rectangles.
+            -- The code here is for a horizontal split, and tr is possibly 
+            -- used to convert to the vertical case.
+            runRects :: Rectangle -> (Rectangle -> Rectangle) -> (Rational -> Disposition -> Disposition)
+                     -> (Disposition -> Rational) -> Rational -> [Window] -> X ()
+            runRects _ _ _ _ _ [] = return () -- impossible
+            runRects (Rectangle sx sy sw sh) tr dfix fracFn tf (w:s) = do
+              -- get the dispositions in the relevant direction (vert/horz)
+              -- as specified by fracFn.
+              ds <- mapM (liftM fracFn . gets . disposition) s
+
+              -- do some math.
+              let lw = round (fromIntegral sw * tf) -- lhs width
+                  rw = sw - fromIntegral lw -- rhs width
+                  ns = map (/ sum ds) ds -- normalized ratios for rhs.
+
+              -- Normalize dispositions while we have the opportunity.
+              -- This is BAD.  Rational numbers will SPACE LEAK each 
+              -- time we make an adjustment.  Floating point numbers are
+              -- better here.  (Change it when somebody complains.)
+              zipWithM_ (\ratio a -> disposeW a (dfix ratio)) ns s
+
+              -- do some more math.
+              let ps = map (round . (* fromIntegral sh)) . scanl (+) 0 $ ns
+                  -- ps are the vertical positions, [p1 = 0, p2, ..., pn, sh]
+                  xs = map fromIntegral . zipWith (-) (tail ps) $ ps
+                  -- xs are the heights of windows, [p2-p1,p3-p2,...,sh-pn]
+                  rects = zipWith (\p q -> Rectangle (sx + lw) p rw q) ps xs
+                  -- rects are the rectangles of our windows.
+
+              -- Move our lhs window, the big main one.
+              move w (tr (Rectangle sx sy (fromIntegral lw) sh))
+
+              -- Move our rhs windows.
+              zipWithM_ (\r a -> move a (tr r)) rects s
+
+              -- And raise this one, for good measure.
+              whenJust (W.peek ws) (io . raiseWindow d)
         case l of
-            Full -> whenJust (W.peekStack n ws) $ \w ->
-                         do move w sx sy sw sh; io $ raiseWindow d w
+            Full -> whenJust (W.peekStack n ws) $ \w -> do
+                                                            move w sx sy sw sh
+                                                            io $ raiseWindow d w
             Tile -> case W.index n ws of
                 []    -> return ()
                 [w]   -> do move w sx sy sw sh; io $ raiseWindow d w
@@ -52,29 +89,29 @@ refresh = do
                         rw = sw - fromIntegral lw
                         rh = fromIntegral sh `div` fromIntegral (length s)
                     move w sx sy (fromIntegral lw) sh
-                    zipWithM_ (\i a -> move a (sx + lw) (sy + i * rh) rw (fromIntegral rh))
-                        [0..] s
+                    zipWithM_ (\i a -> move a (sx + lw) (sy + i * rh) rw (fromIntegral rh)) [0..] s
                     whenJust (W.peek ws) (io . raiseWindow d) -- this is always Just
     whenJust (W.peek ws) setFocus
 
 -- | switchLayout.  Switch to another layout scheme.  Switches the current workspace.
 switchLayout :: X ()
-switchLayout = layout $ \fl -> fl { layoutType = swap (layoutType fl) }
+switchLayout = layout $ \fl -> fl { layoutType = case layoutType fl of
+                                                   Full -> Tile
+                                                   Tile -> Full }
 
 -- | changeWidth.  Change the width of the main window in tiling mode.
 changeWidth :: Rational -> X ()
-changeWidth delta = layout $ \fl ->
-    fl { tileFraction = min 1 (max 0 (tileFraction fl + delta)) }
+changeWidth delta = do
+    layout $ \fl -> fl { tileFraction = min 1 $ max 0 $ tileFraction fl + delta }
 
 -- | layout. Modify the current workspace's layout with a pure function and refresh.
 layout :: (LayoutDesc -> LayoutDesc) -> X ()
-layout f = do
-    modify $ \s ->
-        let fls = layoutDescs s
-            n   = W.current . workspace $ s
-            fl  = M.findWithDefault (defaultLayoutDesc s) n fls
-        in s { layoutDescs = M.insert n (f fl) fls }
-    refresh
+layout f = do modify $ \s -> let fls = layoutDescs s
+                                 n   = W.current . workspace $ s
+                                 fl  = M.findWithDefault (defaultLayoutDesc s) n fls
+                             in s { layoutDescs = M.insert n (f fl) fls }
+              refresh
+              
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WorkSpace -> WorkSpace) -> X ()
