@@ -46,8 +46,9 @@ import Operations
 workspaces :: Int
 workspaces = 9
 
--- modMask lets you easily change which modkey you use. The default is mod1Mask.
--- ("alt")
+-- modMask lets you easily change which modkey you use. The default is mod1Mask
+-- ("left alt").  You may also consider using mod3mask ("right alt"), which
+-- does not conflict with emacs keybindings.
 modMask :: KeyMask
 modMask = mod1Mask
 
