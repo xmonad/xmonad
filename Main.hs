@@ -48,7 +48,9 @@ main = do
             , theRoot       = rootw
             , wmdelete      = wmdelt
             , wmprotocols   = wmprot
-            , dimensions    = (displayWidth  dpy dflt, displayHeight dpy dflt)
+            -- fromIntegral needed for X11 versions that use Int instead of CInt.
+            , dimensions    = (fromIntegral (displayWidth dpy dflt),
+                               fromIntegral (displayHeight dpy dflt))
             , workspace     = W.empty workspaces
             , layoutDescs   = M.empty
             , dispositions  = M.empty
