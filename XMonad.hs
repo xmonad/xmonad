@@ -18,7 +18,7 @@ module XMonad (
     X, WorkSpace, XState(..), Layout(..), LayoutDesc(..), Disposition(..),
     basicLayoutDesc, currentDesc, disposition,
     runX, io, withDisplay, isRoot,
-    spawn, trace, whenJust, swap
+    spawn, trace, whenJust, rot
   ) where
 
 import StackSet (StackSet)
@@ -55,7 +55,7 @@ type WorkSpace = StackSet Window
 
 
 -- ---------------------------------------------------------------------
--- Dispositions and Layout
+-- Display Positions and Layout
 
 -- | Disposition.  Short for 'Display Position,' it describes how much
 -- of the screen a window would like to occupy, when tiled with others.
@@ -68,10 +68,11 @@ basicDisposition = Disposition (1%3) (1%3)
 -- | The different layout modes
 data Layout = Full | Horz | Vert
 
--- | 'not' for Layout.
-swap :: Layout -> Layout
-swap Full = Tile
-swap _    = Full
+-- | 'rot' for Layout.
+rot :: Layout -> Layout
+rot Full = Horz
+rot Horz = Vert
+rot Vert = Full
 
 -- | A full description of a particular workspace's layout parameters.
 data LayoutDesc = LayoutDesc { layoutType   :: !Layout,

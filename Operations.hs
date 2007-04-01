@@ -56,9 +56,9 @@ refresh = do
                   ns = map (/ sum ds) ds -- normalized ratios for rhs.
 
               -- Normalize dispositions while we have the opportunity.
-              -- This is BAD.  Rational numbers will SPACE LEAK each 
+              -- This is bad.  Rational numbers might space leak each 
               -- time we make an adjustment.  Floating point numbers are
-              -- better here.  (Change it when somebody complains.)
+              -- better here.  I am being paranoid.
               zipWithM_ (\ratio a -> disposeW a (dfix ratio)) ns s
 
               -- do some more math.
@@ -78,40 +78,65 @@ refresh = do
               -- And raise this one, for good measure.
               whenJust (W.peek ws) (io . raiseWindow d)
         case l of
-            Full -> whenJust (W.peekStack n ws) $ \w -> do
-                                                            move w sx sy sw sh
-                                                            io $ raiseWindow d w
-            Tile -> case W.index n ws of
-                []    -> return ()
-                [w]   -> do move w sx sy sw sh; io $ raiseWindow d w
-                (w:s) -> do
-                    let lw = floor $ fromIntegral sw * ratio
-                        rw = sw - fromIntegral lw
-                        rh = fromIntegral sh `div` fromIntegral (length s)
-                    move w sx sy (fromIntegral lw) sh
-                    zipWithM_ (\i a -> move a (sx + lw) (sy + i * rh) rw (fromIntegral rh)) [0..] s
-                    whenJust (W.peek ws) (io . raiseWindow d) -- this is always Just
+            Full -> whenJust (W.peekStack n ws) fullWindow
+            _ -> case W.index n ws of
+                []  -> return ()
+                [w] -> fullWindow w
+                s   -> case l of
+                         Horz -> runRects sc id (\r dp -> dp {horzFrac = r}) horzFrac (horzTileFrac fl) s
+                         Vert -> runRects (flipRect sc) flipRect (\r dp -> dp {vertFrac = r}) vertFrac (vertTileFrac fl) s
+                         _    -> error "Operations.refresh: the absurdly impossible happened.  Please complain about this."
     whenJust (W.peek ws) setFocus
 
 -- | switchLayout.  Switch to another layout scheme.  Switches the current workspace.
 switchLayout :: X ()
-switchLayout = layout $ \fl -> fl { layoutType = case layoutType fl of
-                                                   Full -> Tile
-                                                   Tile -> Full }
+switchLayout = layout $ \fl -> fl { layoutType = rot (layoutType fl) }
 
--- | changeWidth.  Change the width of the main window in tiling mode.
-changeWidth :: Rational -> X ()
-changeWidth delta = do
-    layout $ \fl -> fl { tileFraction = min 1 $ max 0 $ tileFraction fl + delta }
+-- | changeVert.  Changes the vertical split, if it's visible.
+changeVert :: Rational -> X ()
+changeVert delta = do
+  l <- gets (layoutType . currentDesc)
+  case l of 
+    Vert -> layout $ \d -> d {vertTileFrac = min 1 $ max 0 $ vertTileFrac d + delta}
+    _    -> return ()
+
+-- | changeHorz.  Changes the horizontal split, if it's visible.
+changeHorz :: Rational -> X ()
+changeHorz delta = do
+  l <- gets (layoutType . currentDesc)
+  case l of
+   Horz -> layout $ \d -> d {horzTileFrac = min 1 $ max 0 $ horzTileFrac d + delta}
+   _    -> return ()
+
+-- | changeSize.  Changes the size of the window, except in Full mode, with the 
+-- size remaining above the given mini-mum.
+changeSize :: Rational -> Rational -> X ()
+changeSize delta mini = do
+  l <- gets (layoutType . currentDesc)
+  mw <- gets (W.peek . workspace)
+  whenJust mw $ \w -> do
+    case l of -- This is always Just.
+      Full -> return ()
+      Horz -> disposeW w $ \d -> d {horzFrac = max mini $ horzFrac d + delta}
+      Vert -> disposeW w $ \d -> d {vertFrac = max mini $ vertFrac d + delta} -- hrm...
+    refresh
 
 -- | layout. Modify the current workspace's layout with a pure function and refresh.
 layout :: (LayoutDesc -> LayoutDesc) -> X ()
-layout f = do modify $ \s -> let fls = layoutDescs s
-                                 n   = W.current . workspace $ s
-                                 fl  = M.findWithDefault (defaultLayoutDesc s) n fls
-                             in s { layoutDescs = M.insert n (f fl) fls }
-              refresh
-              
+layout f = do
+    modify $ \s ->
+        let n  = W.current . workspace $ s
+            fl = currentDesc s
+        in s { layoutDescs = M.insert n (f fl) (layoutDescs s) }
+    refresh
+
+-- | disposeW. Changes the disposition of a particular window.
+disposeW :: Window -> (Disposition -> Disposition) -> X ()
+disposeW w f = modify $ \s -> let d = f (disposition w s)
+                              in s {dispositions = M.insert w d (dispositions s)}
+               -- NO refresh.  Do not put refresh here.
+               -- refresh calls this function.
+
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WorkSpace -> WorkSpace) -> X ()
