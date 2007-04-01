@@ -343,3 +343,14 @@ restart = do
     prog <- getProgName
     args <- getArgs
     executeFile prog True args Nothing
+
+-- | Starts dmenu on the current screen. (Requires patches to dmenu for the -x
+-- and -w options.)
+dmenu :: X ()
+dmenu = do
+    xinesc <- gets xineScreens
+    ws     <- gets workspace
+    ws2sc  <- gets wsOnScreen
+    let curscreen = fromMaybe 0 (M.lookup (W.current ws) ws2sc)
+        sc = xinesc !! curscreen
+    spawn $ "exe=`dmenu_path | dmenu -x " ++ (show $ rect_x sc) ++ " -w " ++ (show $ rect_width sc) ++ "` && exec $exe"
