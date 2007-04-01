@@ -42,9 +42,8 @@ refresh = do
             l  = layoutType fl
             ratio = tileFraction fl
         case l of
-            Full -> whenJust (W.peekStack n ws) $ \w -> do
-                                                            move w sx sy sw sh
-                                                            io $ raiseWindow d w
+            Full -> whenJust (W.peekStack n ws) $ \w ->
+                         do move w sx sy sw sh; io $ raiseWindow d w
             Tile -> case W.index n ws of
                 []    -> return ()
                 [w]   -> do move w sx sy sw sh; io $ raiseWindow d w
@@ -53,29 +52,29 @@ refresh = do
                         rw = sw - fromIntegral lw
                         rh = fromIntegral sh `div` fromIntegral (length s)
                     move w sx sy (fromIntegral lw) sh
-                    zipWithM_ (\i a -> move a (sx + lw) (sy + i * rh) rw (fromIntegral rh)) [0..] s
+                    zipWithM_ (\i a -> move a (sx + lw) (sy + i * rh) rw (fromIntegral rh))
+                        [0..] s
                     whenJust (W.peek ws) (io . raiseWindow d) -- this is always Just
     whenJust (W.peek ws) setFocus
 
 -- | switchLayout.  Switch to another layout scheme.  Switches the current workspace.
 switchLayout :: X ()
-switchLayout = layout $ \fl -> fl { layoutType = case layoutType fl of
-                                                   Full -> Tile
-                                                   Tile -> Full }
+switchLayout = layout $ \fl -> fl { layoutType = swap (layoutType fl) }
 
 -- | changeWidth.  Change the width of the main window in tiling mode.
 changeWidth :: Rational -> X ()
-changeWidth delta = do
-    layout $ \fl -> fl { tileFraction = min 1 $ max 0 $ tileFraction fl + delta }
+changeWidth delta = layout $ \fl ->
+    fl { tileFraction = min 1 (max 0 (tileFraction fl + delta)) }
 
 -- | layout. Modify the current workspace's layout with a pure function and refresh.
 layout :: (LayoutDesc -> LayoutDesc) -> X ()
-layout f = do modify $ \s -> let fls = layoutDescs s
-                                 n   = W.current . workspace $ s
-                                 fl  = M.findWithDefault (defaultLayoutDesc s) n fls
-                             in s { layoutDescs = M.insert n (f fl) fls }
-              refresh
-              
+layout f = do
+    modify $ \s ->
+        let fls = layoutDescs s
+            n   = W.current . workspace $ s
+            fl  = M.findWithDefault (defaultLayoutDesc s) n fls
+        in s { layoutDescs = M.insert n (f fl) fls }
+    refresh
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WorkSpace -> WorkSpace) -> X ()
@@ -99,12 +98,15 @@ buttonsToGrab :: [Button]
 buttonsToGrab = [button1, button2, button3]
 
 setButtonGrab :: Bool -> Window -> X ()
-setButtonGrab True  w = withDisplay $ \d -> io $ flip mapM_ buttonsToGrab (\b ->
-                            grabButton d b anyModifier w False
-                                       (buttonPressMask .|. buttonReleaseMask)
-                                       grabModeAsync grabModeSync none none)
-setButtonGrab False w = withDisplay $ \d -> io $ flip mapM_ buttonsToGrab (\b ->
-                            ungrabButton d b anyModifier w)
+setButtonGrab True  w = withDisplay $ \d -> io $
+    flip mapM_ buttonsToGrab $ \b ->
+        grabButton d b anyModifier w False
+                   (buttonPressMask .|. buttonReleaseMask)
+                   grabModeAsync grabModeSync none none
+
+setButtonGrab False w = withDisplay $ \d -> io $
+    flip mapM_ buttonsToGrab $ \b ->
+        ungrabButton d b anyModifier w
 
 -- | manage. Add a new window to be managed in the current workspace. Bring it into focus.
 -- If the window is already under management, it is just raised.
@@ -146,8 +148,9 @@ safeFocus w = do ws <- gets workspace
 -- | Explicitly set the keyboard focus to the given window
 setFocus :: Window -> X ()
 setFocus w = do
-    ws <- gets workspace
+    ws    <- gets workspace
     ws2sc <- gets wsOnScreen
+
     -- clear mouse button grab and border on other windows
     flip mapM_ (M.keys ws2sc) $ \n -> do
         flip mapM_ (W.index n ws) $ \otherw -> do
@@ -156,10 +159,11 @@ setFocus w = do
 
     withDisplay $ \d -> io $ setInputFocus d w revertToPointerRoot 0
     setButtonGrab False w
-    setBorder w 0xff0000
+    setBorder w 0xff0000    -- make this configurable
+
     -- This does not use 'windows' intentionally.  'windows' calls refresh,
     -- which means infinite loops.
-    modify (\s -> s { workspace = W.raiseFocus w (workspace s) })
+    modify $ \s -> s { workspace = W.raiseFocus w (workspace s) }
 
 -- | Set the focus to the window on top of the stack, or root
 setTopFocus :: X ()
@@ -180,7 +184,7 @@ raise = windows . W.rotate
 
 -- | promote.  Make the focused window the master window in its workspace
 promote :: X ()
-promote = windows (\w -> maybe w (\k -> W.promote k w) (W.peek w))
+promote = windows $ \w -> maybe w (\k -> W.promote k w) (W.peek w)
 
 -- | Kill the currently focused client
 kill :: X ()
@@ -217,9 +221,9 @@ view o = do
     -- is the workspace we want to switch to currently visible?
     if M.member n ws2sc
         then windows $ W.view n
-        else do 
+        else do
             sc <- case M.lookup m ws2sc of
-                Nothing -> do 
+                Nothing -> do
                     trace "Current workspace isn't visible! This should never happen!"
                     -- we don't know what screen to use, just use the first one.
                     return 0
@@ -247,6 +251,7 @@ screenWS n = do
 -- | Restart xmonad by exec()'ing self. This doesn't save state and xmonad has
 -- to be in PATH for this to work.
 restart :: IO ()
-restart = do prog <- getProgName
-             args <- getArgs
-             executeFile prog True args Nothing
+restart = do
+    prog <- getProgName
+    args <- getArgs
+    executeFile prog True args Nothing

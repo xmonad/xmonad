@@ -17,7 +17,7 @@
 module XMonad (
     X, WorkSpace, XState(..), Layout(..), LayoutDesc(..),
     runX, io, withDisplay, isRoot,
-    spawn, trace, whenJust
+    spawn, trace, whenJust, swap
   ) where
 
 import StackSet (StackSet)
@@ -52,6 +52,11 @@ type WorkSpace = StackSet Window
 
 -- | The different layout modes
 data Layout = Full | Tile
+
+-- | 'not' for Layout.
+swap :: Layout -> Layout
+swap Full = Tile
+swap _    = Full
 
 -- | A full description of a particular workspace's layout parameters.
 data LayoutDesc = LayoutDesc { layoutType   :: !Layout
