@@ -61,7 +61,7 @@ sizeDelta :: Rational
 sizeDelta = 3%100
 
 -- The mask for the numlock key. You may need to change this on some systems.
-numlockMask :: KeySym
+numlockMask :: KeyMask
 numlockMask = lockMask
 
 
