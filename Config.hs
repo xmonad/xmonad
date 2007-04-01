@@ -95,5 +95,5 @@ keys = M.fromList $
     -- Keybindings to each screen:
     ++
     [((m .|. modMask, key), screenWS sc >>= f)
-        | (key, sc) <- zip [xK_w, xK_e, xK_r] [1..]
+        | (key, sc) <- zip [xK_e, xK_r, xK_t] [1..]
         , (f, m) <- [(view, 0), (tag, shiftMask)]]
