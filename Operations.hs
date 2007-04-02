@@ -41,6 +41,11 @@ refresh = do
         whenJust (W.peekStack n ws) (io . raiseWindow d)
     whenJust (W.peek ws) setFocus
 
+-- | tile.  Compute the positions for windows in horizontal layout
+-- mode.
+--
+-- TODO generalize this to vertical layout
+--
 tile :: Rational -> Rectangle -> [Window] -> [(Window, Rectangle)]
 tile _ _ []    = []
 tile _ d [w]   = [(w, d)]
