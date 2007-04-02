@@ -26,3 +26,12 @@
     - let mod+enter demote a master window
 
 * Tile vertically/ resize height.
+
+- Xinerama bugs:
+    - Closing the last window in a workspace moves focus to another Xinerama
+      screen.
+    - Focus goes to other Xinerama screen when changing to empty window and
+      create new window.
+    - Focus doesn't always follow mouse or mouse click across Xinerama screens;
+      sometimes focus will only switch with key command to switch to that
+      screen.
