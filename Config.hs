@@ -95,7 +95,7 @@ keys = M.fromList $
     , ((modMask .|. shiftMask, xK_q                     ), io $ exitWith ExitSuccess)
     , ((modMask .|. shiftMask .|. controlMask, xK_q     ), io restart)
 
-    -- more focused window into master position in tiling mode.
+    -- Move focused window into master position in tiling mode.
     , ((modMask,               xK_Return), promote)
 
     ] ++
