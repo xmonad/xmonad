@@ -14,7 +14,6 @@ import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras
 
 import XMonad
-import Data.Ratio
 
 import qualified StackSet as W
 
@@ -31,134 +30,48 @@ refresh = do
     xinesc <- gets xineScreens
     d      <- gets display
     fls    <- gets layoutDescs
-    let move w (Rectangle p q r s) = io $ moveResizeWindow d w p q r s
-        flipRect (Rectangle p q r s) = Rectangle q p s r
+    dfltfl <- gets defaultLayoutDesc
     flip mapM_ (M.assocs ws2sc) $ \(n, scn) -> do
         let sc = xinesc !! scn
-            fl = M.findWithDefault basicLayoutDesc n fls
-            l  = layoutType fl
-            fullWindow w = move w sc >> io (raiseWindow d w)
-
-            -- runRects draws the windows, figuring out their rectangles.
-            -- The code here is for a horizontal split, and tr is possibly
-            -- used to convert to the vertical case.  The comments
-            -- speak in terms of the horizontal case.
-            runRects :: Rectangle -> (Rectangle -> Rectangle)
-                     -> (Rational -> Disposition -> Disposition)
-                     -> (Disposition -> Rational) -> Rational -> [Window] -> X ()
-            runRects _ _ _ _ _ [] = return () -- impossible
-            runRects (Rectangle sx sy sw sh) tr dfix fracFn tf (w:s) = do
-              -- get the dispositions in the relevant direction (vert/horz)
-              -- as specified by fracFn.
-              ds <- mapM (liftM fracFn . gets . disposition) s
-
-              -- do some math.
-              let lw = round (fromIntegral sw * tf) -- lhs width
-                  rw = sw - fromIntegral lw -- rhs width
-                  ns = map (/ sum ds) ds -- normalized ratios for rhs.
-
-              -- Normalize dispositions while we have the opportunity.
-              -- This is bad.  Rational numbers might space leak each
-              -- time we make an adjustment.  Floating point numbers are
-              -- better here.  I am being paranoid.
-              zipWithM_ (\ratio a -> disposeW a (dfix ratio)) ns s
-
-              -- do some more math.
-              let ps = map (round . (* fromIntegral sh)) . scanl (+) 0 $ ns
-                  -- ps are the vertical positions, [p1 = 0, p2, ..., pn, sh]
-                  xs = map fromIntegral . zipWith (-) (tail ps) $ ps
-                  -- xs are the heights of windows, [p2-p1,p3-p2,...,sh-pn]
-                  rects = zipWith (\p q -> Rectangle (sx + lw) p rw q) ps xs
-                  -- rects are the rectangles of our windows.
-
-              -- Move our lhs window, the big main one.
-              move w (tr (Rectangle sx sy (fromIntegral lw) sh))
-
-              -- Move our rhs windows.
-              zipWithM_ (\r a -> move a (tr r)) rects s
-
-              -- And raise this one, for good measure.
-              whenJust (W.peek ws) (io . raiseWindow d)
-        case l of
-            Full -> whenJust (W.peekStack n ws) fullWindow
-            _ -> case W.index n ws of
-                []  -> return ()
-                [w] -> fullWindow w
-                s   -> case l of
-                         Horz -> (runRects sc
-                                           id
-                                           (\r dp -> dp {horzFrac = r})
-                                           horzFrac
-                                           (horzTileFrac fl)
-                                           s)
-                         Vert -> (runRects (flipRect sc)
-                                           flipRect
-                                           (\r dp -> dp {vertFrac = r})
-                                           vertFrac
-                                           (vertTileFrac fl)
-                                           s)
-                         _    -> error "Operations.refresh: the absurdly \
-                                       \impossible happened.  Please \
-                                       \complain about this."
+            fl = M.findWithDefault dfltfl n fls
+        mapM_ (\(w, Rectangle a b c e) -> io $ moveResizeWindow d w a b c e) $
+            case layoutType fl of
+                Full -> fmap (flip (,) sc) $ maybeToList $ W.peekStack n ws
+                Horz -> tile (tileFraction fl) sc $ W.index n ws
+        whenJust (W.peekStack n ws) (io . raiseWindow d)
     whenJust (W.peek ws) setFocus
+
+tile :: Rational -> Rectangle -> [Window] -> [(Window, Rectangle)]
+tile _ _ []    = []
+tile _ d [w]   = [(w, d)]
+tile r (Rectangle sx sy sw sh) (w:s) 
+ = (w, Rectangle sx sy (fromIntegral lw) sh) : zipWith f [sy, sy + rh ..] s
+ where
+    lw = floor $ fromIntegral sw * r
+    rw = sw - fromIntegral lw
+    rh = fromIntegral sh `div` fromIntegral (length s)
+    f i a = (a, Rectangle (sx + lw) i rw (fromIntegral rh))
 
 -- | switchLayout.  Switch to another layout scheme.  Switches the
 -- current workspace.
 switchLayout :: X ()
 switchLayout = layout $ \fl -> fl { layoutType = rot (layoutType fl) }
 
--- | changeVert.  Changes the vertical split, if it's visible.
-changeVert :: Rational -> X ()
-changeVert delta = do
-  l <- gets (layoutType . currentDesc)
-  case l of
-    Vert -> layout $ \d -> d {vertTileFrac = min 1 $
-                                             max 0 $
-                                             vertTileFrac d + delta}
-    _    -> return ()
-
--- | changeHorz.  Changes the horizontal split, if it's visible.
+-- | changeHorz.  Changes the horizontal split.
 changeHorz :: Rational -> X ()
-changeHorz delta = do
-  l <- gets (layoutType . currentDesc)
-  case l of
-   Horz -> layout $ \d -> d {horzTileFrac = min 1 $
-                                            max 0 $
-                                            horzTileFrac d + delta}
-   _    -> return ()
-
--- | changeSize.  Changes the size of the window, except in Full mode, with the
--- size remaining above the given mini-mum.
-changeSize :: Rational -> Rational -> X ()
-changeSize delta mini = do
-  l <- gets (layoutType . currentDesc)
-  mw <- gets (W.peek . workspace)
-  whenJust mw $ \w -> do  -- This is always Just.
-    case l of
-      Full -> return ()
-      Horz -> disposeW w $ \d -> d {horzFrac = max mini $
-                                               horzFrac d + delta}
-      Vert -> disposeW w $ \d -> d {vertFrac = max mini $
-                                               vertFrac d + delta} -- hrm...
-    refresh
+changeHorz delta = layout $ \fl ->
+    fl { tileFraction = min 1 (max 0 (tileFraction fl + delta)) }
 
 -- | layout. Modify the current workspace's layout with a pure
 -- function and refresh.
 layout :: (LayoutDesc -> LayoutDesc) -> X ()
 layout f = do
     modify $ \s ->
-        let n  = W.current . workspace $ s
-            fl = currentDesc s
-        in s { layoutDescs = M.insert n (f fl) (layoutDescs s) }
+        let fls = layoutDescs s
+            n   = W.current . workspace $ s
+            fl  = M.findWithDefault (defaultLayoutDesc s) n fls
+        in s { layoutDescs = M.insert n (f fl) fls }
     refresh
-
--- | disposeW. Changes the disposition of a particular window.
-disposeW :: Window -> (Disposition -> Disposition) -> X ()
-disposeW w f = modify $ \s -> let d = f (disposition w s)
-                              in s {dispositions = M.insert w d (dispositions s)}
-               -- NO refresh.  Do not put refresh here.
-               -- refresh calls this function.
-
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WorkSpace -> WorkSpace) -> X ()
@@ -267,7 +180,7 @@ raise :: Ordering -> X ()
 raise = windows . W.rotate
 
 -- | promote.  Make the focused window the master window in its
--- workspace , in non-fullscreen mode.
+-- workspace
 --
 -- TODO: generic cycling clockwise and anticlockwise
 --

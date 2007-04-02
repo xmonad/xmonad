@@ -52,8 +52,8 @@ main = do
             , dimensions    = (fromIntegral (displayWidth dpy dflt),
                                fromIntegral (displayHeight dpy dflt))
             , workspace     = W.empty workspaces
+            , defaultLayoutDesc = startingLayoutDesc
             , layoutDescs   = M.empty
-            , dispositions  = M.empty
             }
 
     xSetErrorHandler -- in C, I'm too lazy to write the binding

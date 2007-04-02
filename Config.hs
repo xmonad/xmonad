@@ -64,6 +64,13 @@ sizeDelta = 3%100
 numlockMask :: KeyMask
 numlockMask = lockMask
 
+-- What layout to start in, and what the default proportion for the
+-- left pane should be in the tiled layout.  See LayoutDesc and
+-- friends in XMonad.hs for options.
+startingLayoutDesc :: LayoutDesc
+startingLayoutDesc =
+    LayoutDesc { layoutType   = Full
+               , tileFraction = 1%2  }
 
 -- The keys list.
 keys :: M.Map (KeyMask, KeySym) (X ())
@@ -79,8 +86,9 @@ keys = M.fromList $
 
     , ((modMask,               xK_h     ), changeHorz (negate defaultDelta))
     , ((modMask,               xK_l     ), changeHorz defaultDelta)
-    , ((modMask .|. shiftMask, xK_j     ), changeVert defaultDelta)
-    , ((modMask .|. shiftMask, xK_k     ), changeVert (negate defaultDelta))
+    -- Not implemented yet:
+    -- , ((modMask .|. shiftMask, xK_j     ), changeVert defaultDelta)
+    -- , ((modMask .|. shiftMask, xK_k     ), changeVert (negate defaultDelta))
 
     , ((modMask .|. shiftMask, xK_c     ), kill)
 
