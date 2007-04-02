@@ -65,7 +65,7 @@ data LayoutDesc = LayoutDesc { layoutType   :: !Layout
 
 
 
--- | The X monad, a StateT transformer over IO encapuslating the window
+-- | The X monad, a StateT transformer over IO encapsulating the window
 -- manager state
 newtype X a = X (StateT XState IO a)
     deriving (Functor, Monad, MonadIO, MonadState XState)
