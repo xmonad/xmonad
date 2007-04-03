@@ -84,11 +84,8 @@ keys = M.fromList $
     , ((modMask,               xK_j     ), raise GT)
     , ((modMask,               xK_k     ), raise LT)
 
-    , ((modMask,               xK_h     ), changeHorz (negate defaultDelta))
-    , ((modMask,               xK_l     ), changeHorz defaultDelta)
-    -- Not implemented yet:
-    -- , ((modMask .|. shiftMask, xK_j     ), changeVert defaultDelta)
-    -- , ((modMask .|. shiftMask, xK_k     ), changeVert (negate defaultDelta))
+    , ((modMask,               xK_h     ), changeSplit (negate defaultDelta))
+    , ((modMask,               xK_l     ), changeSplit defaultDelta)
 
     , ((modMask .|. shiftMask, xK_c     ), kill)
 

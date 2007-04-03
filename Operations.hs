@@ -37,8 +37,8 @@ refresh = do
         mapM_ (\(w, Rectangle a b c e) -> io $ moveResizeWindow d w a b c e) $
             case layoutType fl of
                 Full -> fmap (flip (,) sc) $ maybeToList $ W.peekStack n ws
-                Horz -> tile (tileFraction fl) sc $ W.index n ws
-                Vert -> vtile (tileFraction fl) sc $ W.index n ws
+                Tall -> tile (tileFraction fl) sc $ W.index n ws
+                Wide -> vtile (tileFraction fl) sc $ W.index n ws
         whenJust (W.peekStack n ws) (io . raiseWindow d)
     whenJust (W.peek ws) setFocus
 
@@ -68,9 +68,9 @@ flipRect (Rectangle { rect_x = x, rect_y = y, rect_width = w, rect_height = h })
 switchLayout :: X ()
 switchLayout = layout $ \fl -> fl { layoutType = rot (layoutType fl) }
 
--- | changeHorz.  Changes the horizontal split.
-changeHorz :: Rational -> X ()
-changeHorz delta = layout $ \fl ->
+-- | changeSplit.  Changes the window split.
+changeSplit :: Rational -> X ()
+changeSplit delta = layout $ \fl ->
     fl { tileFraction = min 1 (max 0 (tileFraction fl + delta)) }
 
 -- | layout. Modify the current workspace's layout with a pure

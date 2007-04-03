@@ -51,7 +51,7 @@ data XState = XState
 type WorkSpace = StackSet Window
 
 -- | The different layout modes
-data Layout = Full | Horz | Vert deriving (Enum, Bounded)
+data Layout = Full | Tall | Wide deriving (Enum, Bounded)
 
 -- | 'rot' for Layout.
 rot :: Layout -> Layout
