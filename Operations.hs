@@ -38,14 +38,12 @@ refresh = do
             case layoutType fl of
                 Full -> fmap (flip (,) sc) $ maybeToList $ W.peekStack n ws
                 Horz -> tile (tileFraction fl) sc $ W.index n ws
+                Vert -> vtile (tileFraction fl) sc $ W.index n ws
         whenJust (W.peekStack n ws) (io . raiseWindow d)
     whenJust (W.peek ws) setFocus
 
 -- | tile.  Compute the positions for windows in horizontal layout
 -- mode.
---
--- TODO generalize this to vertical layout
---
 tile :: Rational -> Rectangle -> [Window] -> [(Window, Rectangle)]
 tile _ _ []    = []
 tile _ d [w]   = [(w, d)]
@@ -56,6 +54,14 @@ tile r (Rectangle sx sy sw sh) (w:s)
     rw = sw - fromIntegral lw
     rh = fromIntegral sh `div` fromIntegral (length s)
     f i a = (a, Rectangle (sx + lw) i rw (fromIntegral rh))
+
+-- | vtile. Tile vertically.
+vtile :: Rational -> Rectangle -> [Window] -> [(Window, Rectangle)]
+vtile r rect ws = map (\(w, wr) -> (w, flipRect wr)) $ tile r (flipRect rect) ws
+
+flipRect :: Rectangle -> Rectangle
+flipRect (Rectangle { rect_x = x, rect_y = y, rect_width = w, rect_height = h })
+        = Rectangle { rect_x = y, rect_y = x, rect_width = h, rect_height = w }
 
 -- | switchLayout.  Switch to another layout scheme.  Switches the
 -- current workspace.
