@@ -25,12 +25,9 @@ import qualified StackSet as W
 -- screen and raises the window.
 refresh :: X ()
 refresh = do
-    ws     <- gets workspace
-    ws2sc  <- gets wsOnScreen
-    xinesc <- gets xineScreens
-    d      <- gets display
-    fls    <- gets layoutDescs
-    dfltfl <- gets defaultLayoutDesc
+    XState {workspace = ws, wsOnScreen = ws2sc, xineScreens = xinesc
+           ,display   = d ,layoutDescs = fls  ,defaultLayoutDesc = dfltfl } <- get
+
     flip mapM_ (M.assocs ws2sc) $ \(n, scn) -> do
         let sc = xinesc !! scn
             fl = M.findWithDefault dfltfl n fls
@@ -156,8 +153,7 @@ safeFocus w = do ws <- gets workspace
 -- | Explicitly set the keyboard focus to the given window
 setFocus :: Window -> X ()
 setFocus w = do
-    ws    <- gets workspace
-    ws2sc <- gets wsOnScreen
+    XState { workspace = ws, wsOnScreen = ws2sc} <- get
 
     -- clear mouse button grab and border on other windows
     flip mapM_ (M.keys ws2sc) $ \n -> do
@@ -204,8 +200,7 @@ kill = withDisplay $ \d -> do
     ws <- gets workspace
     whenJust (W.peek ws) $ \w -> do
         protocols <- io $ getWMProtocols d w
-        wmdelt    <- gets wmdelete
-        wmprot    <- gets wmprotocols
+        XState {wmdelete = wmdelt, wmprotocols = wmprot} <- get
         if wmdelt `elem` protocols
             then io $ allocaXEvent $ \ev -> do
                     setEventType ev clientMessage
@@ -227,8 +222,7 @@ tag o = do
 -- | view. Change the current workspace to workspce at offset 'n-1'.
 view :: Int -> X ()
 view o = do
-    ws    <- gets workspace
-    ws2sc <- gets wsOnScreen
+    XState { workspace = ws, wsOnScreen = ws2sc } <- get
     let m = W.current ws
     -- is the workspace we want to switch to currently visible?
     if M.member n ws2sc
@@ -272,9 +266,8 @@ restart = do
 -- and -w options.)
 dmenu :: X ()
 dmenu = do
-    xinesc <- gets xineScreens
-    ws     <- gets workspace
-    ws2sc  <- gets wsOnScreen
+    XState { xineScreens = xinesc, workspace = ws, wsOnScreen = ws2sc } <- get
     let curscreen = fromMaybe 0 (M.lookup (W.current ws) ws2sc)
         sc = xinesc !! curscreen
-    spawn $ "exe=`dmenu_path | dmenu -x " ++ (show $ rect_x sc) ++ " -w " ++ (show $ rect_width sc) ++ "` && exec $exe"
+    spawn $ concat [ "exe=`dmenu_path | dmenu -x ", show (rect_x sc)
+                   , " -w " , show (rect_width sc) , "` && exec $exe" ]

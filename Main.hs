@@ -169,8 +169,7 @@ handle e@(CrossingEvent {event_type = t})
 
 -- configure a window
 handle e@(ConfigureRequestEvent {window = w}) = do
-    dpy <- gets display
-    ws  <- gets workspace
+    XState { display = dpy, workspace = ws } <- get
 
     when (W.member w ws) $ -- already managed, reconfigure (see client:configure()
         trace ("Reconfigure already managed window: " ++ show w)
