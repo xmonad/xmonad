@@ -31,7 +31,7 @@ refresh = do
     flip mapM_ (M.assocs ws2sc) $ \(n, scn) -> do
         let sc = xinesc !! scn
             fl = M.findWithDefault dfltfl n fls
-        mapM_ (\(w, Rectangle a b c e) -> io $ moveResizeWindow d w a b c e) $
+        mapM_ (\(w, rect) -> io $ moveWindowInside d w rect) $
             case layoutType fl of
                 Full -> fmap (flip (,) sc) $ maybeToList $ W.peekStack n ws
                 Tall -> tile (tileFraction fl) sc $ W.index n ws
@@ -112,6 +112,15 @@ setButtonGrab True  w = withDisplay $ \d -> io $
 setButtonGrab False w = withDisplay $ \d -> io $
     flip mapM_ buttonsToGrab $ \b ->
         ungrabButton d b anyModifier w
+
+-- | moveWindowInside. Moves and resizes w such that it fits inside the given
+-- rectangle, including its border.
+moveWindowInside :: Display -> Window -> Rectangle -> IO ()
+moveWindowInside d w r = do
+    bw <- (fromIntegral . waBorderWidth) `liftM` getWindowAttributes d w
+    moveResizeWindow d w (rect_x r) (rect_y r)
+                         (rect_width  r - bw*2)
+                         (rect_height r - bw*2)
 
 -- | manage. Add a new window to be managed in the current workspace. Bring it into focus.
 -- If the window is already under management, it is just raised.
