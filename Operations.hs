@@ -125,14 +125,11 @@ moveWindowInside d w r = do
 -- | manage. Add a new window to be managed in the current workspace. Bring it into focus.
 -- If the window is already under management, it is just raised.
 --
--- When we start to manage a window, it gains focus.
---
 manage :: Window -> X ()
 manage w = do
     withDisplay $ \d -> io $ do
         selectInput d w $ structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
         mapWindow d w
-    setFocus w
     windows $ W.push w
 
 -- | unmanage. A window no longer exists, remove it from the window
