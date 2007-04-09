@@ -33,18 +33,20 @@ import qualified Data.Map as M
 -- | XState, the window manager state.
 -- Just the display, width, height and a window list
 data XState = XState
-    { display       :: Display
-    , screen        :: {-# UNPACK #-} !ScreenNumber
-    , xineScreens   :: {-# UNPACK #-} ![Rectangle]
+    { display           :: Display
+    , screen            :: !ScreenNumber
+
+    , xineScreens       :: ![Rectangle]
     -- a mapping of workspaces to xinerama screen numbers
-    , wsOnScreen    :: {-# UNPACK #-} !(M.Map Int Int)
-    , theRoot       :: {-# UNPACK #-} !Window
-    , wmdelete      :: {-# UNPACK #-} !Atom
-    , wmprotocols   :: {-# UNPACK #-} !Atom
-    , dimensions    :: {-# UNPACK #-} !(Int,Int)
-    , workspace     :: {-# UNPACK #-} !WorkSpace      -- ^ workspace list
-    , defaultLayoutDesc :: {-# UNPACK #-} !LayoutDesc
-    , layoutDescs   :: {-# UNPACK #-} !(M.Map Int LayoutDesc)
+
+    , wsOnScreen        :: !(M.Map Int Int)
+    , theRoot           :: !Window
+    , wmdelete          :: !Atom
+    , wmprotocols       :: !Atom
+    , dimensions        :: !(Int,Int)
+    , workspace         :: !WorkSpace      -- ^ workspace list
+    , defaultLayoutDesc :: !LayoutDesc
+    , layoutDescs       :: !(M.Map Int LayoutDesc)
     -- ^ mapping of workspaces to descriptions of their layouts
     }
 

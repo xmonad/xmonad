@@ -11,6 +11,6 @@ build-depends:  base>=1.0, X11>=1.1, X11-extras==0.0, mtl==1.0, unix>=1.0
 
 executable:     xmonad
 main-is:        Main.hs
-ghc-options:    -O2 -Wall -optl-Wl,-s
+ghc-options:    -funbox-strict-fields -O2 -Wall -optl-Wl,-s
 -- ghc-options:    -O2 -Wall -optl-Wl,-s -prof -auto-all
 extensions:     GeneralizedNewtypeDeriving
