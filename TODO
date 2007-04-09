@@ -27,8 +27,6 @@
     - change focus in the StackSet structure on EnterNotify
     - let mod+enter demote a master window
 
-* Tile vertically/ resize height.
-
 - Xinerama bugs:
     - Closing the last window in a workspace moves focus to another Xinerama
       screen.
