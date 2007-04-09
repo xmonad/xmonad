@@ -34,7 +34,6 @@ import qualified Data.Map as M
 -- Just the display, width, height and a window list
 data XState = XState
     { display           :: Display                 -- ^ the X11 display
-    , screen            :: !ScreenNumber
 
     , xineScreens       :: ![Rectangle]            -- ^ dimensions of each screen
 

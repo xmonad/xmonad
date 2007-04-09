@@ -42,7 +42,6 @@ main = do
 
     let st = XState
             { display       = dpy
-            , screen        = dflt
             , xineScreens   = xinesc
             , wsOnScreen    = M.fromList $ map (\n -> (n,n)) [0..((length xinesc)-1)]
             , theRoot       = rootw
