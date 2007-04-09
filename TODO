@@ -21,7 +21,6 @@
 
 - tiling:
     - make focus remain between workspace switches
-    - change focus in the StackSet structure on EnterNotify
     - let mod+enter demote a master window
 
 - Xinerama bugs:
