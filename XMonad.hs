@@ -50,11 +50,11 @@ data XState = XState
 type WorkSpace = StackSet Window
 
 -- | The different layout modes
-data Layout = Full | Tall | Wide deriving (Enum, Bounded)
+data Layout = Full | Tall | Wide deriving (Enum, Bounded, Eq)
 
 -- | 'rot' for Layout.
 rot :: Layout -> Layout
-rot x = toEnum $ (fromEnum x + 1) `mod` (fromEnum (maxBound `asTypeOf` x) + 1)
+rot x = if x == maxBound then minBound else succ x
 
 -- | A full description of a particular workspace's layout parameters.
 data LayoutDesc = LayoutDesc { layoutType   :: !Layout
