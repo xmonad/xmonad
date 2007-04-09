@@ -20,9 +20,6 @@
         redraws whenever it finds a change.
 
 - tiling:
-    - Layout calculation: the current algorithm is crude, windows overlap
-        - windows slightly overlap on i386, do not overlap on amd64,
-          implies that it's not xmonad's fault?
     - make focus remain between workspace switches
     - change focus in the StackSet structure on EnterNotify
     - let mod+enter demote a master window
