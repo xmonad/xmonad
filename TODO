@@ -1,6 +1,19 @@
-- tasks before 0.1:
-    - Code clean up after tiling and StackSet changes
-    - Make sure the quickchecks make sense with the new StackSet
+- Tasks blocking xmonad 0.1
+    - Move the multi-screen handling from XState to StackSet
+    - Fix the missing windows on workspace switch bug
+
+- Clean up focus and mouse related issues.  During 'refresh', xmonad should
+  ignore EnterNotify events (by changing selectInput for the duration).
+- let mod+enter demote a master window
+
+- Xinerama bugs:
+    - Closing the last window in a workspace moves focus to another Xinerama
+      screen.
+    - Focus goes to other Xinerama screen when changing to empty window and
+      create new window.
+    - Focus doesn't always follow mouse or mouse click across Xinerama screens;
+      sometimes focus will only switch with key command to switch to that
+      screen.
 
 - think about the statusbar/multithreading.
     Three shared TVars:
@@ -19,15 +32,3 @@
         Statusbar drawing thread, waits for changes in all three TVars, and
         redraws whenever it finds a change.
 
-- tiling:
-    - make focus remain between workspace switches
-    - let mod+enter demote a master window
-
-- Xinerama bugs:
-    - Closing the last window in a workspace moves focus to another Xinerama
-      screen.
-    - Focus goes to other Xinerama screen when changing to empty window and
-      create new window.
-    - Focus doesn't always follow mouse or mouse click across Xinerama screens;
-      sometimes focus will only switch with key command to switch to that
-      screen.
