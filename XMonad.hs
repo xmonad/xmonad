@@ -37,7 +37,6 @@ data XState = XState
 
     , xineScreens       :: ![Rectangle]            -- ^ dimensions of each screen
 
-    , wsOnScreen        :: !(M.Map Int Int)        -- ^ mapping of workspaces to xinerama screen numbers
     , theRoot           :: !Window                 -- ^ the root window
     , wmdelete          :: !Atom                   -- ^ window deletion atom
     , wmprotocols       :: !Atom                   -- ^ wm protocols atom

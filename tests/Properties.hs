@@ -31,22 +31,22 @@ instance (Ord a, Arbitrary a) => Arbitrary (StackSet a) where
 prop_id x = fromList (toList x) == x
     where _ = x :: T
 
-prop_member1 i n = member i (push i x)
-    where x = empty n :: T
+prop_member1 i n m = member i (push i x)
+    where x = empty n m :: T
 
 prop_member2 i x = not (member i (delete i x))
     where _ = x :: T
 
-prop_member3 i n = member i (empty n :: T) == False
+prop_member3 i n m = member i (empty n m :: T) == False
 
-prop_sizepush is n = n > 0 ==> size (foldr push x is ) == n
-    where x  = empty n :: T
+prop_sizepush is n m = n > 0 ==> size (foldr push x is ) == n
+    where x  = empty n m :: T
 
-prop_currentpush is n = n > 0 ==>
+prop_currentpush is n m = n > 0 ==>
     height (current x) (foldr push x js) == length js
     where
         js = nub is
-        x = empty n :: T
+        x = empty n m :: T
 
 prop_pushpeek x is = not (null is) ==> fromJust (peek (foldr push x is)) == head is
     where _ = x :: T
@@ -86,6 +86,16 @@ prop_fullcache x = cached == allvals where
     allvals = sort . concat . elems $ stacks x
     _       = x :: T
 
+prop_currentwsvisible x = (current x) `elem` (visibleWorkspaces x)
+    where _ = x :: T
+
+prop_ws2screen_screen2ws x = (ws == ws') && (sc == sc')
+    where ws  = sort . keys  $ ws2screen x
+          ws' = sort . elems $ screen2ws x
+          sc  = sort . keys  $ screen2ws x
+          sc' = sort . elems $ ws2screen x
+          _ = x :: T
+                          
 ------------------------------------------------------------------------
 
 main :: IO ()
@@ -110,6 +120,8 @@ main = do
         ,("rotate/rotate    ", mytest prop_rotaterotate)
         ,("view/view        ", mytest prop_viewview)
         ,("fullcache        ", mytest prop_fullcache)
+        ,("currentwsvisible ", mytest prop_currentwsvisible)
+        ,("ws screen mapping", mytest prop_ws2screen_screen2ws)
         ]
 
 debug = False

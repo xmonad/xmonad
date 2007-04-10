@@ -25,10 +25,10 @@ import qualified StackSet as W
 -- screen and raises the window.
 refresh :: X ()
 refresh = do
-    XState {workspace = ws, wsOnScreen = ws2sc, xineScreens = xinesc
+    XState {workspace = ws, xineScreens = xinesc
            ,display   = d ,layoutDescs = fls  ,defaultLayoutDesc = dfltfl } <- get
 
-    flip mapM_ (M.assocs ws2sc) $ \(n, scn) -> do
+    flip mapM_ (M.assocs (W.screen2ws ws)) $ \(scn, n) -> do
         let sc = xinesc !! scn
             fl = M.findWithDefault dfltfl n fls
         mapM_ (\(w, rect) -> io $ moveWindowInside d w rect) $
@@ -159,10 +159,10 @@ safeFocus w = do ws <- gets workspace
 -- | Explicitly set the keyboard focus to the given window
 setFocus :: Window -> X ()
 setFocus w = do
-    XState { workspace = ws, wsOnScreen = ws2sc} <- get
+    ws <- gets workspace
 
     -- clear mouse button grab and border on other windows
-    flip mapM_ (M.keys ws2sc) $ \n -> do
+    flip mapM_ (W.visibleWorkspaces ws) $ \n -> do
         flip mapM_ (W.index n ws) $ \otherw -> do
             setButtonGrab True otherw
             setBorder otherw 0xdddddd
@@ -228,37 +228,19 @@ tag o = do
 -- | view. Change the current workspace to workspce at offset 'n-1'.
 view :: Int -> X ()
 view o = do
-    XState { workspace = ws, wsOnScreen = ws2sc } <- get
+    ws <- gets workspace
     let m = W.current ws
-    -- is the workspace we want to switch to currently visible?
-    if M.member n ws2sc
-        then windows $ W.view n
-        else do
-            sc <- case M.lookup m ws2sc of
-                Nothing -> do
-                    trace "Current workspace isn't visible! This should never happen!"
-                    -- we don't know what screen to use, just use the first one.
-                    return 0
-                Just sc -> return sc
-            modify $ \s -> s { wsOnScreen = M.insert n sc (M.filter (/=sc) ws2sc) }
-            gets wsOnScreen >>= trace . show
-            windows $ W.view n
-            mapM_ hide (W.index m ws)
+    windows $ W.view n
+    ws' <- gets workspace
+    -- If the old workspace isn't visible anymore, we have to hide the windows
+    -- in case we're switching to an empty workspace.
+    when (m `notElem` (W.visibleWorkspaces ws')) (mapM_ hide (W.index m ws))
     setTopFocus
     where n = o-1
 
 -- | True if window is under management by us
 isClient :: Window -> X Bool
 isClient w = liftM (W.member w) (gets workspace)
-
--- | screenWS. Returns the workspace currently visible on screen n
-screenWS :: Int -> X Int
-screenWS n = do
-    ws2sc <- gets wsOnScreen
-    -- FIXME: It's ugly to have to query this way. We need a different way to
-    -- keep track of screen <-> workspace mappings.
-    let ws = fmap fst $ find (\(_, scn) -> scn == (n-1)) (M.assocs ws2sc)
-    return $ (fromMaybe 0 ws) + 1
 
 -- | Restart xmonad by exec()'ing self. This doesn't save state and xmonad has
 -- to be in PATH for this to work.
@@ -272,8 +254,8 @@ restart = do
 -- and -w options.)
 dmenu :: X ()
 dmenu = do
-    XState { xineScreens = xinesc, workspace = ws, wsOnScreen = ws2sc } <- get
-    let curscreen = fromMaybe 0 (M.lookup (W.current ws) ws2sc)
+    XState { xineScreens = xinesc, workspace = ws } <- get
+    let curscreen = fromMaybe 0 (M.lookup (W.current ws) (W.ws2screen ws))
         sc = xinesc !! curscreen
     spawn $ concat [ "exe=`dmenu_path | dmenu -x ", show (rect_x sc)
                    , " -w " , show (rect_width sc) , "` && exec $exe" ]

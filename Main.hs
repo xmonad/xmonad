@@ -43,14 +43,13 @@ main = do
     let st = XState
             { display       = dpy
             , xineScreens   = xinesc
-            , wsOnScreen    = M.fromList $ map (\n -> (n,n)) [0.. length xinesc - 1]
             , theRoot       = rootw
             , wmdelete      = wmdelt
             , wmprotocols   = wmprot
             -- fromIntegral needed for X11 versions that use Int instead of CInt.
             , dimensions    = (fromIntegral (displayWidth dpy dflt),
                                fromIntegral (displayHeight dpy dflt))
-            , workspace     = W.empty workspaces
+            , workspace     = W.empty workspaces (length xinesc)
             , defaultLayoutDesc = startingLayoutDesc
             , layoutDescs   = M.empty
             }
