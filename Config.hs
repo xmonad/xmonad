@@ -136,7 +136,7 @@ keys = M.fromList $
     -- Keybindings to each screen :
     -- mod-wer (underneath 123) switches to physical/Xinerama screens 1 2 and 3
     ++
-    [((m .|. modMask, key), gets workspace >>= f . (+1) . fromMaybe 0 . W.workspace sc)
+    [((m .|. modMask, key), screenWorkspace sc >>= f)
         | (key, sc) <- zip [xK_s, xK_d, xK_f] [0..]
         , (f, m) <- [(view, 0), (tag, shiftMask)]]
 

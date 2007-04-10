@@ -238,6 +238,10 @@ view o = do
     setTopFocus
     where n = o-1
 
+-- | 'screenWorkspace sc' returns the workspace number viewed by 'sc'.
+screenWorkspace :: Int -> X Int
+screenWorkspace sc = fmap (succ . fromMaybe 0 . W.workspace sc) (gets workspace)
+
 -- | True if window is under management by us
 isClient :: Window -> X Bool
 isClient w = liftM (W.member w) (gets workspace)
