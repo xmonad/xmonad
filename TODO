@@ -1,5 +1,5 @@
 - Tasks blocking xmonad 0.1
-    - Move the multi-screen handling from XState to StackSet
+    - Move the multi-screen handling from XState to StackSet (see notes below)
     - Fix the missing windows on workspace switch bug
 
 - Clean up focus and mouse related issues.  During 'refresh', xmonad should
@@ -32,3 +32,15 @@
         Statusbar drawing thread, waits for changes in all three TVars, and
         redraws whenever it finds a change.
 
+- Notes on new StackSet:
+
+   The actors: screens, workspaces, windows
+
+   Invariants:
+   - There is exactly one screen in focus at any given time.
+   - A screen views exactly one workspace.
+   - A workspace is visible on one or zero screens.
+   - A workspace has zero or more windows.
+   - A workspace has either one or zero windows in focus.  Zero if the
+     workspace has no windows, one in all other cases.
+   - A window is a member of only one workspace.
