@@ -1,3 +1,15 @@
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Operations.hs
+-- Copyright   :  (c) Spencer Janssen 2007
+-- License     :  BSD3-style (see LICENSE)
+-- 
+-- Maintainer  :  dons@cse.unsw.edu.au
+-- Stability   :  stable
+-- Portability :  portable
+--
+-----------------------------------------------------------------------------
+
 module Operations where
 
 import Data.List
