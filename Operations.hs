@@ -29,7 +29,7 @@ refresh = do
            ,display   = d ,layoutDescs = fls  ,defaultLayoutDesc = dfltfl } <- get
 
     flip mapM_ (M.assocs (W.screen2ws ws)) $ \(scn, n) -> do
-        let sc = xinesc !! scn
+        let sc =  genericIndex xinesc scn -- temporary coercion!
             fl = M.findWithDefault dfltfl n fls
         mapM_ (\(w, rect) -> io $ moveWindowInside d w rect) $
             case layoutType fl of
@@ -214,20 +214,19 @@ kill = withDisplay $ \d -> do
                     sendEvent d w False noEventMask ev
             else io (killClient d w) >> return ()
 
--- | tag. Move a window to a new workspace
-tag :: Int -> X ()
-tag o = do
+-- | tag. Move a window to a new workspace, 0 indexed.
+tag :: W.WorkspaceId -> X ()
+tag n = do
     ws <- gets workspace
-    let m = W.current ws
+    let m = W.current ws -- :: WorkspaceId
     when (n /= m) $
         whenJust (W.peek ws) $ \w -> do
             hide w
             windows $ W.shift n
-    where n = o-1
 
--- | view. Change the current workspace to workspce at offset 'n-1'.
-view :: Int -> X ()
-view o = do
+-- | view. Change the current workspace to workspce at offset n (0 indexed).
+view :: W.WorkspaceId -> X ()
+view n = do
     ws <- gets workspace
     let m = W.current ws
     windows $ W.view n
@@ -236,11 +235,10 @@ view o = do
     -- in case we're switching to an empty workspace.
     when (m `notElem` (W.visibleWorkspaces ws')) (mapM_ hide (W.index m ws))
     setTopFocus
-    where n = o-1
 
 -- | 'screenWorkspace sc' returns the workspace number viewed by 'sc'.
-screenWorkspace :: Int -> X Int
-screenWorkspace sc = fmap (succ . fromMaybe 0 . W.workspace sc) (gets workspace)
+screenWorkspace :: W.ScreenId -> X W.WorkspaceId
+screenWorkspace sc = fmap (fromMaybe 0 . W.workspace sc) (gets workspace)
 
 -- | True if window is under management by us
 isClient :: Window -> X Bool

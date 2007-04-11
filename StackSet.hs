@@ -22,7 +22,7 @@
 module StackSet where
 
 import Data.Maybe
-import qualified Data.List     as L (delete)
+import qualified Data.List     as L (delete,genericLength)
 import qualified Data.Map      as M
 
 ------------------------------------------------------------------------
@@ -35,13 +35,19 @@ import qualified Data.Map      as M
 -- | The StackSet data structure. A table of stacks, with a current pointer
 data StackSet a =
     StackSet
-        { current  :: !Int              -- ^ the currently visible stack
-        , ws2screen:: !(M.Map Int Int)  -- ^ workspace -> screen map
-        , screen2ws:: !(M.Map Int Int)  -- ^ screen -> workspace
-        , stacks   :: !(M.Map Int [a])  -- ^ the separate stacks
-        , focus    :: !(M.Map Int a)    -- ^ the window focused in each stack
-        , cache    :: !(M.Map a Int)    -- ^ a cache of windows back to their stacks
+        { current  :: !WorkspaceId                   -- ^ the currently visible stack
+        , screen2ws:: !(M.Map ScreenId WorkspaceId)  -- ^ screen -> workspace
+        , ws2screen:: !(M.Map WorkspaceId ScreenId)  -- ^ workspace -> screen map
+        , stacks   :: !(M.Map WorkspaceId [a])       -- ^ the separate stacks
+        , focus    :: !(M.Map WorkspaceId a)         -- ^ the window focused in each stack
+        , cache    :: !(M.Map a WorkspaceId)         -- ^ a cache of windows back to their stacks
         } deriving Eq
+
+-- | Physical screen indicies
+newtype ScreenId    = S Int deriving (Eq,Ord,Show,Enum,Num,Integral,Real)
+
+-- | Virtual workspace indicies
+newtype WorkspaceId = W Int deriving (Eq,Ord,Show,Enum,Num,Integral,Real)
 
 instance Show a => Show (StackSet a) where
     showsPrec p s r = showsPrec p (show . toList $ s) r
@@ -57,19 +63,23 @@ instance Show a => Show (StackSet a) where
 -- screens. (also indexed from 0) The 0-indexed stack will be current.
 empty :: Int -> Int -> StackSet a
 empty n m = StackSet { current   = 0
-                     , ws2screen = wsScreenAssn
-                     , screen2ws = wsScreenAssn
-                     , stacks    = M.fromList (zip [0..n-1] (repeat []))
+                     , screen2ws = wsScrs2Works
+
+                     , ws2screen = wsWorks2Scrs
+                     , stacks    = M.fromList (zip [0..W n-1] (repeat []))
                      , focus     = M.empty
                      , cache     = M.empty }
-    where wsScreenAssn = M.fromList $ map (\x -> (x,x)) [0..m-1]
-  
+
+    where (scrs,wrks)  = unzip $ map (\x -> (S x, W x)) [0..m-1]
+          wsScrs2Works = M.fromList (zip scrs wrks)
+          wsWorks2Scrs = M.fromList (zip wrks scrs)
+
 -- | /O(log w)/. True if x is somewhere in the StackSet
 member :: Ord a => a -> StackSet a -> Bool
 member a w = M.member a (cache w)
 
--- | /O(log n)/. Looks up the stack that x is in, if it is in the StackSet
-lookup :: (Monad m, Ord a) => a -> StackSet a -> m Int
+-- | /O(log n)/. Looks up the workspace that x is in, if it is in the StackSet
+lookup :: (Monad m, Ord a) => a -> StackSet a -> m WorkspaceId
 lookup x w = M.lookup x (cache w)
 
 -- | /O(n)/. Number of stacks
@@ -80,10 +90,11 @@ size = M.size . stacks
 
 -- | fromList. Build a new StackSet from a list of list of elements
 -- If there are duplicates in the list, the last occurence wins.
-fromList :: Ord a => (Int,Int,[[a]]) -> StackSet a
-fromList (_,_,[]) = error "Cannot build a StackSet from an empty list"
+-- FIXME: This always makes a StackSet with 1 screen.
+fromList :: Ord a => (Int,[[a]]) -> StackSet a
+fromList (_,[]) = error "Cannot build a StackSet from an empty list"
 
-fromList (n,m,xs) | n < 0 || n >= length xs
+fromList (n,xs) | n < 0 || n >= length xs
                 = error $ "Cursor index is out of range: " ++ show (n, length xs)
                   | m < 1 || m >  length xs
                 = error $ "Can't have more screens than workspaces: " ++ show (m, length xs)
@@ -93,8 +104,8 @@ fromList (o,m,xs) = view o $ foldr (\(i,ys) s ->
                                       (empty (length xs) m) (zip [0..] xs)
 
 -- | toList. Flatten a stackset to a list of lists
-toList  :: StackSet a -> (Int,Int,[[a]])
-toList x = (current x, M.size $ screen2ws x, map snd $ M.toList (stacks x))
+toList  :: StackSet a -> (Int,[[a]])
+toList x = (current x, map snd $ M.toList (stacks x))
 
 -- | Push. Insert an element onto the top of the current stack.
 -- If the element is already in the current stack, it is moved to the top.
@@ -110,23 +121,25 @@ peek w = peekStack (current w) w
 
 -- | /O(log s)/. Extract the element on the top of the given stack. If no such
 -- element exists, Nothing is returned.
-peekStack :: Int -> StackSet a -> Maybe a
+peekStack :: WorkspaceId -> StackSet a -> Maybe a
 peekStack n w = M.lookup n (focus w)
 
 -- | /O(log s)/. Index. Extract the stack at index 'n'.
 -- If the index is invalid, an exception is thrown.
-index :: Int -> StackSet a -> [a]
+index :: WorkspaceId -> StackSet a -> [a]
 index k w = fromJust (M.lookup k (stacks w))
 
--- | view. Set the stack specified by the Int argument as being visible and the
+-- | view. Set the stack specified by the argument as being visible and the
 -- current StackSet. If the stack wasn't previously visible, it will become
 -- visible on the current screen. If the index is out of range an exception is
 -- thrown.
-view :: Int -> StackSet a -> StackSet a
-view n w | n >= 0 && n < M.size (stacks w) = if M.member n (ws2screen w)
-                                                 then w { current = n }
-                                                 else tweak (fromJust $ screen (current w) w)
-         | otherwise                       = error $ "view: index out of bounds: " ++ show n
+view :: WorkspaceId -> StackSet a -> StackSet a
+-- view n w | n >= 0 && n < fromIntegral (M.size (stacks w)) -- coerce
+
+view n w | M.member n (stacks w)
+         = if M.member n (ws2screen w) then w { current = n }
+                                       else tweak (fromJust $ screen (current w) w)
+         | otherwise = error $ "view: index out of bounds: " ++ show n
   where
     tweak sc = w { screen2ws = M.insert sc n (screen2ws w)
                  , ws2screen = M.insert n sc (M.filter (/=sc) (ws2screen w))
@@ -134,15 +147,15 @@ view n w | n >= 0 && n < M.size (stacks w) = if M.member n (ws2screen w)
                  }
 
 -- | That screen that workspace 'n' is visible on, if any.
-screen :: Int -> StackSet a -> Maybe Int
+screen :: WorkspaceId -> StackSet a -> Maybe ScreenId
 screen n w = M.lookup n (ws2screen w)
 
 -- | The workspace visible on screen 'sc'. Nothing if screen is out of bounds.
-workspace :: Int -> StackSet a -> Maybe Int
+workspace :: ScreenId -> StackSet a -> Maybe WorkspaceId
 workspace sc w = M.lookup sc (screen2ws w)
 
 -- | A list of the currently visible workspaces.
-visibleWorkspaces :: StackSet a -> [Int]
+visibleWorkspaces :: StackSet a -> [WorkspaceId]
 visibleWorkspaces = M.keys . ws2screen
 
 --
@@ -168,7 +181,7 @@ rotate o w = maybe w id $ do
 -- the top of stack 'n'. If the stack to move to is not valid, and
 -- exception is thrown.
 --
-shift :: Ord a => Int -> StackSet a -> StackSet a
+shift :: Ord a => WorkspaceId -> StackSet a -> StackSet a
 shift n w = maybe w (\k -> insert k n (delete k w)) (peek w)
 
 -- | /O(log n)/. Insert an element onto the top of stack 'n'.
@@ -176,7 +189,7 @@ shift n w = maybe w (\k -> insert k n (delete k w)) (peek w)
 -- If the element exists on another stack, it is removed from that stack.
 -- If the index is wrong an exception is thrown.
 --
-insert :: Ord a => a -> Int -> StackSet a -> StackSet a
+insert :: Ord a => a -> WorkspaceId -> StackSet a -> StackSet a
 insert k n old = new { cache  = M.insert k n (cache new)
                      , stacks = M.adjust (k:) n (stacks new)
                      , focus  = M.insert n k (focus new) }

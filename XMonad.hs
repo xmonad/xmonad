@@ -20,7 +20,7 @@ module XMonad (
     spawn, trace, whenJust, rot
   ) where
 
-import StackSet (StackSet)
+import StackSet (StackSet,WorkspaceId)
 
 import Control.Monad.State
 import System.IO
@@ -43,7 +43,7 @@ data XState = XState
     , dimensions        :: !(Int,Int)              -- ^ dimensions of the screen, used for hiding windows
     , workspace         :: !WorkSpace              -- ^ workspace list
     , defaultLayoutDesc :: !LayoutDesc             -- ^ default layout
-    , layoutDescs       :: !(M.Map Int LayoutDesc) -- ^ mapping of workspaces to descriptions of their layouts
+    , layoutDescs       :: !(M.Map WorkspaceId LayoutDesc) -- ^ mapping of workspaces to descriptions of their layouts
     }
 
 type WorkSpace = StackSet Window
@@ -59,9 +59,6 @@ rot x = if x == maxBound then minBound else succ x
 data LayoutDesc = LayoutDesc { layoutType   :: !Layout
                              , tileFraction :: !Rational
                              }
-
-
-
 
 -- | The X monad, a StateT transformer over IO encapsulating the window
 -- manager state
