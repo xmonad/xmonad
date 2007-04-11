@@ -138,7 +138,7 @@ screen n w = M.lookup n (ws2screen w)
 
 -- | The workspace visible on screen 'sc'. Nothing if screen is out of bounds.
 workspace :: Int -> StackSet a -> Maybe Int
-workspace sc w = M.lookup sc $ ws2screen w
+workspace sc w = M.lookup sc (screen2ws w)
 
 -- | A list of the currently visible workspaces.
 visibleWorkspaces :: StackSet a -> [Int]
