@@ -17,7 +17,7 @@
 module XMonad (
     X, WorkSpace, XState(..), Layout(..), LayoutDesc(..),
     runX, io, withDisplay, isRoot,
-    spawn, trace, whenJust, rot
+    spawn, trace, whenJust, rotateLayout
   ) where
 
 import StackSet (StackSet,WorkspaceId)
@@ -80,8 +80,8 @@ isRoot w = liftM (w==) (gets theRoot)
 data Layout = Full | Tall | Wide deriving (Enum, Bounded, Eq)
 
 -- | 'rot' for Layout.
-rot :: Layout -> Layout
-rot x = if x == maxBound then minBound else succ x
+rotateLayout :: Layout -> Layout
+rotateLayout x = if x == maxBound then minBound else succ x
 
 -- | A full description of a particular workspace's layout parameters.
 data LayoutDesc = LayoutDesc { layoutType   :: !Layout

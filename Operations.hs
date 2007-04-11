@@ -6,6 +6,7 @@ import Data.Bits
 import qualified Data.Map as M
 
 import Control.Monad.State
+import Control.Arrow
 
 import System.Posix.Process
 import System.Environment
@@ -41,6 +42,7 @@ refresh = do
 
 -- | tile.  Compute the positions for windows in horizontal layout
 -- mode.
+--
 tile :: Rational -> Rectangle -> [Window] -> [(Window, Rectangle)]
 tile _ _ []    = []
 tile _ d [w]   = [(w, d)]
@@ -54,16 +56,23 @@ tile r (Rectangle sx sy sw sh) (w:s)
 
 -- | vtile. Tile vertically.
 vtile :: Rational -> Rectangle -> [Window] -> [(Window, Rectangle)]
-vtile r rect ws = map (\(w, wr) -> (w, flipRect wr)) $ tile r (flipRect rect) ws
+vtile r rect = map (second flipRect) . tile r (flipRect rect)
 
+-- | Flip rectangles around
 flipRect :: Rectangle -> Rectangle
-flipRect (Rectangle { rect_x = rx, rect_y = ry, rect_width = rw, rect_height = rh })
-        = Rectangle { rect_x = ry, rect_y = rx, rect_width = rh, rect_height = rw }
+flipRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 
 -- | switchLayout.  Switch to another layout scheme.  Switches the
--- current workspace.
+-- current workspace. By convention, a window set as master in Tall mode
+-- remains as master in Wide mode. When switching from full screen to a
+-- tiling mode, the currently focused window becomes a master. When
+-- switching back , the focused window is uppermost.
+--
+-- Note a current `feature' is that 'promote' cycles clockwise in Tall
+-- mode, and counter clockwise in wide mode. This is a feature.
+--
 switchLayout :: X ()
-switchLayout = layout $ \fl -> fl { layoutType = rot (layoutType fl) }
+switchLayout = layout $ \fl -> fl { layoutType = rotateLayout (layoutType fl) }
 
 -- | changeSplit.  Changes the window split.
 changeSplit :: Rational -> X ()
