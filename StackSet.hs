@@ -88,24 +88,26 @@ size = M.size . stacks
 
 ------------------------------------------------------------------------
 
--- | fromList. Build a new StackSet from a list of list of elements
--- If there are duplicates in the list, the last occurence wins.
--- FIXME: This always makes a StackSet with 1 screen.
-fromList :: Ord a => (Int,[[a]]) -> StackSet a
-fromList (_,[]) = error "Cannot build a StackSet from an empty list"
+-- | fromList. Build a new StackSet from a list of list of elements,
+-- keeping track of the currently focused workspace, and the total
+-- number of workspaces. If there are duplicates in the list, the last
+-- occurence wins.
+fromList :: Ord a => (WorkspaceId, Int,[[a]]) -> StackSet a
+fromList (_,_,[]) = error "Cannot build a StackSet from an empty list"
 
-fromList (n,xs) | n < 0 || n >= length xs
+fromList (n,m,xs) | n < 0 || n >= L.genericLength xs
                 = error $ "Cursor index is out of range: " ++ show (n, length xs)
-                  | m < 1 || m >  length xs
+                  | m < 1 || m >  L.genericLength xs
                 = error $ "Can't have more screens than workspaces: " ++ show (m, length xs)
 
 fromList (o,m,xs) = view o $ foldr (\(i,ys) s ->
                                   foldr (\a t -> insert a i t) s ys)
                                       (empty (length xs) m) (zip [0..] xs)
 
+
 -- | toList. Flatten a stackset to a list of lists
-toList  :: StackSet a -> (Int,[[a]])
-toList x = (current x, map snd $ M.toList (stacks x))
+toList  :: StackSet a -> (WorkspaceId,Int,[[a]])
+toList x = (current x, M.size $ screen2ws x, map snd $ M.toList (stacks x))
 
 -- | Push. Insert an element onto the top of the current stack.
 -- If the element is already in the current stack, it is moved to the top.
