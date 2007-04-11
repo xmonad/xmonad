@@ -22,7 +22,7 @@ module Config where
 --     mod-shift-q             exit window manager
 --     mod-shift-ctrl-q        restart window manager
 -- 
---     mod-return              move currently focused window into master position
+--     mod-return              cycle the current tiling order
 -- 
 --     mod-1..9                switch to workspace N
 --     mod-shift-1..9          move client to workspace N
