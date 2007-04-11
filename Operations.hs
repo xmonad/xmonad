@@ -253,13 +253,3 @@ restart = do
     prog <- getProgName
     args <- getArgs
     executeFile prog True args Nothing
-
--- | Starts dmenu on the current screen. (Requires patches to dmenu for the -x
--- and -w options.)
-dmenu :: X ()
-dmenu = do
-    XState { xineScreens = xinesc, workspace = ws } <- get
-    let curscreen = fromMaybe 0 (M.lookup (W.current ws) (W.ws2screen ws))
-        sc = xinesc !! curscreen
-    spawn $ concat [ "exe=`dmenu_path | dmenu -x ", show (rect_x sc)
-                   , " -w " , show (rect_width sc) , "` && exec $exe" ]
