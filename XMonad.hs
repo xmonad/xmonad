@@ -33,32 +33,24 @@ import qualified Data.Map as M
 -- | XState, the window manager state.
 -- Just the display, width, height and a window list
 data XState = XState
-    { display           :: Display                 -- ^ the X11 display
+    { display           :: Display                         -- ^ the X11 display
 
-    , xineScreens       :: ![Rectangle]            -- ^ dimensions of each screen
+    , theRoot           :: !Window                         -- ^ the root window
+    , wmdelete          :: !Atom                           -- ^ window deletion atom
+    , wmprotocols       :: !Atom                           -- ^ wm protocols atom
+    , dimensions        :: !(Int,Int)                      -- ^ dimensions of the screen, 
+                                                           -- used for hiding windows
+    , workspace         :: !WorkSpace                      -- ^ workspace list
 
-    , theRoot           :: !Window                 -- ^ the root window
-    , wmdelete          :: !Atom                   -- ^ window deletion atom
-    , wmprotocols       :: !Atom                   -- ^ wm protocols atom
-    , dimensions        :: !(Int,Int)              -- ^ dimensions of the screen, used for hiding windows
-    , workspace         :: !WorkSpace              -- ^ workspace list
-    , defaultLayoutDesc :: !LayoutDesc             -- ^ default layout
-    , layoutDescs       :: !(M.Map WorkspaceId LayoutDesc) -- ^ mapping of workspaces to descriptions of their layouts
+    , xineScreens       :: ![Rectangle]                    -- ^ dimensions of each screen
+    , defaultLayoutDesc :: !LayoutDesc                     -- ^ default layout
+    , layoutDescs       :: !(M.Map WorkspaceId LayoutDesc) -- ^ mapping of workspaces 
+                                                           -- to descriptions of their layouts
     }
 
 type WorkSpace = StackSet Window
 
--- | The different layout modes
-data Layout = Full | Tall | Wide deriving (Enum, Bounded, Eq)
-
--- | 'rot' for Layout.
-rot :: Layout -> Layout
-rot x = if x == maxBound then minBound else succ x
-
--- | A full description of a particular workspace's layout parameters.
-data LayoutDesc = LayoutDesc { layoutType   :: !Layout
-                             , tileFraction :: !Rational
-                             }
+------------------------------------------------------------------------
 
 -- | The X monad, a StateT transformer over IO encapsulating the window
 -- manager state
@@ -80,6 +72,21 @@ withDisplay f = gets display >>= f
 -- | True if the given window is the root window
 isRoot :: Window -> X Bool
 isRoot w = liftM (w==) (gets theRoot)
+
+------------------------------------------------------------------------
+-- Layout handling
+
+-- | The different layout modes
+data Layout = Full | Tall | Wide deriving (Enum, Bounded, Eq)
+
+-- | 'rot' for Layout.
+rot :: Layout -> Layout
+rot x = if x == maxBound then minBound else succ x
+
+-- | A full description of a particular workspace's layout parameters.
+data LayoutDesc = LayoutDesc { layoutType   :: !Layout
+                             , tileFraction :: !Rational
+                             }
 
 -- ---------------------------------------------------------------------
 -- Utilities
