@@ -162,6 +162,8 @@ visibleWorkspaces = M.keys . ws2screen
 
 --
 -- | /O(log n)/. rotate. cycle the current window list up or down.
+-- Has the effect of rotating focus. In fullscreen mode this will cause
+-- a new window to be visible.
 --
 --  rotate EQ   -->  [5,6,7,8,1,2,3,4]
 --  rotate GT   -->  [6,7,8,1,2,3,4,5]
@@ -177,7 +179,7 @@ rotate o w = maybe w id $ do
             EQ -> Nothing
             GT -> elemAfter f s
             LT -> elemAfter f (reverse s)
-    return (w { focus = M.insert (current w) ea (focus w) })
+    return $ w { focus = M.insert (current w) ea (focus w) }
 
 -- | /O(log n)/. shift. move the client on top of the current stack to
 -- the top of stack 'n'. If the stack to move to is not valid, and
@@ -217,11 +219,18 @@ raiseFocus k w = case M.lookup k (cache w) of
     Nothing -> w
     Just i  -> (view i w) { focus = M.insert i k (focus w) }
 
--- | Move a window to the top of its workspace.
-promote :: Ord a => a -> StackSet a -> StackSet a
-promote k w = case M.lookup k (cache w) of
-    Nothing -> w
-    Just i  -> w { stacks = M.adjust (\ks -> k : filter (/= k) ks) i (stacks w) }
+-- | Cycle the current stack ordering. In tiled mode has the effect of
+-- moving a new window into the master position, without changing focus.
+promote :: StackSet a -> StackSet a
+promote w = w { stacks = M.adjust next (current w) (stacks w) }
+   where next [] = []
+         next xs = last xs : init xs
+
+--
+-- case M.lookup k (cache w) of
+--     Nothing -> w
+--    Just i  -> w { stacks = M.adjust (\ks -> k : filter (/= k) ks) i (stacks w) }
+--
 
 -- |
 elemAfter :: Eq a => a -> [a] -> Maybe a

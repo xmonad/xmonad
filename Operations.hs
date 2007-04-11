@@ -34,7 +34,7 @@ refresh = do
         mapM_ (\(w, rect) -> io $ moveWindowInside d w rect) $
             case layoutType fl of
                 Full -> fmap (flip (,) sc) $ maybeToList $ W.peekStack n ws
-                Tall -> tile (tileFraction fl) sc $ W.index n ws
+                Tall -> tile  (tileFraction fl) sc $ W.index n ws
                 Wide -> vtile (tileFraction fl) sc $ W.index n ws
         whenJust (W.peekStack n ws) (io . raiseWindow d)
     whenJust (W.peek ws) setFocus
@@ -192,13 +192,9 @@ setBorder w p = withDisplay $ \d -> io $ setWindowBorder d w p
 raise :: Ordering -> X ()
 raise = windows . W.rotate
 
--- | promote.  Make the focused window the master window in its
--- workspace
---
--- TODO: generic cycling clockwise and anticlockwise
---
+-- | promote. Cycle the current tiling order clockwise.
 promote :: X ()
-promote = windows $ \w -> maybe w (\k -> W.promote k w) (W.peek w)
+promote = windows W.promote
 
 -- | Kill the currently focused client
 kill :: X ()

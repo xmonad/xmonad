@@ -123,7 +123,7 @@ keys = M.fromList $
     , ((modMask .|. shiftMask, xK_q                     ), io $ exitWith ExitSuccess)
     , ((modMask .|. shiftMask .|. controlMask, xK_q     ), io restart)
 
-    -- Move focused window into master position in tiling mode.
+    -- Cycle the current tiling order
     , ((modMask,               xK_Return), promote)
 
     ] ++
