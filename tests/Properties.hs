@@ -24,8 +24,9 @@ instance (Ord a, Arbitrary a) => Arbitrary (StackSet a) where
     arbitrary = do
         sz <- choose (1,20)
         n  <- choose (0,sz-1)
+        sc <- choose (1,sz)
         ls <- vector sz
-        return $ fromList (n,ls)
+        return $ fromList (n,sc,ls)
     coarbitrary = error "no coarbitrary for StackSet"
 
 prop_id x = fromList (toList x) == x
@@ -96,6 +97,12 @@ prop_ws2screen_screen2ws x = (ws == ws') && (sc == sc')
           sc' = sort . elems $ ws2screen x
           _ = x :: T
                           
+prop_screenworkspace x = all test [0..((size x)-1)]
+    where test ws = case screen ws x of
+                        Nothing -> True
+                        Just sc -> workspace sc x == Just ws
+          _ = x :: T
+
 ------------------------------------------------------------------------
 
 main :: IO ()
@@ -122,6 +129,7 @@ main = do
         ,("fullcache        ", mytest prop_fullcache)
         ,("currentwsvisible ", mytest prop_currentwsvisible)
         ,("ws screen mapping", mytest prop_ws2screen_screen2ws)
+        ,("screen/workspace ", mytest prop_screenworkspace)
         ]
 
 debug = False
