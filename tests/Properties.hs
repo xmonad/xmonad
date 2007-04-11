@@ -1,3 +1,4 @@
+{-# OPTIONS -fglasgow-exts #-}
 
 import StackSet
 
@@ -16,7 +17,7 @@ import Data.Map             (keys,elems)
 -- QuickCheck properties for the StackSet
 
 -- | Height of stack 'n'
-height :: Int -> StackSet a -> Int
+height :: WorkspaceId -> StackSet a -> Int
 height i w = length (index i w)
 
 -- build (non-empty) StackSets with between 1 and 100 stacks
@@ -26,7 +27,7 @@ instance (Ord a, Arbitrary a) => Arbitrary (StackSet a) where
         n  <- choose (0,sz-1)
         sc <- choose (1,sz)
         ls <- vector sz
-        return $ fromList (n,sc,ls)
+        return $ fromList (fromIntegral n,sc,ls)
     coarbitrary = error "no coarbitrary for StackSet"
 
 prop_id x = fromList (toList x) == x
@@ -73,7 +74,7 @@ prop_viewview r  x   =
     let n  = current x
         sz = size x
         i  = r `mod` sz
-    in view n (view i x) == x
+    in view n (view (fromIntegral i) x) == x
 
     where _ = x :: T
 
@@ -96,8 +97,8 @@ prop_ws2screen_screen2ws x = (ws == ws') && (sc == sc')
           sc  = sort . keys  $ screen2ws x
           sc' = sort . elems $ ws2screen x
           _ = x :: T
-                          
-prop_screenworkspace x = all test [0..((size x)-1)]
+
+prop_screenworkspace x = all test [0..((fromIntegral $ size x)-1)]
     where test ws = case screen ws x of
                         Nothing -> True
                         Just sc -> workspace sc x == Just ws

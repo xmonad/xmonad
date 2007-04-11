@@ -1,3 +1,4 @@
+{-# OPTIONS -fglasgow-exts #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  StackSet
@@ -14,9 +15,10 @@
 -- set is always current. Elements may appear only once in the entire
 -- stack set.
 --
--- A StackSet provides a nice data structure for multiscreen
--- window managers, where each screen has a stack of windows, and a window
--- may be on only 1 screen at any given time.
+-- A StackSet provides a nice data structure for window managers with
+-- multiple physical screens, and multiple workspaces, where each screen
+-- has a stack of windows, and a window may be on only 1 screen at any
+-- given time.
 --
 
 module StackSet where
@@ -26,11 +28,6 @@ import qualified Data.List     as L (delete,genericLength)
 import qualified Data.Map      as M
 
 ------------------------------------------------------------------------
-
---
--- N.B we probably want to think about strict 'adjust' and inserts on
--- these data structures in the long run.
---
 
 -- | The StackSet data structure. A table of stacks, with a current pointer
 data StackSet a =
@@ -225,12 +222,6 @@ promote :: StackSet a -> StackSet a
 promote w = w { stacks = M.adjust next (current w) (stacks w) }
    where next [] = []
          next xs = last xs : init xs
-
---
--- case M.lookup k (cache w) of
---     Nothing -> w
---    Just i  -> w { stacks = M.adjust (\ks -> k : filter (/= k) ks) i (stacks w) }
---
 
 -- |
 elemAfter :: Eq a => a -> [a] -> Maybe a
