@@ -148,6 +148,6 @@ keys = M.fromList $
     -- mod-wer (underneath 123) switches to physical/Xinerama screens 1 2 and 3
     ++
     [((m .|. modMask, key), screenWorkspace sc >>= f)
-        | (key, sc) <- zip [xK_s, xK_d, xK_f] [0..]
+        | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
         , (f, m) <- [(view, 0), (tag, shiftMask)]]
 
