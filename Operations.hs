@@ -51,6 +51,16 @@ refresh = do
                 Wide -> vtile (tileFraction fl) sc $ W.index n ws
         whenJust (W.peekStack n ws) (io . raiseWindow d)
     whenJust (W.peek ws) setFocus
+    clearEnterEvents
+
+-- | clearEnterEvents.  Remove all window entry events from the event queue.
+clearEnterEvents :: X ()
+clearEnterEvents = do
+    d <- gets display
+    io $ sync d False
+    io $ allocaXEvent $ \p -> fix $ \again -> do
+        more <- checkMaskEvent d enterWindowMask p
+        when more again
 
 -- | tile.  Compute the positions for windows in horizontal layout
 -- mode.
@@ -251,6 +261,7 @@ view n = do
     -- If the old workspace isn't visible anymore, we have to hide the windows
     -- in case we're switching to an empty workspace.
     when (m `notElem` (W.visibleWorkspaces ws')) (mapM_ hide (W.index m ws))
+    clearEnterEvents
     setTopFocus
 
 -- | 'screenWorkspace sc' returns the workspace number viewed by 'sc'.
