@@ -32,7 +32,7 @@ module Config where
 -- 
 --     mod-shift-c             kill client
 --     mod-shift-q             exit window manager
---     mod-shift-ctrl-q        restart window manager
+--     mod-shift-ctrl-q        restart window manager ('xmonad' must be in $PATH)
 -- 
 --     mod-return              cycle the current tiling order
 -- 
