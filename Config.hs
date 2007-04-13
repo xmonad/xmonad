@@ -27,8 +27,8 @@ module Config where
 --     mod-j
 --     mod-k
 -- 
---     mod-h                   resize currently focused window
---     mod-l
+--     mod-h                   decrease the size of the master area
+--     mod-l                   increase the size of the master area
 -- 
 --     mod-shift-c             kill client
 --     mod-shift-q             exit window manager
