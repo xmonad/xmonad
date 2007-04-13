@@ -1,6 +1,7 @@
 - Tasks blocking xmonad 0.1
-    - Move the multi-screen handling from XState to StackSet (see notes below)
-    - Fix the missing windows on workspace switch bug
+    - more quickchecks (layout algorithm is one candidate)
+    - website, xmonad.org
+    - testing
 
 - Clean up focus and mouse related issues.  During 'refresh', xmonad should
   ignore EnterNotify events (by changing selectInput for the duration).
