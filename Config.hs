@@ -99,10 +99,6 @@ modMask = mod1Mask
 defaultDelta :: Rational
 defaultDelta = 3%100
 
--- How much to change the size of a tiled window, by default.
-sizeDelta :: Rational
-sizeDelta = 3%100
-
 -- The mask for the numlock key. You may need to change this on some systems.
 numlockMask :: KeyMask
 numlockMask = lockMask
