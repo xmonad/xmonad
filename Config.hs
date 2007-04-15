@@ -90,8 +90,9 @@ workspaces :: Int
 workspaces = 9
 
 -- modMask lets you easily change which modkey you use. The default is mod1Mask
--- ("left alt").  You may also consider using mod3mask ("right alt"), which
--- does not conflict with emacs keybindings.
+-- ("left alt").  You may also consider using mod3Mask ("right alt"), which
+-- does not conflict with emacs keybindings. The "windows key" is usually
+-- mod4Mask.
 modMask :: KeyMask
 modMask = mod1Mask
 
