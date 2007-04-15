@@ -1,7 +1,10 @@
 - Tasks blocking xmonad 0.1
+    * CRITICAL: fix killClient code. see for example, xclock.
     - more quickchecks (layout algorithm is one candidate)
     - website, xmonad.org
     - testing
+
+
 
 - Clean up focus and mouse related issues.  During 'refresh', xmonad should
   ignore EnterNotify events (by changing selectInput for the duration).
