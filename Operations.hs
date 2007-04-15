@@ -251,7 +251,7 @@ tag n = do
             hide w
             windows $ W.shift n
 
--- | view. Change the current workspace to workspce at offset n (0 indexed).
+-- | view. Change the current workspace to workspace at offset n (0 indexed).
 view :: W.WorkspaceId -> X ()
 view n = do
     ws <- gets workspace
