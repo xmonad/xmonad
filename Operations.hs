@@ -22,6 +22,7 @@ import Control.Arrow
 
 import System.Posix.Process
 import System.Environment
+import System.Directory
 
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras
@@ -276,6 +277,9 @@ isClient w = liftM (W.member w) (gets workspace)
 -- to be in PATH for this to work.
 restart :: IO ()
 restart = do
-    prog <- getProgName
-    args <- getArgs
-    executeFile prog True args Nothing
+    prog      <- getProgName
+    prog_path <- findExecutable prog
+    case prog_path of
+        Nothing -> return ()    -- silently fail
+        Just p  -> do args <- getArgs
+                      executeFile p True args Nothing
