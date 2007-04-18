@@ -1,16 +1,18 @@
-name:           xmonad
-version:        0.0
-description:    A lightweight X11 window manager.
-synopsis:       A lightweight X11 window manager.
-category:       System
-license:        BSD3
-license-file:   LICENSE
-author:         Spencer Janssen
-maintainer:     sjanssen@cse.unl.edu
-build-depends:  base>=1.0, X11>=1.1, X11-extras>=0.0, mtl>=1.0, unix>=1.0
+name:               xmonad
+version:            0.0
+description:        A lightweight X11 window manager.
+synopsis:           A lightweight X11 window manager.
+category:           System
+license:            BSD3
+license-file:       LICENSE
+author:             Spencer Janssen
+maintainer:         sjanssen@cse.unl.edu
+build-depends:      base>=1.0, X11>=1.1, X11-extras>=0.0, mtl>=1.0, unix>=1.0
+extra-source-files: README
 
-executable:     xmonad
-main-is:        Main.hs
-ghc-options:    -funbox-strict-fields -O2 -Wall -optl-Wl,-s
--- ghc-options:    -O2 -Wall -optl-Wl,-s -prof -auto-all
-extensions:     GeneralizedNewtypeDeriving
+executable:         xmonad
+main-is:            Main.hs
+other-modules:      Config Operations StackSet XMonad
+ghc-options:        -funbox-strict-fields -O2 -Wall -optl-Wl,-s
+ghc-prof-options:   -prof -auto-all
+extensions:         GeneralizedNewtypeDeriving
