@@ -2,7 +2,7 @@ import Control.Monad
 import System.Exit
 
 main = do foo <- getContents
-          let actual_loc = filter isntcomment $
+          let actual_loc = filter (not.null) $ filter isntcomment $
                            map (dropWhile (==' ')) $ lines foo
               loc = length actual_loc
           putStrLn $ show loc
@@ -12,4 +12,5 @@ main = do foo <- getContents
 
 isntcomment "" = False
 isntcomment ('-':'-':_) = False
+isntcomment ('{':'-':_) = False -- pragmas
 isntcomment _ = True

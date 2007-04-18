@@ -239,12 +239,12 @@ swap a b xs
 
 swap _ _ xs = xs -- do nothing
 
-{-
+--
 -- cycling:
-promote w = w { stacks = M.adjust next (current w) (stacks w) }
-   where next [] = []
-         next xs = last xs : init xs
--}
+-- promote w = w { stacks = M.adjust next (current w) (stacks w) }
+--    where next [] = []
+--          next xs = last xs : init xs
+--
 
 -- |
 elemAfter :: Eq a => a -> [a] -> Maybe a
