@@ -6,7 +6,7 @@ import Data.Maybe
 import System.Environment
 import Control.Exception    (assert)
 import Control.Monad
-import Test.QuickCheck
+import Test.QuickCheck hiding (promote)
 import System.IO
 import System.Random
 import Text.Printf
@@ -104,6 +104,12 @@ prop_screenworkspace x = all test [0..((fromIntegral $ size x)-1)]
                         Just sc -> workspace sc x == Just ws
           _ = x :: T
 
+prop_promote2 x = promote (promote x) == (promote x)
+  where _ = x :: T
+
+prop_promotefocus x = focus (promote x) == focus x -- focus doesn't change
+  where _ = x :: T
+
 ------------------------------------------------------------------------
 
 main :: IO ()
@@ -131,6 +137,8 @@ main = do
         ,("currentwsvisible ", mytest prop_currentwsvisible)
         ,("ws screen mapping", mytest prop_ws2screen_screen2ws)
         ,("screen/workspace ", mytest prop_screenworkspace)
+        ,("promote idempotent", mytest prop_promote2)
+        ,("promote/focus",     mytest prop_promotefocus)
         ]
 
 debug = False

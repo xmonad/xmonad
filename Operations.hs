@@ -91,9 +91,6 @@ flipRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 -- tiling mode, the currently focused window becomes a master. When
 -- switching back , the focused window is uppermost.
 --
--- Note a current `feature' is that 'promote' cycles clockwise in Tall
--- mode, and counter clockwise in wide mode. This is a feature.
---
 switchLayout :: X ()
 switchLayout = layout $ \fl -> fl { layoutType = rotateLayout (layoutType fl) }
 
@@ -224,7 +221,7 @@ setBorder w p = withDisplay $ \d -> io $ setWindowBorder d w p
 raise :: Ordering -> X ()
 raise = windows . W.rotate
 
--- | promote. Cycle the current tiling order clockwise.
+-- | promote. Move the currently focused window into the master frame
 promote :: X ()
 promote = windows W.promote
 

@@ -24,7 +24,7 @@
 module StackSet where
 
 import Data.Maybe
-import qualified Data.List     as L (delete,genericLength)
+import qualified Data.List     as L (delete,genericLength,elemIndex)
 import qualified Data.Map      as M
 
 ------------------------------------------------------------------------
@@ -216,12 +216,35 @@ raiseFocus k w = case M.lookup k (cache w) of
     Nothing -> w
     Just i  -> (view i w) { focus = M.insert i k (focus w) }
 
--- | Cycle the current stack ordering. In tiled mode has the effect of
--- moving a new window into the master position, without changing focus.
-promote :: StackSet a -> StackSet a
+-- | Swap the currently focused window with the master window (the
+-- window on top of the stack). Focus moves to the master.
+promote :: Ord a => StackSet a -> StackSet a
+promote w = maybe w id $ do
+    a <- peek w -- fail if null
+    let w' = w { stacks = M.adjust (\s -> swap a (head s) s) (current w) (stacks w) }
+    return $ insert a (current w) w' -- and maintain focus
+
+--
+-- | Swap first occurences of 'a' and 'b' in list.
+-- If both elements are not in the list, the list is unchanged.
+--
+swap :: Eq a => a -> a -> [a] -> [a]
+swap a b xs
+    | a == b                    = xs    -- do nothing
+    | Just ai <- L.elemIndex a xs
+    , Just bi <- L.elemIndex b xs = insertAt bi a (insertAt ai b xs)
+ where
+    insertAt n x ys = as ++ x : tail bs
+        where (as,bs) = splitAt n ys
+
+swap _ _ xs = xs -- do nothing
+
+{-
+-- cycling:
 promote w = w { stacks = M.adjust next (current w) (stacks w) }
    where next [] = []
          next xs = last xs : init xs
+-}
 
 -- |
 elemAfter :: Eq a => a -> [a] -> Maybe a
