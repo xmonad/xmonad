@@ -6,8 +6,6 @@
 
 
 
-- Clean up focus and mouse related issues.  During 'refresh', xmonad should
-  ignore EnterNotify events (by changing selectInput for the duration).
 - let mod+enter demote a master window
 
 - think about the statusbar/multithreading.
