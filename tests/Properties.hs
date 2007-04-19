@@ -103,12 +103,24 @@ prop_screenworkspace x = all test [0..((fromIntegral $ size x)-1)]
                         Nothing -> True
                         Just sc -> workspace sc x == Just ws
           _ = x :: T
+------------------------------------------------------------------------
 
+-- promote is idempotent
 prop_promote2 x = promote (promote x) == (promote x)
   where _ = x :: T
 
-prop_promotefocus x = focus (promote x) == focus x -- focus doesn't change
+-- focus doesn't change
+prop_promotefocus x = focus (promote x) == focus x 
   where _ = x :: T
+
+-- screen certainly should't change
+prop_promotecurrent x = current (promote x) == current x 
+  where _ = x :: T
+
+-- promote doesn't mess with other windows
+prop_promoterotate x b = focus (rotate dir (promote x)) == focus (rotate dir x)
+  where _ = x :: T
+        dir = if b then LT else GT
 
 ------------------------------------------------------------------------
 
@@ -137,8 +149,11 @@ main = do
         ,("currentwsvisible ", mytest prop_currentwsvisible)
         ,("ws screen mapping", mytest prop_ws2screen_screen2ws)
         ,("screen/workspace ", mytest prop_screenworkspace)
+
         ,("promote idempotent", mytest prop_promote2)
-        ,("promote/focus",     mytest prop_promotefocus)
+        ,("promote focus",      mytest prop_promotefocus)
+        ,("promote current",    mytest prop_promotecurrent)
+        ,("promote only swaps", mytest prop_promoterotate)
         ]
 
 debug = False
