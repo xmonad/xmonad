@@ -1,7 +1,12 @@
 {-# OPTIONS -fglasgow-exts #-}
 
 import StackSet
+import Operations (tile,vtile)
 
+import Debug.Trace
+import Data.Word
+import Graphics.X11.Xlib.Types (Rectangle(..),Position,Dimension)
+import Data.Ratio
 import Data.Maybe
 import System.Environment
 import Control.Exception    (assert)
@@ -58,13 +63,29 @@ prop_peekmember x = case peek x of
                             Nothing -> True {- then we don't know anything -}
     where _ = x :: T
 
+prop_peek_peekStack n x =
+        if current x == n then peekStack n x == peek x
+                          else True -- so we don't exhaust
+    where _ = x :: T
+
+prop_notpeek_peekStack n x = current x /= n && isJust (peek x) ==> peekStack n x /= peek x
+    where _ = x :: T
+
+------------------------------------------------------------------------
+
 type T = StackSet Int Int Int
 
 prop_delete_uniq i x = not (member i x) ==> delete i x == x
     where _ = x :: T
 
+prop_delete_push i x = not (member i x) ==> delete i (push i x) == x
+    where _ = x :: T
+
 prop_delete2 i x =
     delete i x == delete i (delete i x)
+    where _ = x :: T
+
+prop_focus1 i x = member i x ==> peek (raiseFocus i x) == Just i
     where _ = x :: T
 
 prop_rotaterotate x   = rotate LT (rotate GT x) == x
@@ -103,6 +124,10 @@ prop_screenworkspace x = all test [0..((fromIntegral $ size x)-1)]
                         Nothing -> True
                         Just sc -> workspace sc x == Just ws
           _ = x :: T
+
+prop_swap a b xs = swap a b (swap a b ys) == ys
+    where ys = nub xs :: [Int]
+
 ------------------------------------------------------------------------
 
 -- promote is idempotent
@@ -110,17 +135,94 @@ prop_promote2 x = promote (promote x) == (promote x)
   where _ = x :: T
 
 -- focus doesn't change
-prop_promotefocus x = focus (promote x) == focus x 
+prop_promotefocus x = focus (promote x) == focus x
   where _ = x :: T
 
 -- screen certainly should't change
-prop_promotecurrent x = current (promote x) == current x 
+prop_promotecurrent x = current (promote x) == current x
+  where _ = x :: T
+
+-- the physical screen doesn't change
+prop_promotescreen n x = screen n (promote x) == screen n x
   where _ = x :: T
 
 -- promote doesn't mess with other windows
 prop_promoterotate x b = focus (rotate dir (promote x)) == focus (rotate dir x)
   where _ = x :: T
         dir = if b then LT else GT
+
+------------------------------------------------------------------------
+-- some properties for layouts:
+
+-- 1 window should always be tiled fullscreen
+prop_tile_fullscreen rect = tile pct rect [1] == [(1, rect)]
+
+prop_vtile_fullscreen rect = vtile pct rect [1] == [(1, rect)]
+
+-- multiple windows 
+prop_tile_non_overlap rect windows = noOverlaps (tile pct rect windows)
+  where _ = rect :: Rectangle
+
+prop_vtile_non_overlap rect windows = noOverlaps (vtile pct rect windows)
+  where _ = rect :: Rectangle
+
+pct = 3 % 100
+
+noOverlaps []  = True
+noOverlaps [_] = True
+noOverlaps xs  = and [ verts a `notOverlap` verts b
+                     | (_,a) <- xs
+                     , (_,b) <- filter (\(_,b) -> a /= b) xs
+                     ]
+    where
+      verts (Rectangle a b w h) = (a,b,a + fromIntegral w - 1, b + fromIntegral h - 1)
+
+      notOverlap (left1,bottom1,right1,top1)
+                 (left2,bottom2,right2,top2)
+        =  (top1 < bottom2 || top2 < bottom1)
+        || (right1 < left2 || right2 < left1)
+
+
+------------------------------------------------------------------------
+
+instance Random Word8 where
+  randomR = integralRandomR
+  random = randomR (minBound,maxBound)
+
+instance Arbitrary Word8 where
+  arbitrary     = choose (minBound,maxBound)
+  coarbitrary n = variant (fromIntegral ((fromIntegral n) `rem` 4))
+
+integralRandomR :: (Integral a, RandomGen g) => (a,a) -> g -> (a,g)
+integralRandomR  (a,b) g = case randomR (fromIntegral a :: Integer,
+                                         fromIntegral b :: Integer) g of
+                            (x,g) -> (fromIntegral x, g)
+
+instance Arbitrary Position  where
+    arbitrary = do n <- arbitrary :: Gen Word8
+                   return (fromIntegral n)
+    coarbitrary = undefined
+
+instance Arbitrary Dimension where
+    arbitrary = do n <- arbitrary :: Gen Word8
+                   return (fromIntegral n)
+    coarbitrary = undefined
+
+instance Arbitrary Rectangle where
+    arbitrary = do
+        sx <- arbitrary
+        sy <- arbitrary
+        sw <- arbitrary
+        sh <- arbitrary
+        return $ Rectangle sx sy sw sh
+
+instance Arbitrary Rational where
+    arbitrary = do
+        n <- arbitrary
+        d' <- arbitrary
+        let d =  if d' == 0 then 1 else d'
+        return (n % d)
+    coarbitrary = undefined
 
 ------------------------------------------------------------------------
 
@@ -134,16 +236,27 @@ main = do
 
     tests =
         [("read.show        ", mytest prop_id)
+
         ,("member/push      ", mytest prop_member1)
         ,("member/peek      ", mytest prop_peekmember)
         ,("member/delete    ", mytest prop_member2)
         ,("member/empty     ", mytest prop_member3)
+
         ,("size/push        ", mytest prop_sizepush)
         ,("height/push      ", mytest prop_currentpush)
         ,("push/peek        ", mytest prop_pushpeek)
+
+        ,("peek/peekStack"  ,  mytest prop_peek_peekStack)
+        ,("not . peek/peekStack", mytest prop_notpeek_peekStack)
+
         ,("delete/not.member", mytest prop_delete_uniq)
         ,("delete idempotent", mytest prop_delete2)
+        ,("delete.push identity" , mytest prop_delete_push)
+
+        ,("focus",             mytest prop_focus1)
+
         ,("rotate/rotate    ", mytest prop_rotaterotate)
+
         ,("view/view        ", mytest prop_viewview)
         ,("fullcache        ", mytest prop_fullcache)
         ,("currentwsvisible ", mytest prop_currentwsvisible)
@@ -154,6 +267,16 @@ main = do
         ,("promote focus",      mytest prop_promotefocus)
         ,("promote current",    mytest prop_promotecurrent)
         ,("promote only swaps", mytest prop_promoterotate)
+        ,("promote/screen" ,    mytest prop_promotescreen)
+
+        ,("swap",               mytest prop_swap)
+
+------------------------------------------------------------------------
+
+        ,("tile 1 window fullsize", mytest prop_tile_fullscreen)
+        ,("vtile 1 window fullsize", mytest prop_vtile_fullscreen)
+        ,("vtiles never overlap",    mytest prop_vtile_non_overlap     )
+
         ]
 
 debug = False

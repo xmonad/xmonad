@@ -25,7 +25,7 @@ module StackSet (
 
     screen, peekStack, index, empty, peek, push, delete, member,
     raiseFocus, rotate, promote, shift, view, workspace, fromList,
-    toList, size, visibleWorkspaces
+    toList, size, visibleWorkspaces, swap {- helper -}
   ) where
 
 import Data.Maybe
@@ -219,11 +219,15 @@ promote :: (Integral i, Ord a) => StackSet i j a -> StackSet i j a
 promote w = maybe w id $ do
     a <- peek w -- fail if null
     let w' = w { stacks = M.adjust (\s -> swap a (head s) s) (current w) (stacks w) }
-    return $ insert a (current w) w' -- and maintain focus
+    return $ insert a (current w) w' -- and maintain focus (?)
 
 --
 -- | Swap first occurences of 'a' and 'b' in list.
 -- If both elements are not in the list, the list is unchanged.
+--
+-- Given a set as a list (no duplicates)
+--
+-- > swap a b . swap a b == id
 --
 swap :: Eq a => a -> a -> [a] -> [a]
 swap a b xs
