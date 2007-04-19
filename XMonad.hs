@@ -15,7 +15,7 @@
 --
 
 module XMonad (
-    X, WorkSpace, WorkspaceId(..), ScreenId(..), XState(..), Layout(..), LayoutDesc(..),
+    X, WindowSet, WorkspaceId(..), ScreenId(..), XState(..), Layout(..), LayoutDesc(..),
     runX, io, withDisplay, isRoot, spawn, trace, whenJust, rotateLayout
   ) where
 
@@ -39,7 +39,7 @@ data XState = XState
     , wmprotocols       :: !Atom                           -- ^ wm protocols atom
     , dimensions        :: !(Int,Int)                      -- ^ dimensions of the screen, 
                                                            -- used for hiding windows
-    , workspace         :: !WorkSpace                      -- ^ workspace list
+    , workspace         :: !WindowSet                      -- ^ workspace list
 
     , xineScreens       :: ![Rectangle]                    -- ^ dimensions of each screen
     , defaultLayoutDesc :: !LayoutDesc                     -- ^ default layout
@@ -47,7 +47,7 @@ data XState = XState
                                                            -- to descriptions of their layouts
     }
 
-type WorkSpace = StackSet WorkspaceId ScreenId Window
+type WindowSet = StackSet WorkspaceId ScreenId Window
 
 -- | Virtual workspace indicies
 newtype WorkspaceId = W Int deriving (Eq,Ord,Show,Enum,Num,Integral,Real)

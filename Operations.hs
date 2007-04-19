@@ -111,7 +111,7 @@ layout f = do
     refresh
 
 -- | windows. Modify the current window list with a pure function, and refresh
-windows :: (WorkSpace -> WorkSpace) -> X ()
+windows :: (WindowSet -> WindowSet) -> X ()
 windows f = do
     modify $ \s -> s { workspace = f (workspace s) }
     refresh
