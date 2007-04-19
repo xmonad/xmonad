@@ -193,6 +193,14 @@ instance Arbitrary Word8 where
   arbitrary     = choose (minBound,maxBound)
   coarbitrary n = variant (fromIntegral ((fromIntegral n) `rem` 4))
 
+instance Random Word64 where
+  randomR = integralRandomR
+  random = randomR (minBound,maxBound)
+
+instance Arbitrary Word64 where
+  arbitrary     = choose (minBound,maxBound)
+  coarbitrary n = variant (fromIntegral ((fromIntegral n) `rem` 4))
+
 integralRandomR :: (Integral a, RandomGen g) => (a,a) -> g -> (a,g)
 integralRandomR  (a,b) g = case randomR (fromIntegral a :: Integer,
                                          fromIntegral b :: Integer) g of
