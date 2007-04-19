@@ -146,7 +146,7 @@ setButtonGrab False w = withDisplay $ \d -> io $
 -- rectangle, including its border.
 moveWindowInside :: Display -> Window -> Rectangle -> IO ()
 moveWindowInside d w r = do
-    bw <- (fromIntegral . waBorderWidth) `liftM` getWindowAttributes d w
+    bw <- (fromIntegral . wa_border_width) `liftM` getWindowAttributes d w
     moveResizeWindow d w (rect_x r) (rect_y r)
                          (rect_width  r - bw*2)
                          (rect_height r - bw*2)

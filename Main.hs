@@ -85,8 +85,8 @@ scan dpy rootw = do
     filterM ok ws
   where
     ok w = do wa <- getWindowAttributes dpy w
-              return $ not (waOverrideRedirect wa)
-                     && waMapState wa == waIsViewable
+              return $ not (wa_override_redirect wa)
+                     && wa_map_state wa == waIsViewable
 
 -- | Grab the keys back
 grabKeys :: Display -> Window -> IO ()
@@ -124,64 +124,64 @@ grabKeys dpy rootw = do
 handle :: Event -> X ()
 
 -- run window manager command
-handle (KeyEvent {event_type = t, state = m, keycode = code})
+handle (KeyEvent {ev_event_type = t, ev_state = m, ev_keycode = code})
     | t == keyPress
     = withDisplay $ \dpy -> do
         s   <- io $ keycodeToKeysym dpy code 0
         whenJust (M.lookup (m,s) keys) id
 
 -- manage a new window
-handle (MapRequestEvent    {window = w}) = withDisplay $ \dpy -> do
+handle (MapRequestEvent    {ev_window = w}) = withDisplay $ \dpy -> do
     wa <- io $ getWindowAttributes dpy w -- ignore override windows
-    when (not (waOverrideRedirect wa)) $ manage w
+    when (not (wa_override_redirect wa)) $ manage w
 
 -- window destroyed, unmanage it
-handle (DestroyWindowEvent {window = w}) = do b <- isClient w; when b $ unmanage w
+handle (DestroyWindowEvent {ev_window = w}) = do b <- isClient w; when b $ unmanage w
 
 -- window gone, unmanage it
-handle (UnmapEvent         {window = w}) = do b <- isClient w; when b $ unmanage w
+handle (UnmapEvent         {ev_window = w}) = do b <- isClient w; when b $ unmanage w
 
 -- set keyboard mapping
-handle e@(MappingNotifyEvent {window = w}) = do
+handle e@(MappingNotifyEvent {ev_window = w}) = do
     -- this fromIntegral is only necessary with the old X11 version that uses
     -- Int instead of CInt.  TODO delete it when there is a new release of X11
-    let m = (request e, first_keycode e, fromIntegral $ count e)
+    let m = (ev_request e, ev_first_keycode e, fromIntegral $ ev_count e)
     withDisplay $ \d -> io $ refreshKeyboardMapping d m
-    when (request e == mappingKeyboard) $ withDisplay $ io . flip grabKeys w
+    when (ev_request e == mappingKeyboard) $ withDisplay $ io . flip grabKeys w
 
 -- click on an unfocussed window
-handle (ButtonEvent {window = w, event_type = t})
+handle (ButtonEvent {ev_window = w, ev_event_type = t})
     | t == buttonPress
     = safeFocus w
 
 -- entered a normal window
-handle e@(CrossingEvent {window = w, event_type = t})
-    | t == enterNotify  && mode e == notifyNormal && detail e /= notifyInferior
+handle e@(CrossingEvent {ev_window = w, ev_event_type = t})
+    | t == enterNotify  && ev_mode e == notifyNormal && ev_detail e /= notifyInferior
     = safeFocus w
 
 -- left a window, check if we need to focus root
-handle e@(CrossingEvent {event_type = t})
+handle e@(CrossingEvent {ev_event_type = t})
     | t == leaveNotify
     = do rootw <- gets theRoot
-         when (window e == rootw && not (same_screen e)) $ setFocus rootw
+         when (ev_window e == rootw && not (ev_same_screen e)) $ setFocus rootw
 
 -- configure a window
-handle e@(ConfigureRequestEvent {window = w}) = do
+handle e@(ConfigureRequestEvent {ev_window = w}) = do
     XState { display = dpy, workspace = ws } <- get
 
     when (W.member w ws) $ -- already managed, reconfigure (see client:configure()
         trace ("Reconfigure already managed window: " ++ show w)
 
-    io $ configureWindow dpy (window e) (value_mask e) $ WindowChanges
-        { wcX           = x e
-        , wcY           = y e
-        , wcWidth       = width e
-        , wcHeight      = height e
-        , wcBorderWidth = border_width e
-        , wcSibling     = above e
+    io $ configureWindow dpy (ev_window e) (ev_value_mask e) $ WindowChanges
+        { wc_x            = ev_x e
+        , wc_y            = ev_y e
+        , wc_width        = ev_width e
+        , wc_height       = ev_height e
+        , wc_border_width = ev_border_width e
+        , wc_sibling      = ev_above e
         -- this fromIntegral is only necessary with the old X11 version that uses
         -- Int instead of CInt.  TODO delete it when there is a new release of X11
-        , wcStackMode   = fromIntegral $ detail e
+        , wc_stack_mode   = fromIntegral $ ev_detail e
         }
 
     io $ sync dpy False
