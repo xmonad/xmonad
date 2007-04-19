@@ -240,7 +240,7 @@ kill = withDisplay $ \d -> do
             else io (killClient d w) >> return ()
 
 -- | tag. Move a window to a new workspace, 0 indexed.
-tag :: W.WorkspaceId -> X ()
+tag :: WorkspaceId -> X ()
 tag n = do
     ws <- gets workspace
     let m = W.current ws -- :: WorkspaceId
@@ -250,7 +250,7 @@ tag n = do
             windows $ W.shift n
 
 -- | view. Change the current workspace to workspace at offset n (0 indexed).
-view :: W.WorkspaceId -> X ()
+view :: WorkspaceId -> X ()
 view n = do
     ws <- gets workspace
     let m = W.current ws
@@ -263,7 +263,7 @@ view n = do
     setTopFocus
 
 -- | 'screenWorkspace sc' returns the workspace number viewed by 'sc'.
-screenWorkspace :: W.ScreenId -> X W.WorkspaceId
+screenWorkspace :: ScreenId -> X WorkspaceId
 screenWorkspace sc = fmap (fromMaybe 0 . W.workspace sc) (gets workspace)
 
 -- | True if window is under management by us

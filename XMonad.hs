@@ -15,12 +15,11 @@
 --
 
 module XMonad (
-    X, WorkSpace, XState(..), Layout(..), LayoutDesc(..),
-    runX, io, withDisplay, isRoot,
-    spawn, trace, whenJust, rotateLayout
+    X, WorkSpace, WorkspaceId(..), ScreenId(..), XState(..), Layout(..), LayoutDesc(..),
+    runX, io, withDisplay, isRoot, spawn, trace, whenJust, rotateLayout
   ) where
 
-import StackSet (StackSet,WorkspaceId)
+import StackSet (StackSet)
 
 import Control.Monad.State
 import System.IO
@@ -48,7 +47,13 @@ data XState = XState
                                                            -- to descriptions of their layouts
     }
 
-type WorkSpace = StackSet Window
+type WorkSpace = StackSet WorkspaceId ScreenId Window
+
+-- | Virtual workspace indicies
+newtype WorkspaceId = W Int deriving (Eq,Ord,Show,Enum,Num,Integral,Real)
+
+-- | Physical screen indicies
+newtype ScreenId    = S Int deriving (Eq,Ord,Show,Enum,Num,Integral,Real)
 
 ------------------------------------------------------------------------
 

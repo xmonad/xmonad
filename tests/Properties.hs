@@ -17,11 +17,11 @@ import Data.Map             (keys,elems)
 -- QuickCheck properties for the StackSet
 
 -- | Height of stack 'n'
-height :: WorkspaceId -> StackSet a -> Int
+height :: Int -> T -> Int
 height i w = length (index i w)
 
 -- build (non-empty) StackSets with between 1 and 100 stacks
-instance (Ord a, Arbitrary a) => Arbitrary (StackSet a) where
+instance (Integral i, Integral j, Ord a, Arbitrary a) => Arbitrary (StackSet i j a) where
     arbitrary = do
         sz <- choose (1,20)
         n  <- choose (0,sz-1)
@@ -58,7 +58,7 @@ prop_peekmember x = case peek x of
                             Nothing -> True {- then we don't know anything -}
     where _ = x :: T
 
-type T = StackSet Int
+type T = StackSet Int Int Int
 
 prop_delete_uniq i x = not (member i x) ==> delete i x == x
     where _ = x :: T
