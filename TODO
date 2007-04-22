@@ -4,8 +4,6 @@
 
 
 
-- let mod+enter demote a master window
-
 - think about the statusbar/multithreading.
     Three shared TVars:
         windowTitle :: TVar String
