@@ -13,14 +13,13 @@ Building:
 
     Get the dependencies
 
+    X11-extras:     http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-extras-0.0
+    mtl             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/mtl-1.0
     X11             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-1.2
         (Unfortunately X11-1.2 does not work correctly on AMD64.  The latest
          darcs version from http://darcs.haskell.org/packages/X11 does.)
-
-    mtl             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/mtl-1.0
-    unix            http://hackage.haskell.org/cgi-bin/hackage-scripts/package/unix-2.0 (included with ghc)
-
-    X11-extras:     darcs get http://darcs.haskell.org/~sjanssen/X11-extras
+    unix            http://hackage.haskell.org/cgi-bin/hackage-scripts/package/unix-2.0 
+        (included with ghc)
 
     dmenu   2.{5,6,7} http://www.suckless.org/download/dmenu-2.7.tar.gz
 
@@ -40,3 +39,4 @@ Authors:
 
     Spencer Janssen
     Don Stewart
+    Jason Creigh
