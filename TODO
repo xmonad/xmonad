@@ -1,9 +1,3 @@
-- Tasks blocking xmonad 0.1
-    - website, xmonad.org
-
-
-
-
 - think about the statusbar/multithreading.
     Three shared TVars:
         windowTitle :: TVar String
