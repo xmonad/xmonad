@@ -1,3 +1,6 @@
+- tasks for xmonad 0.2
+    - fix the numlock issue once and for all
+
 - think about the statusbar/multithreading.
     Three shared TVars:
         windowTitle :: TVar String
