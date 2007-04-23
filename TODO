@@ -1,5 +1,18 @@
 - tasks for xmonad 0.2
     - fix the numlock issue once and for all
+    - man page
+
+- possibles:
+    - external statusbar
+    - floating layer/transients
+    - more example layout algorithms implemented via config.hs
+    - more work stabilising and documenting the api
+    - set up trac?
+    - get 'design and impl' TR done.
+
+- related:
+    - xcb bindings
+    - randr
 
 - think about the statusbar/multithreading.
     Three shared TVars:
@@ -17,6 +30,7 @@
 
         Statusbar drawing thread, waits for changes in all three TVars, and
         redraws whenever it finds a change.
+
 
 - Notes on new StackSet:
 
