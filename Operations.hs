@@ -159,6 +159,7 @@ manage w = do
     withDisplay $ \d -> io $ do
         selectInput d w $ structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
         mapWindow d w
+        setWindowBorderWidth d w 1
     windows $ W.push w
 
 -- | unmanage. A window no longer exists, remove it from the window
