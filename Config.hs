@@ -101,8 +101,10 @@ defaultDelta :: Rational
 defaultDelta = 3%100
 
 -- The mask for the numlock key. You may need to change this on some systems.
+-- You can find the numlock modifier by running "xmodmap" and looking for a
+-- modifier with Num_Lock bound to it.
 numlockMask :: KeyMask
-numlockMask = lockMask
+numlockMask = mod2Mask
 
 -- What layout to start in, and what the default proportion for the
 -- left pane should be in the tiled layout.  See LayoutDesc and

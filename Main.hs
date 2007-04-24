@@ -94,7 +94,7 @@ grabKeys dpy rootw = do
     ungrabKey dpy '\0' {-AnyKey-} anyModifier rootw
     flip mapM_ (M.keys keys) $ \(mask,sym) -> do
          kc <- keysymToKeycode dpy sym
-         mapM_ (grab kc) [mask, mask .|. numlockMask] -- note: no numlock
+         mapM_ (grab kc) [mask, mask .|. numlockMask, mask .|. lockMask, mask .|. numlockMask .|. lockMask]
   where
     grab kc m = grabKey dpy kc m rootw True grabModeAsync grabModeAsync
 
@@ -128,7 +128,7 @@ handle (KeyEvent {ev_event_type = t, ev_state = m, ev_keycode = code})
     | t == keyPress
     = withDisplay $ \dpy -> do
         s   <- io $ keycodeToKeysym dpy code 0
-        whenJust (M.lookup (complement numlockMask .&. m,s) keys) id
+        whenJust (M.lookup (complement (numlockMask .|. lockMask) .&. m,s) keys) id
 
 -- manage a new window
 handle (MapRequestEvent    {ev_window = w}) = withDisplay $ \dpy -> do
