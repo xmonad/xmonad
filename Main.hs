@@ -128,7 +128,7 @@ handle (KeyEvent {ev_event_type = t, ev_state = m, ev_keycode = code})
     | t == keyPress
     = withDisplay $ \dpy -> do
         s   <- io $ keycodeToKeysym dpy code 0
-        whenJust (M.lookup (m,s) keys) id
+        whenJust (M.lookup (complement numlockMask .&. m,s) keys) id
 
 -- manage a new window
 handle (MapRequestEvent    {ev_window = w}) = withDisplay $ \dpy -> do
