@@ -139,8 +139,8 @@ keys = M.fromList $
 
     ] ++
     -- Keybindings to get to each workspace:
-    [((m .|. modMask, xK_0 + fromIntegral i), f (fromIntegral (pred i))) -- index from 0.
-        | i <- [1 .. workspaces]
+    [((m .|. modMask, k), f (fromIntegral (pred i))) -- index from 0.
+        | (i, k) <- zip [1 .. workspaces] [xK_1 ..]
         , (f, m) <- [(view, 0), (tag, shiftMask)]]
 
     -- Keybindings to each screen :
