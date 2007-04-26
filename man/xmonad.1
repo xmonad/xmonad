@@ -1,0 +1,78 @@
+./" man page created by David Lazar on April 24, 2007
+./" uses ``tmac.an'' macro set
+.TH xmonad 1 "18 April 07" xmonad\-1.0 "xmonad manual"
+.SH NAME
+xmonad \- a tiling window manager
+.SH DESCRIPTION
+.PP
+\fBxmonad\fR is a minimalist tiling window manager for X, written in Haskell. Windows are managed using automatic layout algorithms, which can be dynamically reconfigured. At any time windows are arranged so as to maximise the use of screen real estate. All features of the window manager are accessible purely from the keyboard: a mouse is entirely optional. \fBxmonad\fR is configured in Haskell, and custom layout algorithms may be implemented by the user in config files. A principle of \fBxmonad\fR is predictability: the user should know in advance precisely the window arrangement that will result from any action.
+.PP
+By default, \fBxmonad\fR provides three layout algorithms: tall, wide and fullscreen. In tall or wide mode, windows are tiled and arranged to prevent overlap and maximise screen use. Sets of windows are grouped together on virtual screens, and each screen retains its own layout, which may be reconfigured dynamically. Multiple physical monitors are supported via Xinerama, allowing simultaneous display of a number of screens.
+.PP
+By utilising the expressivity of a modern functional language with a rich static type system, \fBxmonad\fR provides a complete, featureful window manager in less than 500 lines of code, with an emphasis on correctness and robustness. Internal properties of the window manager are checked using a combination of static guarantees provided by the type system, and type-based automated testing. A benefit of this is that the code is simple to understand, and easy to modify.
+.SH USAGE
+.PP
+\fBxmonad\fR places each window into a "workspace". Each workspace can have any number of windows, which you can cycle though with mod-j and mod-k. Windows are either displayed full screen, tiled horizontally, or tiled vertically. You can toggle the layout mode with mod-space, which will cycle through the available modes.
+.PP
+You can switch to workspace N with mod-N. For example, to switch to workspace 5, you would press mod-5. Similarly, you can move the current window to another workspace with mod-shift-N.
+.PP
+When running with multiple monitors (Xinerama), each screen has exactly 1 workspace visible. When \fBxmonad\fR starts, workspace 1 is on screen 1, workspace 2 is on screen 2, etc. If you switch to a workspace which is currently visible on another screen, \fBxmonad\fR simply switches focus to that screen. If you switch to a workspace which is *not* visible, \fBxmonad\fR replaces the workspace on the *current* screen with the workspace you selected.
+.PP
+For example, if you have the following configuration:
+.RS
+.PP
+Screen 1: Workspace 2
+.PP
+Screen 2: Workspace 5 (current workspace)
+.RE
+.PP
+and you wanted to view workspace 7 on screen 1, you would press:
+.RS
+.PP
+mod-2 (to select workspace 2, and make screen 1 the current screen)
+.PP
+mod-7 (to select workspace 7)
+.RE
+.PP
+Since switching to the workspace currently visible on a given screen is such a common operation, shortcuts are provided: mod-{w,e,r} switch to the workspace currently visible on screens 1, 2, and 3 respectively. Likewise, shift-mod-{w,e,r} moves the current window to the workspace on that screen. Using these keys, the above example would become mod-w mod-7.
+.SS Default keyboard bindings
+.IP \fBmod\-shift\-return\fR
+Launch \fBxterm\fR.
+.IP \fBmod\-p\fR
+Launch \fBdmenu\fR.
+.IP \fBmod\-shift\-p\fR
+Launch \fBgmrun\fR.
+.IP \fBmod\-space\fR
+Switch tiling mode.
+.IP "\fBmod\-j\fR or \fBmod\-tab\fR"
+Focus next window in stack.
+.IP \fBmod\-k\fR
+Focus previous window in stack.
+.IP \fBmod\-h\fR
+Decrease the size of the master area.
+.IP \fBmod\-l\fR
+Increase the size of the master area.
+.IP \fBmod\-shift\-c\fR
+Kill client.
+.IP \fBmod\-shift\-q\fR
+Exit xmonad window manager.
+.IP \fBmod\-shift\-ctrl\-q\fR
+Restart xmonad window manager.
+.IP \fBmod\-return\fR
+Cycle the current tiling order.
+.IP \fBmod\-[1..9]\fR
+Switch to workspace N.
+.IP \fBmod\-shift\-[1..9]\fR
+Move client to workspace N.
+.IP \fBmod\-[w,e,r]\fR
+Switch to physical/Xinerama screen 1, 2 or 3.
+.SH EXAMPLES
+To use \fBxmonad\fR as your window manager add:
+.RS
+exec xmonad
+.RE
+to your \fI~/.xinitrc\fR file
+.SH CUSTOMIZATION
+\fBxmonad\fR is customized by creating a custom Config.hs and (re)compiling the source code.
+.SH BUGS
+NumLock handling is broken.
