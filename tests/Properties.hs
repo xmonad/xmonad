@@ -35,9 +35,6 @@ instance (Integral i, Integral j, Ord a, Arbitrary a) => Arbitrary (StackSet i j
         return $ fromList (fromIntegral n,sc,ls)
     coarbitrary = error "no coarbitrary for StackSet"
 
-prop_id x = fromList (toList x) == x
-    where _ = x :: T
-
 prop_member1 i n m = member i (push i x)
     where x = empty n m :: T
 
@@ -243,9 +240,7 @@ main = do
     n = 100
 
     tests =
-        [("read.show        ", mytest prop_id)
-
-        ,("member/push      ", mytest prop_member1)
+        [("member/push      ", mytest prop_member1)
         ,("member/peek      ", mytest prop_peekmember)
         ,("member/delete    ", mytest prop_member2)
         ,("member/empty     ", mytest prop_member3)

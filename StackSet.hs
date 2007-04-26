@@ -25,7 +25,7 @@ module StackSet (
 
     screen, peekStack, index, empty, peek, push, delete, member,
     raiseFocus, rotate, promote, shift, view, workspace, fromList,
-    toList, size, visibleWorkspaces, swap {- helper -}
+    size, visibleWorkspaces, swap {- helper -}
   ) where
 
 import Data.Maybe
@@ -44,10 +44,7 @@ data StackSet i j a =
         , stacks   :: !(M.Map i [a]) -- ^ the separate stacks
         , focus    :: !(M.Map i a)   -- ^ the window focused in each stack
         , cache    :: !(M.Map a i)   -- ^ a cache of windows back to their stacks
-        } deriving Eq
-
-instance (Show i, Show a) => Show (StackSet i j a) where
-    showsPrec p s r = showsPrec p (show . toList $ s) r
+        } deriving (Eq, Show)
 
 -- The cache is used to check on insertion that we don't already have
 -- this window managed on another stack
@@ -98,10 +95,6 @@ fromList (o,m,xs) = view o $ foldr (\(i,ys) s ->
                                   foldr (\a t -> insert a i t) s ys)
                                       (empty (length xs) m) (zip [0..] xs)
 
-
--- | toList. Flatten a stackset to a list of lists
-toList  :: StackSet i j a -> (i,Int,[[a]])
-toList x = (current x, M.size $ screen2ws x, map snd $ M.toList (stacks x))
 
 -- | Push. Insert an element onto the top of the current stack.
 -- If the element is already in the current stack, it is moved to the top.
