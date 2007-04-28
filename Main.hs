@@ -94,7 +94,9 @@ grabKeys dpy rootw = do
     ungrabKey dpy '\0' {-AnyKey-} anyModifier rootw
     flip mapM_ (M.keys keys) $ \(mask,sym) -> do
          kc <- keysymToKeycode dpy sym
-         mapM_ (grab kc) [mask, mask .|. numlockMask, mask .|. lockMask, mask .|. numlockMask .|. lockMask]
+         -- "If the specified KeySym is not defined for any KeyCode,
+         -- XKeysymToKeycode() returns zero."
+         when (kc /= '\0') $ mapM_ (grab kc . (mask .|.)) $ [0, numlockMask, lockMask, numlockMask .|. lockMask]
   where
     grab kc m = grabKey dpy kc m rootw True grabModeAsync grabModeAsync
 
