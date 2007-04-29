@@ -15,11 +15,30 @@ import Test.QuickCheck hiding (promote)
 import System.IO
 import System.Random
 import Text.Printf
-import Data.List            (nub,sort,group,sort,intersperse)
+import Data.List            (nub,sort,group,sort,intersperse,genericLength)
 import Data.Map             (keys,elems)
 
 -- ---------------------------------------------------------------------
 -- QuickCheck properties for the StackSet
+
+
+-- | fromList. Build a new StackSet from a list of list of elements,
+-- keeping track of the currently focused workspace, and the total
+-- number of workspaces. If there are duplicates in the list, the last
+-- occurence wins.
+fromList :: (Integral i, Integral j, Ord a) => (i, Int,[[a]]) -> StackSet i j a
+fromList (_,_,[]) = error "Cannot build a StackSet from an empty list"
+
+fromList (n,m,xs) | n < 0 || n >= genericLength xs
+                = error $ "Cursor index is out of range: " ++ show (n, length xs)
+                  | m < 1 || m >  genericLength xs
+                = error $ "Can't have more screens than workspaces: " ++ show (m, length xs)
+
+fromList (o,m,xs) = view o $ foldr (\(i,ys) s ->
+                                  foldr (\a t -> insert a i t) s ys)
+                                      (empty (length xs) m) (zip [0..] xs)
+
+-- ---------------------------------------------------------------------
 
 -- | Height of stack 'n'
 height :: Int -> T -> Int
