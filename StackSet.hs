@@ -24,13 +24,13 @@ module StackSet (
     StackSet(..),           -- abstract
 
     screen, peekStack, index, empty, peek, push, delete, member,
-    raiseFocus, rotate, promote, shift, view, workspace, fromList,
+    raiseFocus, rotate, promote, shift, view, workspace, insert,
     size, visibleWorkspaces, swap {- helper -}
   ) where
 
 import Data.Maybe
-import qualified Data.List     as L (delete,genericLength,elemIndex)
-import qualified Data.Map      as M
+import qualified Data.List as L (delete,elemIndex)
+import qualified Data.Map  as M
 
 ------------------------------------------------------------------------
 
@@ -78,23 +78,6 @@ size :: StackSet i j a -> Int
 size = M.size . stacks
 
 ------------------------------------------------------------------------
-
--- | fromList. Build a new StackSet from a list of list of elements,
--- keeping track of the currently focused workspace, and the total
--- number of workspaces. If there are duplicates in the list, the last
--- occurence wins.
-fromList :: (Integral i, Integral j, Ord a) => (i, Int,[[a]]) -> StackSet i j a
-fromList (_,_,[]) = error "Cannot build a StackSet from an empty list"
-
-fromList (n,m,xs) | n < 0 || n >= L.genericLength xs
-                = error $ "Cursor index is out of range: " ++ show (n, length xs)
-                  | m < 1 || m >  L.genericLength xs
-                = error $ "Can't have more screens than workspaces: " ++ show (m, length xs)
-
-fromList (o,m,xs) = view o $ foldr (\(i,ys) s ->
-                                  foldr (\a t -> insert a i t) s ys)
-                                      (empty (length xs) m) (zip [0..] xs)
-
 
 -- | Push. Insert an element onto the top of the current stack.
 -- If the element is already in the current stack, it is moved to the top.
