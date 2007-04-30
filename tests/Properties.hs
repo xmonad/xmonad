@@ -119,8 +119,15 @@ prop_delete2 i x =
 prop_focus1 i x = member i x ==> peek (raiseFocus i x) == Just i
     where _ = x :: T
 
-prop_rotaterotate x   = rotate LT (rotate GT x) == x
-    where _ = x :: T
+-- rotation is reversible in two directions
+prop_rotaterotate1 (x :: T)   = rotate LT (rotate GT x) == x
+prop_rotaterotate2 (x :: T)   = rotate GT (rotate LT x) == x
+
+-- rotation through the height of a stack gets us back to the start
+prop_rotate_all (x :: T) = foldr (\_ y -> rotate GT y) x [1..n] == x
+  where
+    n = height (current x) x
+
 
 prop_viewview r  x   =
     let n  = current x
@@ -129,6 +136,11 @@ prop_viewview r  x   =
     in view n (view (fromIntegral i) x) == x
 
     where _ = x :: T
+
+prop_view_idem (x :: T) r =
+    let i = fromIntegral $ r `mod` sz
+        sz = size x
+    in view i (view i x) == (view i x)
 
 prop_shiftshift r x =
     let n  = current x
@@ -304,9 +316,13 @@ main = do
 
         ,("focus",             mytest prop_focus1)
 
-        ,("rotate/rotate    ", mytest prop_rotaterotate)
+        ,("rotate l >> rotate r", mytest prop_rotaterotate1)
+        ,("rotate r >> rotate l", mytest prop_rotaterotate2)
+        ,("rotate all", mytest prop_rotate_all)
 
         ,("view/view        ", mytest prop_viewview)
+        ,("view idem        ", mytest prop_view_idem)
+
         ,("fullcache        ", mytest prop_fullcache)
         ,("currentwsvisible ", mytest prop_currentwsvisible)
         ,("ws screen mapping", mytest prop_ws2screen_screen2ws)
