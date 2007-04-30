@@ -18,6 +18,7 @@ import Data.Bits
 import qualified Data.Map as M
 
 import Control.Monad.State
+import Control.Monad.Reader
 import Control.Arrow (second)
 
 import System.Posix.Process
@@ -39,8 +40,8 @@ import qualified StackSet as W
 -- screen and raises the window.
 refresh :: X ()
 refresh = do
-    XState {workspace = ws, xineScreens = xinesc
-           ,display   = d ,layoutDescs = fls  ,defaultLayoutDesc = dfltfl } <- get
+    XState { workspace = ws, layoutDescs = fls } <- get
+    XConf  { xineScreens = xinesc, display = d, defaultLayoutDesc = dfltfl } <- ask
 
     flip mapM_ (M.assocs (W.screen2ws ws)) $ \(scn, n) -> do
         let sc =  genericIndex xinesc scn -- temporary coercion!
@@ -57,7 +58,7 @@ refresh = do
 -- | clearEnterEvents.  Remove all window entry events from the event queue.
 clearEnterEvents :: X ()
 clearEnterEvents = do
-    d <- gets display
+    d <- asks display
     io $ sync d False
     io $ allocaXEvent $ \p -> fix $ \again -> do
         more <- checkMaskEvent d enterWindowMask p
@@ -103,10 +104,11 @@ changeSplit delta = layout $ \fl ->
 -- function and refresh.
 layout :: (LayoutDesc -> LayoutDesc) -> X ()
 layout f = do
+    dfl <- asks defaultLayoutDesc
     modify $ \s ->
         let fls = layoutDescs s
             n   = W.current . workspace $ s
-            fl  = M.findWithDefault (defaultLayoutDesc s) n fls
+            fl  = M.findWithDefault dfl n fls
         in s { layoutDescs = M.insert n (f fl) fls }
     refresh
 
@@ -121,7 +123,7 @@ windows f = do
 -- | hide. Hide a window by moving it offscreen.
 hide :: Window -> X ()
 hide w = withDisplay $ \d -> do
-    (sw,sh) <- gets dimensions
+    (sw,sh) <- asks dimensions
     io $ moveWindow d w (2*fromIntegral sw) (2*fromIntegral sh)
 
 -- ---------------------------------------------------------------------
@@ -189,8 +191,8 @@ safeFocus w = do ws <- gets workspace
 -- | Explicitly set the keyboard focus to the given window
 setFocus :: Window -> X ()
 setFocus w = do
-    XState { workspace = ws, display = dpy
-           , normalBorder = nbc, focusedBorder = fbc } <- get
+    ws <- gets workspace
+    XConf { display = dpy , normalBorder = nbc, focusedBorder = fbc } <- ask
 
     -- clear mouse button grab and border on other windows
     flip mapM_ (W.visibleWorkspaces ws) $ \n -> do
@@ -212,7 +214,7 @@ setTopFocus = do
     ws <- gets workspace
     case W.peek ws of
         Just new -> setFocus new
-        Nothing  -> gets theRoot >>= setFocus
+        Nothing  -> asks theRoot >>= setFocus
 
 -- | raise. focus to window at offset 'n' in list.
 -- The currently focused window is always the head of the list
@@ -229,7 +231,7 @@ kill = withDisplay $ \d -> do
     ws <- gets workspace
     whenJust (W.peek ws) $ \w -> do
         protocols <- io $ getWMProtocols d w
-        XState {wmdelete = wmdelt, wmprotocols = wmprot} <- get
+        XConf {wmdelete = wmdelt, wmprotocols = wmprot} <- ask
         if wmdelt `elem` protocols
             then io $ allocaXEvent $ \ev -> do
                     setEventType ev clientMessage

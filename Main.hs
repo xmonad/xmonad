@@ -21,6 +21,7 @@ import Graphics.X11.Xlib.Extras
 import Graphics.X11.Xinerama
 
 import Control.Monad.State
+import Control.Monad.Reader
 
 import qualified StackSet as W
 
@@ -44,7 +45,7 @@ main = do
     nbc    <- initcolor normalBorderColor
     fbc    <- initcolor focusedBorderColor
 
-    let st = XState
+    let cf = XConf
             { display       = dpy
             , xineScreens   = xinesc
             , theRoot       = rootw
@@ -53,11 +54,13 @@ main = do
             -- fromIntegral needed for X11 versions that use Int instead of CInt.
             , dimensions    = (fromIntegral (displayWidth dpy dflt),
                                fromIntegral (displayHeight dpy dflt))
-            , workspace     = W.empty workspaces (length xinesc)
             , defaultLayoutDesc = startingLayoutDesc
-            , layoutDescs   = M.empty
             , normalBorder  = nbc
             , focusedBorder = fbc
+            }
+        st = XState
+            { workspace     = W.empty workspaces (length xinesc)
+            , layoutDescs   = M.empty
             }
 
     xSetErrorHandler -- in C, I'm too lazy to write the binding
@@ -73,7 +76,7 @@ main = do
 
     ws <- scan dpy rootw
     allocaXEvent $ \e ->
-        runX st $ do
+        runX cf st $ do
             mapM_ manage ws
             forever $ handle =<< xevent dpy e
       where
@@ -170,12 +173,13 @@ handle e@(CrossingEvent {ev_window = w, ev_event_type = t})
 -- left a window, check if we need to focus root
 handle e@(CrossingEvent {ev_event_type = t})
     | t == leaveNotify
-    = do rootw <- gets theRoot
+    = do rootw <- asks theRoot
          when (ev_window e == rootw && not (ev_same_screen e)) $ setFocus rootw
 
 -- configure a window
 handle e@(ConfigureRequestEvent {ev_window = w}) = do
-    XState { display = dpy, workspace = ws } <- get
+    dpy <- asks display
+    ws  <- gets workspace
 
     when (W.member w ws) $ -- already managed, reconfigure (see client:configure()
         trace ("Reconfigure already managed window: " ++ show w)

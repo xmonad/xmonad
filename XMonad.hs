@@ -16,13 +16,14 @@
 --
 
 module XMonad (
-    X, WindowSet, WorkspaceId(..), ScreenId(..), XState(..), Layout(..), LayoutDesc(..),
-    runX, io, withDisplay, isRoot, spawn, trace, whenJust, rotateLayout
+    X, WindowSet, WorkspaceId(..), ScreenId(..), XState(..), XConf(..), Layout(..),
+    LayoutDesc(..), runX, io, withDisplay, isRoot, spawn, trace, whenJust, rotateLayout
   ) where
 
 import StackSet (StackSet)
 
 import Control.Monad.State
+import Control.Monad.Reader
 import System.IO
 import System.Posix.Process (executeFile, forkProcess, getProcessStatus)
 import System.Exit
@@ -33,6 +34,11 @@ import qualified Data.Map as M
 -- | XState, the window manager state.
 -- Just the display, width, height and a window list
 data XState = XState
+    { workspace         :: !WindowSet                      -- ^ workspace list
+    , layoutDescs       :: !(M.Map WorkspaceId LayoutDesc) -- ^ mapping of workspaces 
+    }
+
+data XConf = XConf
     { display           :: Display                         -- ^ the X11 display
 
     , theRoot           :: !Window                         -- ^ the root window
@@ -40,11 +46,9 @@ data XState = XState
     , wmprotocols       :: !Atom                           -- ^ wm protocols atom
     , dimensions        :: !(Int,Int)                      -- ^ dimensions of the screen, 
                                                            -- used for hiding windows
-    , workspace         :: !WindowSet                      -- ^ workspace list
 
     , xineScreens       :: ![Rectangle]                    -- ^ dimensions of each screen
     , defaultLayoutDesc :: !LayoutDesc                     -- ^ default layout
-    , layoutDescs       :: !(M.Map WorkspaceId LayoutDesc) -- ^ mapping of workspaces 
                                                            -- to descriptions of their layouts
     , normalBorder      :: !Color                         -- ^ border color of unfocused windows
     , focusedBorder     :: !Color                         -- ^ border color of the focused window
@@ -62,24 +66,24 @@ newtype ScreenId    = S Int deriving (Eq,Ord,Show,Enum,Num,Integral,Real)
 
 -- | The X monad, a StateT transformer over IO encapsulating the window
 -- manager state
-newtype X a = X (StateT XState IO a)
-    deriving (Functor, Monad, MonadIO, MonadState XState)
+newtype X a = X (ReaderT XConf (StateT XState IO) a)
+    deriving (Functor, Monad, MonadIO, MonadState XState, MonadReader XConf)
 
 -- | Run the X monad, given a chunk of X monad code, and an initial state
 -- Return the result, and final state
-runX :: XState -> X a -> IO ()
-runX st (X a) = runStateT a st >> return ()
+runX :: XConf -> XState -> X a -> IO ()
+runX c st (X a) = runStateT (runReaderT a c) st >> return ()
 
 -- ---------------------------------------------------------------------
 -- Convenient wrappers to state
 
 -- | Run a monad action with the current display settings
 withDisplay :: (Display -> X ()) -> X ()
-withDisplay f = gets display >>= f
+withDisplay f = asks display >>= f
 
 -- | True if the given window is the root window
 isRoot :: Window -> X Bool
-isRoot w = liftM (w==) (gets theRoot)
+isRoot w = liftM (w==) (asks theRoot)
 
 ------------------------------------------------------------------------
 -- Layout handling
