@@ -18,7 +18,7 @@ import Data.Bits
 import qualified Data.Map as M
 
 import Control.Monad.State
-import Control.Arrow
+import Control.Arrow (second)
 
 import System.Posix.Process
 import System.Environment
