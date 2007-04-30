@@ -152,7 +152,7 @@ rotate o w = maybe w id $ do
 -- exception is thrown.
 --
 shift :: (Integral i, Ord a) => i -> StackSet i j a -> StackSet i j a
-shift n w = maybe w (\k -> insert k n (delete k w)) (peek w)
+shift n w = maybe w (\k -> insert k n w) (peek w)
 
 -- | /O(log n)/. Insert an element onto the top of stack 'n'.
 -- If the element is already in the stack 'n', it is moved to the top.
