@@ -142,10 +142,12 @@ prop_view_idem (x :: T) r =
         sz = size x
     in view i (view i x) == (view i x)
 
-prop_shiftshift r x =
-    let n  = current x
-    in shift n (shift r x) == x
-    where _ = x :: T
+prop_shift_reversible r (x :: T) =
+    let i  = fromIntegral $ r `mod` sz
+        sz = size x
+        n  = current x
+    in height n x > 0 ==> (view n . shift n . view i . shift i) x == x
+
 
 prop_fullcache x = cached == allvals where
     cached  = sort . keys $ cache x
@@ -322,6 +324,8 @@ main = do
 
         ,("view/view        ", mytest prop_viewview)
         ,("view idem        ", mytest prop_view_idem)
+
+        ,("shift reversible ", mytest prop_shift_reversible)
 
         ,("fullcache        ", mytest prop_fullcache)
         ,("currentwsvisible ", mytest prop_currentwsvisible)
