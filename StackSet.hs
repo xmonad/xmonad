@@ -169,14 +169,12 @@ insert k n old = new { cache  = M.insert k n (cache new)
 -- This can be used to ensure that a given element is not managed elsewhere.
 -- If the element doesn't exist, the original StackSet is returned unmodified.
 delete :: (Integral i, Ord a) => a -> StackSet i j a -> StackSet i j a
-delete k w = maybe w tweak (M.lookup k (cache w))
+delete k w = maybe w del (M.lookup k (cache w))
   where
-    tweak i = w { cache  = M.delete k (cache w)
-                , stacks = M.adjust (L.delete k) i (stacks w)
-                , focus  = M.update (\k' -> if k == k' then elemAfter k (stacks w M.! i)
-                                                       else Just k') i
-                                    (focus w)
-                }
+    del i = w { cache  = M.delete k (cache w)
+              , stacks = M.adjust (L.delete k) i (stacks w)
+              , focus  = M.update (\k' -> if k == k' then elemAfter k (stacks w M.! i)
+                                                     else Just k') i (focus w) }
 
 -- | /O(log n)/. If the given window is contained in a workspace, make it the
 -- focused window of that workspace, and make that workspace the current one.
