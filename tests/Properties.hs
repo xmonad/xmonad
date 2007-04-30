@@ -59,6 +59,15 @@ instance (Integral i, Integral j, Ord a, Arbitrary a) => Arbitrary (StackSet i j
         return $ fromList (fromIntegral n,sc,ls)
     coarbitrary = error "no coarbitrary for StackSet"
 
+-- empty StackSets have no windows in them
+prop_empty n m = n > 0 && m > 0 ==> all null (M.elems (stacks x))
+    where x = empty n m :: T
+
+-- empty StackSets always have focus on workspace 0
+prop_empty_current n m = n > 0 && m > 0 ==> current x == 0
+    where x = empty n m :: T
+
+
 prop_member1 i n m = n > 0 && m > 0 ==> member i (push i x)
     where x = empty n m :: T
 
@@ -271,7 +280,10 @@ main = do
     n = 100
 
     tests =
-        [("member/push      ", mytest prop_member1)
+        [("empty is empty"   , mytest prop_empty)
+        ,("empty / current"  , mytest prop_empty_current)
+
+        ,("member/push      ", mytest prop_member1)
         ,("member/peek      ", mytest prop_peekmember)
         ,("member/delete    ", mytest prop_member2)
         ,("member/empty     ", mytest prop_member3)
