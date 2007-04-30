@@ -143,10 +143,8 @@ rotate :: (Integral i, Eq a) => Ordering -> StackSet i j a -> StackSet i j a
 rotate o w = maybe w id $ do
     f <- M.lookup (current w) (focus w)
     s <- M.lookup (current w) (stacks w)
-    ea <- case o of
-            EQ -> Nothing
-            GT -> elemAfter f s
-            LT -> elemAfter f (reverse s)
+    ea <- case o of EQ -> Nothing
+                    _  -> elemAfter f (if o == GT then s else reverse s)
     return $ w { focus = M.insert (current w) ea (focus w) }
 
 -- | /O(log n)/. shift. move the client on top of the current stack to
