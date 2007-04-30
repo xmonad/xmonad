@@ -107,8 +107,6 @@ index k w = fromJust (M.lookup k (stacks w))
 -- visible on the current screen. If the index is out of range an exception is
 -- thrown.
 view :: (Integral i, Integral j) => i -> StackSet i j a -> StackSet i j a
--- view n w | n >= 0 && n < fromIntegral (M.size (stacks w)) -- coerce
-
 view n w | M.member n (stacks w)
          = if M.member n (ws2screen w) then w { current = n }
                                        else tweak (fromJust $ screen (current w) w)
@@ -116,8 +114,7 @@ view n w | M.member n (stacks w)
   where
     tweak sc = w { screen2ws = M.insert sc n (screen2ws w)
                  , ws2screen = M.insert n sc (M.filter (/=sc) (ws2screen w))
-                 , current = n
-                 }
+                 , current = n }
 
 -- | That screen that workspace 'n' is visible on, if any.
 screen :: Integral i => i -> StackSet i j a -> Maybe j

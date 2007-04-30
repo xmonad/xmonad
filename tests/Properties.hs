@@ -17,6 +17,7 @@ import System.Random
 import Text.Printf
 import Data.List            (nub,sort,group,sort,intersperse,genericLength)
 import Data.Map             (keys,elems)
+import qualified Data.Map as M
 
 -- ---------------------------------------------------------------------
 -- QuickCheck properties for the StackSet
@@ -39,6 +40,10 @@ fromList (o,m,xs) = view o $ foldr (\(i,ys) s ->
                                       (empty (length xs) m) (zip [0..] xs)
 
 -- ---------------------------------------------------------------------
+
+-- | /O(n)/. Number of stacks
+size :: T -> Int
+size = M.size . stacks
 
 -- | Height of stack 'n'
 height :: Int -> T -> Int
