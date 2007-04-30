@@ -29,6 +29,7 @@ import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras
 
 import XMonad
+import {-# SOURCE #-} Config
 
 import qualified StackSet as W
 
@@ -41,11 +42,11 @@ import qualified StackSet as W
 refresh :: X ()
 refresh = do
     XState { workspace = ws, layoutDescs = fls } <- get
-    XConf  { xineScreens = xinesc, display = d, defaultLayoutDesc = dfltfl } <- ask
+    XConf  { xineScreens = xinesc, display = d } <- ask
 
     flip mapM_ (M.assocs (W.screen2ws ws)) $ \(scn, n) -> do
         let sc =  genericIndex xinesc scn -- temporary coercion!
-            fl = M.findWithDefault dfltfl n fls
+            fl = M.findWithDefault defaultLayoutDesc n fls
         mapM_ (\(w, rect) -> io $ moveWindowInside d w rect) $
             case layoutType fl of
                 Full -> fmap (flip (,) sc) $ maybeToList $ W.peekStack n ws
@@ -104,11 +105,10 @@ changeSplit delta = layout $ \fl ->
 -- function and refresh.
 layout :: (LayoutDesc -> LayoutDesc) -> X ()
 layout f = do
-    dfl <- asks defaultLayoutDesc
     modify $ \s ->
         let fls = layoutDescs s
             n   = W.current . workspace $ s
-            fl  = M.findWithDefault dfl n fls
+            fl  = M.findWithDefault defaultLayoutDesc n fls
         in s { layoutDescs = M.insert n (f fl) fls }
     refresh
 

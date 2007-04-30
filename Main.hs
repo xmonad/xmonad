@@ -54,7 +54,6 @@ main = do
             -- fromIntegral needed for X11 versions that use Int instead of CInt.
             , dimensions    = (fromIntegral (displayWidth dpy dflt),
                                fromIntegral (displayHeight dpy dflt))
-            , defaultLayoutDesc = startingLayoutDesc
             , normalBorder  = nbc
             , focusedBorder = fbc
             }

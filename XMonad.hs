@@ -49,7 +49,6 @@ data XConf = XConf
                                         -- used for hiding windows
 
     , xineScreens       :: ![Rectangle] -- ^ dimensions of each screen
-    , defaultLayoutDesc :: !LayoutDesc  -- ^ default layout
     , normalBorder      :: !Color       -- ^ border color of unfocused windows
     , focusedBorder     :: !Color       -- ^ border color of the focused window
     }

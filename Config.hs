@@ -114,8 +114,8 @@ focusedBorderColor = "#ff0000"
 -- What layout to start in, and what the default proportion for the
 -- left pane should be in the tiled layout.  See LayoutDesc and
 -- friends in XMonad.hs for options.
-startingLayoutDesc :: LayoutDesc
-startingLayoutDesc =
+defaultLayoutDesc :: LayoutDesc
+defaultLayoutDesc =
     LayoutDesc { layoutType   = Full
                , tileFraction = 1%2  }
 
