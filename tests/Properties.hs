@@ -59,7 +59,7 @@ instance (Integral i, Integral j, Ord a, Arbitrary a) => Arbitrary (StackSet i j
         return $ fromList (fromIntegral n,sc,ls)
     coarbitrary = error "no coarbitrary for StackSet"
 
-prop_member1 i n m = member i (push i x)
+prop_member1 i n m = n > 0 && m > 0 ==> member i (push i x)
     where x = empty n m :: T
 
 prop_member2 i x = not (member i (delete i x))
