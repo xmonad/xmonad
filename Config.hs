@@ -111,6 +111,10 @@ normalBorderColor, focusedBorderColor :: String
 normalBorderColor  = "#dddddd"
 focusedBorderColor = "#ff0000"
 
+-- Width of the window border in pixels
+borderWidth :: Dimension
+borderWidth = 1
+
 -- What layout to start in, and what the default proportion for the
 -- left pane should be in the tiled layout.  See LayoutDesc and
 -- friends in XMonad.hs for options.
