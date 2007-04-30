@@ -36,6 +36,7 @@ import qualified Data.Map as M
 data XState = XState
     { workspace         :: !WindowSet                      -- ^ workspace list
     , layoutDescs       :: !(M.Map WorkspaceId LayoutDesc) -- ^ mapping of workspaces 
+                                                           -- to descriptions of their layouts
     }
 
 data XConf = XConf
@@ -49,7 +50,6 @@ data XConf = XConf
 
     , xineScreens       :: ![Rectangle]                    -- ^ dimensions of each screen
     , defaultLayoutDesc :: !LayoutDesc                     -- ^ default layout
-                                                           -- to descriptions of their layouts
     , normalBorder      :: !Color                         -- ^ border color of unfocused windows
     , focusedBorder     :: !Color                         -- ^ border color of the focused window
     }
