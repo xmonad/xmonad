@@ -40,18 +40,18 @@ data XState = XState
     }
 
 data XConf = XConf
-    { display           :: Display                         -- ^ the X11 display
+    { display           :: Display      -- ^ the X11 display
 
-    , theRoot           :: !Window                         -- ^ the root window
-    , wmdelete          :: !Atom                           -- ^ window deletion atom
-    , wmprotocols       :: !Atom                           -- ^ wm protocols atom
-    , dimensions        :: !(Int,Int)                      -- ^ dimensions of the screen, 
-                                                           -- used for hiding windows
+    , theRoot           :: !Window      -- ^ the root window
+    , wmdelete          :: !Atom        -- ^ window deletion atom
+    , wmprotocols       :: !Atom        -- ^ wm protocols atom
+    , dimensions        :: !(Int,Int)   -- ^ dimensions of the screen,
+                                        -- used for hiding windows
 
-    , xineScreens       :: ![Rectangle]                    -- ^ dimensions of each screen
-    , defaultLayoutDesc :: !LayoutDesc                     -- ^ default layout
-    , normalBorder      :: !Color                         -- ^ border color of unfocused windows
-    , focusedBorder     :: !Color                         -- ^ border color of the focused window
+    , xineScreens       :: ![Rectangle] -- ^ dimensions of each screen
+    , defaultLayoutDesc :: !LayoutDesc  -- ^ default layout
+    , normalBorder      :: !Color       -- ^ border color of unfocused windows
+    , focusedBorder     :: !Color       -- ^ border color of the focused window
     }
 
 type WindowSet = StackSet WorkspaceId ScreenId Window
