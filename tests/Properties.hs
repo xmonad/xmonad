@@ -67,7 +67,6 @@ prop_empty n m = n > 0 && m > 0 ==> all null (M.elems (stacks x))
 prop_empty_current n m = n > 0 && m > 0 ==> current x == 0
     where x = empty n m :: T
 
-
 prop_member1 i n m = n > 0 && m > 0 ==> member i (push i x)
     where x = empty n m :: T
 
@@ -84,6 +83,8 @@ prop_currentpush is n m = n > 0 ==>
     where
         js = nub is
         x = empty n m :: T
+
+prop_push_idem i (x :: T) = push i x == push i (push i x)
 
 prop_pushpeek x is = not (null is) ==> fromJust (peek (foldr push x is)) == head is
     where _ = x :: T
@@ -292,6 +293,7 @@ main = do
         ,("height/push      ", mytest prop_currentpush)
         ,("push/peek        ", mytest prop_pushpeek)
         ,("push is local"    , mytest prop_push_local)
+        ,("idempotent push" ,  mytest prop_push_idem)
 
         ,("peek/peekStack"  ,  mytest prop_peek_peekStack)
         ,("not . peek/peekStack", mytest prop_notpeek_peekStack)
