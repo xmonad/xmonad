@@ -46,6 +46,8 @@ data XState = XState
     , defaultLayoutDesc :: !LayoutDesc                     -- ^ default layout
     , layoutDescs       :: !(M.Map WorkspaceId LayoutDesc) -- ^ mapping of workspaces 
                                                            -- to descriptions of their layouts
+    , normalBorder      :: !Color                         -- ^ border color of unfocused windows
+    , focusedBorder     :: !Color                         -- ^ border color of the focused window
     }
 
 type WindowSet = StackSet WorkspaceId ScreenId Window

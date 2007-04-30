@@ -106,6 +106,11 @@ defaultDelta = 3%100
 numlockMask :: KeyMask
 numlockMask = mod2Mask
 
+-- Border colors for unfocused and focused windows, respectively.
+normalBorderColor, focusedBorderColor :: String
+normalBorderColor  = "#dddddd"
+focusedBorderColor = "#ff0000"
+
 -- What layout to start in, and what the default proportion for the
 -- left pane should be in the tiled layout.  See LayoutDesc and
 -- friends in XMonad.hs for options.

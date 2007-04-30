@@ -189,17 +189,18 @@ safeFocus w = do ws <- gets workspace
 -- | Explicitly set the keyboard focus to the given window
 setFocus :: Window -> X ()
 setFocus w = do
-    ws <- gets workspace
+    XState { workspace = ws, display = dpy
+           , normalBorder = nbc, focusedBorder = fbc } <- get
 
     -- clear mouse button grab and border on other windows
     flip mapM_ (W.visibleWorkspaces ws) $ \n -> do
         flip mapM_ (W.index n ws) $ \otherw -> do
             setButtonGrab True otherw
-            setBorder otherw 0xdddddd
+            io $ setWindowBorder dpy otherw (color_pixel nbc)
 
     withDisplay $ \d -> io $ setInputFocus d w revertToPointerRoot 0
     setButtonGrab False w
-    setBorder w 0xff0000    -- make this configurable
+    io $ setWindowBorder dpy w (color_pixel fbc)
 
     -- This does not use 'windows' intentionally.  'windows' calls refresh,
     -- which means infinite loops.
@@ -212,10 +213,6 @@ setTopFocus = do
     case W.peek ws of
         Just new -> setFocus new
         Nothing  -> gets theRoot >>= setFocus
-
--- | Set the border color for a particular window.
-setBorder :: Window -> Pixel -> X ()
-setBorder w p = withDisplay $ \d -> io $ setWindowBorder d w p
 
 -- | raise. focus to window at offset 'n' in list.
 -- The currently focused window is always the head of the list

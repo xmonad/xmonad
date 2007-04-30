@@ -35,10 +35,14 @@ main :: IO ()
 main = do
     dpy   <- openDisplay ""
     let dflt = defaultScreen dpy
+        initcolor c = fst `liftM` allocNamedColor dpy (defaultColormap dpy dflt) c
+
     rootw  <- rootWindow dpy dflt
     wmdelt <- internAtom dpy "WM_DELETE_WINDOW" False
     wmprot <- internAtom dpy "WM_PROTOCOLS"     False
     xinesc <- getScreenInfo dpy
+    nbc    <- initcolor normalBorderColor
+    fbc    <- initcolor focusedBorderColor
 
     let st = XState
             { display       = dpy
@@ -52,6 +56,8 @@ main = do
             , workspace     = W.empty workspaces (length xinesc)
             , defaultLayoutDesc = startingLayoutDesc
             , layoutDescs   = M.empty
+            , normalBorder  = nbc
+            , focusedBorder = fbc
             }
 
     xSetErrorHandler -- in C, I'm too lazy to write the binding
