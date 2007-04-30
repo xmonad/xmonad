@@ -25,7 +25,7 @@ module StackSet (
 
     screen, peekStack, index, empty, peek, push, delete, member,
     raiseFocus, rotate, promote, shift, view, workspace, insert,
-    size, visibleWorkspaces, swap {- helper -}
+    visibleWorkspaces, swap {- helper -}
   ) where
 
 import Data.Maybe
@@ -51,8 +51,9 @@ data StackSet i j a =
 
 ------------------------------------------------------------------------
 
--- | /O(n)/. Create a new empty stacks of size 'n', indexed from 0, with 'm'
--- screens. (also indexed from 0) The 0-indexed stack will be current.
+-- | /O(n)/. Create a new stackset, of empty stacks, of size 'n',
+-- indexed from 0, with 'm' screens. (also indexed from 0) The 0-indexed
+-- stack will be current.
 empty :: (Integral i, Integral j) => Int -> Int -> StackSet i j a
 empty n m = StackSet { current   = 0
                      , screen2ws = wsScrs2Works
@@ -74,8 +75,8 @@ member a w = M.member a (cache w)
 -- lookup x w = M.lookup x (cache w)
 
 -- | /O(n)/. Number of stacks
-size :: StackSet i j a -> Int
-size = M.size . stacks
+-- size :: StackSet i j a -> Int
+-- size = M.size . stacks
 
 ------------------------------------------------------------------------
 
