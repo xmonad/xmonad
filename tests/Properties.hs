@@ -172,6 +172,13 @@ prop_promoterotate x b = focus (rotate dir (promote x)) == focus (rotate dir x)
   where _ = x :: T
         dir = if b then LT else GT
 
+-- push shouldn't change anything but the current workspace
+prop_push_local (x :: T) i = not (member i x) ==> hidden x == hidden (push i x)
+  where
+     hidden w = [ index n w | n <- [0 ..sz-1], n /= current w ]
+     sz = M.size (stacks x)
+
+
 ------------------------------------------------------------------------
 -- some properties for layouts:
 
@@ -272,6 +279,7 @@ main = do
         ,("size/push        ", mytest prop_sizepush)
         ,("height/push      ", mytest prop_currentpush)
         ,("push/peek        ", mytest prop_pushpeek)
+        ,("push is local"    , mytest prop_push_local)
 
         ,("peek/peekStack"  ,  mytest prop_peek_peekStack)
         ,("not . peek/peekStack", mytest prop_notpeek_peekStack)
