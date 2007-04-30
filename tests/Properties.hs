@@ -59,6 +59,22 @@ instance (Integral i, Integral j, Ord a, Arbitrary a) => Arbitrary (StackSet i j
         return $ fromList (fromIntegral n,sc,ls)
     coarbitrary = error "no coarbitrary for StackSet"
 
+-- Invariants:
+--
+-- * no element should ever appear more than once in a StackSet
+-- * the current index should always be valid
+--
+-- All operations must preserve this.
+--
+invariant (w :: T) = inBounds w && noDuplicates (concat $ M.elems (stacks w))
+    where
+        noDuplicates ws = nub ws == ws
+        inBounds x      = current x >= 0 && current x < sz where sz = M.size (stacks x)
+
+-- test generator
+prop_invariant = invariant
+
+
 -- empty StackSets have no windows in them
 prop_empty n m = n > 0 && m > 0 ==> all null (M.elems (stacks x))
     where x = empty n m :: T
@@ -295,7 +311,8 @@ main = do
     n = 100
 
     tests =
-        [("empty is empty"   , mytest prop_empty)
+        [("StackSet invariants", mytest prop_invariant)
+        ,("empty is empty"   , mytest prop_empty)
         ,("empty / current"  , mytest prop_empty_current)
 
         ,("member/push      ", mytest prop_member1)
