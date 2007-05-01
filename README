@@ -13,7 +13,7 @@ Building:
 
     Get the dependencies
 
-    X11-extras:     http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-extras-0.0
+    X11-extras:     http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-extras-0.1
     mtl             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/mtl-1.0
     X11             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-1.2
         (Unfortunately X11-1.2 does not work correctly on AMD64.  The latest
