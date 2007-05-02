@@ -66,8 +66,9 @@ instance (Integral i, Integral j, Ord a, Arbitrary a) => Arbitrary (StackSet i j
 --
 -- All operations must preserve this.
 --
-invariant (w :: T) = inBounds w && noDuplicates (concat $ M.elems (stacks w))
+invariant (w :: T) = inBounds w && noDuplicates allWindows
     where
+        allWindows      = concatMap (uncurry (++)) . M.elems . stacks  $ w
         noDuplicates ws = nub ws == ws
         inBounds x      = current x >= 0 && current x < sz where sz = M.size (stacks x)
 
@@ -76,7 +77,7 @@ prop_invariant = invariant
 
 
 -- empty StackSets have no windows in them
-prop_empty n m = n > 0 && m > 0 ==> all null (M.elems (stacks x))
+prop_empty n m = n > 0 && m > 0 ==> all (null . uncurry (++)) (M.elems (stacks x))
     where x = empty n m :: T
 
 -- empty StackSets always have focus on workspace 0
