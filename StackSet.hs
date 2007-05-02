@@ -38,12 +38,12 @@ import qualified Data.Map  as M
 -- stacks, with a current pointer
 data StackSet i j a =
     StackSet
-        { current  :: !i             -- ^ the currently visible stack
-        , screen2ws:: !(M.Map j i)   -- ^ screen -> workspace
-        , ws2screen:: !(M.Map i j)   -- ^ workspace -> screen map
-        , stacks   :: !(M.Map i [a]) -- ^ the separate stacks
-        , focus    :: !(M.Map i a)   -- ^ the window focused in each stack
-        , cache    :: !(M.Map a i)   -- ^ a cache of windows back to their stacks
+        { current  :: !i                    -- ^ the currently visible stack
+        , screen2ws:: !(M.Map j i)          -- ^ screen -> workspace
+        , ws2screen:: !(M.Map i j)          -- ^ workspace -> screen map
+        , stacks   :: !(M.Map i ([a], [a])) -- ^ screen -> (floating, normal)
+        , focus    :: !(M.Map i a)          -- ^ the window focused in each stack
+        , cache    :: !(M.Map a i)          -- ^ a cache of windows back to their stacks
         } deriving (Eq, Show)
 
 -- The cache is used to check on insertion that we don't already have
@@ -58,7 +58,7 @@ empty :: (Integral i, Integral j) => Int -> Int -> StackSet i j a
 empty n m = StackSet { current   = 0
                      , screen2ws = wsScrs2Works
                      , ws2screen = wsWorks2Scrs
-                     , stacks    = M.fromList (zip [0..fromIntegral n-1] (repeat []))
+                     , stacks    = M.fromList (zip [0..fromIntegral n-1] (repeat ([], [])))
                      , focus     = M.empty
                      , cache     = M.empty }
 
@@ -100,7 +100,7 @@ peekStack i w = M.lookup i (focus w)
 -- | /O(log s)/. Index. Extract the stack at workspace 'n'.
 -- If the index is invalid, an exception is thrown.
 index :: Integral i => i -> StackSet i j a -> [a]
-index k w = fromJust (M.lookup k (stacks w))
+index k w = uncurry (++) $ fromJust $ M.lookup k (stacks w)
 
 -- | view. Set the stack specified by the argument as being visible and the
 -- current StackSet. If the stack wasn't previously visible, it will become
@@ -142,7 +142,7 @@ visibleWorkspaces = M.keys . ws2screen
 rotate :: (Integral i, Eq a) => Ordering -> StackSet i j a -> StackSet i j a
 rotate o w = maybe w id $ do
     f <- M.lookup (current w) (focus w)
-    s <- M.lookup (current w) (stacks w)
+    s <- fmap (uncurry (++)) $ M.lookup (current w) (stacks w)
     ea <- case o of EQ -> Nothing
                     _  -> elemAfter f (if o == GT then s else reverse s)
     return $ w { focus = M.insert (current w) ea (focus w) }
@@ -161,7 +161,7 @@ shift n w = maybe w (\k -> insert k n w) (peek w)
 --
 insert :: (Integral i, Ord a) => a -> i -> StackSet i j a -> StackSet i j a
 insert k n old = new { cache  = M.insert k n (cache new)
-                     , stacks = M.adjust (k:) n (stacks new)
+                     , stacks = M.adjust (\(f, ks) -> (f, k:ks)) n (stacks new)
                      , focus  = M.insert n k (focus new) }
     where new = delete k old
 
@@ -172,8 +172,8 @@ delete :: (Integral i, Ord a) => a -> StackSet i j a -> StackSet i j a
 delete k w = maybe w del (M.lookup k (cache w))
   where
     del i = w { cache  = M.delete k (cache w)
-              , stacks = M.adjust (L.delete k) i (stacks w)
-              , focus  = M.update (\k' -> if k == k' then elemAfter k (stacks w M.! i)
+              , stacks = M.adjust (\(xs, ys) -> (L.delete k xs, L.delete k ys)) i (stacks w)
+              , focus  = M.update (\k' -> if k == k' then elemAfter k (index i w)
                                                      else Just k') i (focus w) }
 
 -- | /O(log n)/. If the given window is contained in a workspace, make it the
@@ -188,10 +188,9 @@ raiseFocus k w = case M.lookup k (cache w) of
 promote :: (Integral i, Ord a) => StackSet i j a -> StackSet i j a
 promote w = maybe w id $ do
     a <- peek w -- fail if null
-    let w' = w { stacks = M.adjust (\s -> swap a (head s) s) (current w) (stacks w) }
+    let w' = w { stacks = M.adjust (\(f, s) -> (f, swap a (head s) s)) (current w) (stacks w) }
     return $ insert a (current w) w' -- and maintain focus (?)
 
---
 -- | Swap first occurences of 'a' and 'b' in list.
 -- If both elements are not in the list, the list is unchanged.
 --
@@ -213,6 +212,10 @@ swap _ _ xs = xs -- do nothing
 --    where next [] = []
 --          next xs = last xs : init xs
 --
+
+-- | Returns true if the window is in the floating layer
+isFloat :: (Ord a, Ord i) => a -> StackSet i j a -> Bool
+isFloat k w = maybe False (elem k . fst . (stacks w M.!)) (M.lookup k (cache w))
 
 -- | Find the element in the (circular) list after given element.
 elemAfter :: Eq a => a -> [a] -> Maybe a

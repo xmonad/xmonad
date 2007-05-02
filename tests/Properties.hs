@@ -167,7 +167,7 @@ prop_shift_reversible r (x :: T) =
 
 prop_fullcache x = cached == allvals where
     cached  = sort . keys $ cache x
-    allvals = sort . concat . elems $ stacks x
+    allvals = sort . concat . map (uncurry (++)) . elems $ stacks x
     _       = x :: T
 
 prop_currentwsvisible x = (current x) `elem` (visibleWorkspaces x)
