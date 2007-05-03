@@ -48,7 +48,7 @@ refresh = do
 
     flip mapM_ (M.assocs (W.screen2ws ws)) $ \(scn, n) -> do
         let sc =  genericIndex xinesc scn -- temporary coercion!
-            (l:_) = case M.findWithDefault defaultLayouts n fls of {[] -> defaultLayouts; l -> l}
+            l  = fromMaybe full (do (x:_) <- M.lookup n fls; return x)
         mapM_ (\(w, rect) -> io $ moveWindowInside d w rect) $ (doLayout l) sc $ W.index n ws
         whenJust (W.peekStack n ws) (io . raiseWindow d)
     whenJust (W.peek ws) setFocus
