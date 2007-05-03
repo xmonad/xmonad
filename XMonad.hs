@@ -17,7 +17,7 @@
 
 module XMonad (
     X, WindowSet, WorkspaceId(..), ScreenId(..), XState(..), XConf(..), Layout(..),
-    LayoutDesc(..), runX, io, withDisplay, isRoot, spawn, trace, whenJust, rotateLayout
+    runX, io, withDisplay, isRoot, spawn, trace, whenJust
   ) where
 
 import StackSet (StackSet)
@@ -28,6 +28,7 @@ import System.IO
 import System.Posix.Process (executeFile, forkProcess, getProcessStatus)
 import System.Exit
 import Graphics.X11.Xlib
+import Data.Dynamic ( Dynamic )
 
 import qualified Data.Map as M
 
@@ -35,7 +36,7 @@ import qualified Data.Map as M
 -- Just the display, width, height and a window list
 data XState = XState
     { workspace         :: !WindowSet                      -- ^ workspace list
-    , layoutDescs       :: !(M.Map WorkspaceId LayoutDesc) -- ^ mapping of workspaces 
+    , layouts           :: !(M.Map WorkspaceId [Layout])   -- ^ mapping of workspaces 
                                                            -- to descriptions of their layouts
     }
 
@@ -93,15 +94,8 @@ isRoot w = liftM (w==) (asks theRoot)
 -- Layout handling
 
 -- | The different layout modes
-data Layout = Full | Tall | Wide deriving (Enum, Bounded, Eq)
-
--- | 'rot' for Layout.
-rotateLayout :: Layout -> Layout
-rotateLayout x = if x == maxBound then minBound else succ x
-
--- | A full description of a particular workspace's layout parameters.
-data LayoutDesc = LayoutDesc { layoutType   :: !Layout
-                             , tileFraction :: !Rational }
+data Layout = Layout { doLayout :: Rectangle -> [Window] -> [(Window, Rectangle)]
+                     , modifyLayout :: Dynamic -> Maybe Layout }
 
 -- ---------------------------------------------------------------------
 -- Utilities

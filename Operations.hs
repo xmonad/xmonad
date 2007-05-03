@@ -1,3 +1,4 @@
+{-# OPTIONS -fglasgow-exts #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Operations.hs
@@ -15,6 +16,7 @@ module Operations where
 import Data.List
 import Data.Maybe
 import Data.Bits
+import Data.Dynamic ( Typeable, toDyn, fromDynamic )
 import qualified Data.Map as M
 
 import Control.Monad.State
@@ -41,18 +43,13 @@ import qualified StackSet as W
 -- screen and raises the window.
 refresh :: X ()
 refresh = do
-    XState { workspace = ws, layoutDescs = fls } <- get
+    XState { workspace = ws, layouts = fls } <- get
     XConf  { xineScreens = xinesc, display = d } <- ask -- neat, eh?
 
     flip mapM_ (M.assocs (W.screen2ws ws)) $ \(scn, n) -> do
         let sc =  genericIndex xinesc scn -- temporary coercion!
-            fl = M.findWithDefault defaultLayoutDesc n fls
-        mapM_ (\(w, rect) -> io $ moveWindowInside d w rect) $
-            -- likely this should just dispatch on the current layout algo
-            case layoutType fl of
-                Full -> fmap (flip (,) sc) $ maybeToList $ W.peekStack n ws
-                Tall -> tile  (tileFraction fl) sc $ W.index n ws
-                Wide -> vtile (tileFraction fl) sc $ W.index n ws
+            (l:_) = case M.findWithDefault defaultLayouts n fls of {[] -> defaultLayouts; l -> l}
+        mapM_ (\(w, rect) -> io $ moveWindowInside d w rect) $ (doLayout l) sc $ W.index n ws
         whenJust (W.peekStack n ws) (io . raiseWindow d)
     whenJust (W.peek ws) setFocus
     clearEnterEvents
@@ -100,22 +97,37 @@ flipRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 -- switching back , the focused window is uppermost.
 --
 switchLayout :: X ()
-switchLayout = layout $ \fl -> fl { layoutType = rotateLayout (layoutType fl) }
+switchLayout = layout rotateList where rotateList [] = []
+                                       rotateList xs = last xs : init xs
 
--- | changeSplit.  Changes the window split.
-changeSplit :: Rational -> X ()
-changeSplit delta = layout $ \fl ->
-    fl { tileFraction = min 1 (max 0 (tileFraction fl + delta)) }
+data ShrinkOrExpand = Shrink | Expand deriving ( Typeable, Eq )
+
+layoutMsg :: Typeable a => a -> X () -- FIXME: The below shouldn't refresh on Nothing
+layoutMsg a = layout $ \(l:ls) -> case modifyLayout l (toDyn a) of Nothing -> l:ls
+                                                                   Just l' -> l':ls
+
+full :: Layout
+full = Layout { doLayout = \sc -> map (\w -> (w,sc)), modifyLayout = const Nothing }
+
+tall, wide :: Rational -> Rational -> Layout
+tall delta tileFrac = Layout { doLayout = \sc -> tile tileFrac sc
+                             , modifyLayout = (fmap m) . fromDynamic }
+    where m Shrink = tall delta (tileFrac-delta)
+          m Expand = tall delta (tileFrac+delta)
+
+wide delta tileFrac = Layout { doLayout = \sc -> vtile tileFrac sc
+                             , modifyLayout = (fmap m) . fromDynamic }
+    where m Shrink = wide delta (tileFrac-delta)
+          m Expand = wide delta (tileFrac+delta)
 
 -- | layout. Modify the current workspace's layout with a pure
 -- function and refresh.
-layout :: (LayoutDesc -> LayoutDesc) -> X ()
+layout :: ([Layout] -> [Layout]) -> X ()
 layout f = do
     modify $ \s ->
-        let fls = layoutDescs s
-            n   = W.current . workspace $ s
-            fl  = M.findWithDefault defaultLayoutDesc n fls
-        in s { layoutDescs = M.insert n (f fl) fls }
+        let n   = W.current . workspace $ s
+            fl  = M.findWithDefault defaultLayouts n $ layouts s
+        in s { layouts = M.insert n (f fl) (layouts s) }
     refresh
 
 -- | windows. Modify the current window list with a pure function, and refresh

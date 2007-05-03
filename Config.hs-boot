@@ -1,5 +1,5 @@
 module Config where
-import XMonad (LayoutDesc)
+import XMonad (Layout)
 import Graphics.X11.Xlib.Types (Dimension)
-defaultLayoutDesc :: LayoutDesc
+defaultLayouts :: [Layout]
 borderWidth :: Dimension

@@ -133,16 +133,9 @@ focusedBorderColor = "#ff0000"
 borderWidth :: Dimension
 borderWidth = 2
 
--- A LayoutDesc specifies two things:
---  * what layout mode to use by default
---  * what default screen ratio of master/slave areas are used when tiling
---
--- See LayoutDesc and friends in XMonad.hs for options.
---
-defaultLayoutDesc :: LayoutDesc
-defaultLayoutDesc =
-    LayoutDesc { layoutType   = Full
-               , tileFraction = 2%3  }
+-- The default set of Layouts:
+defaultLayouts :: [Layout]
+defaultLayouts = [ full, tall defaultDelta (2%3), wide defaultDelta (2%3) ]
 
 --
 -- The key bindings list.
@@ -161,8 +154,8 @@ keys = M.fromList $
     , ((modMask,               xK_j     ), raise GT)
     , ((modMask,               xK_k     ), raise LT)
 
-    , ((modMask,               xK_h     ), changeSplit (negate defaultDelta))
-    , ((modMask,               xK_l     ), changeSplit defaultDelta)
+    , ((modMask,               xK_h     ), layoutMsg Expand)
+    , ((modMask,               xK_l     ), layoutMsg Shrink)
 
     , ((modMask .|. shiftMask, xK_c     ), kill)
 

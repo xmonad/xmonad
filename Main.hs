@@ -59,7 +59,7 @@ main = do
             }
         st = XState
             { workspace     = W.empty workspaces (length xinesc)
-            , layoutDescs   = M.empty
+            , layouts       = M.empty
             }
 
     xSetErrorHandler -- in C, I'm too lazy to write the binding
