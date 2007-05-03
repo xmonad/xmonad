@@ -292,6 +292,8 @@ instance Arbitrary Rectangle where
         sw <- arbitrary
         sh <- arbitrary
         return $ Rectangle sx sy sw sh
+    coarbitrary = undefined
+
 
 instance Arbitrary Rational where
     arbitrary = do
