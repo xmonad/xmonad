@@ -97,8 +97,7 @@ flipRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 -- switching back , the focused window is uppermost.
 --
 switchLayout :: X ()
-switchLayout = layout rotateList where rotateList [] = []
-                                       rotateList xs = last xs : init xs
+switchLayout = layout (\(x:xs) -> xs ++ [x])
 
 data ShrinkOrExpand = Shrink | Expand deriving ( Typeable, Eq )
 
