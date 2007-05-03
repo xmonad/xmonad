@@ -153,10 +153,7 @@ handle (UnmapEvent         {ev_window = w}) = do b <- isClient w; when b $ unman
 
 -- set keyboard mapping
 handle e@(MappingNotifyEvent {ev_window = w}) = do
-    -- this fromIntegral is only necessary with the old X11 version that uses
-    -- Int instead of CInt.  TODO delete it when there is a new release of X11
-    let m = (ev_request e, ev_first_keycode e, fromIntegral $ ev_count e)
-    withDisplay $ \d -> io $ refreshKeyboardMapping d m
+    io $ refreshKeyboardMapping e
     when (ev_request e == mappingKeyboard) $ withDisplay $ io . flip grabKeys w
 
 -- click on an unfocussed window
