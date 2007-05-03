@@ -135,7 +135,7 @@ borderWidth = 1
 
 -- The default set of Layouts:
 defaultLayouts :: [Layout]
-defaultLayouts = [ full, tall defaultDelta (2%3), wide defaultDelta (2%3) ]
+defaultLayouts = [ full, tall defaultDelta (1%2), wide defaultDelta (1%2) ]
 
 --
 -- The key bindings list.
@@ -154,8 +154,8 @@ keys = M.fromList $
     , ((modMask,               xK_j     ), raise GT)
     , ((modMask,               xK_k     ), raise LT)
 
-    , ((modMask,               xK_h     ), layoutMsg Expand)
-    , ((modMask,               xK_l     ), layoutMsg Shrink)
+    , ((modMask,               xK_h     ), layoutMsg Shrink)
+    , ((modMask,               xK_l     ), layoutMsg Expand)
 
     , ((modMask .|. shiftMask, xK_c     ), kill)
 
