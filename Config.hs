@@ -131,7 +131,7 @@ focusedBorderColor = "#ff0000"
 
 -- Width of the window border in pixels
 borderWidth :: Dimension
-borderWidth = 2
+borderWidth = 1
 
 -- The default set of Layouts:
 defaultLayouts :: [Layout]
