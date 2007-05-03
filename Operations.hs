@@ -42,12 +42,13 @@ import qualified StackSet as W
 refresh :: X ()
 refresh = do
     XState { workspace = ws, layoutDescs = fls } <- get
-    XConf  { xineScreens = xinesc, display = d } <- ask
+    XConf  { xineScreens = xinesc, display = d } <- ask -- neat, eh?
 
     flip mapM_ (M.assocs (W.screen2ws ws)) $ \(scn, n) -> do
         let sc =  genericIndex xinesc scn -- temporary coercion!
             fl = M.findWithDefault defaultLayoutDesc n fls
         mapM_ (\(w, rect) -> io $ moveWindowInside d w rect) $
+            -- likely this should just dispatch on the current layout algo
             case layoutType fl of
                 Full -> fmap (flip (,) sc) $ maybeToList $ W.peekStack n ws
                 Tall -> tile  (tileFraction fl) sc $ W.index n ws
@@ -63,10 +64,15 @@ clearEnterEvents = do
     io $ sync d False
     io $ allocaXEvent $ \p -> fix $ \again -> do
         more <- checkMaskEvent d enterWindowMask p
-        when more again
+        when more again -- beautiful
 
 -- | tile.  Compute the positions for windows in horizontal layout
 -- mode.
+--
+-- Tiling algorithms in the core should satisify the constraint that
+--
+--  * no windows overlap
+--  * no gaps exist between windows.
 --
 tile :: Rational -> Rectangle -> [Window] -> [(Window, Rectangle)]
 tile _ _ []    = []
@@ -117,8 +123,7 @@ windows :: (WindowSet -> WindowSet) -> X ()
 windows f = do
     modify $ \s -> s { workspace = f (workspace s) }
     refresh
-    ws <- gets workspace
-    trace (show ws) -- log state changes to stderr
+    -- gets workspace >>= trace . show -- log state changes to stderr
 
 -- | hide. Hide a window by moving it offscreen.
 hide :: Window -> X ()

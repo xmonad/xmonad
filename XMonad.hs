@@ -65,6 +65,11 @@ newtype ScreenId    = S Int deriving (Eq,Ord,Show,Enum,Num,Integral,Real)
 
 -- | The X monad, a StateT transformer over IO encapsulating the window
 -- manager state
+--
+-- Dynamic components may be retrieved with 'get', static components
+-- with 'ask'. With newtype deriving we get readers and state monads
+-- instantiated on XConf and XState automatically.
+--
 newtype X a = X (ReaderT XConf (StateT XState IO) a)
     deriving (Functor, Monad, MonadIO, MonadState XState, MonadReader XConf)
 
@@ -96,8 +101,7 @@ rotateLayout x = if x == maxBound then minBound else succ x
 
 -- | A full description of a particular workspace's layout parameters.
 data LayoutDesc = LayoutDesc { layoutType   :: !Layout
-                             , tileFraction :: !Rational
-                             }
+                             , tileFraction :: !Rational }
 
 -- ---------------------------------------------------------------------
 -- Utilities
