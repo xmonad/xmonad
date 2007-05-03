@@ -8,7 +8,12 @@
 -- Stability   :  stable
 -- Portability :  portable
 --
------------------------------------------------------------------------------
+------------------------------------------------------------------------
+--
+-- This module specifies configurable defaults for xmonad. If you change
+-- values here, be sure to recompile and restart (mod-shift-ctrl-q) xmonad,
+-- for the changes to take effect.
+--
 
 module Config where
 
@@ -22,10 +27,11 @@ module Config where
 --     mod-shift-p             launch gmrun
 -- 
 --     mod-space               switch tiling mode
+--     mod-n                   nudge current window into fullscreen mode
 -- 
---     mod-tab                 raise next window in stack
---     mod-j
---     mod-k
+--     mod-tab                 shift focus to next window in stack
+--     mod-j                   shift focus to next window in stack
+--     mod-k                   shift focus previous window in stack 
 -- 
 --     mod-h                   decrease the size of the master area
 --     mod-l                   increase the size of the master area
@@ -34,7 +40,7 @@ module Config where
 --     mod-shift-q             exit window manager
 --     mod-shift-ctrl-q        restart window manager ('xmonad' must be in $PATH)
 -- 
---     mod-return              cycle the current tiling order
+--     mod-return              swap focused window with master window
 -- 
 --     mod-1..9                switch to workspace N
 --     mod-shift-1..9          move client to workspace N
@@ -77,6 +83,9 @@ module Config where
 -- mod-7.
 -- 
 
+-- 
+-- Useful imports
+--
 import Data.Ratio
 import Data.Bits
 import qualified Data.Map as M
@@ -85,24 +94,33 @@ import Graphics.X11.Xlib
 import XMonad
 import Operations
 
--- The number of workspaces:
+-- The number of workspaces (virtual screens)
 workspaces :: Int
 workspaces = 9
 
--- modMask lets you easily change which modkey you use. The default is mod1Mask
+-- modMask lets you specify which modkey you want to use. The default is mod1Mask
 -- ("left alt").  You may also consider using mod3Mask ("right alt"), which
 -- does not conflict with emacs keybindings. The "windows key" is usually
 -- mod4Mask.
+--
 modMask :: KeyMask
 modMask = mod1Mask
 
--- How much to change the horizontal/vertical split bar by defalut.
+-- When resizing a window, this ratio specifies by what percent to
+-- resize in a single step
 defaultDelta :: Rational
 defaultDelta = 3%100
 
+-- numlock handling:
+--
 -- The mask for the numlock key. You may need to change this on some systems.
+--
 -- You can find the numlock modifier by running "xmodmap" and looking for a
--- modifier with Num_Lock bound to it.
+-- modifier with Num_Lock bound to it:
+--
+-- $ xmodmap | grep Num
+-- mod2        Num_Lock (0x4d)
+--
 numlockMask :: KeyMask
 numlockMask = mod2Mask
 
@@ -113,17 +131,22 @@ focusedBorderColor = "#ff0000"
 
 -- Width of the window border in pixels
 borderWidth :: Dimension
-borderWidth = 1
+borderWidth = 2
 
--- What layout to start in, and what the default proportion for the
--- left pane should be in the tiled layout.  See LayoutDesc and
--- friends in XMonad.hs for options.
+-- A LayoutDesc specifies two things:
+--  * what layout mode to use by default
+--  * what default screen ratio of master/slave areas are used when tiling
+--
+-- See LayoutDesc and friends in XMonad.hs for options.
+--
 defaultLayoutDesc :: LayoutDesc
 defaultLayoutDesc =
     LayoutDesc { layoutType   = Full
-               , tileFraction = 1%2  }
+               , tileFraction = 2%3  }
 
--- The keys list.
+--
+-- The key bindings list.
+--
 keys :: M.Map (KeyMask, KeySym) (X ())
 keys = M.fromList $
     [ ((modMask .|. shiftMask, xK_Return), spawn "xterm")
