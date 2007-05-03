@@ -131,6 +131,9 @@ keys = M.fromList $
     , ((modMask .|. shiftMask, xK_p     ), spawn "gmrun")
     , ((modMask,               xK_space ), switchLayout)
 
+    -- 'nudge': resize viewed windows to the correct size.
+    , ((modMask,               xK_n     ), refresh)
+
     , ((modMask,               xK_Tab   ), raise GT)
     , ((modMask,               xK_j     ), raise GT)
     , ((modMask,               xK_k     ), raise LT)
