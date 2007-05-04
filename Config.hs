@@ -154,8 +154,8 @@ keys = M.fromList $
     , ((modMask,               xK_j     ), raise GT)
     , ((modMask,               xK_k     ), raise LT)
 
-    , ((modMask,               xK_h     ), layoutMsg Shrink)
-    , ((modMask,               xK_l     ), layoutMsg Expand)
+    , ((modMask,               xK_h     ), sendMessage Shrink)
+    , ((modMask,               xK_l     ), sendMessage Expand)
 
     , ((modMask .|. shiftMask, xK_c     ), kill)
 

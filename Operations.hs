@@ -16,7 +16,6 @@ module Operations where
 import Data.List
 import Data.Maybe
 import Data.Bits
-import Data.Dynamic ( Typeable, toDyn, fromDynamic )
 import qualified Data.Map as M
 
 import Control.Monad.State
@@ -73,41 +72,46 @@ clearEnterEvents = do
 -- uppermost.
 --
 switchLayout :: X ()
-switchLayout = layout (\(x, xs) -> let xs' = xs ++ [x]
-                                   in (head xs', tail xs'))
+switchLayout = layout (\(x, xs) -> let xs' = xs ++ [x] in (head xs', tail xs'))
 
+-- | Throw an (extensible) message value to the current Layout scheme,
+-- possibly modifying how we layout the windows, then refresh.
 --
--- TODO, using Typeable for extensible stuff is a bit gunky. Check --
--- 'extensible exceptions' paper for other ideas.
+-- TODO, this will refresh on Nothing.
 --
--- Basically this thing specifies the basic operations that vary between
--- layouts.
---
-data ShrinkOrExpand = Shrink | Expand deriving (Typeable, Eq)
+sendMessage :: Message a => a -> X ()
+sendMessage a = layout $ \x@(l, ls) -> maybe x (flip (,) ls) (modifyLayout l (SomeMessage a))
 
-layoutMsg :: Typeable a => a -> X () -- FIXME: The below shouldn't refresh on Nothing
-layoutMsg a = layout $ \x@(l, ls) -> maybe x (flip (,) ls) (modifyLayout l (toDyn a))
-
+------------------------------------------------------------------------
 --
--- Standard layout algorithms:
+-- Builtin layout algorithms:
 --
 --   fullscreen mode
 --   tall mode
 --   wide mode
+-- 
+-- The latter algorithms support the following operations:
 --
+--      Shrink
+--      Expand
+--
+
+data Resize = Shrink | Expand deriving (Typeable, Show)
+instance Message Resize
+
 full :: Layout
+full = Layout { doLayout     = \sc ws -> [ (w,sc) | w <- ws ]
+              , modifyLayout = const Nothing } -- no changes
+
 tall, wide :: Rational -> Rational -> Layout
-
-full            = Layout { doLayout     = \sc ws -> [ (w,sc) | w <- ws ]
-                         , modifyLayout = const Nothing }
-
 wide delta frac = mirrorLayout (tall delta frac)
 
 tall delta frac = Layout { doLayout     = tile frac
-                         , modifyLayout = fmap f . fromDynamic }
+                         , modifyLayout = fmap handler . fromMessage }
 
-    where f s = tall delta ((op s) frac delta)
-          op Shrink = (-) ; op Expand = (+)
+    where handler s = tall delta $ (case s of
+                                    Shrink -> (-)
+                                    Expand -> (+)) frac delta
 
 -- | Mirror a rectangle
 mirrorRect :: Rectangle -> Rectangle

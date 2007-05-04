@@ -17,6 +17,7 @@
 
 module XMonad (
     X, WindowSet, WorkspaceId(..), ScreenId(..), XState(..), XConf(..), Layout(..),
+    Typeable, Message, SomeMessage(..), fromMessage,
     runX, io, withDisplay, isRoot, spawn, trace, whenJust
   ) where
 
@@ -28,7 +29,7 @@ import System.IO
 import System.Posix.Process (executeFile, forkProcess, getProcessStatus)
 import System.Exit
 import Graphics.X11.Xlib
-import Data.Dynamic ( Dynamic )
+import Data.Typeable
 
 import qualified Data.Map as M
 
@@ -36,10 +37,8 @@ import qualified Data.Map as M
 -- Just the display, width, height and a window list
 data XState = XState
     { workspace         :: !WindowSet                      -- ^ workspace list
-    , layouts           :: !(M.Map WorkspaceId (Layout, [Layout]))
-                                                           -- ^ mapping of workspaces 
-                                                           -- to descriptions of their layouts
-    }
+    , layouts           :: !(M.Map WorkspaceId (Layout, [Layout]))  }
+                       -- ^ mapping of workspaces to descriptions of their layouts
 
 data XConf = XConf
     { display           :: Display      -- ^ the X11 display
@@ -52,8 +51,7 @@ data XConf = XConf
 
     , xineScreens       :: ![Rectangle] -- ^ dimensions of each screen
     , normalBorder      :: !Color       -- ^ border color of unfocused windows
-    , focusedBorder     :: !Color       -- ^ border color of the focused window
-    }
+    , focusedBorder     :: !Color     } -- ^ border color of the focused window
 
 type WindowSet = StackSet WorkspaceId ScreenId Window
 
@@ -95,10 +93,30 @@ isRoot w = liftM (w==) (asks theRoot)
 -- Layout handling
 
 -- | The different layout modes
--- 'doLayout', a pure function to layout a Window set
--- 'modifyLayout', 
+-- 'doLayout', a pure function to layout a Window set 'modifyLayout', 
+-- 'modifyLayout' can be considered a branch of an exception handler.
+--
 data Layout = Layout { doLayout     :: Rectangle -> [Window] -> [(Window, Rectangle)]
-                     , modifyLayout :: Dynamic -> Maybe Layout }
+                     , modifyLayout :: SomeMessage -> Maybe Layout }
+
+-- Based on ideas in /An Extensible Dynamically-Typed Hierarchy of Exceptions/,
+-- Simon Marlow, 2006. Use extensible messages to the modifyLayout handler.
+-- 
+-- User-extensible messages must be a member of this class:
+--
+class (Typeable a, Show a) => Message a
+
+--
+-- A wrapped value of some type in the Message class.
+--
+data SomeMessage = forall a. Message a => SomeMessage a
+
+--
+-- And now, unwrap a given, unknown Message type, performing a (dynamic)
+-- type check on the result.
+--
+fromMessage :: Message m => SomeMessage -> Maybe m
+fromMessage (SomeMessage m) = cast m
 
 -- ---------------------------------------------------------------------
 -- Utilities
