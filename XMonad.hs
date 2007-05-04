@@ -94,7 +94,9 @@ isRoot w = liftM (w==) (asks theRoot)
 -- Layout handling
 
 -- | The different layout modes
-data Layout = Layout { doLayout :: Rectangle -> [Window] -> [(Window, Rectangle)]
+-- 'doLayout', a pure function to layout a Window set
+-- 'modifyLayout', 
+data Layout = Layout { doLayout     :: Rectangle -> [Window] -> [(Window, Rectangle)]
                      , modifyLayout :: Dynamic -> Maybe Layout }
 
 -- ---------------------------------------------------------------------

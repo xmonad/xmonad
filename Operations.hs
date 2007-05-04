@@ -63,9 +63,62 @@ clearEnterEvents = do
         more <- checkMaskEvent d enterWindowMask p
         when more again -- beautiful
 
--- | tile.  Compute the positions for windows in horizontal layout
--- mode.
+------------------------------------------------------------------------
+
+-- | switchLayout.  Switch to another layout scheme.  Switches the
+-- layout of the current workspace. By convention, a window set as
+-- master in Tall mode remains as master in Wide mode. When switching
+-- from full screen to a tiling mode, the currently focused window
+-- becomes a master. When switching back , the focused window is
+-- uppermost.
 --
+switchLayout :: X ()
+switchLayout = layout (\(x:xs) -> xs ++ [x]) -- TODO pattern match here might fail!
+
+--
+-- TODO, using Typeable for extensible stuff is a bit gunky. Check --
+-- 'extensible exceptions' paper for other ideas.
+--
+-- Basically this thing specifies the basic operations that vary between
+-- layouts.
+--
+data ShrinkOrExpand = Shrink | Expand deriving (Typeable, Eq)
+
+layoutMsg :: Typeable a => a -> X () -- FIXME: The below shouldn't refresh on Nothing
+layoutMsg a = layout $ \x@(l:ls) -> maybe x (:ls) (modifyLayout l (toDyn a))
+
+--
+-- Standard layout algorithms:
+--
+--   fullscreen mode
+--   tall mode
+--   wide mode
+--
+full :: Layout
+tall, wide :: Rational -> Rational -> Layout
+
+full            = Layout { doLayout     = \sc ws -> [ (w,sc) | w <- ws ]
+                         , modifyLayout = const Nothing }
+
+wide delta frac = mirrorLayout (tall delta frac)
+
+tall delta frac = Layout { doLayout     = tile frac
+                         , modifyLayout = fmap f . fromDynamic }
+
+    where f s = tall delta ((op s) frac delta)
+          op Shrink = (-) ; op Expand = (+)
+
+-- | Mirror a rectangle
+mirrorRect :: Rectangle -> Rectangle
+mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
+
+-- | Mirror a layout
+mirrorLayout :: Layout -> Layout
+mirrorLayout (Layout { doLayout = dl, modifyLayout = ml }) =
+              Layout { doLayout = \sc -> map (second mirrorRect) . dl (mirrorRect sc)
+                     , modifyLayout = fmap mirrorLayout . ml }
+
+-- | tile.  Compute the positions for windows in our default tiling modes
 -- Tiling algorithms in the core should satisify the constraint that
 --
 --  * no windows overlap
@@ -74,49 +127,15 @@ clearEnterEvents = do
 tile :: Rational -> Rectangle -> [Window] -> [(Window, Rectangle)]
 tile _ _ []    = []
 tile _ d [w]   = [(w, d)]
-tile r (Rectangle sx sy sw sh) (w:s)
- = (w, Rectangle sx sy (fromIntegral lw) sh) : zipWith f [sy, sy + rh ..] s
+tile r (Rectangle sx sy sw sh) (w:s) =
+       (w, Rectangle sx sy (fromIntegral lw) sh) : zipWith f [sy, sy + rh ..] s
  where
     lw = floor $ fromIntegral sw * r
     rw = sw - fromIntegral lw
     rh = fromIntegral sh `div` fromIntegral (length s)
     f i a = (a, Rectangle (sx + lw) i rw (fromIntegral rh))
 
--- | Mirror a rectangle
-mirrorRect :: Rectangle -> Rectangle
-mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
-
--- | Mirror a layout
-mirrorLayout :: Layout -> Layout
-mirrorLayout (Layout { doLayout = dl, modifyLayout = ml })
- = Layout { doLayout = (\sc ws -> map (second mirrorRect) $ dl (mirrorRect sc) ws)
-          , modifyLayout = fmap mirrorLayout . ml }
-
--- | switchLayout.  Switch to another layout scheme.  Switches the
--- current workspace. By convention, a window set as master in Tall mode
--- remains as master in Wide mode. When switching from full screen to a
--- tiling mode, the currently focused window becomes a master. When
--- switching back , the focused window is uppermost.
---
-switchLayout :: X ()
-switchLayout = layout (\(x:xs) -> xs ++ [x])
-
-data ShrinkOrExpand = Shrink | Expand deriving ( Typeable, Eq )
-
-layoutMsg :: Typeable a => a -> X () -- FIXME: The below shouldn't refresh on Nothing
-layoutMsg a = layout $ \(l:ls) -> case modifyLayout l (toDyn a) of Nothing -> l:ls
-                                                                   Just l' -> l':ls
-
-full :: Layout
-full = Layout { doLayout = \sc -> map (\w -> (w,sc)), modifyLayout = const Nothing }
-
-tall, wide :: Rational -> Rational -> Layout
-tall delta tileFrac = Layout { doLayout = \sc -> tile tileFrac sc
-                             , modifyLayout = (fmap m) . fromDynamic }
-    where m Shrink = tall delta (tileFrac-delta)
-          m Expand = tall delta (tileFrac+delta)
-
-wide delta tileFrac = mirrorLayout (tall delta tileFrac)
+------------------------------------------------------------------------
 
 -- | layout. Modify the current workspace's layout with a pure
 -- function and refresh.
