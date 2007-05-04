@@ -96,7 +96,7 @@ sendMessage a = layout $ \x@(l, ls) -> maybe x (flip (,) ls) (modifyLayout l (So
 --      Expand
 --
 
-data Resize = Shrink | Expand deriving (Typeable, Show)
+data Resize = Shrink | Expand deriving Typeable
 instance Message Resize
 
 full :: Layout

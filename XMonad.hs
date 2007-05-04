@@ -104,7 +104,7 @@ data Layout = Layout { doLayout     :: Rectangle -> [Window] -> [(Window, Rectan
 -- 
 -- User-extensible messages must be a member of this class:
 --
-class (Typeable a, Show a) => Message a
+class Typeable a => Message a
 
 --
 -- A wrapped value of some type in the Message class.
