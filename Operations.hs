@@ -82,13 +82,15 @@ tile r (Rectangle sx sy sw sh) (w:s)
     rh = fromIntegral sh `div` fromIntegral (length s)
     f i a = (a, Rectangle (sx + lw) i rw (fromIntegral rh))
 
--- | vtile. Tile vertically.
-vtile :: Rational -> Rectangle -> [Window] -> [(Window, Rectangle)]
-vtile r rect = map (second flipRect) . tile r (flipRect rect)
+-- | Mirror a rectangle
+mirrorRect :: Rectangle -> Rectangle
+mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 
--- | Flip rectangles around
-flipRect :: Rectangle -> Rectangle
-flipRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
+-- | Mirror a layout
+mirrorLayout :: Layout -> Layout
+mirrorLayout (Layout { doLayout = dl, modifyLayout = ml })
+ = Layout { doLayout = (\sc ws -> map (second mirrorRect) $ dl (mirrorRect sc) ws)
+          , modifyLayout = fmap mirrorLayout . ml }
 
 -- | switchLayout.  Switch to another layout scheme.  Switches the
 -- current workspace. By convention, a window set as master in Tall mode
@@ -114,10 +116,7 @@ tall delta tileFrac = Layout { doLayout = \sc -> tile tileFrac sc
     where m Shrink = tall delta (tileFrac-delta)
           m Expand = tall delta (tileFrac+delta)
 
-wide delta tileFrac = Layout { doLayout = \sc -> vtile tileFrac sc
-                             , modifyLayout = (fmap m) . fromDynamic }
-    where m Shrink = wide delta (tileFrac-delta)
-          m Expand = wide delta (tileFrac+delta)
+wide delta tileFrac = mirrorLayout (tall delta tileFrac)
 
 -- | layout. Modify the current workspace's layout with a pure
 -- function and refresh.

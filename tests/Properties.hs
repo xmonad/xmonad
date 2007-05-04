@@ -1,7 +1,7 @@
 {-# OPTIONS -fglasgow-exts #-}
 
 import StackSet
-import Operations (tile,vtile)
+import Operations (tile)
 
 import Debug.Trace
 import Data.Word
@@ -226,13 +226,8 @@ prop_push_local (x :: T) i = not (member i x) ==> hidden x == hidden (push i x)
 -- 1 window should always be tiled fullscreen
 prop_tile_fullscreen rect = tile pct rect [1] == [(1, rect)]
 
-prop_vtile_fullscreen rect = vtile pct rect [1] == [(1, rect)]
-
 -- multiple windows 
 prop_tile_non_overlap rect windows = noOverlaps (tile pct rect windows)
-  where _ = rect :: Rectangle
-
-prop_vtile_non_overlap rect windows = noOverlaps (vtile pct rect windows)
   where _ = rect :: Rectangle
 
 pct = 3 % 100
@@ -363,8 +358,7 @@ main = do
 ------------------------------------------------------------------------
 
         ,("tile 1 window fullsize", mytest prop_tile_fullscreen)
-        ,("vtile 1 window fullsize", mytest prop_vtile_fullscreen)
-        ,("vtiles never overlap",    mytest prop_vtile_non_overlap     )
+        ,("tiles never overlap",    mytest prop_tile_non_overlap)
 
         ]
 
