@@ -45,7 +45,8 @@ main = do
     nbc    <- initcolor normalBorderColor
     fbc    <- initcolor focusedBorderColor
 
-    let cf = XConf
+    let safeLayouts = case defaultLayouts of [] -> (full, []); (x:xs) -> (x, xs)
+        cf = XConf
             { display       = dpy
             , xineScreens   = xinesc
             , theRoot       = rootw
@@ -59,7 +60,7 @@ main = do
             }
         st = XState
             { workspace     = W.empty workspaces (length xinesc)
-            , layouts       = M.empty
+            , layouts       = M.fromList [(w, safeLayouts) | w <- [0 .. W workspaces - 1]]
             }
 
     xSetErrorHandler -- in C, I'm too lazy to write the binding

@@ -47,8 +47,8 @@ refresh = do
     XConf  { xineScreens = xinesc, display = d } <- ask -- neat, eh?
 
     flip mapM_ (M.assocs (W.screen2ws ws)) $ \(scn, n) -> do
-        let sc =  genericIndex xinesc scn -- temporary coercion!
-            l  = fromMaybe full (do (x:_) <- M.lookup n fls; return x)
+        let sc        = genericIndex xinesc scn -- temporary coercion!
+            (Just l)  = fmap fst $ M.lookup n fls
         mapM_ (\(w, rect) -> io $ moveWindowInside d w rect) $ (doLayout l) sc $ W.index n ws
         whenJust (W.peekStack n ws) (io . raiseWindow d)
     whenJust (W.peek ws) setFocus
@@ -73,7 +73,8 @@ clearEnterEvents = do
 -- uppermost.
 --
 switchLayout :: X ()
-switchLayout = layout (\(x:xs) -> xs ++ [x]) -- TODO pattern match here might fail!
+switchLayout = layout (\(x, xs) -> let xs' = xs ++ [x]
+                                   in (head xs', tail xs'))
 
 --
 -- TODO, using Typeable for extensible stuff is a bit gunky. Check --
@@ -85,7 +86,7 @@ switchLayout = layout (\(x:xs) -> xs ++ [x]) -- TODO pattern match here might fa
 data ShrinkOrExpand = Shrink | Expand deriving (Typeable, Eq)
 
 layoutMsg :: Typeable a => a -> X () -- FIXME: The below shouldn't refresh on Nothing
-layoutMsg a = layout $ \x@(l:ls) -> maybe x (:ls) (modifyLayout l (toDyn a))
+layoutMsg a = layout $ \x@(l, ls) -> maybe x (flip (,) ls) (modifyLayout l (toDyn a))
 
 --
 -- Standard layout algorithms:
@@ -139,11 +140,11 @@ tile r (Rectangle sx sy sw sh) (w:s) =
 
 -- | layout. Modify the current workspace's layout with a pure
 -- function and refresh.
-layout :: ([Layout] -> [Layout]) -> X ()
+layout :: ((Layout, [Layout]) -> (Layout, [Layout])) -> X ()
 layout f = do
     modify $ \s ->
-        let n   = W.current . workspace $ s
-            fl  = M.findWithDefault defaultLayouts n $ layouts s
+        let n          = W.current . workspace $ s
+            (Just fl)  = M.lookup n $ layouts s
         in s { layouts = M.insert n (f fl) (layouts s) }
     refresh
 

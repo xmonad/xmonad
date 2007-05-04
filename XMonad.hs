@@ -36,7 +36,8 @@ import qualified Data.Map as M
 -- Just the display, width, height and a window list
 data XState = XState
     { workspace         :: !WindowSet                      -- ^ workspace list
-    , layouts           :: !(M.Map WorkspaceId [Layout])   -- ^ mapping of workspaces 
+    , layouts           :: !(M.Map WorkspaceId (Layout, [Layout]))
+                                                           -- ^ mapping of workspaces 
                                                            -- to descriptions of their layouts
     }
 
