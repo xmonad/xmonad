@@ -304,7 +304,8 @@ main :: IO ()
 main = do
     args <- getArgs
     let n = if null args then 100 else read (head args)
-    mapM_ (\(s,a) -> printf "%-25s: " s >> a n) tests
+    results <- mapM (\(s,a) -> printf "%-25s: " s >> a n) tests
+    when (not . and $ results) $ fail "Not all tests passed!"
  where
     n = 100
 
@@ -364,20 +365,20 @@ main = do
 
 debug = False
 
-mytest :: Testable a => a -> Int -> IO ()
+mytest :: Testable a => a -> Int -> IO Bool
 mytest a n = mycheck defaultConfig
     { configMaxTest=n
     , configEvery= \n args -> if debug then show n ++ ":\n" ++ unlines args else [] } a
 
-mycheck :: Testable a => Config -> a -> IO ()
+mycheck :: Testable a => Config -> a -> IO Bool
 mycheck config a = do
     rnd <- newStdGen
     mytests config (evaluate a) rnd 0 0 []
 
-mytests :: Config -> Gen Result -> StdGen -> Int -> Int -> [[String]] -> IO ()
+mytests :: Config -> Gen Result -> StdGen -> Int -> Int -> [[String]] -> IO Bool
 mytests config gen rnd0 ntest nfail stamps
-    | ntest == configMaxTest config = do done "OK," ntest stamps
-    | nfail == configMaxFail config = do done "Arguments exhausted after" ntest stamps
+    | ntest == configMaxTest config = done "OK," ntest stamps >> return True
+    | nfail == configMaxFail config = done "Arguments exhausted after" ntest stamps >> return True
     | otherwise               =
       do putStr (configEvery config ntest (arguments result)) >> hFlush stdout
          case ok result of
@@ -390,7 +391,7 @@ mytests config gen rnd0 ntest nfail stamps
                    ++ show ntest
                    ++ " tests:\n"
                    ++ unlines (arguments result)
-                    ) >> hFlush stdout
+                    ) >> hFlush stdout >> return False
      where
       result      = generate (configSize config ntest) rnd2 gen
       (rnd1,rnd2) = split rnd0
