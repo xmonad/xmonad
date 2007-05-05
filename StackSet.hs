@@ -46,7 +46,7 @@ data StackSet i j a =
         , stacks   :: !(M.Map i ([a], [a])) -- ^ screen -> (floating, normal)
         , focus    :: !(M.Map i a)          -- ^ the window focused in each stack
         , cache    :: !(M.Map a i)          -- ^ a cache of windows back to their stacks
-        } deriving (Eq, Show)
+        } deriving (Eq, Show, Read)
 
 -- The cache is used to check on insertion that we don't already have
 -- this window managed on another stack

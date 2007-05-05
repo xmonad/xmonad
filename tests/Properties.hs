@@ -16,6 +16,7 @@ import System.IO
 import System.Random
 import Text.Printf
 import Data.List            (nub,sort,group,sort,intersperse,genericLength)
+import Data.Char            (ord)
 import Data.Map             (keys,elems)
 import qualified Data.Map as M
 
@@ -121,7 +122,7 @@ prop_notpeek_peekStack n x = current x /= n && isJust (peek x) ==> peekStack n x
 
 ------------------------------------------------------------------------
 
-type T = StackSet Int Int Int
+type T = StackSet Int Int Char
 
 prop_delete_uniq i x = not (member i x) ==> delete i x == x
     where _ = x :: T
@@ -248,6 +249,10 @@ noOverlaps xs  = and [ verts a `notOverlap` verts b
 
 
 ------------------------------------------------------------------------
+
+instance Arbitrary Char where
+    arbitrary = choose ('a','z')
+    coarbitrary n = coarbitrary (ord n)
 
 instance Random Word8 where
   randomR = integralRandomR
