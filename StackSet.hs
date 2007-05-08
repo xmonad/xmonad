@@ -62,7 +62,9 @@ empty n m = StackSet { current   = 0
                      , focus     = M.empty
                      , cache     = M.empty }
 
-    where (scrs,wrks)  = unzip $ map (\x -> (fromIntegral x, fromIntegral x)) [0..m-1]
+    where scrs_wrks = unzip $ map (\x -> (fromIntegral x, fromIntegral x)) [0..m-1]
+          scrs = fst scrs_wrks
+          wrks = snd scrs_wrks
           wsScrs2Works = M.fromList (zip scrs wrks)
           wsWorks2Scrs = M.fromList (zip wrks scrs)
 
