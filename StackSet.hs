@@ -188,7 +188,8 @@ raiseFocus k w = case M.lookup k (cache w) of
 promote :: (Integral i, Ord a) => StackSet i j a -> StackSet i j a
 promote w = maybe w id $ do
     a <- peek w -- fail if null
-    let w' = w { stacks = M.adjust (\(f, s) -> (f, swap a (head s) s)) (current w) (stacks w) }
+    (f, xs@(x:_)) <- M.lookup (current w) (stacks w)
+    let w' = w { stacks = M.insert (current w) (f, swap a x xs) (stacks w) }
     return $ insert a (current w) w' -- and maintain focus (?)
 
 -- | Swap first occurences of 'a' and 'b' in list.
