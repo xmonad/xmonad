@@ -57,7 +57,7 @@ size = M.size . stacks
 
 -- | Height of stack 'n'
 height :: Int -> T -> Int
-height i w = length (index i w)
+height i w = maybe 0 length (index i w)
 
 -- build (non-empty) StackSets with between 1 and 100 stacks
 --
