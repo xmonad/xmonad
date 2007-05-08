@@ -244,9 +244,12 @@ prop_promotescreen n x = screen n (promote x) == screen n x
   where _ = x :: T
 
 -- promote doesn't mess with other windows
-prop_promoterotate x b = focus (rotate dir (promote x)) == focus (rotate dir x)
-  where _ = x :: T
-        dir = if b then LT else GT
+prop_promote_raise_id x b = (not . null . fromMaybe [] . flip index x . current $ x) ==>
+                            (raiseFocus y . promote . raiseFocus z . promote) x == x
+  where _            = x :: T
+        dir          = if b then LT else GT
+        (Just y)     = peek x
+        (Just (z:_)) = flip index x . current $ x
 
 -- push shouldn't change anything but the current workspace
 prop_push_local (x :: T) i = not (member i x) ==> hidden x == hidden (push i x)
@@ -390,7 +393,7 @@ main = do
         ,("promote idempotent", mytest prop_promote2)
         ,("promote focus",      mytest prop_promotefocus)
         ,("promote current",    mytest prop_promotecurrent)
-        ,("promote only swaps", mytest prop_promoterotate)
+        ,("promote only swaps", mytest prop_promote_raise_id)
         ,("promote/screen" ,    mytest prop_promotescreen)
 
         ,("swap",               mytest prop_swap)
