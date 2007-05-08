@@ -297,7 +297,7 @@ view n = do
     ws' <- gets workspace
     -- If the old workspace isn't visible anymore, we have to hide the windows
     -- in case we're switching to an empty workspace.
-    when (m `notElem` (W.visibleWorkspaces ws')) (mapM_ hide (W.index m ws))
+    when (m `notElem` W.visibleWorkspaces ws') (mapM_ hide (W.index m ws))
     clearEnterEvents
     setTopFocus
 
