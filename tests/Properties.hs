@@ -28,17 +28,26 @@ import qualified Data.Map as M
 -- keeping track of the currently focused workspace, and the total
 -- number of workspaces. If there are duplicates in the list, the last
 -- occurence wins.
-fromList :: (Integral i, Integral j, Ord a) => (i, Int,[[a]]) -> StackSet i j a
-fromList (_,_,[]) = error "Cannot build a StackSet from an empty list"
+fromList :: (Integral i, Integral j, Ord a) => (i, Int, [Maybe a], [[a]]) -> StackSet i j a
+fromList (_,_,_,[]) = error "Cannot build a StackSet from an empty list"
 
-fromList (n,m,xs) | n < 0 || n >= genericLength xs
+fromList (n,m,fs,xs) | n < 0 || n >= genericLength xs
                 = error $ "Cursor index is out of range: " ++ show (n, length xs)
                   | m < 1 || m >  genericLength xs
                 = error $ "Can't have more screens than workspaces: " ++ show (m, length xs)
 
-fromList (o,m,xs) = view o $ foldr (\(i,ys) s ->
-                                  foldr (\a t -> insert a i t) s ys)
-                                      (empty (length xs) m) (zip [0..] xs)
+-- 'o' random workspace
+-- 'fs' random focused window on each workspace
+--
+fromList (o,m,fs,xs) =
+    let s = view o $
+                foldr (\(i,ys) s ->
+                    foldr (\a t -> insert a i t) s ys)
+                        (empty (length xs) m) (zip [0..] xs)
+
+    in foldr (\f s -> case f of
+                            Nothing -> s
+                            Just w  -> raiseFocus w s) s fs
 
 -- ---------------------------------------------------------------------
 
@@ -51,13 +60,30 @@ height :: Int -> T -> Int
 height i w = length (index i w)
 
 -- build (non-empty) StackSets with between 1 and 100 stacks
+--
+-- StackSet
+--  { current :: i
+--  , screen2ws:: !(M.Map j i)          -- ^ screen -> workspace
+--  , ws2screen:: !(M.Map i j)          -- ^ workspace -> screen map
+--  , stacks   :: !(M.Map i ([a], [a])) -- ^ screen -> (floating, normal)
+--  , cache    :: !(M.Map a i)          -- ^ a cache of windows back to their stacks
+--  }
+--
+-- Use 'raiseFocus' to bring focus to the front'
+--
 instance (Integral i, Integral j, Ord a, Arbitrary a) => Arbitrary (StackSet i j a) where
     arbitrary = do
         sz <- choose (1,20)
         n  <- choose (0,sz-1)
         sc <- choose (1,sz)
         ls <- vector sz
-        return $ fromList (fromIntegral n,sc,ls)
+
+        -- pick a random element of each stack to focus.
+        fs <- sequence [ if null s then return Nothing
+                            else liftM Just (elements s)
+                       | s <- ls ]
+
+        return $ fromList (fromIntegral n,sc,fs,ls)
     coarbitrary = error "no coarbitrary for StackSet"
 
 -- Invariants:
