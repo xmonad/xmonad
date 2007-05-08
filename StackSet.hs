@@ -111,7 +111,7 @@ index k w = fmap (uncurry (++)) $ M.lookup k (stacks w)
 view :: (Integral i, Integral j) => i -> StackSet i j a -> StackSet i j a
 view n w | M.member n (stacks w)
          = if M.member n (ws2screen w) then w { current = n }
-                                       else tweak (fromJust $ screen (current w) w)
+                                       else maybe w tweak (screen (current w) w)
          | otherwise = w
   where
     tweak sc = w { screen2ws = M.insert sc n (screen2ws w)
