@@ -48,7 +48,7 @@ refresh = do
     flip mapM_ (M.assocs (W.screen2ws ws)) $ \(scn, n) -> do
         let sc        = genericIndex xinesc scn -- temporary coercion!
             (Just l)  = fmap fst $ M.lookup n fls
-        mapM_ (\(w, rect) -> io $ moveWindowInside d w rect) $ (doLayout l) sc $ W.index n ws
+        whenJust (W.index n ws) $ mapM_ (\(w, rect) -> io $ moveWindowInside d w rect) . doLayout l sc
         whenJust (W.peekStack n ws) (io . raiseWindow d)
     whenJust (W.peek ws) setFocus
     clearEnterEvents
@@ -235,7 +235,7 @@ setFocus w = do
 
     -- clear mouse button grab and border on other windows
     flip mapM_ (W.visibleWorkspaces ws) $ \n -> do
-        flip mapM_ (W.index n ws) $ \otherw -> do
+        flip mapM_ (fromMaybe [] $ W.index n ws) $ \otherw -> do
             setButtonGrab True otherw
             io $ setWindowBorder dpy otherw (color_pixel nbc)
 
@@ -297,7 +297,7 @@ view n = do
     ws' <- gets workspace
     -- If the old workspace isn't visible anymore, we have to hide the windows
     -- in case we're switching to an empty workspace.
-    when (m `notElem` W.visibleWorkspaces ws') (mapM_ hide (W.index m ws))
+    when (m `notElem` W.visibleWorkspaces ws') $ maybe (return ()) (mapM_ hide) $ W.index m ws
     clearEnterEvents
     setTopFocus
 

@@ -98,9 +98,9 @@ peekStack :: Integral i => i -> StackSet i j a -> Maybe a
 peekStack i w = M.lookup i (focus w)
 
 -- | /O(log s)/. Index. Extract the stack at workspace 'n'.
--- If the index is invalid, an exception is thrown.
-index :: Integral i => i -> StackSet i j a -> [a]
-index k w = uncurry (++) $ fromJust $ M.lookup k (stacks w)
+-- If the index is invalid, returns Nothing.
+index :: Integral i => i -> StackSet i j a -> Maybe [a]
+index k w = fmap (uncurry (++)) $ M.lookup k (stacks w)
 
 -- | view. Set the stack specified by the argument as being visible and the
 -- current StackSet. If the stack wasn't previously visible, it will become
@@ -173,7 +173,7 @@ delete k w = maybe w del (M.lookup k (cache w))
   where
     del i = w { cache  = M.delete k (cache w)
               , stacks = M.adjust (\(xs, ys) -> (L.delete k xs, L.delete k ys)) i (stacks w)
-              , focus  = M.update (\k' -> if k == k' then elemAfter k (index i w)
+              , focus  = M.update (\k' -> if k == k' then elemAfter k =<< index i w
                                                      else Just k') i (focus w) }
 
 -- | /O(log n)/. If the given window is contained in a workspace, make it the
