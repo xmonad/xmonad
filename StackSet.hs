@@ -104,13 +104,13 @@ index k w = uncurry (++) $ fromJust $ M.lookup k (stacks w)
 
 -- | view. Set the stack specified by the argument as being visible and the
 -- current StackSet. If the stack wasn't previously visible, it will become
--- visible on the current screen. If the index is out of range an exception is
--- thrown.
+-- visible on the current screen. If the index is out of range 'view' returns
+-- the initial 'StackSet' unchanged.
 view :: (Integral i, Integral j) => i -> StackSet i j a -> StackSet i j a
 view n w | M.member n (stacks w)
          = if M.member n (ws2screen w) then w { current = n }
                                        else tweak (fromJust $ screen (current w) w)
-         | otherwise = error $ "view: index out of bounds: " ++ show n
+         | otherwise = w
   where
     tweak sc = w { screen2ws = M.insert sc n (screen2ws w)
                  , ws2screen = M.insert n sc (M.filter (/=sc) (ws2screen w))
