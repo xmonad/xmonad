@@ -1,5 +1,3 @@
-{-# OPTIONS -fglasgow-exts #-}
-
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  StackSet
@@ -8,7 +6,7 @@
 --
 -- Maintainer  :  dons@cse.unsw.edu.au
 -- Stability   :  stable
--- Portability :  portable, needs GHC 6.6
+-- Portability :  portable
 --
 -----------------------------------------------------------------------------
 --
@@ -201,12 +199,11 @@ promote w = maybe w id $ do
 -- > swap a b . swap a b == id
 --
 swap :: Eq a => a -> a -> [a] -> [a]
-swap a b xs | a == b  = xs    -- do nothing
-            | Just ai <- L.elemIndex a xs
-            , Just bi <- L.elemIndex b xs = insertAt bi a (insertAt ai b xs)
+swap a b xs = head $ [insertAt bi a (insertAt ai b xs) | a /= b
+                     ,Just ai <- [L.elemIndex a xs], Just bi <- [L.elemIndex b xs]]
+                     ++ [xs]
   where insertAt n x ys = as ++ x : tail bs
             where (as,bs) = splitAt n ys
-swap _ _ xs = xs -- do nothing
 
 --
 -- cycling:
