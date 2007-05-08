@@ -199,10 +199,11 @@ promote w = maybe w id $ do
 -- > swap a b . swap a b == id
 --
 swap :: Eq a => a -> a -> [a] -> [a]
-swap a b xs = head $ [insertAt bi a (insertAt ai b xs) | a /= b
-                     ,Just ai <- [L.elemIndex a xs], Just bi <- [L.elemIndex b xs]]
-                     ++ [xs]
-  where insertAt n x ys = as ++ x : tail bs
+swap a b xs = maybe xs id $ do
+    ai <- L.elemIndex a xs
+    bi <- L.elemIndex b xs
+    return . insertAt bi a . insertAt ai b $ xs
+  where insertAt n x ys = as ++ x : drop 1 bs
             where (as,bs) = splitAt n ys
 
 --
