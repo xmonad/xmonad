@@ -42,7 +42,7 @@ data StackSet i j a =
         , screen2ws:: !(M.Map j i)          -- ^ screen -> workspace
         , ws2screen:: !(M.Map i j)          -- ^ workspace -> screen map
         , stacks   :: !(M.Map i ([a], [a])) -- ^ screen -> (floating, normal)
-        , focus    :: !(M.Map i a)          -- ^ the window focused in each stack
+        , focus    :: !(M.Map i [a])        -- ^ the stack of window focus in each stack
         , cache    :: !(M.Map a i)          -- ^ a cache of windows back to their stacks
         } deriving (Eq, Show, Read)
 
@@ -97,7 +97,19 @@ peek w = peekStack (current w) w
 -- | /O(log s)/. Extract the element on the top of the given stack. If no such
 -- element exists, Nothing is returned.
 peekStack :: Integral i => i -> StackSet i j a -> Maybe a
-peekStack i w = M.lookup i (focus w)
+peekStack i w = M.lookup i (focus w) >>= maybeHead
+
+maybeHead :: [a] -> Maybe a
+maybeHead (x:_) = Just x
+maybeHead [] = Nothing
+
+-- | /O(log s)/. Set the focus for the given stack to the given element.
+pushFocus :: (Eq a, Integral i) => i -> a -> StackSet i j a -> StackSet i j a
+pushFocus i a w = w { focus = M.insert i ((a:) $ L.delete a $ M.findWithDefault [] i $ focus w) (focus w) }
+
+popFocus :: (Eq a, Integral i) => i -> a -> StackSet i j a -> StackSet i j a
+popFocus i a w = w { focus = M.update upd i (focus w) }
+    where upd xs = case L.delete a xs of [] -> Nothing; xs' -> Just xs'
 
 -- | /O(log s)/. Index. Extract the stack at workspace 'n'.
 -- If the index is invalid, returns Nothing.
@@ -143,11 +155,11 @@ visibleWorkspaces = M.keys . ws2screen
 --
 rotate :: (Integral i, Eq a) => Ordering -> StackSet i j a -> StackSet i j a
 rotate o w = maybe w id $ do
-    f <- M.lookup (current w) (focus w)
+    f <- peekStack (current w) w
     s <- fmap (uncurry (++)) $ M.lookup (current w) (stacks w)
     ea <- case o of EQ -> Nothing
                     _  -> elemAfter f (if o == GT then s else reverse s)
-    return $ w { focus = M.insert (current w) ea (focus w) }
+    return $ pushFocus (current w) ea w
 
 -- | /O(log n)/. shift. move the client on top of the current stack to
 -- the top of stack 'n'. If the stack to move to is not valid, and
@@ -162,9 +174,9 @@ shift n w = maybe w (\k -> insert k n w) (peek w)
 -- If the index is wrong an exception is thrown.
 --
 insert :: (Integral i, Ord a) => a -> i -> StackSet i j a -> StackSet i j a
-insert k n old = new { cache  = M.insert k n (cache new)
-                     , stacks = M.adjust (\(f, ks) -> (f, k:ks)) n (stacks new)
-                     , focus  = M.insert n k (focus new) }
+insert k n old = pushFocus n k $
+                 new { cache  = M.insert k n (cache new)
+                     , stacks = M.adjust (\(f, ks) -> (f, k:ks)) n (stacks new) }
     where new = delete k old
 
 -- | /O(log n)/. Delete an element entirely from from the StackSet.
@@ -172,18 +184,14 @@ insert k n old = new { cache  = M.insert k n (cache new)
 -- If the element doesn't exist, the original StackSet is returned unmodified.
 delete :: (Integral i, Ord a) => a -> StackSet i j a -> StackSet i j a
 delete k w = maybe w del (M.lookup k (cache w))
-  where
-    del i = w { cache  = M.delete k (cache w)
-              , stacks = M.adjust (\(xs, ys) -> (L.delete k xs, L.delete k ys)) i (stacks w)
-              , focus  = M.update (\k' -> if k == k' then elemAfter k =<< index i w
-                                                     else Just k') i (focus w) }
+  where del i = popFocus i k $
+                w { cache  = M.delete k (cache w)
+                  , stacks = M.adjust (\(xs, ys) -> (L.delete k xs, L.delete k ys)) i (stacks w) }
 
 -- | /O(log n)/. If the given window is contained in a workspace, make it the
 -- focused window of that workspace, and make that workspace the current one.
 raiseFocus :: (Integral i, Integral j, Ord a) => a -> StackSet i j a -> StackSet i j a
-raiseFocus k w = case M.lookup k (cache w) of
-    Nothing -> w
-    Just i  -> (view i w) { focus = M.insert i k (focus w) }
+raiseFocus k w = maybe w (\i -> pushFocus i k $ view i w) $ M.lookup k (cache w)
 
 -- | Swap the currently focused window with the master window (the
 -- window on top of the stack). Focus moves to the master.

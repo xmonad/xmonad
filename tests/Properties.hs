@@ -160,6 +160,9 @@ prop_delete_push i x = not (member i x) ==> delete i (push i x) == x
     where _ = x :: T
 -}
 
+prop_delete_push i x = not (member i x) ==> delete i (push i x) == x
+    where _ = x :: T
+
 prop_delete2 i x =
     delete i x == delete i (delete i x)
     where _ = x :: T
@@ -168,13 +171,16 @@ prop_focus1 i x = member i x ==> peek (raiseFocus i x) == Just i
     where _ = x :: T
 
 -- rotation is reversible in two directions
-prop_rotaterotate1 (x :: T)   = rotate LT (rotate GT x) == x
-prop_rotaterotate2 (x :: T)   = rotate GT (rotate LT x) == x
+prop_rotaterotate1 (x :: T)   = rotate LT (rotate GT x') == x'
+    where x' = rotate LT x
+prop_rotaterotate2 (x :: T)   = rotate GT (rotate LT x') == x'
+    where x' = rotate GT x
 
 -- rotation through the height of a stack gets us back to the start
-prop_rotate_all (x :: T) = foldr (\_ y -> rotate GT y) x [1..n] == x
+prop_rotate_all (x :: T) = f (f x) == f x
   where
     n = height (current x) x
+    f x' = foldr (\_ y -> rotate GT y) x' [1..n]
 
 
 prop_viewview r  x   =
@@ -244,12 +250,9 @@ prop_promotescreen n x = screen n (promote x) == screen n x
   where _ = x :: T
 
 -- promote doesn't mess with other windows
-prop_promote_raise_id x b = (not . null . fromMaybe [] . flip index x . current $ x) ==>
-                            (raiseFocus y . promote . raiseFocus z . promote) x == x
+prop_promote_raise_id x = (not . null . fromMaybe [] . flip index x . current $ x) ==>
+                          (promote . promote . promote) x == promote x
   where _            = x :: T
-        dir          = if b then LT else GT
-        (Just y)     = peek x
-        (Just (z:_)) = flip index x . current $ x
 
 -- push shouldn't change anything but the current workspace
 prop_push_local (x :: T) i = not (member i x) ==> hidden x == hidden (push i x)
@@ -372,7 +375,7 @@ main = do
 
         ,("delete/not.member", mytest prop_delete_uniq)
         ,("delete idempotent", mytest prop_delete2)
-        -- disabled, for now ,("delete.push identity" , mytest prop_delete_push)
+        ,("delete.push identity" , mytest prop_delete_push)
 
         ,("focus",             mytest prop_focus1)
 
