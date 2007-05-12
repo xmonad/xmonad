@@ -48,7 +48,9 @@ refresh = do
     flip mapM_ (M.assocs (W.screen2ws ws)) $ \(scn, n) -> do
         let sc        = genericIndex xinesc scn -- temporary coercion!
             (Just l)  = fmap fst $ M.lookup n fls
-        whenJust (W.index n ws) $ mapM_ (\(w, rect) -> io $ moveWindowInside d w rect) . doLayout l sc
+        whenJust (W.index n ws) $ \winds ->
+            do wrects <- doLayout l sc winds :: X [(Window,Rectangle)]
+               mapM_ (\(w, rect) -> io $ moveWindowInside d w rect) wrects
         whenJust (W.peekStack n ws) (io . raiseWindow d)
     whenJust (W.peek ws) setFocus
     clearEnterEvents
@@ -100,13 +102,13 @@ data Resize = Shrink | Expand deriving Typeable
 instance Message Resize
 
 full :: Layout
-full = Layout { doLayout     = \sc ws -> [ (w,sc) | w <- ws ]
+full = Layout { doLayout     = \sc ws -> return [ (w,sc) | w <- ws ]
               , modifyLayout = const Nothing } -- no changes
 
 tall, wide :: Rational -> Rational -> Layout
 wide delta frac = mirrorLayout (tall delta frac)
 
-tall delta frac = Layout { doLayout     = tile frac
+tall delta frac = Layout { doLayout = \a b -> return $ tile frac a b
                          , modifyLayout = fmap handler . fromMessage }
 
     where handler s = tall delta $ (case s of
@@ -120,7 +122,7 @@ mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 -- | Mirror a layout
 mirrorLayout :: Layout -> Layout
 mirrorLayout (Layout { doLayout = dl, modifyLayout = ml }) =
-              Layout { doLayout = \sc -> map (second mirrorRect) . dl (mirrorRect sc)
+              Layout { doLayout = \sc w -> map (second mirrorRect) `fmap` dl (mirrorRect sc) w
                      , modifyLayout = fmap mirrorLayout . ml }
 
 -- | tile.  Compute the positions for windows in our default tiling modes
