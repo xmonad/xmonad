@@ -26,7 +26,7 @@ import StackSet (StackSet)
 import Control.Monad.State
 import Control.Monad.Reader
 import System.IO
-import System.Posix.Process (executeFile, forkProcess, getProcessStatus)
+import System.Posix.Process (executeFile, forkProcess, getProcessStatus, createSession)
 import System.Exit
 import Graphics.X11.Xlib
 import Data.Typeable
@@ -130,7 +130,7 @@ io = liftIO
 spawn :: String -> X ()
 spawn x = io $ do
     pid <- forkProcess $ do
-        forkProcess (executeFile "/bin/sh" False ["-c", x] Nothing)
+        forkProcess (createSession >> executeFile "/bin/sh" False ["-c", x] Nothing)
         exitWith ExitSuccess
         return ()
     getProcessStatus True False pid
