@@ -108,7 +108,7 @@ full = Layout { doLayout     = \sc ws -> return [ (w,sc) | w <- ws ]
 tall, wide :: Rational -> Rational -> Layout
 wide delta frac = mirrorLayout (tall delta frac)
 
-tall delta frac = Layout { doLayout = \a b -> return $ tile frac a b
+tall delta frac = Layout { doLayout = \r w -> return $ zip w $ tile frac r (length w)
                          , modifyLayout = fmap handler . fromMessage }
 
     where handler s = tall delta $ (case s of
@@ -131,16 +131,23 @@ mirrorLayout (Layout { doLayout = dl, modifyLayout = ml }) =
 --  * no windows overlap
 --  * no gaps exist between windows.
 --
-tile :: Rational -> Rectangle -> [Window] -> [(Window, Rectangle)]
-tile _ _ []    = []
-tile _ d [w]   = [(w, d)]
-tile r (Rectangle sx sy sw sh) (w:s) =
-       (w, Rectangle sx sy (fromIntegral lw) sh) : zipWith f [sy, sy + rh ..] s
- where
-    lw = floor $ fromIntegral sw * r
-    rw = sw - fromIntegral lw
-    rh = fromIntegral sh `div` fromIntegral (length s)
-    f i a = (a, Rectangle (sx + lw) i rw (fromIntegral rh))
+tile :: Rational -> Rectangle -> Int -> [Rectangle]
+tile _ d n | n < 2 = [d]
+tile f r n = r1 : split_vertically (n-1) r2
+    where (r1,r2) = split_horizontally_by f r
+
+split_vertically, split_horizontally :: Int -> Rectangle -> [Rectangle]
+split_vertically n r | n < 2 = [r]
+split_vertically n (Rectangle sx sy sw sh) = Rectangle sx sy sw smallh :
+    split_vertically (n-1) (Rectangle sx (sy+fromIntegral smallh) sw (sh-smallh))
+    where smallh = sh `div` fromIntegral n
+split_horizontally n r = map mirrorRect $ split_vertically n $ mirrorRect r
+
+split_horizontally_by, split_vertically_by :: Rational -> Rectangle -> (Rectangle, Rectangle)
+split_horizontally_by f (Rectangle sx sy sw sh) =
+    (Rectangle sx sy leftw sh, Rectangle (sx + fromIntegral leftw) sy (sw-fromIntegral leftw) sh)
+        where leftw = floor $ fromIntegral sw * f
+split_vertically_by f r = (\(a,b)->(mirrorRect a,mirrorRect b)) $ split_horizontally_by f $ mirrorRect r
 
 ------------------------------------------------------------------------
 

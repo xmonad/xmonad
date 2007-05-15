@@ -265,7 +265,7 @@ prop_push_local (x :: T) i = not (member i x) ==> hidden x == hidden (push i x)
 -- some properties for layouts:
 
 -- 1 window should always be tiled fullscreen
-prop_tile_fullscreen rect = tile pct rect [1] == [(1, rect)]
+prop_tile_fullscreen rect = tile pct rect 1 == [rect]
 
 -- multiple windows 
 prop_tile_non_overlap rect windows = noOverlaps (tile pct rect windows)
@@ -276,8 +276,8 @@ pct = 3 % 100
 noOverlaps []  = True
 noOverlaps [_] = True
 noOverlaps xs  = and [ verts a `notOverlap` verts b
-                     | (_,a) <- xs
-                     , (_,b) <- filter (\(_,b) -> a /= b) xs
+                     | a <- xs
+                     , b <- filter (a /=) xs
                      ]
     where
       verts (Rectangle a b w h) = (a,b,a + fromIntegral w - 1, b + fromIntegral h - 1)
