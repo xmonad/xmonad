@@ -111,6 +111,10 @@ modMask = mod1Mask
 defaultDelta :: Rational
 defaultDelta = 3%100
 
+-- The default number of windows in the master area
+defaultWindowsInMaster :: Int
+defaultWindowsInMaster = 1
+
 -- numlock handling:
 --
 -- The mask for the numlock key. You may need to change this on some systems.
@@ -135,7 +139,9 @@ borderWidth = 1
 
 -- The default set of Layouts:
 defaultLayouts :: [Layout]
-defaultLayouts = [ full, tall defaultDelta (1%2), wide defaultDelta (1%2) ]
+defaultLayouts = [ full,
+                   tall defaultWindowsInMaster defaultDelta (1%2),
+                   wide defaultWindowsInMaster defaultDelta (1%2) ]
 
 --
 -- The key bindings list.
@@ -156,6 +162,9 @@ keys = M.fromList $
 
     , ((modMask,               xK_h     ), sendMessage Shrink)
     , ((modMask,               xK_l     ), sendMessage Expand)
+
+    , ((modMask .|. shiftMask, xK_j     ), sendMessage (IncMasterN 1))
+    , ((modMask .|. shiftMask, xK_k     ), sendMessage (IncMasterN (-1)))
 
     , ((modMask .|. shiftMask, xK_c     ), kill)
 

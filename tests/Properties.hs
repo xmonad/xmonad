@@ -265,10 +265,10 @@ prop_push_local (x :: T) i = not (member i x) ==> hidden x == hidden (push i x)
 -- some properties for layouts:
 
 -- 1 window should always be tiled fullscreen
-prop_tile_fullscreen rect = tile pct rect 1 == [rect]
+prop_tile_fullscreen rect = tile pct rect 1 1 == [rect]
 
 -- multiple windows 
-prop_tile_non_overlap rect windows = noOverlaps (tile pct rect windows)
+prop_tile_non_overlap rect windows nmaster = noOverlaps (tile pct rect nmaster windows)
   where _ = rect :: Rectangle
 
 pct = 3 % 100

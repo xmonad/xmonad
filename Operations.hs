@@ -101,19 +101,22 @@ sendMessage a = layout $ \x@(l, ls) -> maybe x (flip (,) ls) (modifyLayout l (So
 data Resize = Shrink | Expand deriving Typeable
 instance Message Resize
 
+data IncMasterN = IncMasterN Int deriving Typeable
+instance Message IncMasterN
+
 full :: Layout
 full = Layout { doLayout     = \sc ws -> return [ (w,sc) | w <- ws ]
               , modifyLayout = const Nothing } -- no changes
 
-tall, wide :: Rational -> Rational -> Layout
-wide delta frac = mirrorLayout (tall delta frac)
+tall, wide :: Int -> Rational -> Rational -> Layout
+wide nmaster delta frac = mirrorLayout (tall nmaster delta frac)
 
-tall delta frac = Layout { doLayout = \r w -> return $ zip w $ tile frac r (length w)
-                         , modifyLayout = fmap handler . fromMessage }
+tall nmaster delta frac = Layout { doLayout = \r w -> return $ zip w $ tile frac r nmaster (length w)
+                                 , modifyLayout = \m -> fmap resize (fromMessage m) `mplus` fmap incmastern (fromMessage m) }
 
-    where handler s = tall delta $ (case s of
-                                    Shrink -> (-)
-                                    Expand -> (+)) frac delta
+    where resize Shrink = tall nmaster delta (frac-delta)
+          resize Expand = tall nmaster delta (frac+delta)
+          incmastern (IncMasterN d) = tall (max 1 (nmaster+d)) delta frac
 
 -- | Mirror a rectangle
 mirrorRect :: Rectangle -> Rectangle
@@ -131,9 +134,9 @@ mirrorLayout (Layout { doLayout = dl, modifyLayout = ml }) =
 --  * no windows overlap
 --  * no gaps exist between windows.
 --
-tile :: Rational -> Rectangle -> Int -> [Rectangle]
-tile _ d n | n < 2 = [d]
-tile f r n = r1 : splitVertically (n-1) r2
+tile :: Rational -> Rectangle -> Int -> Int -> [Rectangle]
+tile _ r nmaster n | n <= nmaster = splitVertically n r
+tile f r nmaster n = splitVertically nmaster r1 ++ splitVertically (n-nmaster) r2
     where (r1,r2) = splitHorizontallyBy f r
 
 splitVertically, splitHorizontally :: Int -> Rectangle -> [Rectangle]
