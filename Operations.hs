@@ -133,21 +133,21 @@ mirrorLayout (Layout { doLayout = dl, modifyLayout = ml }) =
 --
 tile :: Rational -> Rectangle -> Int -> [Rectangle]
 tile _ d n | n < 2 = [d]
-tile f r n = r1 : split_vertically (n-1) r2
-    where (r1,r2) = split_horizontally_by f r
+tile f r n = r1 : splitVertically (n-1) r2
+    where (r1,r2) = splitHorizontallyBy f r
 
-split_vertically, split_horizontally :: Int -> Rectangle -> [Rectangle]
-split_vertically n r | n < 2 = [r]
-split_vertically n (Rectangle sx sy sw sh) = Rectangle sx sy sw smallh :
-    split_vertically (n-1) (Rectangle sx (sy+fromIntegral smallh) sw (sh-smallh))
+splitVertically, splitHorizontally :: Int -> Rectangle -> [Rectangle]
+splitVertically n r | n < 2 = [r]
+splitVertically n (Rectangle sx sy sw sh) = Rectangle sx sy sw smallh :
+    splitVertically (n-1) (Rectangle sx (sy+fromIntegral smallh) sw (sh-smallh))
     where smallh = sh `div` fromIntegral n
-split_horizontally n r = map mirrorRect $ split_vertically n $ mirrorRect r
+splitHorizontally n r = map mirrorRect $ splitVertically n $ mirrorRect r
 
-split_horizontally_by, split_vertically_by :: Rational -> Rectangle -> (Rectangle, Rectangle)
-split_horizontally_by f (Rectangle sx sy sw sh) =
+splitHorizontallyBy, splitVerticallyBy :: Rational -> Rectangle -> (Rectangle, Rectangle)
+splitHorizontallyBy f (Rectangle sx sy sw sh) =
     (Rectangle sx sy leftw sh, Rectangle (sx + fromIntegral leftw) sy (sw-fromIntegral leftw) sh)
         where leftw = floor $ fromIntegral sw * f
-split_vertically_by f r = (\(a,b)->(mirrorRect a,mirrorRect b)) $ split_horizontally_by f $ mirrorRect r
+splitVerticallyBy f r = (\(a,b)->(mirrorRect a,mirrorRect b)) $ splitHorizontallyBy f $ mirrorRect r
 
 ------------------------------------------------------------------------
 
