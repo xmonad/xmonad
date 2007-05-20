@@ -119,10 +119,10 @@ data Workspace i a = Workspace  { tag :: !i, stack :: Stack a }
 
 -- 
 -- A stack is a cursor onto a (possibly empty) window list.
--- The data structure tracks focus by construction, and we follow the
--- master separately (since the wrapping behaviour of focusLeft/Right
--- reorders the window distribution, so we can't rely on the left most
--- window remaining as master (TODO double check this)).
+-- The data structure tracks focus by construction, and
+-- the master window is by convention the left most item.
+-- Focus operations will not reorder the list that results from
+-- flattening the cursor.
 --
 -- A 'Stack' can be viewed as a list with a hole punched in it to make
 -- the focused position. Under the zipper/calculus view of such
