@@ -6,65 +6,187 @@
 -- License     :  BSD3-style (see LICENSE)
 -- 
 -- Maintainer  :  dons@cse.unsw.edu.au
--- Stability   :  stable
--- Portability :  portable
+-- Stability   :  unstable
+-- Portability :  not portable, mtl, posix
 --
 -----------------------------------------------------------------------------
 
 module Operations where
 
-import Data.List
+import XMonad
+import qualified StackSet as W
+import {-# SOURCE #-} Config (borderWidth)
+
 import Data.Maybe
-import Data.Bits
+import Data.List            (genericIndex)
+import Data.Bits            ((.|.))
 import qualified Data.Map as M
 
+import System.Mem
 import Control.Monad.State
 import Control.Monad.Reader
-import Control.Arrow (second)
-
-import System.Posix.Process
-import System.Environment
-import System.Directory
+import Control.Arrow
 
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras
 
-import XMonad
-import {-# SOURCE #-} Config
+-- ---------------------------------------------------------------------
+-- Window manager operations
 
-import qualified StackSet as W
+-- | manage. Add a new window to be managed in the current workspace.
+-- Bring it into focus. If the window is already managed, nothing happens.
+--
+manage :: Window -> X ()
+manage w = do
+    withDisplay $ \d -> io $ do
+        selectInput d w $ structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
+        mapWindow d w
+        setWindowBorderWidth d w borderWidth
+    windows $ W.insertLeft w
 
+-- | unmanage. A window no longer exists, remove it from the window
+-- list, on whatever workspace it is.
+unmanage :: Window -> X ()
+unmanage = windows . W.delete
+
+-- | focus. focus window to the left or right.
+focusLeft, focusRight :: X ()
+focusLeft  = windows W.focusLeft
+focusRight = windows W.focusRight
+
+-- | swap. Move the currently focused window into the master frame
+swap :: X ()
+swap = windows W.swap
+
+-- | shift. Move a window to a new workspace, 0 indexed.
+shift :: WorkspaceId -> X ()
+shift n = withFocused hide >> windows (W.shift n)
+    -- refresh will raise it if we didn't need to move it.
+
+-- | view. Change the current workspace to workspace at offset n (0 indexed).
+view :: WorkspaceId -> X ()
+view n = withWorkspace $ \w -> when (n /= (W.tag (W.current w))) $ do
+    windows $ W.view n     -- move in new workspace first, to avoid flicker
+    mapM_ hide (W.index w) -- now just hide the old workspace
+    clearEnterEvents       -- better clear any events from the old workspace
+
+-- | Kill the currently focused client. If we do kill it, we'll get a
+-- delete notify back from X.
+--
+-- There are two ways to delete a window. Either just kill it, or if it
+-- supports the delete protocol, send a delete event (e.g. firefox)
+--
+kill :: X ()
+kill = withDisplay $ \d -> withFocused $ \w -> do
+    XConf {wmdelete = wmdelt, wmprotocols = wmprot} <- ask
+    protocols <- io $ getWMProtocols d w
+    io $ if wmdelt `elem` protocols
+        then allocaXEvent $ \ev -> do
+                setEventType ev clientMessage
+                setClientMessageEvent ev w wmprot 32 wmdelt 0
+                sendEvent d w False noEventMask ev
+        else killClient d w >> return ()
 
 -- ---------------------------------------------------------------------
 -- Managing windows
 
--- | refresh. Refresh the currently focused window. Resizes to full
--- screen and raises the window.
+-- | windows. Modify the current window list with a pure function, and refresh
+windows :: (WindowSet -> WindowSet) -> X ()
+windows f = modify (\s -> s { workspace = f (workspace s) }) >> refresh
+
+-- | hide. Hide a window by moving it off screen.
+hide :: Window -> X ()
+hide w = withDisplay $ \d -> do
+    (sw,sh) <- asks dimensions
+    io $ moveWindow d w (2*fromIntegral sw) (2*fromIntegral sh)
+
+-- | refresh. Render the currently visible workspaces, as determined by
+-- the StackSet. Also, set focus to the focused window.
+--
+-- This is our 'view' operation (MVC), in that it pretty prints our model
+-- with X calls.
+--
 refresh :: X ()
 refresh = do
-    XState { workspace = ws, layouts = fls } <- get
-    XConf  { xineScreens = xinesc, display = d } <- ask -- neat, eh?
+    XState { workspace = ws, layouts = fls }     <- get
+    XConf  { xineScreens = xinesc, display = d } <- ask
 
-    flip mapM_ (M.assocs (W.screen2ws ws)) $ \(scn, n) -> do
-        let sc        = genericIndex xinesc scn -- temporary coercion!
-            (Just l)  = fmap fst $ M.lookup n fls
-        whenJust (W.index n ws) $ \winds ->
-            do wrects <- doLayout l sc winds :: X [(Window,Rectangle)]
-               mapM_ (\(w, rect) -> io $ moveWindowInside d w rect) wrects
-        whenJust (W.peekStack n ws) (io . raiseWindow d)
-    whenJust (W.peek ws) setFocus
+    -- for each workspace, layout the currently visible workspaces
+    flip mapM_ (M.assocs (W.screens ws)) $ \(n, scn) -> do
+        let this   = W.view n ws
+            Just l = fmap fst $ M.lookup n fls
+        -- now tile the windows on this workspace
+        rs <- doLayout l (genericIndex xinesc scn) (W.index this)
+        mapM_ (\(w,rect) -> io (tileWindow d w rect)) rs
+
+        -- and raise the focused window if there is one.
+        whenJust (W.peek this) $ io . raiseWindow d
+
+    setTopFocus
     clearEnterEvents
+    io performGC -- really helps 
 
 -- | clearEnterEvents.  Remove all window entry events from the event queue.
 clearEnterEvents :: X ()
-clearEnterEvents = do
-    d <- asks display
-    io $ sync d False
-    io $ allocaXEvent $ \p -> fix $ \again -> do
+clearEnterEvents = withDisplay $ \d -> io $ do
+    sync d False
+    allocaXEvent $ \p -> fix $ \again -> do
         more <- checkMaskEvent d enterWindowMask p
         when more again -- beautiful
 
-------------------------------------------------------------------------
+-- | tileWindow. Moves and resizes w such that it fits inside the given
+-- rectangle, including its border.
+tileWindow :: Display -> Window -> Rectangle -> IO ()
+tileWindow d w r = do
+    bw <- (fromIntegral . wa_border_width) `liftM` getWindowAttributes d w
+    moveResizeWindow d w (rect_x r) (rect_y r)
+                         (rect_width  r - bw*2) (rect_height r - bw*2)
+
+-- ---------------------------------------------------------------------
+
+buttonsToGrab :: [Button]
+buttonsToGrab = [button1, button2, button3]
+
+-- | setButtonGrab. Tell whether or not to intercept clicks on a given window
+setButtonGrab :: Bool -> Window -> X ()
+setButtonGrab True  w = withDisplay $ \d -> io $ flip mapM_ buttonsToGrab $ \b ->
+    grabButton d b anyModifier w False (buttonPressMask .|. buttonReleaseMask)
+               grabModeAsync grabModeSync none none
+
+setButtonGrab False w = withDisplay $ \d -> io $ flip mapM_ buttonsToGrab $ \b ->
+        ungrabButton d b anyModifier w
+
+-- ---------------------------------------------------------------------
+-- Setting keyboard focus
+
+-- | Set the focus to the window on top of the stack, or root
+setTopFocus :: X ()
+setTopFocus = withWorkspace $ \ws -> maybe (asks theRoot >>= setFocusX) setFocusX (W.peek ws)
+
+-- | Set focus explicitly to window 'w' if it is managed by us, or root.
+focus :: Window -> X ()
+focus w = withWorkspace $ \s -> do
+    if W.member w s then do modify $ \st -> st { workspace = W.focusWindow w s } -- avoid 'refresh'
+                            setFocusX w
+                    else whenX (isRoot w) $ setFocusX w
+
+-- | Call X to set the keyboard focus details.
+setFocusX :: Window -> X ()
+setFocusX w = withWorkspace $ \ws -> do
+    XConf { display = dpy , normalBorder = nbc, focusedBorder = fbc } <- ask
+
+    -- clear mouse button grab and border on other windows
+    (`mapM_` (M.keys . W.screens $ ws)) $ \n -> do
+        (`mapM_` (W.index (W.view n ws))) $ \otherw -> do
+            setButtonGrab True otherw
+            io $ setWindowBorder dpy otherw (color_pixel nbc)
+
+    withDisplay $ \d -> io $ setInputFocus d w revertToPointerRoot 0
+    setButtonGrab False w
+    io $ setWindowBorder dpy w (color_pixel fbc)
+
+-- ---------------------------------------------------------------------
+-- Managing layout
 
 -- | switchLayout.  Switch to another layout scheme.  Switches the
 -- layout of the current workspace. By convention, a window set as
@@ -84,7 +206,6 @@ switchLayout = layout (\(x, xs) -> let xs' = xs ++ [x] in (head xs', tail xs'))
 sendMessage :: Message a => a -> X ()
 sendMessage a = layout $ \x@(l, ls) -> maybe x (flip (,) ls) (modifyLayout l (SomeMessage a))
 
-------------------------------------------------------------------------
 --
 -- Builtin layout algorithms:
 --
@@ -159,175 +280,22 @@ splitVerticallyBy f r = (\(a,b)->(mirrorRect a,mirrorRect b)) $ splitHorizontall
 layout :: ((Layout, [Layout]) -> (Layout, [Layout])) -> X ()
 layout f = do
     modify $ \s ->
-        let n          = W.current . workspace $ s
+        let n          = W.tag . W.current . workspace $ s
             (Just fl)  = M.lookup n $ layouts s
         in s { layouts = M.insert n (f fl) (layouts s) }
     refresh
 
--- | windows. Modify the current window list with a pure function, and refresh
-windows :: (WindowSet -> WindowSet) -> X ()
-windows f = do
-    modify $ \s -> s { workspace = f (workspace s) }
-    refresh
-    -- gets workspace >>= trace . show -- log state changes to stderr
+------------------------------------------------------------------------
+-- Utilities
 
--- | hide. Hide a window by moving it offscreen.
-hide :: Window -> X ()
-hide w = withDisplay $ \d -> do
-    (sw,sh) <- asks dimensions
-    io $ moveWindow d w (2*fromIntegral sw) (2*fromIntegral sh)
-
--- ---------------------------------------------------------------------
--- Window operations
-
--- | setButtonGrab. Tell whether or not to intercept clicks on a given window
-buttonsToGrab :: [Button]
-buttonsToGrab = [button1, button2, button3]
-
-setButtonGrab :: Bool -> Window -> X ()
-setButtonGrab True  w = withDisplay $ \d -> io $
-    flip mapM_ buttonsToGrab $ \b ->
-        grabButton d b anyModifier w False
-                   (buttonPressMask .|. buttonReleaseMask)
-                   grabModeAsync grabModeSync none none
-
-setButtonGrab False w = withDisplay $ \d -> io $
-    flip mapM_ buttonsToGrab $ \b ->
-        ungrabButton d b anyModifier w
-
--- | moveWindowInside. Moves and resizes w such that it fits inside the given
--- rectangle, including its border.
-moveWindowInside :: Display -> Window -> Rectangle -> IO ()
-moveWindowInside d w r = do
-    bw <- (fromIntegral . wa_border_width) `liftM` getWindowAttributes d w
-    moveResizeWindow d w (rect_x r) (rect_y r)
-                         (rect_width  r - bw*2)
-                         (rect_height r - bw*2)
-
--- | manage. Add a new window to be managed in the current workspace. Bring it into focus.
--- If the window is already under management, it is just raised.
---
-manage :: Window -> X ()
-manage w = do
-    withDisplay $ \d -> io $ do
-        selectInput d w $ structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
-        mapWindow d w
-        setWindowBorderWidth d w borderWidth
-    windows $ W.push w
-
--- | unmanage. A window no longer exists, remove it from the window
--- list, on whatever workspace it is.
-unmanage :: Window -> X ()
-unmanage w = do
-    windows $ W.delete w
-    withServerX $ do
-      setTopFocus
-      withDisplay $ \d -> io (sync d False)
-      -- TODO, everything operates on the current display, so wrap it up.
-
--- | Grab the X server (lock it) from the X monad
-withServerX :: X () -> X ()
-withServerX f = withDisplay $ \dpy -> do
-    io $ grabServer dpy
-    f
-    io $ ungrabServer dpy
-
-safeFocus :: Window -> X ()
-safeFocus w = do ws <- gets workspace
-                 if W.member w ws
-                    then setFocus w
-                    else do b <- isRoot w
-                            when b setTopFocus
-
--- | Explicitly set the keyboard focus to the given window
-setFocus :: Window -> X ()
-setFocus w = do
-    ws <- gets workspace
-    XConf { display = dpy , normalBorder = nbc, focusedBorder = fbc } <- ask
-
-    -- clear mouse button grab and border on other windows
-    flip mapM_ (W.visibleWorkspaces ws) $ \n -> do
-        flip mapM_ (fromMaybe [] $ W.index n ws) $ \otherw -> do
-            setButtonGrab True otherw
-            io $ setWindowBorder dpy otherw (color_pixel nbc)
-
-    withDisplay $ \d -> io $ setInputFocus d w revertToPointerRoot 0
-    setButtonGrab False w
-    io $ setWindowBorder dpy w (color_pixel fbc)
-
-    -- This does not use 'windows' intentionally.  'windows' calls refresh,
-    -- which means infinite loops.
-    modify $ \s -> s { workspace = W.raiseFocus w (workspace s) }
-
--- | Set the focus to the window on top of the stack, or root
-setTopFocus :: X ()
-setTopFocus = do
-    ws <- gets workspace
-    case W.peek ws of
-        Just new -> setFocus new
-        Nothing  -> asks theRoot >>= setFocus
-
--- | raise. focus to window at offset 'n' in list.
--- The currently focused window is always the head of the list
-raise :: Ordering -> X ()
-raise = windows . W.rotate
-
--- | promote. Move the currently focused window into the master frame
-promote :: X ()
-promote = windows W.promote
-
--- | Kill the currently focused client
-kill :: X ()
-kill = withDisplay $ \d -> do
-    ws <- gets workspace
-    whenJust (W.peek ws) $ \w -> do
-        protocols <- io $ getWMProtocols d w
-        XConf {wmdelete = wmdelt, wmprotocols = wmprot} <- ask
-        if wmdelt `elem` protocols
-            then io $ allocaXEvent $ \ev -> do
-                    setEventType ev clientMessage
-                    setClientMessageEvent ev w wmprot 32 wmdelt 0
-                    sendEvent d w False noEventMask ev
-            else io (killClient d w) >> return ()
-
--- | tag. Move a window to a new workspace, 0 indexed.
-tag :: WorkspaceId -> X ()
-tag n = do
-    ws <- gets workspace
-    let m = W.current ws -- :: WorkspaceId
-    when (n /= m) $
-        whenJust (W.peek ws) $ \w -> do
-            hide w
-            windows $ W.shift n
-
--- | view. Change the current workspace to workspace at offset n (0 indexed).
-view :: WorkspaceId -> X ()
-view n = do
-    ws <- gets workspace
-    let m = W.current ws
-    windows $ W.view n
-    ws' <- gets workspace
-    -- If the old workspace isn't visible anymore, we have to hide the windows
-    -- in case we're switching to an empty workspace.
-    when (m `notElem` W.visibleWorkspaces ws') $ maybe (return ()) (mapM_ hide) $ W.index m ws
-    clearEnterEvents
-    setTopFocus
-
--- | 'screenWorkspace sc' returns the workspace number viewed by 'sc'.
+-- | Return workspace visible on screen 'sc', or 0.
 screenWorkspace :: ScreenId -> X WorkspaceId
-screenWorkspace sc = fmap (fromMaybe 0 . W.workspace sc) (gets workspace)
+screenWorkspace sc = withWorkspace $ return . fromMaybe 0 . W.lookupWorkspace sc
+
+-- | Apply an X operation to the currently focused window, if there is one.
+withFocused :: (Window -> X ()) -> X ()
+withFocused f = withWorkspace $ \w -> whenJust (W.peek w) f
 
 -- | True if window is under management by us
 isClient :: Window -> X Bool
-isClient w = liftM (W.member w) (gets workspace)
-
--- | Restart xmonad by exec()'ing self. This doesn't save state and xmonad has
--- to be in PATH for this to work.
-restart :: IO ()
-restart = do
-    prog      <- getProgName
-    prog_path <- findExecutable prog
-    case prog_path of
-        Nothing -> return ()    -- silently fail
-        Just p  -> do args <- getArgs
-                      executeFile p True args Nothing
+isClient w = withWorkspace $ return . W.member w

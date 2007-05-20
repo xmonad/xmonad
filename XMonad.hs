@@ -18,7 +18,7 @@
 module XMonad (
     X, WindowSet, WorkspaceId(..), ScreenId(..), XState(..), XConf(..), Layout(..),
     Typeable, Message, SomeMessage(..), fromMessage,
-    runX, io, withDisplay, isRoot, spawn, trace, whenJust
+    runX, io, withDisplay, withWorkspace, isRoot, spawn, restart, trace, whenJust, whenX
   ) where
 
 import StackSet (StackSet)
@@ -28,6 +28,8 @@ import Control.Monad.Reader
 import System.IO
 import System.Posix.Process (executeFile, forkProcess, getProcessStatus, createSession)
 import System.Exit
+import System.Environment
+import System.Directory
 import Graphics.X11.Xlib
 import Data.Typeable
 
@@ -53,7 +55,7 @@ data XConf = XConf
     , normalBorder      :: !Color       -- ^ border color of unfocused windows
     , focusedBorder     :: !Color     } -- ^ border color of the focused window
 
-type WindowSet = StackSet WorkspaceId ScreenId Window
+type WindowSet = StackSet WorkspaceId Window ScreenId
 
 -- | Virtual workspace indicies
 newtype WorkspaceId = W Int deriving (Eq,Ord,Show,Enum,Num,Integral,Real)
@@ -84,6 +86,10 @@ runX c st (X a) = runStateT (runReaderT a c) st >> return ()
 -- | Run a monad action with the current display settings
 withDisplay :: (Display -> X ()) -> X ()
 withDisplay f = asks display >>= f
+
+-- | Run a monadic action with the current workspace
+withWorkspace :: (WindowSet -> X a) -> X a
+withWorkspace f = gets workspace >>= f
 
 -- | True if the given window is the root window
 isRoot :: Window -> X Bool
@@ -119,12 +125,11 @@ fromMessage :: Message m => SomeMessage -> Maybe m
 fromMessage (SomeMessage m) = cast m
 
 -- ---------------------------------------------------------------------
--- Utilities
+-- General utilities
 
 -- | Lift an IO action into the X monad
 io :: IO a -> X a
 io = liftIO
-{-# INLINE io #-}
 
 -- | spawn. Launch an external application
 spawn :: String -> X ()
@@ -136,9 +141,31 @@ spawn x = io $ do
     getProcessStatus True False pid
     return ()
 
+-- | Restart xmonad by exec()'ing self. This doesn't save state and xmonad has
+-- to be in PATH for this to work.
+restart :: IO ()
+restart = do
+    prog      <- getProgName
+    prog_path <- findExecutable prog
+    case prog_path of
+        Nothing -> return ()    -- silently fail
+        Just p  -> do args <- getArgs
+                      executeFile p True args Nothing
+
 -- | Run a side effecting action with the current workspace. Like 'when' but
 whenJust :: Maybe a -> (a -> X ()) -> X ()
 whenJust mg f = maybe (return ()) f mg
+
+-- | Conditionally run an action, using a X event to decide
+whenX :: X Bool -> X () -> X ()
+whenX a f = a >>= \b -> when b f
+
+-- | Grab the X server (lock it) from the X monad
+-- withServerX :: X () -> X ()
+-- withServerX f = withDisplay $ \dpy -> do
+--     io $ grabServer dpy
+--     f
+--     io $ ungrabServer dpy
 
 -- | A 'trace' for the X monad. Logs a string to stderr. The result may
 -- be found in your .xsession-errors file

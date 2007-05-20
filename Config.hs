@@ -86,13 +86,13 @@ module Config where
 -- 
 -- Useful imports
 --
+import XMonad
+import Operations
 import Data.Ratio
-import Data.Bits
+import Data.Bits ((.|.))
 import qualified Data.Map as M
 import System.Exit
 import Graphics.X11.Xlib
-import XMonad
-import Operations
 
 -- The number of workspaces (virtual screens)
 workspaces :: Int
@@ -156,9 +156,9 @@ keys = M.fromList $
     -- 'nudge': resize viewed windows to the correct size.
     , ((modMask,               xK_n     ), refresh)
 
-    , ((modMask,               xK_Tab   ), raise GT)
-    , ((modMask,               xK_j     ), raise GT)
-    , ((modMask,               xK_k     ), raise LT)
+    , ((modMask,               xK_Tab   ), focusLeft)
+    , ((modMask,               xK_j     ), focusLeft)
+    , ((modMask,               xK_k     ), focusRight)
 
     , ((modMask,               xK_h     ), sendMessage Shrink)
     , ((modMask,               xK_l     ), sendMessage Expand)
@@ -172,18 +172,18 @@ keys = M.fromList $
     , ((modMask .|. shiftMask .|. controlMask, xK_q     ), io restart)
 
     -- Cycle the current tiling order
-    , ((modMask,               xK_Return), promote)
+    , ((modMask,               xK_Return), swap)
 
     ] ++
     -- Keybindings to get to each workspace:
     [((m .|. modMask, k), f i)
         | (i, k) <- zip [0 .. fromIntegral workspaces - 1] [xK_1 ..]
-        , (f, m) <- [(view, 0), (tag, shiftMask)]]
+        , (f, m) <- [(view, 0), (shift, shiftMask)]]
 
     -- Keybindings to each screen :
     -- mod-wer (underneath 123) switches to physical/Xinerama screens 1 2 and 3
     ++
     [((m .|. modMask, key), screenWorkspace sc >>= f)
         | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
-        , (f, m) <- [(view, 0), (tag, shiftMask)]]
+        , (f, m) <- [(view, 0), (shift, shiftMask)]]
 

@@ -10,24 +10,21 @@
 --
 -----------------------------------------------------------------------------
 --
--- xmonad, a minimal window manager for X11
+-- xmonad, a minimalist, tiling window manager for X11
 --
 
 import Data.Bits
 import qualified Data.Map as M
+import Control.Monad.Reader
 
 import Graphics.X11.Xlib hiding (refreshKeyboardMapping)
 import Graphics.X11.Xlib.Extras
-import Graphics.X11.Xinerama
-
-import Control.Monad.State
-import Control.Monad.Reader
-
-import qualified StackSet as W
+import Graphics.X11.Xinerama    (getScreenInfo)
 
 import XMonad
-import Operations
 import Config
+import StackSet (new)
+import Operations   (manage, unmanage, focus, setFocusX, full, isClient)
 
 --
 -- The main entry point
@@ -59,18 +56,15 @@ main = do
             , focusedBorder = fbc
             }
         st = XState
-            { workspace     = W.empty workspaces (length xinesc)
-            , layouts       = M.fromList [(w, safeLayouts) | w <- [0 .. W workspaces - 1]]
-            }
+            { workspace     = new (fromIntegral workspaces) (fromIntegral $ length xinesc)
+            , layouts       = M.fromList [(w, safeLayouts) | w <- [0 .. W workspaces - 1]] }
 
-    xSetErrorHandler -- in C, I'm too lazy to write the binding
+    xSetErrorHandler -- in C, I'm too lazy to write the binding: dons
 
     -- setup initial X environment
     sync dpy False
-    selectInput dpy rootw $  substructureRedirectMask
-                         .|. substructureNotifyMask
-                         .|. enterWindowMask
-                         .|. leaveWindowMask
+    selectInput dpy rootw $  substructureRedirectMask .|. substructureNotifyMask
+                         .|. enterWindowMask .|. leaveWindowMask
     grabKeys dpy rootw
     sync dpy False
 
@@ -78,10 +72,9 @@ main = do
     allocaXEvent $ \e ->
         runX cf st $ do
             mapM_ manage ws
-            forever $ handle =<< xevent dpy e
-      where
-        xevent d e = io (nextEvent d e >> getEvent e)
-        forever a = a >> forever a
+            -- main loop, for all you HOF/recursion fans out there.
+            forever $ handle =<< io (nextEvent dpy e >> getEvent e)
+      where forever a = a >> forever a
 
 -- ---------------------------------------------------------------------
 -- IO stuff. Doesn't require any X state
@@ -105,14 +98,14 @@ grabKeys dpy rootw = do
          kc <- keysymToKeycode dpy sym
          -- "If the specified KeySym is not defined for any KeyCode,
          -- XKeysymToKeycode() returns zero."
-         when (kc /= '\0') $ mapM_ (grab kc . (mask .|.)) $ [0, numlockMask, lockMask, numlockMask .|. lockMask]
+         when (kc /= '\0') $ mapM_ (grab kc . (mask .|.)) $
+            [0, numlockMask, lockMask, numlockMask .|. lockMask]
   where
     grab kc m = grabKey dpy kc m rootw True grabModeAsync grabModeAsync
 
 -- ---------------------------------------------------------------------
--- Event handler
---
--- | handle. Handle X events
+-- | Event handler. Map X events onto calls into Operations.hs, which
+-- modify our internal model of the window manager state.
 --
 -- Events dwm handles that we don't:
 --
@@ -120,25 +113,13 @@ grabKeys dpy rootw = do
 --    [Expose]         = expose,
 --    [PropertyNotify] = propertynotify,
 --
--- Todo: seperate IO from X monad stuff. We want to be able to test the
--- handler, and client functions, with dummy X interface ops, in QuickCheck
---
--- Will require an abstract interpreter from Event -> X Action, which
--- modifies the internal X state, and then produces an IO action to
--- evaluate.
---
--- XCreateWindowEvent(3X11)
--- Window manager clients normally should ignore this window if the
--- override_redirect member is True.
---
 
 handle :: Event -> X ()
 
 -- run window manager command
 handle (KeyEvent {ev_event_type = t, ev_state = m, ev_keycode = code})
-    | t == keyPress
-    = withDisplay $ \dpy -> do
-        s   <- io $ keycodeToKeysym dpy code 0
+    | t == keyPress = withDisplay $ \dpy -> do
+        s  <- io $ keycodeToKeysym dpy code 0
         whenJust (M.lookup (complement (numlockMask .|. lockMask) .&. m,s) keys) id
 
 -- manage a new window
@@ -147,40 +128,31 @@ handle (MapRequestEvent    {ev_window = w}) = withDisplay $ \dpy -> do
     when (not (wa_override_redirect wa)) $ manage w
 
 -- window destroyed, unmanage it
-handle (DestroyWindowEvent {ev_window = w}) = do b <- isClient w; when b $ unmanage w
-
--- window gone, unmanage it
-handle (UnmapEvent         {ev_window = w}) = do b <- isClient w; when b $ unmanage w
+-- window gone,      unmanage it
+handle (DestroyWindowEvent {ev_window = w}) = whenX (isClient w) $ unmanage w
+handle (UnmapEvent         {ev_window = w}) = whenX (isClient w) $ unmanage w
 
 -- set keyboard mapping
 handle e@(MappingNotifyEvent {ev_window = w}) = do
     io $ refreshKeyboardMapping e
     when (ev_request e == mappingKeyboard) $ withDisplay $ io . flip grabKeys w
 
--- click on an unfocussed window
-handle (ButtonEvent {ev_window = w, ev_event_type = t})
-    | t == buttonPress
-    = safeFocus w
+-- click on an unfocused window, makes it focused on this workspace
+handle (ButtonEvent {ev_window = w, ev_event_type = t}) | t == buttonPress = focus w
 
--- entered a normal window
+-- entered a normal window, makes this focused.
 handle e@(CrossingEvent {ev_window = w, ev_event_type = t})
-    | t == enterNotify  && ev_mode e == notifyNormal && ev_detail e /= notifyInferior
-    = safeFocus w
+    | t == enterNotify && ev_mode   e == notifyNormal
+                       && ev_detail e /= notifyInferior = focus w
 
 -- left a window, check if we need to focus root
 handle e@(CrossingEvent {ev_event_type = t})
     | t == leaveNotify
     = do rootw <- asks theRoot
-         when (ev_window e == rootw && not (ev_same_screen e)) $ setFocus rootw
+         when (ev_window e == rootw && not (ev_same_screen e)) $ setFocusX rootw
 
 -- configure a window
-handle e@(ConfigureRequestEvent {ev_window = w}) = do
-    dpy <- asks display
-    ws  <- gets workspace
-
-    when (W.member w ws) $ -- already managed, reconfigure (see client:configure()
-        trace ("Reconfigure already managed window: " ++ show w)
-
+handle e@(ConfigureRequestEvent {}) = withDisplay $ \dpy -> do
     io $ configureWindow dpy (ev_window e) (ev_value_mask e) $ WindowChanges
         { wc_x            = ev_x e
         , wc_y            = ev_y e
@@ -190,9 +162,7 @@ handle e@(ConfigureRequestEvent {ev_window = w}) = do
         , wc_sibling      = ev_above e
         -- this fromIntegral is only necessary with the old X11 version that uses
         -- Int instead of CInt.  TODO delete it when there is a new release of X11
-        , wc_stack_mode   = fromIntegral $ ev_detail e
-        }
-
+        , wc_stack_mode   = fromIntegral $ ev_detail e }
     io $ sync dpy False
 
-handle e = trace (eventName e) -- ignoring
+handle _ = return () -- trace (eventName e) -- ignoring
