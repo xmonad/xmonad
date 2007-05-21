@@ -156,9 +156,9 @@ keys = M.fromList $
     -- 'nudge': resize viewed windows to the correct size.
     , ((modMask,               xK_n     ), refresh)
 
-    , ((modMask,               xK_Tab   ), focusLeft)
-    , ((modMask,               xK_j     ), focusLeft)
-    , ((modMask,               xK_k     ), focusRight)
+    , ((modMask,               xK_Tab   ), focusRight)
+    , ((modMask,               xK_j     ), focusRight)
+    , ((modMask,               xK_k     ), focusLeft)
 
     , ((modMask,               xK_h     ), sendMessage Shrink)
     , ((modMask,               xK_l     ), sendMessage Expand)
