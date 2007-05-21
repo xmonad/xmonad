@@ -143,8 +143,8 @@ spawn x = io $ do
 
 -- | Restart xmonad by exec()'ing self. This doesn't save state and xmonad has
 -- to be in PATH for this to work.
-restart :: IO ()
-restart = do
+restart :: X ()
+restart = io $ do
     prog      <- getProgName
     prog_path <- findExecutable prog
     case prog_path of
