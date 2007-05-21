@@ -56,7 +56,7 @@ main = do
             , focusedBorder = fbc
             }
         st = XState
-            { workspace     = new (fromIntegral workspaces) (fromIntegral $ length xinesc)
+            { windowset     = new (fromIntegral workspaces) (fromIntegral $ length xinesc)
             , layouts       = M.fromList [(w, safeLayouts) | w <- [0 .. W workspaces - 1]] }
 
     xSetErrorHandler -- in C, I'm too lazy to write the binding: dons

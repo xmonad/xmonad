@@ -38,7 +38,7 @@ import qualified Data.Map as M
 -- | XState, the window manager state.
 -- Just the display, width, height and a window list
 data XState = XState
-    { workspace         :: !WindowSet                      -- ^ workspace list
+    { windowset         :: !WindowSet                      -- ^ workspace list
     , layouts           :: !(M.Map WorkspaceId (Layout, [Layout]))  }
                        -- ^ mapping of workspaces to descriptions of their layouts
 
@@ -89,7 +89,7 @@ withDisplay f = asks display >>= f
 
 -- | Run a monadic action with the current workspace
 withWorkspace :: (WindowSet -> X a) -> X a
-withWorkspace f = gets workspace >>= f
+withWorkspace f = gets windowset >>= f
 
 -- | True if the given window is the root window
 isRoot :: Window -> X Bool

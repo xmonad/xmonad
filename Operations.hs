@@ -68,7 +68,7 @@ view :: WorkspaceId -> X ()
 view n = withWorkspace $ \w -> when (n /= (W.tag (W.current w))) $ do
     windows $ W.view n     -- move in new workspace first, to avoid flicker
     -- Hide the old workspace if it is no longer visible
-    oldWsNotVisible <- (not . M.member (W.tag . W.current $ w) . W.screens) `liftM` gets workspace
+    oldWsNotVisible <- (not . M.member (W.tag . W.current $ w) . W.screens) `liftM` gets windowset
     when oldWsNotVisible $ mapM_ hide (W.index w)
     clearEnterEvents       -- better clear any events from the old workspace
 
@@ -94,7 +94,7 @@ kill = withDisplay $ \d -> withFocused $ \w -> do
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WindowSet -> WindowSet) -> X ()
-windows f = modify (\s -> s { workspace = f (workspace s) }) >> refresh
+windows f = modify (\s -> s { windowset = f (windowset s) }) >> refresh
 
 -- | hide. Hide a window by moving it off screen.
 hide :: Window -> X ()
@@ -110,7 +110,7 @@ hide w = withDisplay $ \d -> do
 --
 refresh :: X ()
 refresh = do
-    XState { workspace = ws, layouts = fls }     <- get
+    XState { windowset = ws, layouts = fls }     <- get
     XConf  { xineScreens = xinesc, display = d } <- ask
 
     -- for each workspace, layout the currently visible workspaces
@@ -168,7 +168,7 @@ setTopFocus = withWorkspace $ \ws -> maybe (asks theRoot >>= setFocusX) setFocus
 -- | Set focus explicitly to window 'w' if it is managed by us, or root.
 focus :: Window -> X ()
 focus w = withWorkspace $ \s -> do
-    if W.member w s then do modify $ \st -> st { workspace = W.focusWindow w s } -- avoid 'refresh'
+    if W.member w s then do modify $ \st -> st { windowset = W.focusWindow w s } -- avoid 'refresh'
                             setFocusX w
                     else whenX (isRoot w) $ setFocusX w
 
@@ -282,7 +282,7 @@ splitVerticallyBy f r = (\(a,b)->(mirrorRect a,mirrorRect b)) $ splitHorizontall
 layout :: ((Layout, [Layout]) -> (Layout, [Layout])) -> X ()
 layout f = do
     modify $ \s ->
-        let n          = W.tag . W.current . workspace $ s
+        let n          = W.tag . W.current . windowset $ s
             (Just fl)  = M.lookup n $ layouts s
         in s { layouts = M.insert n (f fl) (layouts s) }
     refresh
