@@ -101,7 +101,7 @@ windows f = modify (\s -> s { windowset = f (windowset s) }) >> refresh
 hide :: Window -> X ()
 hide w = withDisplay $ \d -> do
     (sw,sh) <- gets dimensions
-    io $ moveWindow d w (2*fromIntegral sw) (2*fromIntegral sh)
+    io $ moveWindow d w (2*sw) (2*sh)
 
 -- | refresh. Render the currently visible workspaces, as determined by
 -- the StackSet. Also, set focus to the focused window.
