@@ -108,7 +108,7 @@ windows f = do
 hide :: Window -> X ()
 hide w = withDisplay $ \d -> do
     (sw,sh) <- gets dimensions
-    io $ moveWindow d w (2*sw) (2*sh)
+    io $ moveWindow d w sw sh
 
 -- | refresh. Render the currently visible workspaces, as determined by
 -- the StackSet. Also, set focus to the focused window.
