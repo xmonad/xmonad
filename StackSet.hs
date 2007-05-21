@@ -248,19 +248,14 @@ focusRight = modify Empty $ \c -> case c of
     Node t ls     [] -> Node x [] (xs ++ [t]) where (x:xs) = reverse ls
 
 --
--- | /O(1) on current window, O(n) in general/. Focus the window 'w' on
--- the current workspace. If 'w' isn't on the current workspace, leave
--- the StackSet unmodified.
---
--- TODO: focusWindow give focus to any window on visible workspace
+-- | /O(1) on current window, O(n) in general/. Focus the window 'w'. If the
+-- workspace 'w' is on is not visible, 'view' that workspace first.
 --
 focusWindow :: (Integral i, Eq a) => a -> StackSet i a s -> StackSet i a s
 focusWindow w s | Just w == peek s = s
                 | otherwise        = maybe s id $ do
-                    n <- findIndex w s  -- TODO, needs to check visible workspaces
-                    if n /= tag (current s) then Nothing    -- not on this screen
-                        else return $ until ((Just w ==) . peek) focusLeft s
-
+                    n <- findIndex w s
+                    return $ until ((Just w ==) . peek) focusLeft (view n s)
 
 --
 -- Finding if a window is in the stackset is a little tedious. We could
