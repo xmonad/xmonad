@@ -58,10 +58,10 @@ data XConf = XConf
 type WindowSet = StackSet WorkspaceId Window ScreenId
 
 -- | Virtual workspace indicies
-newtype WorkspaceId = W Int deriving (Eq,Ord,Show,Enum,Num,Integral,Real)
+newtype WorkspaceId = W Int deriving (Eq,Ord,Show,Read,Enum,Num,Integral,Real)
 
 -- | Physical screen indicies
-newtype ScreenId    = S Int deriving (Eq,Ord,Show,Enum,Num,Integral,Real)
+newtype ScreenId    = S Int deriving (Eq,Ord,Show,Read,Enum,Num,Integral,Real)
 
 ------------------------------------------------------------------------
 
