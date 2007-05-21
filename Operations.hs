@@ -65,11 +65,12 @@ shift n = withFocused hide >> windows (W.shift n)
 
 -- | view. Change the current workspace to workspace at offset n (0 indexed).
 view :: WorkspaceId -> X ()
-view n = withWorkspace $ \w -> when (n /= (W.tag (W.current w))) $ do
+view n = withWorkspace $ \old -> when (n /= (W.tag (W.workspace (W.current old)))) $ do
     windows $ W.view n     -- move in new workspace first, to avoid flicker
+
     -- Hide the old workspace if it is no longer visible
-    oldWsNotVisible <- (not . M.member (W.tag . W.current $ w) . W.screens) `liftM` gets windowset
-    when oldWsNotVisible $ mapM_ hide (W.index w)
+    oldWsNotVisible <- liftM (notElem (W.current old)) (gets (W.visible . windowset))
+    when oldWsNotVisible $ mapM_ hide (W.index old)
     clearEnterEvents       -- better clear any events from the old workspace
 
 -- | Kill the currently focused client. If we do kill it, we'll get a
@@ -114,12 +115,13 @@ refresh = do
     XConf  { xineScreens = xinesc, display = d } <- ask
 
     -- for each workspace, layout the currently visible workspaces
-    flip mapM_ (M.assocs (W.screens ws)) $ \(n, scn) -> do
-        let this   = W.view n ws
+    (`mapM_` (W.current ws : W.visible ws)) $ \w -> do
+        let n      = W.tag (W.workspace w)
+            this   = W.view n ws
             Just l = fmap fst $ M.lookup n fls
         -- now tile the windows on this workspace
-        rs <- doLayout l (genericIndex xinesc scn) (W.index this)
-        mapM_ (\(w,rect) -> io (tileWindow d w rect)) rs
+        rs <- doLayout l (genericIndex xinesc (W.screen w)) (W.index this)
+        mapM_ (\(win,rect) -> io (tileWindow d win rect)) rs
 
         -- and raise the focused window if there is one.
         whenJust (W.peek this) $ io . raiseWindow d
@@ -178,8 +180,8 @@ setFocusX w = withWorkspace $ \ws -> do
     XConf { display = dpy , normalBorder = nbc, focusedBorder = fbc } <- ask
 
     -- clear mouse button grab and border on other windows
-    (`mapM_` (M.keys . W.screens $ ws)) $ \n -> do
-        (`mapM_` (W.index (W.view n ws))) $ \otherw -> do
+    (`mapM_` (W.current ws : W.visible ws)) $ \wk -> do
+        (`mapM_` (W.index (W.view (W.tag (W.workspace wk)) ws))) $ \otherw -> do
             setButtonGrab True otherw
             io $ setWindowBorder dpy otherw (color_pixel nbc)
 
@@ -282,7 +284,7 @@ splitVerticallyBy f r = (\(a,b)->(mirrorRect a,mirrorRect b)) $ splitHorizontall
 layout :: ((Layout, [Layout]) -> (Layout, [Layout])) -> X ()
 layout f = do
     modify $ \s ->
-        let n          = W.tag . W.current . windowset $ s
+        let n          = W.tag . W.workspace . W.current . windowset $ s
             (Just fl)  = M.lookup n $ layouts s
         in s { layouts = M.insert n (f fl) (layouts s) }
     refresh

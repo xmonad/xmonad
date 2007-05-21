@@ -75,13 +75,13 @@
 -- 'delete'.
 --
 module StackSet (
-        StackSet(..), Workspace(..), Stack(..),
+        StackSet(..), Workspace(..), Screen(..), Stack(..),
         new, view, lookupWorkspace, peek, index, focusLeft, focusRight,
         focusWindow, member, findIndex, insertLeft, delete, swap, shift
     ) where
 
-import qualified Data.Map as M
 import Data.Maybe   (listToMaybe)
+import qualified Data.List as L (delete,find,genericSplitAt)
 
 
 -- API changes from xmonad 0.1:
@@ -103,23 +103,28 @@ import Data.Maybe   (listToMaybe)
 ------------------------------------------------------------------------
 
 --
--- A cursor into a non-empty list of workspaces.
+-- A cursor into a non-empty list of workspaces. 
+-- We puncture the workspace list, producing a hole in the structure
+-- used to track the currently focused workspace. The two other lists
+-- that are produced are used to track those workspaces visible as
+-- Xinerama screens, and those workspaces not visible anywhere.
 --
-data StackSet i a screen =
-        StackSet { size    :: !i                -- number of workspaces
-                 , current :: !(Workspace i a)  -- currently focused workspace
-                 , prev    :: [Workspace i a]   -- workspaces to the left
-                 , next    :: [Workspace i a]   -- workspaces to the right
-                 , screens :: M.Map i screen    -- a map of visible workspaces to their screens
-                 } deriving (Show, Eq)
+data StackSet i a sid =
+    StackSet { size    :: !i                -- number of workspaces
+             , current :: !(Screen i a sid) -- currently focused workspace
+             , visible :: [Screen i a sid]  -- non-focused workspaces, visible in xinerama
+             , hidden  :: [Workspace i a]   -- workspaces not visible anywhere
+             } deriving (Show, Eq)
+
+-- Visible workspaces, and their Xinerama screens.
+data Screen i a sid = Screen { workspace :: !(Workspace i a), screen :: !sid }
+    deriving (Show, Eq)
 
 -- 
 -- A workspace is just a tag - its index - and a stack
 --
 data Workspace i a = Workspace  { tag :: !i, stack :: Stack a }
     deriving (Show, Eq)
-
--- TODO an unmanaged floating layer would go in here somewhere (a 2nd stack?)
 
 -- 
 -- A stack is a cursor onto a (possibly empty) window list.
@@ -149,40 +154,41 @@ data Stack a = Empty
 -- Xinerama: Virtual workspaces are assigned to physical screens, starting at 0.
 --
 new :: (Integral i, Integral s) => i -> s -> StackSet i a s
-new n m | n > 0 && m > 0 = StackSet n h [] ts xine
+new n m | n > 0 && m > 0 = StackSet n cur visi unseen
         | otherwise      = error "non-positive arguments to StackSet.new"
-    where (h:ts) = Workspace 0 Empty : [ Workspace i Empty | i <- [1 ..n-1]]
-          xine   = M.fromList [ (fromIntegral s, s) | s <- [0 .. m-1] ]
+
+  where (seen,unseen) = L.genericSplitAt m $ Workspace 0 Empty : [ Workspace i Empty | i <- [1 ..n-1]]
+        (cur:visi)    = [ Screen i s |  (i,s) <- zip seen [0..] ]
+                -- now zip up visibles with their screen id
 
 -- 
 -- /O(w)/. Set focus to the workspace with index 'i'. 
 -- If the index is out of range, return the original StackSet.
 --
 -- Xinerama: If the workspace is not visible on any Xinerama screen, it
--- is raised on the current screen. If it is already visible, focus is
+-- becomes the current screen. If it is in the visible list, it becomes
+-- current.
+
+-- is raised to the current screen. If it is already visible, focus is
 -- just moved.
 --
-view :: Integral i => i -> StackSet i a s -> StackSet i a s
-view i s@(StackSet sz (Workspace n _) _ _ scrs)
-    | i >= 0 && i < sz
-    = setCurrent $ if M.member i scrs
-                   then s   -- already visisble. just set current.
-                   else case M.lookup n scrs of -- TODO current should always be valid
-                            Nothing -> error "xmonad:view: No physical screen"
-                            Just sc -> s { screens = M.insert i sc (M.delete n scrs) }
-    | otherwise = s
+view :: (Eq i, Eq a, Eq s, Integral i) => i -> StackSet i a s -> StackSet i a s
+view i s
+    | i < 0 && i >= size s || i == tag (workspace (current s)) = s  -- out of bounds or current
 
-        -- actually moving focus is easy:
-  where setCurrent x = foldr traverse x [1..abs (i-n)]
+    | Just x <- L.find ((i==).tag.workspace) (visible s)
+    -- if it is visible, it is just raised
+    = s { current = x, visible = current s : L.delete x (visible s) }
 
-        -- work out which direction to move
-        traverse _ = if signum (i-n) >= 0 then viewRight else viewLeft
+    | Just x <- L.find ((i==).tag)     (hidden  s)
+    -- if it was hidden, it is raised on the xine screen currently used
+    = s { current = Screen x (screen (current s))
+        , hidden = workspace (current s) : L.delete x (hidden s) }
 
-        -- /O(1)/. Move workspace focus left or right one node, a la Huet. 
-        viewLeft  (StackSet m t (l:ls) rs sc) = StackSet m l ls (t:rs) sc
-        viewLeft  t = t
-        viewRight (StackSet m t ls (r:rs) sc) = StackSet m r (t:ls) rs sc
-        viewRight t = t
+    | otherwise = error "Inconsistent StackSet: workspace not found"
+
+    -- 'Catch'ing this might be hard. Relies on monotonically increasing
+    -- workspace tags defined in 'new'
 
 -- ---------------------------------------------------------------------
 -- Xinerama operations
@@ -190,7 +196,7 @@ view i s@(StackSet sz (Workspace n _) _ _ scrs)
 -- | Find the tag of the workspace visible on Xinerama screen 'sc'.
 -- Nothing if screen is out of bounds.
 lookupWorkspace :: Eq s => s -> StackSet i a s -> Maybe i
-lookupWorkspace sc w = listToMaybe [ i | (i,s) <- M.assocs (screens w), s == sc ]
+lookupWorkspace sc w = listToMaybe [ tag i | Screen i s <- current w : visible w, s == sc ]
 
 -- ---------------------------------------------------------------------
 -- Operations on the current stack
@@ -202,7 +208,7 @@ lookupWorkspace sc w = listToMaybe [ i | (i,s) <- M.assocs (screens w), s == sc 
 -- returning the result. It is like 'maybe' for the focused workspace.
 --
 with :: b -> (Stack a -> b) -> StackSet i a s -> b
-with dflt f s = case stack (current s) of Empty -> dflt; v -> f v
+with dflt f s = case stack (workspace (current s)) of Empty -> dflt; v -> f v
     -- TODO: ndm: a 'catch' proof here that 'f' only gets Node
     --            constructors, hence all 'f's are safe below?
 
@@ -210,7 +216,8 @@ with dflt f s = case stack (current s) of Empty -> dflt; v -> f v
 -- Apply a function, and a default value for Empty, to modify the current stack.
 --
 modify :: Stack a -> (Stack a -> Stack a) -> StackSet i a s -> StackSet i a s
-modify d f s = s { current = (current s) { stack = with d f s } }
+modify d f s = s { current = (current s)
+                        { workspace = (workspace (current s)) { stack = with d f s }}}
 
 --
 -- /O(1)/. Extract the focused element of the current stack. 
@@ -248,10 +255,10 @@ focusRight = modify Empty $ \c -> case c of
     Node t ls     [] -> Node x [] (xs ++ [t]) where (x:xs) = reverse ls
 
 --
--- | /O(1) on current window, O(n) in general/. Focus the window 'w'. If the
--- workspace 'w' is on is not visible, 'view' that workspace first.
+-- | /O(1) on current window, O(n) in general/. Focus the window 'w', 
+-- and set its workspace as current.
 --
-focusWindow :: (Integral i, Eq a) => a -> StackSet i a s -> StackSet i a s
+focusWindow :: (Integral i, Eq s, Eq a) => a -> StackSet i a s -> StackSet i a s
 focusWindow w s | Just w == peek s = s
                 | otherwise        = maybe s id $ do
                     n <- findIndex w s
@@ -270,7 +277,8 @@ member a s = maybe False (const True) (findIndex a s)
 -- Return Just the workspace index of the given window, or Nothing
 -- if the window is not in the StackSet.
 findIndex :: Eq a => a -> StackSet i a s -> Maybe i
-findIndex a s = listToMaybe [ tag w | w <- current s : prev s ++ next s, has a (stack w) ]
+findIndex a s = listToMaybe
+    [ tag w | w <- workspace (current s) : map workspace (visible s) ++ hidden s, has a (stack w) ]
     where has _ Empty         = False
           has x (Node t l r) = x `elem` (t : l ++ r)
 
@@ -314,9 +322,9 @@ insertLeft a s = if member a s then s else insert
 --   * deleting the master window resets it to the newly focused window
 --   * otherwise, delete doesn't affect the master.
 --
-delete :: (Integral i, Eq a) => a -> StackSet i a s -> StackSet i a s
+delete :: (Integral i, Eq a, Eq s) => a -> StackSet i a s -> StackSet i a s
 delete w s | Just w == peek s = remove s -- common case. 
-           | otherwise = maybe s (removeWindow . tag . current $ s) (findIndex w s)
+           | otherwise = maybe s (removeWindow.tag.workspace.current $ s) (findIndex w s)
   where
     -- find and remove window script
     removeWindow o n = foldr ($) s [view o,remove ,until ((Just w ==) . peek) focusLeft,view n]
@@ -351,8 +359,9 @@ swap = modify Empty $ \c -> case c of
 -- workspace.  The actual focused workspace doesn't change. If there is
 -- no element on the current stack, the original stackSet is returned.
 --
-shift :: (Eq a, Integral i) => i -> StackSet i a s -> StackSet i a s
-shift n s = if and [n >= 0,n < size s,n /= tag (current s)] then maybe s go (peek s) else s
-    where go w = foldr ($) s [view (tag (current s)),insertLeft w,view n,delete w]
+shift :: (Eq a, Eq s, Integral i) => i -> StackSet i a s -> StackSet i a s
+shift n s = if and [n >= 0,n < size s,n /= tag (workspace (current s))]
+            then maybe s go (peek s) else s
+    where go w = foldr ($) s [view (tag (workspace (current s))),insertLeft w,view n,delete w]
                            -- ^^ poor man's state monad :-)
 

@@ -84,7 +84,7 @@ fromList (o,m,fs,xs) =
 type T = StackSet Int Char Int
 
 -- Useful operation, the non-local workspaces
-hidden x = [ w | w <- prev x ++ next x ] -- the hidden workspaces
+hidden_spaces x = map workspace (visible x) ++ hidden x
 
 -- Basic data invariants of the StackSet
 --
@@ -105,27 +105,23 @@ invariant (s :: T) = and
     [ noDuplicates
 
     -- all this xinerama stuff says we don't have the right structure
-    , currentIsVisible
-    , validScreens
-    , validWorkspaces
-    , inBounds
+--  , validScreens
+--  , validWorkspaces
+--  , inBounds
     ]
 
   where
     ws = [ focus t : left t ++ right t
-             | w <- current s : prev s ++ next s, let t = stack w, t /= Empty ]
+             | w <- workspace (current s) : map workspace (visible s) ++ hidden s
+             , let t = stack w, t /= Empty ]
     noDuplicates = nub ws == ws
 
-    -- xinerama invariants:
+--  validScreens = monotonic . sort . M. . (W.current s : W.visible : W$ s
 
-    currentIsVisible = M.member (tag (current s)) (screens s)
+--  validWorkspaces = and [ w `elem` allworkspaces | w <- (M.keys . screens) s ]
+--          where allworkspaces = map tag $ current s : prev s ++ next s
 
-    validScreens = monotonic . sort . M.elems . screens $ s
-
-    validWorkspaces = and [ w `elem` allworkspaces | w <- (M.keys . screens) s ]
-            where allworkspaces = map tag $ current s : prev s ++ next s
-
-    inBounds  = and [ w >=0 && w < size s | (w,sc) <- M.assocs (screens s) ]
+--  inBounds  = and [ w >=0 && w < size s | (w,sc) <- M.assocs (screens s) ]
 
 monotonic []       = True
 monotonic (x:[])   = True
@@ -149,7 +145,7 @@ prop_focusRight_I (n :: NonNegative Int) (x :: T) =
 prop_focus_I (n :: NonNegative Int) (x :: T) =
     case peek x of
         Nothing -> True
-        Just _  -> let w = focus . stack . current $ foldr (const focusLeft) x [1..n]
+        Just _  -> let w = focus . stack . workspace . current $ foldr (const focusLeft) x [1..n]
                    in invariant $ focusWindow w x
 
 prop_insertLeft_I n (x :: T) = invariant $ insertLeft n x
@@ -171,13 +167,14 @@ prop_shift_I (n :: NonNegative Int) (x :: T) =
 -- empty StackSets have no windows in them
 prop_empty (n :: Positive Int)
            (m :: Positive Int) =
-       all (== Empty) [ stack w | w <- current x : prev x ++ next x ]
+       all (== Empty) [ stack w | w <- workspace (current x)
+                                        : map workspace (visible x) ++ hidden x ]
 
     where x = new (fromIntegral n) (fromIntegral m) :: T
 
 -- empty StackSets always have focus on workspace 0
 prop_empty_current (n :: Positive Int)
-                   (m :: Positive Int) = tag (current x) == 0
+                   (m :: Positive Int) = tag (workspace $ current x) == 0
     where x = new (fromIntegral n) (fromIntegral m) :: T
 
 -- no windows will be a member of an empty workspace
@@ -189,7 +186,7 @@ prop_member_empty i (n :: Positive Int) (m :: Positive Int)
 
 -- view sets the current workspace to 'n'
 prop_view_current (x :: T) (n :: NonNegative Int) = i < size x ==>
-    tag (current (view i x)) == i
+    tag (workspace $ current (view i x)) == i
   where
     i = fromIntegral n
 
@@ -199,14 +196,15 @@ prop_view_local  (x :: T) (n :: NonNegative Int) = i < size x ==>
     workspaces x == workspaces (view i x)
   where
     workspaces a = sortBy (\s t -> tag s `compare` tag t) $
-                                    current a : prev a ++ next a
+                                    workspace (current a)
+                                    : map workspace (visible a) ++ hidden a
     i = fromIntegral n
 
 -- view should result in a visible xinerama screen
-prop_view_xinerama (x :: T) (n :: NonNegative Int) = i < size x ==>
-    M.member i (screens (view i x))
-  where
-    i = fromIntegral n
+-- prop_view_xinerama (x :: T) (n :: NonNegative Int) = i < size x ==>
+--     M.member i (screens (view i x))
+--   where
+--     i = fromIntegral n
 
 -- view is idempotent
 prop_view_idem (x :: T) r =
@@ -214,21 +212,27 @@ prop_view_idem (x :: T) r =
         sz = size x
     in view i (view i x) == (view i x)
 
--- view is reversible
-prop_view_reversible r (x :: T) = view n (view i x) == x
-    where n  = tag (current x)
+-- view is reversible, though shuffles the order of hidden/visible
+prop_view_reversible r (x :: T) = normal (view n (view i x)) == normal x
+    where n  = tag (workspace $ current x)
           sz = size x
           i  = fromIntegral $ r `mod` sz
+
+-- normalise workspace list
+normal s = s { hidden = sortBy g (hidden s), visible = sortBy f (visible s) }
+    where
+        f = \a b -> tag (workspace a) `compare` tag (workspace b)
+        g = \a b -> tag a `compare` tag b
 
 -- ---------------------------------------------------------------------
 -- Xinerama
 
 -- every screen should yield a valid workspace
-prop_lookupWorkspace (n :: NonNegative Int) (x :: T) =
-      s < M.size (screens x) ==>
-      fromJust (lookupWorkspace s x) `elem` (map tag $ current x : prev x ++ next x)
-    where
-       s = fromIntegral n
+-- prop_lookupWorkspace (n :: NonNegative Int) (x :: T) =
+--       s < M.size (screens x) ==>
+--       fromJust (lookupWorkspace s x) `elem` (map tag $ current x : prev x ++ next x)
+--     where
+--        s = fromIntegral n
 
 -- ---------------------------------------------------------------------
 -- peek/index
@@ -249,33 +253,12 @@ prop_index_length (x :: T) =
         Empty   -> length (index x) == 0
         Node {} -> length (index x) == length list
   where
-    it   = stack . current $ x
+    it   = stack . workspace . current $ x
     list = focus it : left it ++ right it
 
 -- ---------------------------------------------------------------------
 -- rotating focus
 --
--- Unfortunately, in the presence of wrapping of focus, we don't have a
--- simple identity where focusLeft . focusRight == id, as the focus
--- operations repartition the structure on wrapping.
---
--- Note the issue with equality on Stacks given the wrapping semantics.
---
---  [1,2,3] ++ [4] ++ [5]
---
--- should be equivalent to:
---
---  []      ++ [4] ++ [5,1,2,3]
--- 
--- However, we can simply normalise the list, taking focus as the head,
--- and the items should be the same.
-
--- So we normalise the stack on the current workspace.
--- We normalise by moving everything to the 'left' of the focused item,
--- to the right.
--- normal (x :: T) = modify Empty (\c -> case c of
---     Node t ls rs -> Node t [] (rs ++ reverse ls)) x
-normal = id
 
 -- master/focus
 -- 
@@ -293,8 +276,8 @@ prop_focusWindow_master (n :: NonNegative Int) (x :: T) =
                    in index (focusWindow (s !! i) x) == index x
 
 -- shifting focus is trivially reversible
-prop_focus_left  (x :: T) = normal (focusLeft  (focusRight x)) == normal x
-prop_focus_right (x :: T) = normal (focusRight (focusLeft  x)) == normal  x
+prop_focus_left  (x :: T) = (focusLeft  (focusRight x)) == x
+prop_focus_right (x :: T) = (focusRight (focusLeft  x)) ==  x
 
 -- focusWindow actually leaves the window focused...
 prop_focusWindow_works (n :: NonNegative Int) (x :: T) =
@@ -302,26 +285,26 @@ prop_focusWindow_works (n :: NonNegative Int) (x :: T) =
         Nothing -> True
         Just _  -> let s = index x
                        i = fromIntegral n `mod` length s
-                   in (focus . stack . current) (focusWindow (s !! i) x) == (s !! i)
+                   in (focus . stack . workspace . current) (focusWindow (s !! i) x) == (s !! i)
 
 -- rotation through the height of a stack gets us back to the start
-prop_focus_all_l (x :: T) = normal (foldr (const focusLeft) x [1..n]) == normal x
+prop_focus_all_l (x :: T) = (foldr (const focusLeft) x [1..n]) == x
   where n = length (index x)
-prop_focus_all_r (x :: T) = normal (foldr (const focusRight) x [1..n]) == normal x
+prop_focus_all_r (x :: T) = (foldr (const focusRight) x [1..n]) == x
   where n = length (index x)
 
 -- prop_rotate_all (x :: T) = f (f x) == f x
 --     f x' = foldr (\_ y -> rotate GT y) x' [1..n]
 
 -- focus is local to the current workspace
-prop_focus_local (x :: T) = hidden (focusRight x) == hidden x
+prop_focus_local (x :: T) = hidden_spaces (focusRight x) == hidden_spaces x
 
 prop_focusWindow_local (n :: NonNegative Int) (x::T ) =
     case peek x of
         Nothing -> True
         Just _  -> let s = index x
                        i = fromIntegral n `mod` length s
-                   in hidden (focusWindow (s !! i) x) == hidden x
+                   in hidden_spaces (focusWindow (s !! i) x) == hidden_spaces x
 
 -- ---------------------------------------------------------------------
 -- member/findIndex
@@ -332,7 +315,7 @@ prop_focusWindow_local (n :: NonNegative Int) (x::T ) =
 --
 prop_findIndex (x :: T) =
     and [ tag w == fromJust (findIndex i x)
-        | w <- current x : prev x ++ next x
+        | w <- workspace (current x) : map workspace (visible x)  ++ hidden x
         , let t = stack w
         , t /= Empty
         , i <- focus (stack w) : left (stack w) ++ right (stack w)
@@ -352,7 +335,7 @@ prop_insert_idem i (x :: T) = insertLeft i x == insertLeft i (insertLeft i x)
 prop_insert_duplicate i (x :: T) = member i x ==> insertLeft i x == x
 
 -- push shouldn't change anything but the current workspace
-prop_insert_local (x :: T) i = not (member i x) ==> hidden x == hidden (insertLeft i x)
+prop_insert_local (x :: T) i = not (member i x) ==> hidden_spaces x == hidden_spaces (insertLeft i x)
 
 -- Inserting a (unique) list of items into an empty stackset should
 -- result in the last inserted element having focus.
@@ -402,7 +385,7 @@ prop_delete_insert (x :: T) =
 prop_delete_local (x :: T) = 
     case peek x of
         Nothing -> True
-        Just i  -> hidden x == hidden (delete i x)
+        Just i  -> hidden_spaces x == hidden_spaces (delete i x)
 
 -- ---------------------------------------------------------------------
 -- swap: setting the master window
@@ -414,10 +397,10 @@ prop_delete_local (x :: T) =
 prop_swap_focus (x :: T)
     = case peek x of
         Nothing -> True
-        Just f  -> focus (stack (current (swap x))) == f
+        Just f  -> focus (stack (workspace $ current (swap x))) == f
 
 -- swap is local
-prop_swap_local (x :: T) = hidden x == hidden (swap x)
+prop_swap_local (x :: T) = hidden_spaces x == hidden_spaces (swap x)
 
 -- TODO swap is reversible
 -- swap is reversible, but involves moving focus back the window with
@@ -441,10 +424,10 @@ prop_swap_idempotent (x :: T) = swap (swap x) == swap x
 prop_shift_reversible (r :: Int) (x :: T) =
     let i  = fromIntegral $ r `mod` sz
         sz = size y
-        n  = tag (current y)
+        n  = tag (workspace $ current y)
     in case peek y of
         Nothing -> True
-        Just _  -> (view n . shift n . view i . shift i) y == y
+        Just _  -> normal ((view n . shift n . view i . shift i) y) == normal y
     where
         y = swap x
 
@@ -499,11 +482,11 @@ main = do
         ,("view : invariant"    , mytest prop_view_I)
         ,("view sets current"   , mytest prop_view_current)
         ,("view idempotent"     , mytest prop_view_idem)
-        ,("view reviersible"    , mytest prop_view_reversible)
-        ,("view / xinerama"     , mytest prop_view_xinerama)
+        ,("view reversible"    , mytest prop_view_reversible)
+--      ,("view / xinerama"     , mytest prop_view_xinerama)
         ,("view is local"       , mytest prop_view_local)
 
-        ,("valid workspace xinerama", mytest prop_lookupWorkspace)
+--      ,("valid workspace xinerama", mytest prop_lookupWorkspace)
 
         ,("peek/member "        , mytest prop_member_peek)
 
