@@ -115,17 +115,17 @@ data StackSet i a sid =
              , current :: !(Screen i a sid) -- currently focused workspace
              , visible :: [Screen i a sid]  -- non-focused workspaces, visible in xinerama
              , hidden  :: [Workspace i a]   -- workspaces not visible anywhere
-             } deriving (Show, Eq)
+             } deriving (Show, Read, Eq)
 
 -- Visible workspaces, and their Xinerama screens.
 data Screen i a sid = Screen { workspace :: !(Workspace i a), screen :: !sid }
-    deriving (Show, Eq)
+    deriving (Show, Read, Eq)
 
 -- 
 -- A workspace is just a tag - its index - and a stack
 --
 data Workspace i a = Workspace  { tag :: !i, stack :: Stack a }
-    deriving (Show, Eq)
+    deriving (Show, Read, Eq)
 
 -- 
 -- A stack is a cursor onto a (possibly empty) window list.
@@ -143,7 +143,7 @@ data Stack a = Empty
              | Node { focus  :: !a        -- focused thing in this set
                     , left   :: [a]       -- clowns to the left
                     , right  :: [a] }     -- jokers to the right
-    deriving (Show, Eq)
+    deriving (Show, Read, Eq)
 
 -- ---------------------------------------------------------------------
 -- Construction
