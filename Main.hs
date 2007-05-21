@@ -17,6 +17,8 @@ import Data.Bits
 import qualified Data.Map as M
 import Control.Monad.Reader
 
+import System.Environment (getArgs)
+
 import Graphics.X11.Xlib hiding (refreshKeyboardMapping)
 import Graphics.X11.Xlib.Extras
 import Graphics.X11.Xinerama    (getScreenInfo)
@@ -41,8 +43,12 @@ main = do
     xinesc <- getScreenInfo dpy
     nbc    <- initcolor normalBorderColor
     fbc    <- initcolor focusedBorderColor
+    args <- getArgs
 
-    let safeLayouts = case defaultLayouts of [] -> (full, []); (x:xs) -> (x, xs)
+    let winset | ("--resume" : s : _) <- args
+               , [(x, "")]            <- reads s = x
+               | otherwise = new (fromIntegral workspaces) (fromIntegral $ length xinesc)
+        safeLayouts = case defaultLayouts of [] -> (full, []); (x:xs) -> (x, xs)
         cf = XConf
             { display       = dpy
             , theRoot       = rootw
@@ -53,7 +59,7 @@ main = do
             , focusedBorder = fbc
             }
         st = XState
-            { windowset     = new (fromIntegral workspaces) (fromIntegral $ length xinesc)
+            { windowset     = winset
             , layouts       = M.fromList [(w, safeLayouts) | w <- [0 .. W workspaces - 1]]
             , xineScreens   = xinesc
             , dimensions    = (fromIntegral (displayWidth dpy dflt),

@@ -169,7 +169,7 @@ keys = M.fromList $
     , ((modMask .|. shiftMask, xK_c     ), kill)
 
     , ((modMask .|. shiftMask, xK_q                     ), io $ exitWith ExitSuccess)
-    , ((modMask .|. shiftMask .|. controlMask, xK_q     ), restart)
+    , ((modMask .|. shiftMask .|. controlMask, xK_q     ), restart Nothing False)
 
     -- Cycle the current tiling order
     , ((modMask,               xK_Return), swap)

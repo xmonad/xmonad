@@ -140,13 +140,21 @@ spawn x = io $ do
     getProcessStatus True False pid
     return ()
 
--- | Restart xmonad by exec()'ing self. This doesn't save state and xmonad has
--- to be in PATH for this to work.
-restart :: X ()
-restart = io $ do
-    prog      <- getProgName
-    args      <- getArgs
-    catch (executeFile prog True args Nothing) (const $ return ())
+-- | Restart xmonad via exec().
+--
+-- If the first parameter is 'Just name', restart will attempt to execute the
+-- program corresponding to 'name'.  Otherwise, xmonad will attempt to execute
+-- the name of the current program.
+--
+-- When the second parameter is 'True', xmonad will attempt to resume with the
+-- current window state.
+restart :: Maybe String -> Bool -> X ()
+restart mprog resume = do
+    prog  <- maybe (io $ getProgName) return mprog
+    args  <- io $ getArgs
+    args' <- if resume then gets (("--resume":) . return . show . windowset) else return []
+    io $ catch (executeFile prog True (args ++ args') Nothing)
+               (const $ return ()) -- ignore executable not found exception
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
 whenJust :: Maybe a -> (a -> X ()) -> X ()
