@@ -67,7 +67,9 @@ shift n = withFocused hide >> windows (W.shift n)
 view :: WorkspaceId -> X ()
 view n = withWorkspace $ \w -> when (n /= (W.tag (W.current w))) $ do
     windows $ W.view n     -- move in new workspace first, to avoid flicker
-    mapM_ hide (W.index w) -- now just hide the old workspace
+    -- Hide the old workspace if it is no longer visible
+    oldWsNotVisible <- (not . M.member (W.tag . W.current $ w) . W.screens) `liftM` gets workspace
+    when oldWsNotVisible $ mapM_ hide (W.index w)
     clearEnterEvents       -- better clear any events from the old workspace
 
 -- | Kill the currently focused client. If we do kill it, we'll get a
