@@ -45,19 +45,19 @@ main = do
     let safeLayouts = case defaultLayouts of [] -> (full, []); (x:xs) -> (x, xs)
         cf = XConf
             { display       = dpy
-            , xineScreens   = xinesc
             , theRoot       = rootw
             , wmdelete      = wmdelt
             , wmprotocols   = wmprot
             -- fromIntegral needed for X11 versions that use Int instead of CInt.
-            , dimensions    = (fromIntegral (displayWidth dpy dflt),
-                               fromIntegral (displayHeight dpy dflt))
             , normalBorder  = nbc
             , focusedBorder = fbc
             }
         st = XState
             { windowset     = new (fromIntegral workspaces) (fromIntegral $ length xinesc)
-            , layouts       = M.fromList [(w, safeLayouts) | w <- [0 .. W workspaces - 1]] }
+            , layouts       = M.fromList [(w, safeLayouts) | w <- [0 .. W workspaces - 1]]
+            , xineScreens   = xinesc
+            , dimensions    = (fromIntegral (displayWidth dpy dflt),
+                               fromIntegral (displayHeight dpy dflt)) }
 
     xSetErrorHandler -- in C, I'm too lazy to write the binding: dons
 

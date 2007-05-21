@@ -100,7 +100,7 @@ windows f = modify (\s -> s { windowset = f (windowset s) }) >> refresh
 -- | hide. Hide a window by moving it off screen.
 hide :: Window -> X ()
 hide w = withDisplay $ \d -> do
-    (sw,sh) <- asks dimensions
+    (sw,sh) <- gets dimensions
     io $ moveWindow d w (2*fromIntegral sw) (2*fromIntegral sh)
 
 -- | refresh. Render the currently visible workspaces, as determined by
@@ -111,8 +111,8 @@ hide w = withDisplay $ \d -> do
 --
 refresh :: X ()
 refresh = do
-    XState { windowset = ws, layouts = fls }     <- get
-    XConf  { xineScreens = xinesc, display = d } <- ask
+    XState { windowset = ws, layouts = fls, xineScreens = xinesc } <- get
+    d <- asks display
 
     -- for each workspace, layout the currently visible workspaces
     (`mapM_` (W.current ws : W.visible ws)) $ \w -> do

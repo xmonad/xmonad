@@ -39,6 +39,9 @@ import qualified Data.Map as M
 -- Just the display, width, height and a window list
 data XState = XState
     { windowset         :: !WindowSet                      -- ^ workspace list
+    , xineScreens       :: ![Rectangle] -- ^ dimensions of each screen
+    , dimensions        :: !(Int,Int)   -- ^ dimensions of the screen,
+                                        -- used for hiding windows
     , layouts           :: !(M.Map WorkspaceId (Layout, [Layout]))  }
                        -- ^ mapping of workspaces to descriptions of their layouts
 
@@ -48,10 +51,7 @@ data XConf = XConf
     , theRoot           :: !Window      -- ^ the root window
     , wmdelete          :: !Atom        -- ^ window deletion atom
     , wmprotocols       :: !Atom        -- ^ wm protocols atom
-    , dimensions        :: !(Int,Int)   -- ^ dimensions of the screen,
-                                        -- used for hiding windows
 
-    , xineScreens       :: ![Rectangle] -- ^ dimensions of each screen
     , normalBorder      :: !Color       -- ^ border color of unfocused windows
     , focusedBorder     :: !Color     } -- ^ border color of the focused window
 
