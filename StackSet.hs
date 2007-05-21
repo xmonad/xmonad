@@ -74,7 +74,11 @@
 -- needs to be well defined. Particular in relation to 'insert' and
 -- 'delete'.
 --
-module StackSet where {- all top level functions -}
+module StackSet (
+        StackSet(..), Workspace(..), Stack(..),
+        new, view, lookupWorkspace, peek, index, focusLeft, focusRight,
+        focusWindow, member, findIndex, insertLeft, delete, swap, shift
+    ) where
 
 import qualified Data.Map as M
 import Data.Maybe   (listToMaybe)
