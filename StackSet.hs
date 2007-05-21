@@ -77,7 +77,8 @@
 module StackSet (
         StackSet(..), Workspace(..), Screen(..), Stack(..),
         new, view, lookupWorkspace, peek, index, focusLeft, focusRight,
-        focusWindow, member, findIndex, insertLeft, delete, swap, shift
+        focusWindow, member, findIndex, insertLeft, delete, swap, shift,
+        modify -- needed by users
     ) where
 
 import Data.Maybe   (listToMaybe)
