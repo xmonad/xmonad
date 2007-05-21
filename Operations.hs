@@ -18,7 +18,7 @@ import qualified StackSet as W
 import {-# SOURCE #-} Config (borderWidth)
 
 import Data.Maybe
-import Data.List            (genericIndex)
+import Data.List            (genericIndex, intersectBy)
 import Data.Bits            ((.|.))
 import qualified Data.Map as M
 
@@ -65,13 +65,7 @@ shift n = withFocused hide >> windows (W.shift n)
 
 -- | view. Change the current workspace to workspace at offset n (0 indexed).
 view :: WorkspaceId -> X ()
-view n = withWorkspace $ \old -> when (n /= (W.tag (W.workspace (W.current old)))) $ do
-    windows $ W.view n     -- move in new workspace first, to avoid flicker
-
-    -- Hide the old workspace if it is no longer visible
-    oldWsNotVisible <- liftM (notElem (W.current old)) (gets (W.visible . windowset))
-    when oldWsNotVisible $ mapM_ hide (W.index old)
-    clearEnterEvents       -- better clear any events from the old workspace
+view = windows . W.view
 
 -- | Kill the currently focused client. If we do kill it, we'll get a
 -- delete notify back from X.
@@ -95,7 +89,20 @@ kill = withDisplay $ \d -> withFocused $ \w -> do
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WindowSet -> WindowSet) -> X ()
-windows f = modify (\s -> s { windowset = f (windowset s) }) >> refresh
+windows f = do
+    oldws <- gets windowset
+    let news = f oldws
+    modify (\s -> s { windowset = news })
+    refresh
+    -- TODO:  this requires too much mucking about with StackSet internals
+    mapM_ hide . concatMap (integrate . W.stack) $
+        intersectBy (\w x -> W.tag w == W.tag x) (map W.workspace $ W.current oldws : W.visible oldws) (W.hidden news)
+        -- intersection of previously visible with currently hidden
+    clearEnterEvents
+ where
+    -- TODO: move this into StackSet.  This isn't exactly the usual integrate.
+    integrate W.Empty        = []
+    integrate (W.Node x l r) = x : l ++ r
 
 -- | hide. Hide a window by moving it off screen.
 hide :: Window -> X ()
