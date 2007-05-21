@@ -29,7 +29,6 @@ import System.IO
 import System.Posix.Process (executeFile, forkProcess, getProcessStatus, createSession)
 import System.Exit
 import System.Environment
-import System.Directory
 import Graphics.X11.Xlib
 import Data.Typeable
 
@@ -146,11 +145,8 @@ spawn x = io $ do
 restart :: X ()
 restart = io $ do
     prog      <- getProgName
-    prog_path <- findExecutable prog
-    case prog_path of
-        Nothing -> return ()    -- silently fail
-        Just p  -> do args <- getArgs
-                      executeFile p True args Nothing
+    args      <- getArgs
+    catch (executeFile prog True args Nothing) (const $ return ())
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
 whenJust :: Maybe a -> (a -> X ()) -> X ()
