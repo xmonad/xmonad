@@ -26,7 +26,7 @@ import Graphics.X11.Xinerama    (getScreenInfo)
 import XMonad
 import Config
 import StackSet (new)
-import Operations   (manage, unmanage, focus, setFocusX, full, isClient)
+import Operations   (manage, unmanage, focus, setFocusX, full, isClient, rescreen)
 
 --
 -- The main entry point
@@ -70,7 +70,7 @@ main = do
     -- setup initial X environment
     sync dpy False
     selectInput dpy rootw $  substructureRedirectMask .|. substructureNotifyMask
-                         .|. enterWindowMask .|. leaveWindowMask
+                         .|. enterWindowMask .|. leaveWindowMask .|. structureNotifyMask
     grabKeys dpy rootw
     sync dpy False
 
@@ -170,5 +170,10 @@ handle e@(ConfigureRequestEvent {}) = withDisplay $ \dpy -> do
         -- Int instead of CInt.  TODO delete it when there is a new release of X11
         , wc_stack_mode   = fromIntegral $ ev_detail e }
     io $ sync dpy False
+
+-- the root may have configured
+handle e@(ConfigureEvent {ev_window = w}) = do
+    r <- asks theRoot
+    when (r == w) rescreen
 
 handle _ = return () -- trace (eventName e) -- ignoring

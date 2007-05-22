@@ -28,6 +28,7 @@ import Control.Monad.Reader
 import Control.Arrow
 
 import Graphics.X11.Xlib
+import Graphics.X11.Xinerama (getScreenInfo)
 import Graphics.X11.Xlib.Extras
 
 -- ---------------------------------------------------------------------
@@ -152,6 +153,25 @@ tileWindow d w r = do
     bw <- (fromIntegral . wa_border_width) `liftM` getWindowAttributes d w
     moveResizeWindow d w (rect_x r) (rect_y r)
                          (rect_width  r - bw*2) (rect_height r - bw*2)
+
+-- ---------------------------------------------------------------------
+
+-- | rescreen.  The screen configuration may have changed, update the state and
+-- refresh the screen.
+rescreen :: X ()
+rescreen = do
+    dpy    <- asks display
+    xinesc <- io $ getScreenInfo dpy
+    -- TODO: This stuff is necessary because Xlib apparently caches screen
+    -- width/height.  Find a better solution later.  I hate Xlib.
+    let sx = maximum $ map (\r -> rect_x r + fromIntegral (rect_width  r)) xinesc
+        sy = maximum $ map (\r -> rect_y r + fromIntegral (rect_height r)) xinesc
+    modify (\s -> s { xineScreens = xinesc, dimensions = (sx, sy) })
+    windows $ \ws@(W.StackSet { W.current = v, W.visible = vs, W.hidden = hs }) ->
+        let (x:xs, ys) = splitAt (length xinesc) $ map W.workspace (v:vs) ++ hs
+        in  ws { W.current = W.Screen x 0
+               , W.visible = zipWith W.Screen xs [1 ..]
+               , W.hidden  = ys }
 
 -- ---------------------------------------------------------------------
 
