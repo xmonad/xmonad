@@ -172,8 +172,6 @@ handle e@(ConfigureRequestEvent {}) = withDisplay $ \dpy -> do
     io $ sync dpy False
 
 -- the root may have configured
-handle e@(ConfigureEvent {ev_window = w}) = do
-    r <- asks theRoot
-    when (r == w) rescreen
+handle (ConfigureEvent {ev_window = w}) = whenX (isRoot w) rescreen
 
 handle _ = return () -- trace (eventName e) -- ignoring
