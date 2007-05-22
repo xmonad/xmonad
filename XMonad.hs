@@ -83,7 +83,7 @@ runX c st (X a) = runStateT (runReaderT a c) st >> return ()
 -- Convenient wrappers to state
 
 -- | Run a monad action with the current display settings
-withDisplay :: (Display -> X ()) -> X ()
+withDisplay :: (Display -> X a) -> X a
 withDisplay f = asks display >>= f
 
 -- | Run a monadic action with the current workspace
