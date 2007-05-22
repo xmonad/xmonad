@@ -155,7 +155,12 @@ prop_delete_I (x :: T) = invariant $
         Nothing -> x
         Just i  -> delete i x
 
-prop_swap_I (x :: T) = invariant $ swap x
+prop_swap_master_I (x :: T) = invariant $ swapMaster x
+
+prop_swap_left_I  (n :: NonNegative Int) (x :: T) =
+    invariant $ foldr (const swapLeft ) x [1..n]
+prop_swap_right_I (n :: NonNegative Int) (x :: T) =
+    invariant $ foldr (const swapRight) x [1..n]
 
 prop_shift_I (n :: NonNegative Int) (x :: T) =
     fromIntegral n < size x ==> invariant $ shift (fromIntegral n) x
@@ -349,8 +354,8 @@ prop_insert_peek (n :: Positive Int) (m :: Positive Int) (NonEmptyNubList is) =
 --
 prop_insert_delete n x = not (member n x) ==> delete n (insertLeft n y) == (y :: T)
     where
-        y = swap x -- sets the master window to the current focus.
-                   -- otherwise, we don't have a rule for where master goes.
+        y = swapMaster x -- sets the master window to the current focus.
+                         -- otherwise, we don't have a rule for where master goes.
 
 -- inserting n elements increases current stack size by n
 prop_size_insert is (n :: Positive Int) (m :: Positive Int) =
@@ -379,7 +384,7 @@ prop_delete_insert (x :: T) =
         Nothing -> True
         Just n  -> insertLeft n (delete n y) == y
     where
-        y = swap x
+        y = swapMaster x
 
 -- delete should be local
 prop_delete_local (x :: T) = 
@@ -388,20 +393,11 @@ prop_delete_local (x :: T) =
         Just i  -> hidden_spaces x == hidden_spaces (delete i x)
 
 -- ---------------------------------------------------------------------
--- swap: setting the master window
+-- swapLeft, swapRight, swapMaster: reordiring windows
 
--- prop_swap_reversible a b xs = swap a b (swap a b ys) == ys
---     where ys = nub xs :: [Int]
-
--- swap doesn't change focus
-prop_swap_focus (x :: T)
-    = case peek x of
-        Nothing -> True
-        Just f  -> focus (stack (workspace $ current (swap x))) == f
-
--- swap is local
-prop_swap_local (x :: T) = hidden_spaces x == hidden_spaces (swap x)
-
+-- swap is trivially reversible
+prop_swap_left  (x :: T) = (swapLeft  (swapRight x)) == x
+prop_swap_right (x :: T) = (swapRight (swapLeft  x)) ==  x
 -- TODO swap is reversible
 -- swap is reversible, but involves moving focus back the window with
 -- master on it. easy to do with a mouse...
@@ -414,7 +410,26 @@ prop_promote_reversible x b = (not . null . fromMaybe [] . flip index x . curren
         (Just (z:_)) = flip index x . current $ x
 -}
 
-prop_swap_idempotent (x :: T) = swap (swap x) == swap x
+-- swap doesn't change focus
+prop_swap_master_focus (x :: T) = peek x == (peek $ swapMaster x)
+--    = case peek x of
+--        Nothing -> True
+--        Just f  -> focus (stack (workspace $ current (swap x))) == f
+prop_swap_left_focus   (x :: T) = peek x == (peek $ swapLeft   x)
+prop_swap_right_focus  (x :: T) = peek x == (peek $ swapRight  x)
+
+-- swap is local
+prop_swap_master_local (x :: T) = hidden_spaces x == hidden_spaces (swapMaster x)
+prop_swap_left_local   (x :: T) = hidden_spaces x == hidden_spaces (swapLeft   x)
+prop_swap_right_local  (x :: T) = hidden_spaces x == hidden_spaces (swapRight  x)
+
+-- rotation through the height of a stack gets us back to the start
+prop_swap_all_l (x :: T) = (foldr (const swapLeft)  x [1..n]) == x
+  where n = length (index x)
+prop_swap_all_r (x :: T) = (foldr (const swapRight) x [1..n]) == x
+  where n = length (index x)
+
+prop_swap_master_idempotent (x :: T) = swapMaster (swapMaster x) == swapMaster x
 
 -- ---------------------------------------------------------------------
 -- shift
@@ -429,7 +444,7 @@ prop_shift_reversible (r :: Int) (x :: T) =
         Nothing -> True
         Just _  -> normal ((view n . shift n . view i . shift i) y) == normal y
     where
-        y = swap x
+        y = swapMaster x
 
 ------------------------------------------------------------------------
 -- some properties for layouts:
@@ -523,10 +538,18 @@ main = do
         ,("delete is reversible", mytest prop_delete_insert)
         ,("delete is local"     , mytest prop_delete_local)
 
-        ,("swap: invariant  "   , mytest prop_swap_I)
-        ,("swap id on focus"    , mytest prop_swap_focus)
-        ,("swap is idempotent"  , mytest prop_swap_idempotent)
-        ,("swap is local"       , mytest prop_swap_local)
+        ,("swapMaster: invariant", mytest prop_swap_master_I)
+        ,("swapLeft: invariant" , mytest prop_swap_left_I)
+        ,("swapRight: invariant", mytest prop_swap_right_I)
+        ,("swapMaster id on focus", mytest prop_swap_master_focus)
+        ,("swapLeft id on focus", mytest prop_swap_left_focus)
+        ,("swapRight id on focus", mytest prop_swap_right_focus)
+        ,("swapMaster is idempotent", mytest prop_swap_master_idempotent)
+        ,("swap all left  "     , mytest prop_swap_all_l)
+        ,("swap all right "     , mytest prop_swap_all_r)
+        ,("swapMaster is local" , mytest prop_swap_master_local)
+        ,("swapLeft is local"   , mytest prop_swap_left_local)
+        ,("swapRight is local"  , mytest prop_swap_right_local)
 
         ,("shift: invariant"    , mytest prop_shift_I)
         ,("shift is reversible" , mytest prop_shift_reversible)

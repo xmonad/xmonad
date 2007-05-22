@@ -160,6 +160,9 @@ keys = M.fromList $
     , ((modMask,               xK_j     ), focusRight)
     , ((modMask,               xK_k     ), focusLeft)
 
+    , ((modMask,               xK_Left  ), swapLeft)
+    , ((modMask,               xK_Right ), swapRight)
+
     , ((modMask,               xK_h     ), sendMessage Shrink)
     , ((modMask,               xK_l     ), sendMessage Expand)
 
@@ -172,7 +175,7 @@ keys = M.fromList $
     , ((modMask .|. shiftMask .|. controlMask, xK_q     ), restart Nothing False)
 
     -- Cycle the current tiling order
-    , ((modMask,               xK_Return), swap)
+    , ((modMask,               xK_Return), swapMaster)
 
     ] ++
     -- Keybindings to get to each workspace:

@@ -51,13 +51,15 @@ unmanage :: Window -> X ()
 unmanage = windows . W.delete
 
 -- | focus. focus window to the left or right.
-focusLeft, focusRight :: X ()
+focusLeft, focusRight, swapLeft, swapRight :: X ()
 focusLeft  = windows W.focusLeft
 focusRight = windows W.focusRight
+swapLeft   = windows W.swapLeft
+swapRight  = windows W.swapRight
 
--- | swap. Move the currently focused window into the master frame
-swap :: X ()
-swap = windows W.swap
+-- | swapMaster. Move the currently focused window into the master frame
+swapMaster :: X ()
+swapMaster = windows W.swapMaster
 
 -- | shift. Move a window to a new workspace, 0 indexed.
 shift :: WorkspaceId -> X ()

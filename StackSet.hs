@@ -77,8 +77,8 @@
 module StackSet (
         StackSet(..), Workspace(..), Screen(..), Stack(..),
         new, view, lookupWorkspace, peek, index, focusLeft, focusRight,
-        focusWindow, member, findIndex, insertLeft, delete, swap, shift,
-        modify -- needed by users
+        focusWindow, member, findIndex, insertLeft, delete, shift,
+        swapMaster, swapLeft, swapRight, modify -- needed by users
     ) where
 
 import Data.Maybe   (listToMaybe)
@@ -92,10 +92,11 @@ import qualified Data.List as L (delete,find,genericSplitAt)
 --  index,
 --  peek,                   -- was: peek/peekStack
 --  focusLeft, focusRight,  -- was: rotate
+--  swapLeft, swapRight
 --  focus                   -- was: raiseFocus
 --  insertLeft,             -- was: insert/push
 --  delete,
---  swap,                   -- was: promote
+--  swapMaster,             -- was: promote/swap
 --  member, 
 --  shift,
 --  lookupWorkspace,        -- was: workspace
@@ -239,12 +240,18 @@ index = with [] $ \(Node t l r) -> reverse l ++ t : r
 --  let is = t : r ++ reverse l in take (length is) (dropWhile (/= m) (cycle is))
 
 --
--- /O(1), O(w) on the wrapping case/. Move the window focus left or
+-- /O(1), O(w) on the wrapping case/. 
+--
+-- focusLeft, focusRight. Move the window focus left or
 -- right, wrapping if we reach the end. The wrapping should model a
 -- 'cycle' on the current stack. The 'master' window, and window order,
 -- are unaffected by movement of focus.
 --
-focusLeft, focusRight :: StackSet i a s -> StackSet i a s
+-- swapLeft, swapRight. Swap the focused window with its left or right
+-- neighbour in the stack ordering, wrapping if we reach the end. Again 
+-- the wrapping model should 'cycle' on the current stack.
+-- 
+focusLeft, focusRight, swapLeft, swapRight :: StackSet i a s -> StackSet i a s
 focusLeft = modify Empty $ \c -> case c of
     Node _ []     [] -> c
     Node t (l:ls) rs -> Node l ls (t:rs)
@@ -254,6 +261,16 @@ focusRight = modify Empty $ \c -> case c of
     Node _ []     [] -> c
     Node t ls (r:rs) -> Node r (t:ls) rs
     Node t ls     [] -> Node x [] (xs ++ [t]) where (x:xs) = reverse ls
+
+swapLeft = modify Empty $ \c -> case c of
+    Node _ []     [] -> c
+    Node t (l:ls) rs -> Node t ls (l:rs)
+    Node t []     rs -> Node t (reverse rs) []
+
+swapRight = modify Empty $ \c -> case c of
+    Node _ []     [] -> c
+    Node t ls (r:rs) -> Node t (r:ls) rs
+    Node t ls     [] -> Node t [] (reverse ls)
 
 --
 -- | /O(1) on current window, O(n) in general/. Focus the window 'w', 
@@ -342,8 +359,8 @@ delete w s | Just w == peek s = remove s -- common case.
 -- /O(s)/. Set the master window to the focused window.
 -- The old master window is swapped in the tiling order with the focused window.
 -- Focus stays with the item moved.
-swap :: StackSet i a s -> StackSet i a s
-swap = modify Empty $ \c -> case c of
+swapMaster :: StackSet i a s -> StackSet i a s
+swapMaster = modify Empty $ \c -> case c of
     Node _ [] _  -> c    -- already master.
     Node t ls rs -> Node t [] (ys ++ x : rs) where (x:ys) = reverse ls
 
