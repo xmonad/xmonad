@@ -160,8 +160,7 @@ tileWindow d w r = do
 -- refresh the screen.
 rescreen :: X ()
 rescreen = do
-    dpy    <- asks display
-    xinesc <- io $ getScreenInfo dpy
+    xinesc <- withDisplay (io . getScreenInfo)
     -- TODO: This stuff is necessary because Xlib apparently caches screen
     -- width/height.  Find a better solution later.  I hate Xlib.
     let sx = maximum $ map (\r -> rect_x r + fromIntegral (rect_width  r)) xinesc
