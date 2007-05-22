@@ -10,9 +10,21 @@ import StackSet
 -- TESTING PROPERTIES
 
 main = 
-    screen ||| peekStack ||| index ||| empty ||| peek ||| push ||| delete ||| member |||
-    raiseFocus ||| rotate ||| promote ||| shift ||| view ||| workspace ||| insert |||
-    visibleWorkspaces ||| swap {- helper -}
+        new
+    ||| view
+    ||| lookupWorkspace
+    ||| modify
+    ||| peek
+    ||| index
+    ||| focusLeft
+    ||| focusRight
+    ||| focusWindow
+    ||| member
+    ||| findIndex
+    ||| insertLeft
+    ||| delete
+    ||| swap
+    ||| shift
 
 
 ---------------------------------------------------------------------
