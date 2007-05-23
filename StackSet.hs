@@ -146,6 +146,10 @@ data Stack a = Empty
                     , right  :: [a] }     -- jokers to the right
     deriving (Show, Read, Eq)
 
+
+-- this function indicates to catch that an error is expected
+abort x = error x
+
 -- ---------------------------------------------------------------------
 -- Construction
 
@@ -157,7 +161,7 @@ data Stack a = Empty
 --
 new :: (Integral i, Integral s) => i -> s -> StackSet i a s
 new n m | n > 0 && m > 0 = StackSet n cur visi unseen
-        | otherwise      = error "non-positive arguments to StackSet.new"
+        | otherwise      = abort "non-positive arguments to StackSet.new"
 
   where (seen,unseen) = L.genericSplitAt m $ Workspace 0 Empty : [ Workspace i Empty | i <- [1 ..n-1]]
         (cur:visi)    = [ Screen i s |  (i,s) <- zip seen [0..] ]
@@ -187,7 +191,7 @@ view i s
     = s { current = Screen x (screen (current s))
         , hidden = workspace (current s) : L.delete x (hidden s) }
 
-    | otherwise = error "Inconsistent StackSet: workspace not found"
+    | otherwise = abort "Inconsistent StackSet: workspace not found"
 
     -- 'Catch'ing this might be hard. Relies on monotonically increasing
     -- workspace tags defined in 'new'
