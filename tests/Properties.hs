@@ -111,9 +111,9 @@ invariant (s :: T) = and
     ]
 
   where
-    ws = [ focus t : left t ++ right t
-             | w <- workspace (current s) : map workspace (visible s) ++ hidden s
-             , let t = stack w, t /= Empty ]
+    ws = concat [ focus t : left t ++ right t
+                  | w <- workspace (current s) : map workspace (visible s) ++ hidden s
+                , let t = stack w, t /= Empty ] :: [Char]
     noDuplicates = nub ws == ws
 
 --  validScreens = monotonic . sort . M. . (W.current s : W.visible : W$ s
