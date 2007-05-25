@@ -345,13 +345,16 @@ delete w s | Just w == peek s = remove s -- common case.
            | otherwise = maybe s (removeWindow.tag.workspace.current $ s) (findIndex w s)
   where
     -- find and remove window script
-    removeWindow o n = foldr ($) s [view o,remove ,until ((Just w ==) . peek) focusLeft,view n]
+    removeWindow o n = foldr ($) s [view o,remove,view n]
 
     -- actual removal logic, and focus/master logic:
-    remove = modify Empty $ \c -> case c of
+    remove = modify Empty $ \c -> 
+      if focus c == w 
+      then case c of
         Node _ ls     (r:rs) -> Node r ls rs    -- try right first
         Node _ (l:ls) []     -> Node l ls []    -- else left.
         Node _ []     []     -> Empty
+      else c { left  = w `L.delete` left c, right = w `L.delete` right c }
 
 ------------------------------------------------------------------------
 -- Setting the master window
