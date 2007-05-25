@@ -139,9 +139,9 @@ borderWidth = 1
 
 -- The default set of Layouts:
 defaultLayouts :: [Layout]
-defaultLayouts = [ full,
-                   tall defaultWindowsInMaster defaultDelta (1%2),
-                   wide defaultWindowsInMaster defaultDelta (1%2) ]
+defaultLayouts = [ full
+                 , tall defaultWindowsInMaster defaultDelta (1%2)
+                 , wide defaultWindowsInMaster defaultDelta (1%2) ]
 
 --
 -- The key bindings list.
