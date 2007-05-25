@@ -103,6 +103,7 @@ hidden_spaces x = map workspace (visible x) ++ hidden x
 invariant (s :: T) = and
     -- no duplicates
     [ noDuplicates
+    , accurateSize
 
     -- all this xinerama stuff says we don't have the right structure
 --  , validScreens
@@ -115,6 +116,8 @@ invariant (s :: T) = and
                   | w <- workspace (current s) : map workspace (visible s) ++ hidden s
                 , let t = stack w, t /= Empty ] :: [Char]
     noDuplicates = nub ws == ws
+    calculatedSize = length (visible s) + length (hidden s) + 1   -- +1 is for current
+    accurateSize = calculatedSize == size s
 
 --  validScreens = monotonic . sort . M. . (W.current s : W.visible : W$ s
 
