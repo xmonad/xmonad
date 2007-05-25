@@ -392,6 +392,9 @@ prop_delete_local (x :: T) =
         Nothing -> True
         Just i  -> hidden_spaces x == hidden_spaces (delete i x)
 
+-- delete should not affect focus unless the focused element is what is being deleted
+prop_delete_focus n (x :: T) = member n x && Just n /= peek x ==> peek (delete n x) == peek x
+
 -- ---------------------------------------------------------------------
 -- swapLeft, swapRight, swapMaster: reordiring windows
 
@@ -537,6 +540,7 @@ main = do
         ,("delete/member"       , mytest prop_delete)
         ,("delete is reversible", mytest prop_delete_insert)
         ,("delete is local"     , mytest prop_delete_local)
+        ,("delete/focus"        , mytest prop_delete_focus)
 
         ,("swapMaster: invariant", mytest prop_swap_master_I)
         ,("swapLeft: invariant" , mytest prop_swap_left_I)
