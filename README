@@ -32,6 +32,9 @@ Building:
 
 Get the dependencies
 
+    It is likely that you already have some of these dependencies.  To check
+    whether you've got a package run 'ghc-pkg list some_package_name'
+
     mtl             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/mtl-1.0
     X11             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-1.2
         (Unfortunately X11-1.2 does not work correctly on AMD64.  The latest
