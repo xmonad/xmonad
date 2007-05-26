@@ -1,46 +1,13 @@
 - tasks for xmonad 0.2
-    - fix the numlock issue once and for all
-    - man page
-
+    - generate man page from Config.hs
+    - screenshots/web page
+    - testing/ more QC
+    - check build systems for X11-extras/X11.
+      
 - possibles:
-    - external statusbar
-    - floating layer/transients
-    - more example layout algorithms implemented via config.hs
-    - more work stabilising and documenting the api
-    - set up trac?
-    - get 'design and impl' TR done.
+    - use more constrained type in StackSet to avoid pattern match warnings
 
 - related:
     - xcb bindings
     - randr
 
-- think about the statusbar/multithreading.
-    Three shared TVars:
-        windowTitle :: TVar String
-        workspace   :: TVar Int
-        statusText  :: TVar String
-    Three threads:
-        Main thread, handles all of the events that it handles now.  When
-        necessary, it writes to workspace or windowTitle
-
-        Status IO thread, the algorithm is something like this:
-            forever $ do
-                s <- getLine
-                atomic (writeTVar statusText s)
-
-        Statusbar drawing thread, waits for changes in all three TVars, and
-        redraws whenever it finds a change.
-
-
-- Notes on new StackSet:
-
-   The actors: screens, workspaces, windows
-
-   Invariants:
-   - There is exactly one screen in focus at any given time.
-   - A screen views exactly one workspace.
-   - A workspace is visible on one or zero screens.
-   - A workspace has zero or more windows.
-   - A workspace has either one or zero windows in focus.  Zero if the
-     workspace has no windows, one in all other cases.
-   - A window is a member of only one workspace.
