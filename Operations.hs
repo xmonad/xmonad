@@ -43,7 +43,7 @@ manage w = do
         selectInput d w $ structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
         mapWindow d w
         setWindowBorderWidth d w borderWidth
-    windows $ W.insertLeft w
+    windows $ W.insertUp w
 
 -- | unmanage. A window no longer exists, remove it from the window
 -- list, on whatever workspace it is.
@@ -51,11 +51,11 @@ unmanage :: Window -> X ()
 unmanage = windows . W.delete
 
 -- | focus. focus window to the left or right.
-focusLeft, focusRight, swapLeft, swapRight :: X ()
-focusLeft  = windows W.focusLeft
-focusRight = windows W.focusRight
-swapLeft   = windows W.swapLeft
-swapRight  = windows W.swapRight
+focusUp, focusDown, swapUp, swapDown :: X ()
+focusUp   = windows W.focusUp
+focusDown = windows W.focusDown
+swapUp    = windows W.swapUp
+swapDown  = windows W.swapDown
 
 -- | swapMaster. Move the currently focused window into the master frame
 swapMaster :: X ()

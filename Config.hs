@@ -148,34 +148,39 @@ defaultLayouts = [ full
 --
 keys :: M.Map (KeyMask, KeySym) (X ())
 keys = M.fromList $
+    -- launching and killing programs
     [ ((modMask .|. shiftMask, xK_Return), spawn "xterm")
     , ((modMask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && exec $exe")
     , ((modMask .|. shiftMask, xK_p     ), spawn "gmrun")
+    , ((modMask .|. shiftMask, xK_c     ), kill)
+
+    -- rotate through the available layout algorithms
     , ((modMask,               xK_space ), switchLayout)
 
     -- 'nudge': resize viewed windows to the correct size.
     , ((modMask,               xK_n     ), refresh)
 
-    , ((modMask,               xK_Tab   ), focusRight)
-    , ((modMask,               xK_j     ), focusRight)
-    , ((modMask,               xK_k     ), focusLeft)
+    -- move focus up or down the window stack
+    , ((modMask,               xK_Tab   ), focusDown)
+    , ((modMask,               xK_j     ), focusDown)
+    , ((modMask,               xK_k     ), focusUp)
 
-    , ((modMask,               xK_Left  ), swapLeft)
-    , ((modMask,               xK_Right ), swapRight)
+    -- modifying the window order
+    , ((modMask,               xK_Return), swapMaster)
+    , ((modMask .|. shiftMask, xK_j     ), swapDown)
+    , ((modMask .|. shiftMask, xK_k     ), swapUp)
 
+    -- resizing the master/slave ratio
     , ((modMask,               xK_h     ), sendMessage Shrink)
     , ((modMask,               xK_l     ), sendMessage Expand)
 
-    , ((modMask .|. shiftMask, xK_j     ), sendMessage (IncMasterN 1))
-    , ((modMask .|. shiftMask, xK_k     ), sendMessage (IncMasterN (-1)))
+    -- increase or decrease number of windows in the master area
+    , ((modMask              , xK_comma ), sendMessage (IncMasterN 1))
+    , ((modMask              , xK_period), sendMessage (IncMasterN (-1)))
 
-    , ((modMask .|. shiftMask, xK_c     ), kill)
-
+    -- quit, or restart
     , ((modMask .|. shiftMask, xK_q                     ), io $ exitWith ExitSuccess)
     , ((modMask .|. shiftMask .|. controlMask, xK_q     ), restart Nothing True)
-
-    -- Cycle the current tiling order
-    , ((modMask,               xK_Return), swapMaster)
 
     ] ++
     -- Keybindings to get to each workspace:

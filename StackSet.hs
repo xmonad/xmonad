@@ -76,9 +76,9 @@
 --
 module StackSet (
         StackSet(..), Workspace(..), Screen(..), Stack(..),
-        new, view, lookupWorkspace, peek, index, focusLeft, focusRight,
-        focusWindow, member, findIndex, insertLeft, delete, shift,
-        swapMaster, swapLeft, swapRight, modify -- needed by users
+        new, view, lookupWorkspace, peek, index, focusUp, focusDown,
+        focusWindow, member, findIndex, insertUp, delete, shift,
+        swapMaster, swapUp, swapDown, modify -- needed by users
     ) where
 
 import Data.Maybe   (listToMaybe)
@@ -91,10 +91,10 @@ import qualified Data.List as L (delete,find,genericSplitAt)
 --  view,
 --  index,
 --  peek,                   -- was: peek/peekStack
---  focusLeft, focusRight,  -- was: rotate
---  swapLeft, swapRight
+--  focusUp, focusDown,  -- was: rotate
+--  swapUp, swapDown
 --  focus                   -- was: raiseFocus
---  insertLeft,             -- was: insert/push
+--  insertUp,             -- was: insert/push
 --  delete,
 --  swapMaster,             -- was: promote/swap
 --  member, 
@@ -131,9 +131,15 @@ data Workspace i a = Workspace  { tag :: !i, stack :: Stack a }
 -- 
 -- A stack is a cursor onto a (possibly empty) window list.
 -- The data structure tracks focus by construction, and
--- the master window is by convention the left most item.
+-- the master window is by convention the top-most item.
 -- Focus operations will not reorder the list that results from
--- flattening the cursor.
+-- flattening the cursor. The structure can be envisaged as:
+--
+--     +-- master:  < '7' >
+--  up |            [ '2' ]
+--     +---------   [ '3' ]
+--  focus:          < '4' >
+--  dn +----------- [ '8' ]
 --
 -- A 'Stack' can be viewed as a list with a hole punched in it to make
 -- the focused position. Under the zipper/calculus view of such
@@ -142,8 +148,8 @@ data Workspace i a = Workspace  { tag :: !i, stack :: Stack a }
 --
 data Stack a = Empty
              | Node { focus  :: !a        -- focused thing in this set
-                    , left   :: [a]       -- clowns to the left
-                    , right  :: [a] }     -- jokers to the right
+                    , up     :: [a]       -- clowns to the left
+                    , down   :: [a] }     -- jokers to the right
     deriving (Show, Read, Eq)
 
 
@@ -247,32 +253,32 @@ index = with [] $ \(Node t l r) -> reverse l ++ t : r
 --
 -- /O(1), O(w) on the wrapping case/. 
 --
--- focusLeft, focusRight. Move the window focus left or
--- right, wrapping if we reach the end. The wrapping should model a
--- 'cycle' on the current stack. The 'master' window, and window order,
+-- focusUp, focusDown. Move the window focus up or down the stack,
+-- wrapping if we reach the end. The wrapping should model a -- 'cycle'
+-- on the current stack. The 'master' window, and window order,
 -- are unaffected by movement of focus.
 --
--- swapLeft, swapRight. Swap the focused window with its left or right
--- neighbour in the stack ordering, wrapping if we reach the end. Again 
--- the wrapping model should 'cycle' on the current stack.
+-- swapUp, swapDown, swap the neighbour in the stack ordering, wrapping
+-- if we reach the end. Again the wrapping model should 'cycle' on
+-- the current stack.
 -- 
-focusLeft, focusRight, swapLeft, swapRight :: StackSet i a s -> StackSet i a s
-focusLeft = modify Empty $ \c -> case c of
+focusUp, focusDown, swapUp, swapDown :: StackSet i a s -> StackSet i a s
+focusUp = modify Empty $ \c -> case c of
     Node _ []     [] -> c
     Node t (l:ls) rs -> Node l ls (t:rs)
     Node t []     rs -> Node x (xs ++ [t]) [] where (x:xs) = reverse rs
 
-focusRight = modify Empty $ \c -> case c of
+focusDown = modify Empty $ \c -> case c of
     Node _ []     [] -> c
     Node t ls (r:rs) -> Node r (t:ls) rs
     Node t ls     [] -> Node x [] (xs ++ [t]) where (x:xs) = reverse ls
 
-swapLeft = modify Empty $ \c -> case c of
+swapUp = modify Empty $ \c -> case c of
     Node _ []     [] -> c
     Node t (l:ls) rs -> Node t ls (l:rs)
     Node t []     rs -> Node t (reverse rs) []
 
-swapRight = modify Empty $ \c -> case c of
+swapDown = modify Empty $ \c -> case c of
     Node _ []     [] -> c
     Node t ls (r:rs) -> Node t (r:ls) rs
     Node t ls     [] -> Node t [] (reverse ls)
@@ -285,7 +291,7 @@ focusWindow :: (Integral i, Eq s, Eq a) => a -> StackSet i a s -> StackSet i a s
 focusWindow w s | Just w == peek s = s
                 | otherwise        = maybe s id $ do
                     n <- findIndex w s
-                    return $ until ((Just w ==) . peek) focusLeft (view n s)
+                    return $ until ((Just w ==) . peek) focusUp (view n s)
 
 --
 -- Finding if a window is in the stackset is a little tedious. We could
@@ -310,34 +316,34 @@ findIndex a s = listToMaybe
 
 --
 -- /O(n)/. (Complexity due to duplicate check). Insert a new element into
--- the stack, to the left of the currently focused element.
+-- the stack, above the currently focused element.
 --
 -- The new element is given focus, and is set as the master window.
--- The previously focused element is moved to the right.  The previously
+-- The previously focused element is moved down.  The previously
 -- 'master' element is forgotten. (Thus, 'insert' will cause a retiling).
 --
 -- If the element is already in the stackset, the original stackset is
 -- returned unmodified.
 --
 -- Semantics in Huet's paper is that insert doesn't move the cursor.
--- However, we choose to insert to the left, and move the focus.
+-- However, we choose to insert above, and move the focus.
 --
-insertLeft :: Eq a => a -> StackSet i a s -> StackSet i a s
-insertLeft a s = if member a s then s else insert
+insertUp :: Eq a => a -> StackSet i a s -> StackSet i a s
+insertUp a s = if member a s then s else insert
   where insert = modify (Node a [] []) (\(Node t l r) -> Node a l (t:r)) s
 
--- insertRight :: a -> StackSet i a s -> StackSet i a s
--- insertRight a = modify (Node a [] []) $ \(Node t l r) -> Node a (t:l) r
+-- insertDown :: a -> StackSet i a s -> StackSet i a s
+-- insertDown a = modify (Node a [] []) $ \(Node t l r) -> Node a (t:l) r
 -- Old semantics, from Huet.
--- >    w { right = a : right w }
+-- >    w { down = a : down w }
 
 --
 -- /O(1) on current window, O(n) in general/. Delete window 'w' if it exists.
 -- There are 4 cases to consider:
 --
 --   * delete on an Empty workspace leaves it Empty
---   * otherwise, try to move focus to the right
---   * otherwise, try to move focus to the left
+--   * otherwise, try to move focus to the down
+--   * otherwise, try to move focus to the up
 --   * otherwise, you've got an empty workspace, becomes Empty
 --
 -- Behaviour with respect to the master:
@@ -353,13 +359,13 @@ delete w s | Just w == peek s = remove s -- common case.
     removeWindow o n = foldr ($) s [view o,remove,view n]
 
     -- actual removal logic, and focus/master logic:
-    remove = modify Empty $ \c -> 
-      if focus c == w 
+    remove = modify Empty $ \c ->
+      if focus c == w
       then case c of
-        Node _ ls     (r:rs) -> Node r ls rs    -- try right first
-        Node _ (l:ls) []     -> Node l ls []    -- else left.
+        Node _ ls     (r:rs) -> Node r ls rs    -- try down first
+        Node _ (l:ls) []     -> Node l ls []    -- else up
         Node _ []     []     -> Empty
-      else c { left  = w `L.delete` left c, right = w `L.delete` right c }
+      else c { up = w `L.delete` up c, down = w `L.delete` down c }
 
 ------------------------------------------------------------------------
 -- Setting the master window
@@ -372,8 +378,7 @@ swapMaster = modify Empty $ \c -> case c of
     Node _ [] _  -> c    -- already master.
     Node t ls rs -> Node t [] (ys ++ x : rs) where (x:ys) = reverse ls
 
- -- natural! keep focus, move current to furthest left, move furthest
--- left to current position.
+ -- natural! keep focus, move current to the top, move top to current.
 
 -- ---------------------------------------------------------------------
 -- Composite operations
@@ -381,13 +386,13 @@ swapMaster = modify Empty $ \c -> case c of
 
 -- /O(w)/. shift. Move the focused element of the current stack to stack
 -- 'n', leaving it as the focused element on that stack. The item is
--- inserted to the left of the currently focused element on that
--- workspace.  The actual focused workspace doesn't change. If there is
--- no element on the current stack, the original stackSet is returned.
+-- inserted above the currently focused element on that workspace.  --
+-- The actual focused workspace doesn't change. If there is -- no
+-- element on the current stack, the original stackSet is returned.
 --
 shift :: (Eq a, Eq s, Integral i) => i -> StackSet i a s -> StackSet i a s
 shift n s = if and [n >= 0,n < size s,n /= tag (workspace (current s))]
             then maybe s go (peek s) else s
-    where go w = foldr ($) s [view (tag (workspace (current s))),insertLeft w,view n,delete w]
+    where go w = foldr ($) s [view (tag (workspace (current s))),insertUp w,view n,delete w]
                            -- ^^ poor man's state monad :-)
 

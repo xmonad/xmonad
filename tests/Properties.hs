@@ -70,11 +70,11 @@ fromList (n,m,fs,xs) | n < 0 || n >= genericLength xs
 fromList (o,m,fs,xs) =
     let s = view o $
                 foldr (\(i,ys) s ->
-                    foldr insertLeft (view i s) ys)
+                    foldr insertUp (view i s) ys)
                         (new (genericLength xs) m) (zip [0..] xs)
     in foldr (\f t -> case f of
                             Nothing -> t
-                            Just i  -> foldr (const focusLeft) t [0..i] ) s fs
+                            Just i  -> foldr (const focusUp) t [0..i] ) s fs
 
 ------------------------------------------------------------------------
 
@@ -112,7 +112,7 @@ invariant (s :: T) = and
     ]
 
   where
-    ws = concat [ focus t : left t ++ right t
+    ws = concat [ focus t : up t ++ down t
                   | w <- workspace (current s) : map workspace (visible s) ++ hidden s
                 , let t = stack w, t /= Empty ] :: [Char]
     noDuplicates = nub ws == ws
@@ -140,18 +140,18 @@ prop_empty_I  (n :: Positive Int) = forAll (choose (1,fromIntegral n)) $ \m ->
 prop_view_I (n :: NonNegative Int) (x :: T) =
     fromIntegral n < size x ==> invariant $ view (fromIntegral n) x
 
-prop_focusLeft_I (n :: NonNegative Int) (x :: T) =
-    invariant $ foldr (const focusLeft) x [1..n]
-prop_focusRight_I (n :: NonNegative Int) (x :: T) =
-    invariant $ foldr (const focusRight) x [1..n]
+prop_focusUp_I (n :: NonNegative Int) (x :: T) =
+    invariant $ foldr (const focusUp) x [1..n]
+prop_focusDown_I (n :: NonNegative Int) (x :: T) =
+    invariant $ foldr (const focusDown) x [1..n]
 
 prop_focus_I (n :: NonNegative Int) (x :: T) =
     case peek x of
         Nothing -> True
-        Just _  -> let w = focus . stack . workspace . current $ foldr (const focusLeft) x [1..n]
+        Just _  -> let w = focus . stack . workspace . current $ foldr (const focusUp) x [1..n]
                    in invariant $ focusWindow w x
 
-prop_insertLeft_I n (x :: T) = invariant $ insertLeft n x
+prop_insertUp_I n (x :: T) = invariant $ insertUp n x
 
 prop_delete_I (x :: T) = invariant $
     case peek x of
@@ -161,9 +161,9 @@ prop_delete_I (x :: T) = invariant $
 prop_swap_master_I (x :: T) = invariant $ swapMaster x
 
 prop_swap_left_I  (n :: NonNegative Int) (x :: T) =
-    invariant $ foldr (const swapLeft ) x [1..n]
+    invariant $ foldr (const swapUp ) x [1..n]
 prop_swap_right_I (n :: NonNegative Int) (x :: T) =
-    invariant $ foldr (const swapRight) x [1..n]
+    invariant $ foldr (const swapDown) x [1..n]
 
 prop_shift_I (n :: NonNegative Int) (x :: T) =
     fromIntegral n < size x ==> invariant $ shift (fromIntegral n) x
@@ -262,7 +262,7 @@ prop_index_length (x :: T) =
         Node {} -> length (index x) == length list
   where
     it   = stack . workspace . current $ x
-    list = focus it : left it ++ right it
+    list = focus it : up it ++ down it
 
 -- ---------------------------------------------------------------------
 -- rotating focus
@@ -273,9 +273,9 @@ prop_index_length (x :: T) =
 -- The tiling order, and master window, of a stack is unaffected by focus changes.
 --
 prop_focus_left_master (n :: NonNegative Int) (x::T) =
-    index (foldr (const focusLeft) x [1..n]) == index x
+    index (foldr (const focusUp) x [1..n]) == index x
 prop_focus_right_master (n :: NonNegative Int) (x::T) =
-    index (foldr (const focusRight) x [1..n]) == index x
+    index (foldr (const focusDown) x [1..n]) == index x
 prop_focusWindow_master (n :: NonNegative Int) (x :: T) =
     case peek x of
         Nothing -> True
@@ -284,8 +284,8 @@ prop_focusWindow_master (n :: NonNegative Int) (x :: T) =
                    in index (focusWindow (s !! i) x) == index x
 
 -- shifting focus is trivially reversible
-prop_focus_left  (x :: T) = (focusLeft  (focusRight x)) == x
-prop_focus_right (x :: T) = (focusRight (focusLeft  x)) ==  x
+prop_focus_left  (x :: T) = (focusUp  (focusDown x)) == x
+prop_focus_right (x :: T) = (focusDown (focusUp  x)) ==  x
 
 -- focusWindow actually leaves the window focused...
 prop_focusWindow_works (n :: NonNegative Int) (x :: T) =
@@ -296,16 +296,16 @@ prop_focusWindow_works (n :: NonNegative Int) (x :: T) =
                    in (focus . stack . workspace . current) (focusWindow (s !! i) x) == (s !! i)
 
 -- rotation through the height of a stack gets us back to the start
-prop_focus_all_l (x :: T) = (foldr (const focusLeft) x [1..n]) == x
+prop_focus_all_l (x :: T) = (foldr (const focusUp) x [1..n]) == x
   where n = length (index x)
-prop_focus_all_r (x :: T) = (foldr (const focusRight) x [1..n]) == x
+prop_focus_all_r (x :: T) = (foldr (const focusDown) x [1..n]) == x
   where n = length (index x)
 
 -- prop_rotate_all (x :: T) = f (f x) == f x
 --     f x' = foldr (\_ y -> rotate GT y) x' [1..n]
 
 -- focus is local to the current workspace
-prop_focus_local (x :: T) = hidden_spaces (focusRight x) == hidden_spaces x
+prop_focus_local (x :: T) = hidden_spaces (focusDown x) == hidden_spaces x
 
 prop_focusWindow_local (n :: NonNegative Int) (x::T ) =
     case peek x of
@@ -326,43 +326,43 @@ prop_findIndex (x :: T) =
         | w <- workspace (current x) : map workspace (visible x)  ++ hidden x
         , let t = stack w
         , t /= Empty
-        , i <- focus (stack w) : left (stack w) ++ right (stack w)
+        , i <- focus (stack w) : up (stack w) ++ down (stack w)
         ]
 
 -- ---------------------------------------------------------------------
 -- 'insert'
 
 -- inserting a item into an empty stackset means that item is now a member
-prop_insert_empty i (n :: Positive Int) (m :: Positive Int) = member i (insertLeft i x)
+prop_insert_empty i (n :: Positive Int) (m :: Positive Int) = member i (insertUp i x)
     where x = new (fromIntegral n) (fromIntegral m) :: T
 
 -- insert should be idempotent
-prop_insert_idem i (x :: T) = insertLeft i x == insertLeft i (insertLeft i x)
+prop_insert_idem i (x :: T) = insertUp i x == insertUp i (insertUp i x)
 
 -- insert when an item is a member should leave the stackset unchanged
-prop_insert_duplicate i (x :: T) = member i x ==> insertLeft i x == x
+prop_insert_duplicate i (x :: T) = member i x ==> insertUp i x == x
 
 -- push shouldn't change anything but the current workspace
-prop_insert_local (x :: T) i = not (member i x) ==> hidden_spaces x == hidden_spaces (insertLeft i x)
+prop_insert_local (x :: T) i = not (member i x) ==> hidden_spaces x == hidden_spaces (insertUp i x)
 
 -- Inserting a (unique) list of items into an empty stackset should
 -- result in the last inserted element having focus.
 prop_insert_peek (n :: Positive Int) (m :: Positive Int) (NonEmptyNubList is) =
-    peek (foldr insertLeft x is) == Just (head is)
+    peek (foldr insertUp x is) == Just (head is)
     where
         x = new (fromIntegral n) (fromIntegral m) :: T
 
 -- insert >> delete is the identity, when i `notElem` .
 -- Except for the 'master', which is reset on insert and delete.
 --
-prop_insert_delete n x = not (member n x) ==> delete n (insertLeft n y) == (y :: T)
+prop_insert_delete n x = not (member n x) ==> delete n (insertUp n y) == (y :: T)
     where
         y = swapMaster x -- sets the master window to the current focus.
                          -- otherwise, we don't have a rule for where master goes.
 
 -- inserting n elements increases current stack size by n
 prop_size_insert is (n :: Positive Int) (m :: Positive Int) =
-        size (foldr insertLeft x ws ) ==  (length ws)
+        size (foldr insertUp x ws ) ==  (length ws)
   where
     ws   = nub is
     x    = new (fromIntegral n) (fromIntegral m) :: T
@@ -385,7 +385,7 @@ prop_delete x =
 prop_delete_insert (x :: T) =
     case peek x of
         Nothing -> True
-        Just n  -> insertLeft n (delete n y) == y
+        Just n  -> insertUp n (delete n y) == y
     where
         y = swapMaster x
 
@@ -399,11 +399,11 @@ prop_delete_local (x :: T) =
 prop_delete_focus n (x :: T) = member n x && Just n /= peek x ==> peek (delete n x) == peek x
 
 -- ---------------------------------------------------------------------
--- swapLeft, swapRight, swapMaster: reordiring windows
+-- swapUp, swapDown, swapMaster: reordiring windows
 
 -- swap is trivially reversible
-prop_swap_left  (x :: T) = (swapLeft  (swapRight x)) == x
-prop_swap_right (x :: T) = (swapRight (swapLeft  x)) ==  x
+prop_swap_left  (x :: T) = (swapUp  (swapDown x)) == x
+prop_swap_right (x :: T) = (swapDown (swapUp  x)) ==  x
 -- TODO swap is reversible
 -- swap is reversible, but involves moving focus back the window with
 -- master on it. easy to do with a mouse...
@@ -421,18 +421,18 @@ prop_swap_master_focus (x :: T) = peek x == (peek $ swapMaster x)
 --    = case peek x of
 --        Nothing -> True
 --        Just f  -> focus (stack (workspace $ current (swap x))) == f
-prop_swap_left_focus   (x :: T) = peek x == (peek $ swapLeft   x)
-prop_swap_right_focus  (x :: T) = peek x == (peek $ swapRight  x)
+prop_swap_left_focus   (x :: T) = peek x == (peek $ swapUp   x)
+prop_swap_right_focus  (x :: T) = peek x == (peek $ swapDown  x)
 
 -- swap is local
 prop_swap_master_local (x :: T) = hidden_spaces x == hidden_spaces (swapMaster x)
-prop_swap_left_local   (x :: T) = hidden_spaces x == hidden_spaces (swapLeft   x)
-prop_swap_right_local  (x :: T) = hidden_spaces x == hidden_spaces (swapRight  x)
+prop_swap_left_local   (x :: T) = hidden_spaces x == hidden_spaces (swapUp   x)
+prop_swap_right_local  (x :: T) = hidden_spaces x == hidden_spaces (swapDown  x)
 
 -- rotation through the height of a stack gets us back to the start
-prop_swap_all_l (x :: T) = (foldr (const swapLeft)  x [1..n]) == x
+prop_swap_all_l (x :: T) = (foldr (const swapUp)  x [1..n]) == x
   where n = length (index x)
-prop_swap_all_r (x :: T) = (foldr (const swapRight) x [1..n]) == x
+prop_swap_all_r (x :: T) = (foldr (const swapDown) x [1..n]) == x
   where n = length (index x)
 
 prop_swap_master_idempotent (x :: T) = swapMaster (swapMaster x) == swapMaster x
@@ -513,8 +513,8 @@ main = do
 
         ,("index/length"        , mytest prop_index_length)
 
-        ,("focus left : invariant", mytest prop_focusLeft_I)
-        ,("focus right: invariant", mytest prop_focusRight_I)
+        ,("focus left : invariant", mytest prop_focusUp_I)
+        ,("focus right: invariant", mytest prop_focusDown_I)
         ,("focusWindow: invariant", mytest prop_focus_I)
         ,("focus left/master"   , mytest prop_focus_left_master)
         ,("focus right/master"  , mytest prop_focus_right_master)
@@ -529,7 +529,7 @@ main = do
 
         ,("findIndex"           , mytest prop_findIndex)
 
-        ,("insert: invariant"   , mytest prop_insertLeft_I)
+        ,("insert: invariant"   , mytest prop_insertUp_I)
         ,("insert/new"          , mytest prop_insert_empty)
         ,("insert is idempotent", mytest prop_insert_idem)
         ,("insert is reversible", mytest prop_insert_delete)
@@ -546,17 +546,17 @@ main = do
         ,("delete/focus"        , mytest prop_delete_focus)
 
         ,("swapMaster: invariant", mytest prop_swap_master_I)
-        ,("swapLeft: invariant" , mytest prop_swap_left_I)
-        ,("swapRight: invariant", mytest prop_swap_right_I)
+        ,("swapUp: invariant" , mytest prop_swap_left_I)
+        ,("swapDown: invariant", mytest prop_swap_right_I)
         ,("swapMaster id on focus", mytest prop_swap_master_focus)
-        ,("swapLeft id on focus", mytest prop_swap_left_focus)
-        ,("swapRight id on focus", mytest prop_swap_right_focus)
+        ,("swapUp id on focus", mytest prop_swap_left_focus)
+        ,("swapDown id on focus", mytest prop_swap_right_focus)
         ,("swapMaster is idempotent", mytest prop_swap_master_idempotent)
         ,("swap all left  "     , mytest prop_swap_all_l)
         ,("swap all right "     , mytest prop_swap_all_r)
         ,("swapMaster is local" , mytest prop_swap_master_local)
-        ,("swapLeft is local"   , mytest prop_swap_left_local)
-        ,("swapRight is local"  , mytest prop_swap_right_local)
+        ,("swapUp is local"   , mytest prop_swap_left_local)
+        ,("swapDown is local"  , mytest prop_swap_right_local)
 
         ,("shift: invariant"    , mytest prop_shift_I)
         ,("shift is reversible" , mytest prop_shift_reversible)
