@@ -147,8 +147,9 @@ data Stack a = Empty
     deriving (Show, Read, Eq)
 
 
--- this function indicates to catch that an error is expected
-abort x = error x
+-- | this function indicates to catch that an error is expected
+abort :: String -> a
+abort x = error $ "xmonad: StackSet: " ++ x
 
 -- ---------------------------------------------------------------------
 -- Construction
