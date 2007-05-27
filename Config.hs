@@ -49,9 +49,9 @@ defaultDelta = 3%100
 defaultWindowsInMaster :: Int
 defaultWindowsInMaster = 1
 
--- Default width of gap at top of screen for a menu bar (e.g. 16)
-defaultMenuGap :: Int
-defaultMenuGap = 0
+-- Default height of gap at top of screen for a menu bar (e.g. 15)
+defaultStatusGap :: Int
+defaultStatusGap = 0 -- 15 for default dzen
 
 -- numlock handling:
 --
@@ -113,6 +113,9 @@ keys = M.fromList $
     -- increase or decrease number of windows in the master area
     , ((modMask              , xK_comma ), sendMessage (IncMasterN 1)) -- @@ Increment the number of windows in the master area
     , ((modMask              , xK_period), sendMessage (IncMasterN (-1))) -- @@ Deincrement the number of windows in the master area
+
+    -- toggle the status bar gap
+    , ((modMask              , xK_b     ), modifyGap (\n -> if n == 0 then defaultStatusGap else 0)) -- @@ Toggle the status bar gap
 
     -- quit, or restart
     , ((modMask .|. shiftMask, xK_q                     ), io (exitWith ExitSuccess)) -- @@ Quit xmonad

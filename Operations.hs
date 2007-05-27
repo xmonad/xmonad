@@ -15,7 +15,7 @@ module Operations where
 
 import XMonad
 import qualified StackSet as W
-import {-# SOURCE #-} Config (borderWidth,defaultMenuGap)
+import {-# SOURCE #-} Config (borderWidth)
 
 import Data.Maybe
 import Data.List            (genericIndex, intersectBy)
@@ -66,6 +66,12 @@ shift n = withFocused hide >> windows (W.shift n)
 -- | view. Change the current workspace to workspace at offset n (0 indexed).
 view :: WorkspaceId -> X ()
 view = windows . W.view
+
+-- | Modify the size of the status gap at the top of the screen
+modifyGap :: (Int -> Int) -> X ()
+modifyGap f = do modify $ \s -> s { statusGap = max 0 (f (statusGap s)) }
+                 refresh
+
 
 -- | Kill the currently focused client. If we do kill it, we'll get a
 -- delete notify back from X.
@@ -123,7 +129,7 @@ hide w = withDisplay $ \d -> do
 --
 refresh :: X ()
 refresh = do
-    XState { windowset = ws, layouts = fls, xineScreens = xinesc } <- get
+    XState { windowset = ws, layouts = fls, xineScreens = xinesc, statusGap = gap } <- get
     d <- asks display
 
     -- for each workspace, layout the currently visible workspaces
@@ -133,8 +139,8 @@ refresh = do
             Just l = fmap fst $ M.lookup n fls
             Rectangle sx sy sw sh = genericIndex xinesc (W.screen w)
         -- now tile the windows on this workspace
-        rs <- doLayout l (Rectangle sx (sy + fromIntegral defaultMenuGap)
-                                    sw (sh - fromIntegral defaultMenuGap)) (W.index this)
+        rs <- doLayout l (Rectangle sx (sy + fromIntegral gap)
+                                    sw (sh - fromIntegral gap)) (W.index this)
         mapM_ (\(win,rect) -> io (tileWindow d win rect)) rs
 
         -- and raise the focused window if there is one.

@@ -40,6 +40,7 @@ data XState = XState
     { windowset         :: !WindowSet           -- ^ workspace list
     , xineScreens       :: ![Rectangle]         -- ^ dimensions of each screen
     , dimensions        :: !(Position,Position) -- ^ dimensions of the screen,
+    , statusGap         :: !Int                 -- ^ width of status bar
                                                 -- used for hiding windows
     , layouts           :: !(M.Map WorkspaceId (Layout, [Layout]))  }
                        -- ^ mapping of workspaces to descriptions of their layouts
