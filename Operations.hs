@@ -50,15 +50,12 @@ manage w = do
 unmanage :: Window -> X ()
 unmanage = windows . W.delete
 
--- | focus. focus window to the left or right.
-focusUp, focusDown, swapUp, swapDown :: X ()
-focusUp   = windows W.focusUp
-focusDown = windows W.focusDown
-swapUp    = windows W.swapUp
-swapDown  = windows W.swapDown
-
--- | swapMaster. Move the currently focused window into the master frame
-swapMaster :: X ()
+-- | focus. focus window up or down. or swap various windows.
+focusUp, focusDown, swapUp, swapDown, swapMaster :: X ()
+focusUp    = windows W.focusUp
+focusDown  = windows W.focusDown
+swapUp     = windows W.swapUp
+swapDown   = windows W.swapDown
 swapMaster = windows W.swapMaster
 
 -- | shift. Move a window to a new workspace, 0 indexed.
@@ -93,19 +90,24 @@ kill = withDisplay $ \d -> withFocused $ \w -> do
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WindowSet -> WindowSet) -> X ()
 windows f = do
-    oldws <- gets windowset
-    let news = f oldws
-    modify (\s -> s { windowset = news })
+    old  <- gets windowset
+    let new = f old
+    modify (\s -> s { windowset = new })
     refresh
-    -- TODO:  this requires too much mucking about with StackSet internals
+
+    -- We now go to some effort to compute the minimal set of windows to hide.
+    -- The minimal set being only those windows which weren't previously hidden,
+    -- which is the intersection of previously visible windows with those now hidden
     mapM_ hide . concatMap (integrate . W.stack) $
-        intersectBy (\w x -> W.tag w == W.tag x) (map W.workspace $ W.current oldws : W.visible oldws) (W.hidden news)
-        -- intersection of previously visible with currently hidden
+        intersectBy (\w x -> W.tag w == W.tag x)
+            (map W.workspace $ W.current old : W.visible old)
+            (W.hidden new)
+
     clearEnterEvents
- where
+
     -- TODO: move this into StackSet.  This isn't exactly the usual integrate.
-    integrate W.Empty        = []
-    integrate (W.Node x l r) = x : l ++ r
+ where integrate W.Empty        = []
+       integrate (W.Node x l r) = x : l ++ r
 
 -- | hide. Hide a window by moving it off screen.
 hide :: Window -> X ()
@@ -158,16 +160,19 @@ tileWindow d w r = do
 
 -- ---------------------------------------------------------------------
 
--- | rescreen.  The screen configuration may have changed, update the state and
--- refresh the screen.
+-- | rescreen.  The screen configuration may have changed (due to
+-- xrandr), update the state and refresh the screen.
 rescreen :: X ()
 rescreen = do
     xinesc <- withDisplay (io . getScreenInfo)
+
     -- TODO: This stuff is necessary because Xlib apparently caches screen
     -- width/height.  Find a better solution later.  I hate Xlib.
     let sx = maximum $ map (\r -> rect_x r + fromIntegral (rect_width  r)) xinesc
         sy = maximum $ map (\r -> rect_y r + fromIntegral (rect_height r)) xinesc
+
     modify (\s -> s { xineScreens = xinesc, dimensions = (sx, sy) })
+
     windows $ \ws@(W.StackSet { W.current = v, W.visible = vs, W.hidden = hs }) ->
         let (x:xs, ys) = splitAt (length xinesc) $ map W.workspace (v:vs) ++ hs
         in  ws { W.current = W.Screen x 0
@@ -181,19 +186,17 @@ buttonsToGrab = [button1, button2, button3]
 
 -- | setButtonGrab. Tell whether or not to intercept clicks on a given window
 setButtonGrab :: Bool -> Window -> X ()
-setButtonGrab True  w = withDisplay $ \d -> io $ flip mapM_ buttonsToGrab $ \b ->
-    grabButton d b anyModifier w False (buttonPressMask .|. buttonReleaseMask)
-               grabModeAsync grabModeSync none none
-
-setButtonGrab False w = withDisplay $ \d -> io $ flip mapM_ buttonsToGrab $ \b ->
-        ungrabButton d b anyModifier w
+setButtonGrab grab w = withDisplay $ \d -> io $ (`mapM_` buttonsToGrab) $ \b ->
+    if grab then grabButton d b anyModifier w False (buttonPressMask .|. buttonReleaseMask)
+                   grabModeAsync grabModeSync none none
+            else ungrabButton d b anyModifier w
 
 -- ---------------------------------------------------------------------
 -- Setting keyboard focus
 
 -- | Set the focus to the window on top of the stack, or root
 setTopFocus :: X ()
-setTopFocus = withWorkspace $ \ws -> maybe (asks theRoot >>= setFocusX) setFocusX (W.peek ws)
+setTopFocus = withWorkspace $ maybe (setFocusX =<< asks theRoot) setFocusX . W.peek
 
 -- | Set focus explicitly to window 'w' if it is managed by us, or root.
 focus :: Window -> X ()
@@ -264,8 +267,10 @@ full = Layout { doLayout     = \sc ws -> return [ (w,sc) | w <- ws ]
 tall, wide :: Int -> Rational -> Rational -> Layout
 wide nmaster delta frac = mirrorLayout (tall nmaster delta frac)
 
-tall nmaster delta frac = Layout { doLayout = \r w -> return $ zip w $ tile frac r nmaster (length w)
-                                 , modifyLayout = \m -> fmap resize (fromMessage m) `mplus` fmap incmastern (fromMessage m) }
+tall nmaster delta frac =
+    Layout { doLayout     = \r -> return . ap zip (tile frac r nmaster . length)
+           , modifyLayout = \m -> fmap resize     (fromMessage m) `mplus`
+                                  fmap incmastern (fromMessage m) }
 
     where resize Shrink = tall nmaster delta (frac-delta)
           resize Expand = tall nmaster delta (frac+delta)
@@ -288,8 +293,8 @@ mirrorLayout (Layout { doLayout = dl, modifyLayout = ml }) =
 --  * no gaps exist between windows.
 --
 tile :: Rational -> Rectangle -> Int -> Int -> [Rectangle]
-tile _ r nmaster n | n <= nmaster = splitVertically n r
-tile f r nmaster n = splitVertically nmaster r1 ++ splitVertically (n-nmaster) r2
+tile f r nmaster n | n <= nmaster = splitVertically n r
+                   | otherwise    = splitVertically nmaster r1 ++ splitVertically (n-nmaster) r2
     where (r1,r2) = splitHorizontallyBy f r
 
 splitVertically, splitHorizontally :: Int -> Rectangle -> [Rectangle]
