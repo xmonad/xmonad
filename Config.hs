@@ -17,72 +17,6 @@
 
 module Config where
 
---
--- xmonad bindings follow mostly the dwm/wmii conventions:
--- 
---     key combination         action
---     
---     mod-shift-return        new xterm
---     mod-p                   launch dmenu
---     mod-shift-p             launch gmrun
--- 
---     mod-space               switch tiling mode
---     mod-n                   nudge current window into fullscreen mode
--- 
---     mod-tab                 shift focus to next window in stack
---     mod-j                   shift focus to next window in stack
---     mod-k                   shift focus previous window in stack 
--- 
---     mod-h                   decrease the size of the master area
---     mod-l                   increase the size of the master area
--- 
---     mod-shift-c             kill client
---     mod-shift-q             exit window manager
---     mod-shift-ctrl-q        restart window manager ('xmonad' must be in $PATH)
--- 
---     mod-return              swap focused window with master window
--- 
---     mod-1..9                switch to workspace N
---     mod-shift-1..9          move client to workspace N
--- 
---     mod-w,e,r               switch to physical/Xinerama screen 1, 2 or 3.
--- 
--- xmonad places each window into a "workspace." Each workspace can have
--- any number of windows, which you can cycle though with mod-j and mod-k.
--- Windows are either displayed full screen, tiled horizontally, or tiled
--- vertically. You can toggle the layout mode with mod-space, which will
--- cycle through the available modes.
--- 
--- You can switch to workspace N with mod-N. For example, to switch to
--- workspace 5, you would press mod-5. Similarly, you can move the current
--- window to another workspace with mod-shift-N.
--- 
--- When running with multiple monitors (Xinerama), each screen has exactly
--- 1 workspace visible. When xmonad starts, workspace 1 is on screen 1,
--- workspace 2 is on screen 2, etc. If you switch to a workspace which is
--- currently visible on another screen, xmonad simply switches focus to
--- that screen. If you switch to a workspace which is *not* visible, xmonad
--- replaces the workspace on the *current* screen with the workspace you
--- selected.
--- 
--- For example, if you have the following configuration:
--- 
--- Screen 1: Workspace 2
--- Screen 2: Workspace 5 (current workspace)
--- 
--- and you wanted to view workspace 7 on screen 1, you would press:
--- 
--- mod-2 (to select workspace 2, and make screen 1 the current screen)
--- mod-7 (to select workspace 7)
--- 
--- Since switching to the workspace currently visible on a given screen is
--- such a common operation, shortcuts are provided: mod-{w,e,r} switch to
--- the workspace currently visible on screens 1, 2, and 3 respectively.
--- Likewise, shift-mod-{w,e,r} moves the current window to the workspace on
--- that screen.  Using these keys, the above example would become mod-w
--- mod-7.
--- 
-
 -- 
 -- Useful imports
 --
@@ -149,49 +83,47 @@ defaultLayouts = [ full
 keys :: M.Map (KeyMask, KeySym) (X ())
 keys = M.fromList $
     -- launching and killing programs
-    [ ((modMask .|. shiftMask, xK_Return), spawn "xterm")
-    , ((modMask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && exec $exe")
-    , ((modMask .|. shiftMask, xK_p     ), spawn "gmrun")
-    , ((modMask .|. shiftMask, xK_c     ), kill)
+    [ ((modMask .|. shiftMask, xK_Return), spawn "xterm") -- @@ Launch an xterm
+    , ((modMask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && exec $exe") -- @@ Launch dmenu
+    , ((modMask .|. shiftMask, xK_p     ), spawn "gmrun") -- @@ Launch gmrun
+    , ((modMask .|. shiftMask, xK_c     ), kill) -- @@ Close the focused window
 
-    -- rotate through the available layout algorithms
-    , ((modMask,               xK_space ), switchLayout)
+    , ((modMask,               xK_space ), switchLayout) -- @@ Rotate through the available layout algorithms
 
-    -- 'nudge': resize viewed windows to the correct size.
-    , ((modMask,               xK_n     ), refresh)
+    , ((modMask,               xK_n     ), refresh) -- 'nudge': resize viewed windows to the correct size
 
     -- move focus up or down the window stack
-    , ((modMask,               xK_Tab   ), focusDown)
-    , ((modMask,               xK_j     ), focusDown)
-    , ((modMask,               xK_k     ), focusUp)
+    , ((modMask,               xK_Tab   ), focusDown) -- @@ Move focus to the next window
+    , ((modMask,               xK_j     ), focusDown) -- @@ Move focus to the next window
+    , ((modMask,               xK_k     ), focusUp  ) -- @@ Move focus to the previous window
 
     -- modifying the window order
-    , ((modMask,               xK_Return), swapMaster)
-    , ((modMask .|. shiftMask, xK_j     ), swapDown)
-    , ((modMask .|. shiftMask, xK_k     ), swapUp)
+    , ((modMask,               xK_Return), swapMaster) -- @@ Swap the focused window and the master window
+    , ((modMask .|. shiftMask, xK_j     ), swapDown  ) -- @@ Swap the focused window with the next window
+    , ((modMask .|. shiftMask, xK_k     ), swapUp    ) -- @@ Swap the focused window with the previous window
 
     -- resizing the master/slave ratio
-    , ((modMask,               xK_h     ), sendMessage Shrink)
-    , ((modMask,               xK_l     ), sendMessage Expand)
+    , ((modMask,               xK_h     ), sendMessage Shrink) -- @@ Shrink the master area
+    , ((modMask,               xK_l     ), sendMessage Expand) -- @@ Expand the master area
 
     -- increase or decrease number of windows in the master area
-    , ((modMask              , xK_comma ), sendMessage (IncMasterN 1))
-    , ((modMask              , xK_period), sendMessage (IncMasterN (-1)))
+    , ((modMask              , xK_comma ), sendMessage (IncMasterN 1)) -- @@ Increment the number of windows in the master area
+    , ((modMask              , xK_period), sendMessage (IncMasterN (-1))) -- @@ Deincrement the number of windows in the master area
 
     -- quit, or restart
-    , ((modMask .|. shiftMask, xK_q                     ), io $ exitWith ExitSuccess)
-    , ((modMask .|. shiftMask .|. controlMask, xK_q     ), restart Nothing True)
+    , ((modMask .|. shiftMask, xK_q                     ), io (exitWith ExitSuccess)) -- @@ Quit xmonad
+    , ((modMask .|. shiftMask .|. controlMask, xK_q     ), restart Nothing True) -- @@ Restart xmonad
 
     ] ++
-    -- Keybindings to get to each workspace:
+    -- mod-[1..9] @@ Switch to workspace N
+    -- mod-shift-[1..9] @@ Move client to workspace N
     [((m .|. modMask, k), f i)
         | (i, k) <- zip [0 .. fromIntegral workspaces - 1] [xK_1 ..]
         , (f, m) <- [(view, 0), (shift, shiftMask)]]
 
-    -- Keybindings to each screen :
-    -- mod-wer (underneath 123) switches to physical/Xinerama screens 1 2 and 3
+    -- mod-{w,e,r} @@ Switch to physical/Xinerama screens 1, 2, or 3
+    -- mod-shift-{w,e,r} @@ Move client to screen 1, 2, or 3
     ++
     [((m .|. modMask, key), screenWorkspace sc >>= f)
         | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
         , (f, m) <- [(view, 0), (shift, shiftMask)]]
-

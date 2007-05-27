@@ -36,36 +36,7 @@ mod-7 (to select workspace 7)
 .PP
 Since switching to the workspace currently visible on a given screen is such a common operation, shortcuts are provided: mod-{w,e,r} switch to the workspace currently visible on screens 1, 2, and 3 respectively. Likewise, shift-mod-{w,e,r} moves the current window to the workspace on that screen. Using these keys, the above example would become mod-w mod-7.
 .SS Default keyboard bindings
-.IP \fBmod\-shift\-return\fR
-Launch \fBxterm\fR.
-.IP \fBmod\-p\fR
-Launch \fBdmenu\fR.
-.IP \fBmod\-shift\-p\fR
-Launch \fBgmrun\fR.
-.IP \fBmod\-space\fR
-Switch tiling mode.
-.IP "\fBmod\-j\fR or \fBmod\-tab\fR"
-Focus next window in stack.
-.IP \fBmod\-k\fR
-Focus previous window in stack.
-.IP \fBmod\-h\fR
-Decrease the size of the master area.
-.IP \fBmod\-l\fR
-Increase the size of the master area.
-.IP \fBmod\-shift\-c\fR
-Kill client.
-.IP \fBmod\-shift\-q\fR
-Exit xmonad window manager.
-.IP \fBmod\-shift\-ctrl\-q\fR
-Restart xmonad window manager.
-.IP \fBmod\-return\fR
-Cycle the current tiling order.
-.IP \fBmod\-[1..9]\fR
-Switch to workspace N.
-.IP \fBmod\-shift\-[1..9]\fR
-Move client to workspace N.
-.IP \fBmod\-[w,e,r]\fR
-Switch to physical/Xinerama screen 1, 2 or 3.
+___KEYBINDINGS___
 .SH EXAMPLES
 To use \fBxmonad\fR as your window manager add:
 .RS
