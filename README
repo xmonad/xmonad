@@ -50,7 +50,7 @@ And then build with Cabal:
 
     runhaskell Setup.lhs configure --prefix=/home/dons
     runhaskell Setup.lhs build
-    runhaskell Setup.lhs install
+    runhaskell Setup.lhs install --user
 
 Finally, add:
 
