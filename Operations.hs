@@ -22,7 +22,7 @@ import Data.List            (genericIndex, intersectBy)
 import Data.Bits            ((.|.))
 import qualified Data.Map as M
 
-import System.Mem (performGC)
+-- import System.Mem (performGC)
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Arrow
@@ -140,7 +140,7 @@ refresh = do
 
     setTopFocus
     clearEnterEvents
-    io performGC -- really helps 
+--  io performGC -- really helps 
 
 -- | clearEnterEvents.  Remove all window entry events from the event queue.
 clearEnterEvents :: X ()
