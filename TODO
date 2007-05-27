@@ -1,6 +1,7 @@
 - tasks for xmonad 0.2
     - testing/ more QC
     - check build systems for X11-extras/X11.
+    - audit for events handled in dwm.
       
 - possibles:
     - use more constrained type in StackSet to avoid pattern match warnings
