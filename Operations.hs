@@ -69,9 +69,7 @@ view = windows . W.view
 
 -- | Modify the size of the status gap at the top of the screen
 modifyGap :: (Int -> Int) -> X ()
-modifyGap f = do modify $ \s -> s { statusGap = max 0 (f (statusGap s)) }
-                 refresh
-
+modifyGap f = modify (\s -> s { statusGap = max 0 (f (statusGap s)) }) >> refresh
 
 -- | Kill the currently focused client. If we do kill it, we'll get a
 -- delete notify back from X.
@@ -141,9 +139,8 @@ refresh = do
 
         -- now tile the windows on this workspace, and set gap maybe on current
         rs <- doLayout l (if w == W.current ws
-                                then Rectangle sx (sy + fromIntegral gap)
-                                               sw (sh - fromIntegral gap)
-                                else r) (W.index this)
+                            then Rectangle sx (sy + fromIntegral gap) sw (sh - fromIntegral gap)
+                            else r) (W.index this)
         mapM_ (\(win,rect) -> io (tileWindow d win rect)) rs
 
         -- and raise the focused window if there is one.
@@ -214,10 +211,8 @@ setTopFocus = withWorkspace $ maybe (setFocusX =<< asks theRoot) setFocusX . W.p
 -- the mouse to a new screen).
 focus :: Window -> X ()
 focus w = withWorkspace $ \s -> do
-    if W.member w s then do modify $ \st -> st { windowset = W.focusWindow w s } -- avoid 'refresh'
-                            refresh -- and set gap -- was: setFocusX w
-                    else whenX (isRoot w) $ setFocusX w
-                            -- we could refresh here, moving gap too.
+    if W.member w s then modify (\st -> st { windowset = W.focusWindow w s }) >> refresh
+                    else whenX (isRoot w) $ setFocusX w -- we could refresh here, moving gap too.
     -- XXX a focus change could be caused by switching workspaces in xinerama.
     -- if so, and the gap is in use, the gap should probably follow the
     -- cursor to the new screen. 
