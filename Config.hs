@@ -49,6 +49,10 @@ defaultDelta = 3%100
 defaultWindowsInMaster :: Int
 defaultWindowsInMaster = 1
 
+-- Default width of gap at top of screen for a menu bar (e.g. 16)
+defaultMenuGap :: Int
+defaultMenuGap = 0
+
 -- numlock handling:
 --
 -- The mask for the numlock key. You may need to change this on some systems.

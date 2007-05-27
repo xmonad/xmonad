@@ -15,7 +15,7 @@ module Operations where
 
 import XMonad
 import qualified StackSet as W
-import {-# SOURCE #-} Config (borderWidth)
+import {-# SOURCE #-} Config (borderWidth,defaultMenuGap)
 
 import Data.Maybe
 import Data.List            (genericIndex, intersectBy)
@@ -131,8 +131,10 @@ refresh = do
         let n      = W.tag (W.workspace w)
             this   = W.view n ws
             Just l = fmap fst $ M.lookup n fls
+            Rectangle sx sy sw sh = genericIndex xinesc (W.screen w)
         -- now tile the windows on this workspace
-        rs <- doLayout l (genericIndex xinesc (W.screen w)) (W.index this)
+        rs <- doLayout l (Rectangle sx (sy + fromIntegral defaultMenuGap)
+                                    sw (sh - fromIntegral defaultMenuGap)) (W.index this)
         mapM_ (\(win,rect) -> io (tileWindow d win rect)) rs
 
         -- and raise the focused window if there is one.
