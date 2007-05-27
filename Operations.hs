@@ -216,7 +216,8 @@ setFocusX w = withWorkspace $ \ws -> do
             setButtonGrab True otherw
             io $ setWindowBorder dpy otherw (color_pixel nbc)
 
-    withDisplay $ \d -> io $ setInputFocus d w revertToPointerRoot 0
+    io $ do setInputFocus dpy w revertToPointerRoot 0
+            raiseWindow dpy w
     setButtonGrab False w
     io $ setWindowBorder dpy w (color_pixel fbc)
 
