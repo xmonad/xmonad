@@ -136,7 +136,6 @@ spawn x = io $ do
     pid <- forkProcess $ do
         forkProcess (createSession >> executeFile "/bin/sh" False ["-c", x] Nothing)
         exitWith ExitSuccess
-        return ()
     getProcessStatus True False pid
     return ()
 
