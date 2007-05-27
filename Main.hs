@@ -80,6 +80,7 @@ main = do
             mapM_ manage ws
             -- main loop, for all you HOF/recursion fans out there.
             forever $ handle =<< io (nextEvent dpy e >> getEvent e)
+
       where forever a = a >> forever a
 
 -- ---------------------------------------------------------------------
@@ -91,10 +92,10 @@ scan :: Display -> Window -> IO [Window]
 scan dpy rootw = do
     (_, _, ws) <- queryTree dpy rootw
     filterM ok ws
-  where
-    ok w = do wa <- getWindowAttributes dpy w
-              return $ not (wa_override_redirect wa)
-                     && wa_map_state wa == waIsViewable
+
+  where ok w = do wa <- getWindowAttributes dpy w
+                  return $ not (wa_override_redirect wa)
+                         && wa_map_state wa == waIsViewable
 
 -- | Grab the keys back
 grabKeys :: Display -> Window -> IO ()
@@ -106,8 +107,8 @@ grabKeys dpy rootw = do
          -- XKeysymToKeycode() returns zero."
          when (kc /= '\0') $ mapM_ (grab kc . (mask .|.)) $
             [0, numlockMask, lockMask, numlockMask .|. lockMask]
-  where
-    grab kc m = grabKey dpy kc m rootw True grabModeAsync grabModeAsync
+
+  where grab kc m = grabKey dpy kc m rootw True grabModeAsync grabModeAsync
 
 -- ---------------------------------------------------------------------
 -- | Event handler. Map X events onto calls into Operations.hs, which
