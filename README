@@ -1,32 +1,40 @@
-                   xmonad : a lightweight X11 window manager.
+               xmonad : a lightweight X11 window manager.
 
-                               http://xmonad.org
+                           http://xmonad.org
+
+------------------------------------------------------------------------
 
 About:
 
-Xmonad is a minimalist tiling window manager for X, written in Haskell. Windows
-are managed using automatic layout algorithms, which can be dynamically
-reconfigured. At any time windows are arranged so as to maximise the use of
-screen real estate. All features of the window manager are accessible purely
-from the keyboard: a mouse is entirely optional. Xmonad is configured in
-Haskell, and custom layout algorithms may be implemented by the user in config
-files. A principle of Xmonad is predictability: the user should know in advance
-precisely the window arrangement that will result from any action.
+    Xmonad is a tiling window manager for X. Windows are managed using
+    automatic tiling algorithms, which can be dynamically configured.
+    Windows are arranged so as to tile the screen without gaps, maximising
+    screen use. All features of the window manager are accessible 
+    from the keyboard: a mouse is strictly optional. Xmonad is written
+    and extensible in Haskell, and custom layout algorithms may be
+    implemented by the user in config files. A guiding principle of the
+    user interface is <i>predictability</i>: users should know in
+    advance precisely the window arrangement that will result from any
+    action, leading to an intuitive user interface.
 
-By default xmonad provides three layout algorithms: tall, wide and fullscreen.
-In tall or wide mode, windows are tiled and arranged to prevent overlap and
-maximise screen use. Sets of windows are grouped together on virtual screens,
-and each screen retains its own layout, which may be reconfigured dynamically.
-Multiple physical monitors are supported via Xinerama, allowing simultaneous
-display of a number of screens.
+    Xmonad provides three tiling algorithms by default: tall, wide and
+    fullscreen. In tall or wide mode, all windows are visible and tiled
+    to fill the plane without gaps. In fullscreen mode only the focused
+    window is visible, filling the screen.  Alternative tiling
+    algorithms are provided as extensions. Sets of windows are grouped
+    together on virtual workspaces and each workspace retains its own
+    layout. Multiple physical monitors are supported via Xinerama,
+    allowing simultaneous display of several workspaces.
 
-By utilising the expressivity of a modern functional language with a rich
-static type system, Xmonad provides a complete, featureful window manager in
-less than 500 lines of code, with an emphasis on correctness and robustness.
-Internal properties of the window manager are checked using a combination of
-static guarantees provided by the type system, and type-based automated
-testing. A benefit of this is that the code is simple to understand, and easy
-to modify.
+    Adhering to a minimalist philosophy of doing one job, and doing it
+    well, the entire code base remains tiny, and is written to be simple
+    to understand and modify. By using Haskell as a configuration
+    language arbitrarily complex extensions may be implemented by the
+    user using a powerful `scripting' language, without needing to
+    modify the window manager directly. For example, users may write
+    their own tiling algorithms.
+
+------------------------------------------------------------------------
 
 Building:
 
@@ -36,15 +44,14 @@ Get the dependencies
     whether you've got a package run 'ghc-pkg list some_package_name'
 
     mtl             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/mtl-1.0
+    unix            http://hackage.haskell.org/cgi-bin/hackage-scripts/package/unix-2.0 
+
     X11             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-1.2
         (Unfortunately X11-1.2 does not work correctly on AMD64.  The latest
          darcs version from http://darcs.haskell.org/packages/X11 does.)
-    X11-extras:     http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-extras-0.1
-    unix            http://hackage.haskell.org/cgi-bin/hackage-scripts/package/unix-2.0 
-        (included with ghc)
 
-    dmenu   2.*     http://www.suckless.org/download/dmenu-2.7.tar.gz
-        (optional)
+    X11-extras:     http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-extras-0.1
+        (included with ghc)
 
 And then build with Cabal:
 
@@ -52,11 +59,33 @@ And then build with Cabal:
     runhaskell Setup.lhs build
     runhaskell Setup.lhs install --user
 
-Finally, add:
+------------------------------------------------------------------------
+
+Running xmonad:
+
+    Add:
 
          exec /home/dons/bin/xmonad
 
-    to the last line of your .xsession file
+    to the last line of your .xsession file.
+
+------------------------------------------------------------------------
+
+Other useful programs:
+
+ For a program dispatch menu:
+
+    dmenu           http://www.suckless.org/download/
+ or
+    gmrun           (in your package system)
+
+ For custom status bars:
+
+    dzen            http://gotmor.googlepages.com/dzen
+
+ A nicer xterm replacment, that supports resizing better:
+
+    urxvt           http://software.schmorp.de/pkg/rxvt-unicode.html
 
 Authors:
 
