@@ -67,7 +67,7 @@ Running xmonad:
 
          exec /home/dons/bin/xmonad
 
-    to the last line of your .xsession file.
+    to the last line of your .xsession or .xinitrc file.
 
 ------------------------------------------------------------------------
 
