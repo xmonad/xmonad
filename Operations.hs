@@ -141,16 +141,14 @@ refresh = do
         let n      = W.tag (W.workspace w)
             this   = W.view n ws
             Just l = fmap fst $ M.lookup n fls
-            r@(Rectangle sx sy sw sh) = genericIndex xinesc (W.screen w)
-            (gt,gb,gl,gr)             = genericIndex gaps   (W.screen w)
+            (Rectangle sx sy sw sh) = genericIndex xinesc (W.screen w)
+            (gt,gb,gl,gr)           = genericIndex gaps   (W.screen w)
 
-        -- now tile the windows on this workspace, and set gap maybe on current
-        rs <- doLayout l (if w == W.current ws
-                            then Rectangle (sx + fromIntegral gl)
-                                           (sy + fromIntegral gt)
-                                           (sw - fromIntegral (gl + gr))
-                                           (sh - fromIntegral (gt + gb))
-                            else r) (W.index this)
+        -- now tile the windows on this workspace, modified by the gap
+        rs <- doLayout l (Rectangle (sx + fromIntegral gl)
+                                    (sy + fromIntegral gt)
+                                    (sw - fromIntegral (gl + gr))
+                                    (sh - fromIntegral (gt + gb))) (W.index this)
         mapM_ (\(win,rect) -> io (tileWindow d win rect)) rs
 
         -- and raise the focused window if there is one.
