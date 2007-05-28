@@ -179,7 +179,7 @@ tileWindow d w r = do
 -- ---------------------------------------------------------------------
 
 -- | rescreen.  The screen configuration may have changed (due to
--- xrandr), update the state and refresh the screen.
+-- xrandr), update the state and refresh the screen, and reset the gap.
 rescreen :: X ()
 rescreen = do
     xinesc <- withDisplay (io . getScreenInfo)
@@ -189,7 +189,8 @@ rescreen = do
     let sx = maximum $ map (\r -> rect_x r + fromIntegral (rect_width  r)) xinesc
         sy = maximum $ map (\r -> rect_y r + fromIntegral (rect_height r)) xinesc
 
-    modify (\s -> s { xineScreens = xinesc, dimensions = (sx, sy) })
+    modify (\s -> s { xineScreens = xinesc , dimensions  = (sx, sy)
+                    , statusGaps  = take (length xinesc) $ (statusGaps s) ++ repeat (0,0,0,0) })
 
     windows $ \ws@(W.StackSet { W.current = v, W.visible = vs, W.hidden = hs }) ->
         let (x:xs, ys) = splitAt (length xinesc) $ map W.workspace (v:vs) ++ hs
