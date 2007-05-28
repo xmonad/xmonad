@@ -36,7 +36,7 @@ allBindings xs = map (binding . map trim) (xs =~ "(.*)--(.*)@@(.*)")
 
 -- FIXME: What escaping should we be doing on these strings?
 troff :: (String, String) -> String
-troff (key, desc) = ".IP \\fB" ++ key ++ "\\fR\n" ++ desc ++ "\n"
+troff (key, desc) = ".IP\n \\fB" ++ key ++ "\\fR\n" ++ desc ++ "\n"
 
 replace :: Eq a => a -> a -> [a] -> [a]
 replace x y = map (\a -> if a == x then y else a)
