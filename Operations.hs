@@ -67,9 +67,15 @@ shift n = withFocused hide >> windows (W.shift n)
 view :: WorkspaceId -> X ()
 view = windows . W.view
 
--- | Modify the size of the status gap at the top of the screen
-modifyGap :: ((Int,Int,Int,Int) -> (Int,Int,Int,Int)) -> X ()
-modifyGap f = modify (\s -> s { statusGap = f (statusGap s) }) >> refresh
+-- | Modify the size of the status gap at the top of the current screen
+-- Taking a function giving the current screen, and current geometry.
+modifyGap :: (Int -> (Int,Int,Int,Int) -> (Int,Int,Int,Int)) -> X ()
+modifyGap f = do
+    XState { windowset = ws, statusGaps = gaps } <- get
+    let n       = fromIntegral $ W.screen (W.current ws)
+        (a,i:b) = splitAt n gaps
+    modify $ \s -> s { statusGaps = a ++ f n i : b }
+    refresh
 
 -- | Kill the currently focused client. If we do kill it, we'll get a
 -- delete notify back from X.
@@ -127,7 +133,7 @@ hide w = withDisplay $ \d -> do
 --
 refresh :: X ()
 refresh = do
-    XState { windowset = ws, layouts = fls, xineScreens = xinesc, statusGap = (gt,gb,gl,gr) } <- get
+    XState { windowset = ws, layouts = fls, xineScreens = xinesc, statusGaps = gaps } <- get
     d <- asks display
 
     -- for each workspace, layout the currently visible workspaces
@@ -136,6 +142,7 @@ refresh = do
             this   = W.view n ws
             Just l = fmap fst $ M.lookup n fls
             r@(Rectangle sx sy sw sh) = genericIndex xinesc (W.screen w)
+            (gt,gb,gl,gr)             = genericIndex gaps   (W.screen w)
 
         -- now tile the windows on this workspace, and set gap maybe on current
         rs <- doLayout l (if w == W.current ws
