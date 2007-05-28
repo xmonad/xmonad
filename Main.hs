@@ -61,7 +61,7 @@ main = do
         st = XState
             { windowset     = winset
             , layouts       = M.fromList [(w, safeLayouts) | w <- [0 .. W workspaces - 1]]
-            , statusGap     = defaultStatusGap
+            , statusGap     = defaultGap
             , xineScreens   = xinesc
             , dimensions    = (fromIntegral (displayWidth dpy dflt),
                                fromIntegral (displayHeight dpy dflt)) }

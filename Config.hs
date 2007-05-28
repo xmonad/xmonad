@@ -49,9 +49,14 @@ defaultDelta = 3%100
 defaultWindowsInMaster :: Int
 defaultWindowsInMaster = 1
 
--- Default height of gap at top of screen for a menu bar (e.g. 15)
-defaultStatusGap :: Int
-defaultStatusGap = 0 -- 15 for default dzen
+-- Default offset of drawable screen boundary from physical screen.
+-- Anything non-zero here will leave a gap of that many pixels on the
+-- given edge. A useful gap at top of screen for a menu bar (e.g. 15)
+--
+-- Fields are: top, bottom, left, right.
+--
+defaultGap :: (Int,Int,Int,Int)
+defaultGap = (0,0,0,0) -- 15 for default dzen
 
 -- numlock handling:
 --
@@ -115,7 +120,7 @@ keys = M.fromList $
     , ((modMask              , xK_period), sendMessage (IncMasterN (-1))) -- @@ Deincrement the number of windows in the master area
 
     -- toggle the status bar gap
-    , ((modMask              , xK_b     ), modifyGap (\n -> if n == 0 then defaultStatusGap else 0)) -- @@ Toggle the status bar gap
+    , ((modMask              , xK_b     ), modifyGap (\n -> if n == defaultGap then (0,0,0,0) else defaultGap)) -- @@ Toggle the status bar gap
 
     -- quit, or restart
     , ((modMask .|. shiftMask, xK_q                     ), io (exitWith ExitSuccess)) -- @@ Quit xmonad

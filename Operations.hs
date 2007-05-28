@@ -68,8 +68,8 @@ view :: WorkspaceId -> X ()
 view = windows . W.view
 
 -- | Modify the size of the status gap at the top of the screen
-modifyGap :: (Int -> Int) -> X ()
-modifyGap f = modify (\s -> s { statusGap = max 0 (f (statusGap s)) }) >> refresh
+modifyGap :: ((Int,Int,Int,Int) -> (Int,Int,Int,Int)) -> X ()
+modifyGap f = modify (\s -> s { statusGap = f (statusGap s) }) >> refresh
 
 -- | Kill the currently focused client. If we do kill it, we'll get a
 -- delete notify back from X.
@@ -127,7 +127,7 @@ hide w = withDisplay $ \d -> do
 --
 refresh :: X ()
 refresh = do
-    XState { windowset = ws, layouts = fls, xineScreens = xinesc, statusGap = gap } <- get
+    XState { windowset = ws, layouts = fls, xineScreens = xinesc, statusGap = (gt,gb,gl,gr) } <- get
     d <- asks display
 
     -- for each workspace, layout the currently visible workspaces
@@ -139,7 +139,10 @@ refresh = do
 
         -- now tile the windows on this workspace, and set gap maybe on current
         rs <- doLayout l (if w == W.current ws
-                            then Rectangle sx (sy + fromIntegral gap) sw (sh - fromIntegral gap)
+                            then Rectangle (sx + fromIntegral gl)
+                                           (sy + fromIntegral gt)
+                                           (sw - fromIntegral (gl + gr))
+                                           (sh - fromIntegral (gt + gb))
                             else r) (W.index this)
         mapM_ (\(win,rect) -> io (tileWindow d win rect)) rs
 

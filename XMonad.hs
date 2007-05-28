@@ -37,23 +37,20 @@ import qualified Data.Map as M
 -- | XState, the window manager state.
 -- Just the display, width, height and a window list
 data XState = XState
-    { windowset         :: !WindowSet           -- ^ workspace list
-    , xineScreens       :: ![Rectangle]         -- ^ dimensions of each screen
-    , dimensions        :: !(Position,Position) -- ^ dimensions of the screen,
-    , statusGap         :: !Int                 -- ^ width of status bar
-                                                -- used for hiding windows
-    , layouts           :: !(M.Map WorkspaceId (Layout, [Layout]))  }
+    { windowset   :: !WindowSet           -- ^ workspace list
+    , xineScreens :: ![Rectangle]         -- ^ dimensions of each screen
+    , dimensions  :: !(Position,Position) -- ^ dimensions of the screen,
+    , statusGap   :: !(Int,Int,Int,Int)   -- ^ width of status bar
+    , layouts     :: !(M.Map WorkspaceId (Layout, [Layout]))  }
                        -- ^ mapping of workspaces to descriptions of their layouts
 
 data XConf = XConf
-    { display           :: Display      -- ^ the X11 display
-
-    , theRoot           :: !Window      -- ^ the root window
-    , wmdelete          :: !Atom        -- ^ window deletion atom
-    , wmprotocols       :: !Atom        -- ^ wm protocols atom
-
-    , normalBorder      :: !Color       -- ^ border color of unfocused windows
-    , focusedBorder     :: !Color     } -- ^ border color of the focused window
+    { display       :: Display      -- ^ the X11 display
+    , theRoot       :: !Window      -- ^ the root window
+    , wmdelete      :: !Atom        -- ^ window deletion atom
+    , wmprotocols   :: !Atom        -- ^ wm protocols atom
+    , normalBorder  :: !Color       -- ^ border color of unfocused windows
+    , focusedBorder :: !Color     } -- ^ border color of the focused window
 
 type WindowSet = StackSet WorkspaceId Window ScreenId
 
