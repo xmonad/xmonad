@@ -99,7 +99,7 @@ keys = M.fromList $
 
     , ((modMask,               xK_space ), switchLayout) -- @@ Rotate through the available layout algorithms
 
-    , ((modMask,               xK_n     ), refresh) -- @@ 'nudge': resize viewed windows to the correct size
+    , ((modMask,               xK_n     ), refresh) -- @@ Resize viewed windows to the correct size
 
     -- move focus up or down the window stack
     , ((modMask,               xK_Tab   ), focusDown) -- @@ Move focus to the next window
