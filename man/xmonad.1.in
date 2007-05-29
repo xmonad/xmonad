@@ -46,4 +46,4 @@ to your \fI~/.xinitrc\fR file
 .SH CUSTOMIZATION
 \fBxmonad\fR is customized by creating a custom Config.hs and (re)compiling the source code.
 .SH BUGS
-NumLock handling is broken.
+Probably. If you find any, please report them: http://code.google.com/p/xmonad/issues/list
