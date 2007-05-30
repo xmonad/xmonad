@@ -150,7 +150,7 @@ restart mprog resume = do
     prog <- maybe (io $ getProgName) return mprog
     args <- if resume then gets (("--resume":) . return . show . windowset) else return []
     io $ catch (executeFile prog True args Nothing)
-               ( (hPutStrLn stderr). show  ) -- print executable not found exception
+               (hPutStrLn stderr . show) -- print executable not found exception
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
 whenJust :: Maybe a -> (a -> X ()) -> X ()
