@@ -52,7 +52,7 @@ Get the dependencies
     X11             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-1.2.2
         (Included with GHC)
 
-    X11-extras:     http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-extras-0.1
+    X11-extras:     http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-extras-0.2
 
 And then build with Cabal:
 
