@@ -49,10 +49,8 @@ Get the dependencies
     unix            http://hackage.haskell.org/cgi-bin/hackage-scripts/package/unix-2.0 
         (Included with GHC)
 
-    X11             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-1.2
+    X11             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-1.2.2
         (Included with GHC)
-        (Unfortunately X11-1.2 does not work correctly on AMD64.  The latest
-         darcs version from http://darcs.haskell.org/packages/X11 does.)
 
     X11-extras:     http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-extras-0.1
 
