@@ -124,7 +124,7 @@ keys = M.fromList $
 
     -- quit, or restart
     , ((modMask .|. shiftMask, xK_q                     ), io (exitWith ExitSuccess)) -- @@ Quit xmonad
-    , ((modMask .|. shiftMask .|. controlMask, xK_q     ), restart Nothing True) -- @@ Restart xmonad
+    , ((modMask              , xK_q     ), restart Nothing True) -- @@ Restart xmonad
 
     ] ++
     -- mod-[1..9] @@ Switch to workspace N
