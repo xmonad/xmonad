@@ -123,7 +123,7 @@ keys = M.fromList $
     , ((modMask              , xK_b     ), modifyGap (\i n -> let x = (defaultGaps ++ repeat (0,0,0,0)) !! i in if n == x then (0,0,0,0) else x)) -- @@ Toggle the status bar gap
 
     -- quit, or restart
-    , ((modMask .|. shiftMask, xK_q                     ), io (exitWith ExitSuccess)) -- @@ Quit xmonad
+    , ((modMask              , xK_q                     ), io (exitWith ExitSuccess)) -- @@ Quit xmonad
     , ((modMask .|. shiftMask .|. controlMask, xK_q     ), restart Nothing True) -- @@ Restart xmonad
 
     ] ++
