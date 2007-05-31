@@ -179,6 +179,16 @@ refresh = do
         -- TODO seems fishy?
         -- Urgh. This is required because the fullscreen layout assumes that
         -- the focused window will be raised. Hmm. This is a reordering.
+
+        -- This really doesn't work with fullscreen mode, where 
+        -- focus is used to find the raised window. moving the floating
+        -- layer will move focus there, so we now have forgotten the
+        -- window on the top of the fullscreen
+        --
+        -- I think the solution must be to track the floating layer separately
+        -- in its own zipper, on each workspace. And from there to
+        -- handle pushing between the two.
+        --
         let tiled' = case W.peek this of
                         Just x | x `elem` tiled -> x : delete x tiled
                         _ -> tiled
