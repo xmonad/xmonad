@@ -74,7 +74,7 @@ numlockMask = mod2Mask
 -- Border colors for unfocused and focused windows, respectively.
 normalBorderColor, focusedBorderColor :: String
 normalBorderColor  = "#dddddd"
-focusedBorderColor = "#5fbf77"
+focusedBorderColor = "#ff0000"
 
 -- Width of the window border in pixels
 borderWidth :: Dimension
