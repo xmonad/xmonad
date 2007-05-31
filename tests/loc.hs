@@ -8,7 +8,6 @@ main = do foo <- getContents
           putStrLn $ show loc
           -- uncomment the following to check for mistakes in isntcomment
           -- putStr $ unlines $ actual_loc
-          when (loc > 550) $ fail "Too many lines of code!"
 
 isntcomment "" = False
 isntcomment ('-':'-':_) = False
