@@ -78,7 +78,7 @@ module StackSet (
         StackSet(..), Workspace(..), Screen(..), Stack(..), RationalRect(..),
         new, view, lookupWorkspace, peek, index, focusUp, focusDown,
         focusWindow, member, findIndex, insertUp, delete, shift,
-        swapMaster, swapUp, swapDown, modify, makeFloating, clearFloating -- needed by users
+        swapMaster, swapUp, swapDown, modify, float, sink -- needed by users
     ) where
 
 import Data.Maybe   (listToMaybe)
@@ -371,11 +371,14 @@ delete w s | Just w == peek s = remove s -- common case.
         Node _ []     []     -> Empty
       else c { up = w `L.delete` up c, down = w `L.delete` down c }
 
-makeFloating :: Ord a => a -> RationalRect -> StackSet i a s -> StackSet i a s
-makeFloating w r s = s { floating = M.insert w r (floating s) }
+-- | Given a window, and its preferred rectangle, set it as floating
+-- A floating window should already be managed by the StackSet.
+float :: Ord a => a -> RationalRect -> StackSet i a s -> StackSet i a s
+float w r s = s { floating = M.insert w r (floating s) }
 
-clearFloating :: Ord a => a -> StackSet i a s -> StackSet i a s
-clearFloating w s = s { floating = M.delete w (floating s) }
+-- | Clear the floating status of a window
+sink :: Ord a => a -> StackSet i a s -> StackSet i a s
+sink w s = s { floating = M.delete w (floating s) }
 
 ------------------------------------------------------------------------
 -- Setting the master window

@@ -74,7 +74,7 @@ numlockMask = mod2Mask
 -- Border colors for unfocused and focused windows, respectively.
 normalBorderColor, focusedBorderColor :: String
 normalBorderColor  = "#dddddd"
-focusedBorderColor = "#ff0000"
+focusedBorderColor = "#5fbf77"
 
 -- Width of the window border in pixels
 borderWidth :: Dimension
@@ -115,7 +115,7 @@ keys = M.fromList $
     , ((modMask,               xK_h     ), sendMessage Shrink) -- @@ Shrink the master area
     , ((modMask,               xK_l     ), sendMessage Expand) -- @@ Expand the master area
 
-    , ((modMask,               xK_t     ), withFocused clearFloating) -- @@ Make floating window tiled
+    , ((modMask,               xK_t     ), withFocused sink) -- @@ Push window back into tiling
 
     -- increase or decrease number of windows in the master area
     , ((modMask              , xK_comma ), sendMessage (IncMasterN 1)) -- @@ Increment the number of windows in the master area
@@ -125,7 +125,7 @@ keys = M.fromList $
     , ((modMask              , xK_b     ), modifyGap (\i n -> let x = (defaultGaps ++ repeat (0,0,0,0)) !! i in if n == x then (0,0,0,0) else x)) -- @@ Toggle the status bar gap
 
     -- quit, or restart
-    , ((modMask .|. shiftMask, xK_q                     ), io (exitWith ExitSuccess)) -- @@ Quit xmonad
+    , ((modMask .|. shiftMask, xK_q     ), io (exitWith ExitSuccess)) -- @@ Quit xmonad
     , ((modMask              , xK_q     ), restart Nothing True) -- @@ Restart xmonad
 
     ] ++

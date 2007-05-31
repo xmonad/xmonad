@@ -26,7 +26,7 @@ import Graphics.X11.Xinerama    (getScreenInfo)
 import XMonad
 import Config
 import StackSet (new)
-import Operations   (manage, unmanage, focus, setFocusX, full, isClient, rescreen, makeFloating, swapMaster)
+import Operations
 
 --
 -- The main entry point
@@ -114,16 +114,19 @@ grabKeys dpy rootw = do
 cleanMask :: KeyMask -> KeyMask
 cleanMask = (complement (numlockMask .|. lockMask) .&.)
 
+------------------------------------------------------------------------
+-- mouse handling
+
+-- | Accumulate mouse motion events
 mouseDrag :: (XMotionEvent -> IO ()) -> X ()
 mouseDrag f = do
     XConf { theRoot = root, display = d } <- ask
-    io $ grabPointer d root False (buttonReleaseMask .|. pointerMotionMask) grabModeAsync grabModeAsync none none currentTime
-
-    io $ allocaXEvent $ \p -> fix $ \again -> do
+    io $ grabPointer d root False (buttonReleaseMask .|. pointerMotionMask)
+            grabModeAsync grabModeAsync none none currentTime
+    io $ allocaXEvent $ \p -> fix $ \again -> do -- event loop
         maskEvent d (buttonReleaseMask .|. pointerMotionMask) p
         et <- get_EventType p
         when (et == motionNotify) $ get_MotionEvent p >>= f >> again
-
     io $ ungrabPointer d currentTime
 
 mouseMoveWindow :: Window -> X ()
@@ -132,19 +135,20 @@ mouseMoveWindow w = withDisplay $ \d -> do
     wa <- io $ getWindowAttributes d w
     (_, _, _, ox, oy, _, _, _) <- io $ queryPointer d w
     mouseDrag $ \(_, _, _, ex, ey, _, _, _, _, _) ->
-        moveWindow d w (fromIntegral (fromIntegral (wa_x wa) + (ex - ox))) (fromIntegral (fromIntegral (wa_y wa) + (ey - oy)))
-
-    makeFloating w
+        moveWindow d w (fromIntegral (fromIntegral (wa_x wa) + (ex - ox)))
+                       (fromIntegral (fromIntegral (wa_y wa) + (ey - oy)))
+    float w
 
 mouseResizeWindow :: Window -> X ()
 mouseResizeWindow w = withDisplay $ \d -> do
     io $ raiseWindow d w
     wa <- io $ getWindowAttributes d w
-    io $ warpPointer d none w 0 0 0 0 (fromIntegral (wa_width wa)) (fromIntegral (wa_height wa))
+    io $ warpPointer d none w 0 0 0 0 (fromIntegral (wa_width wa))
+                                      (fromIntegral (wa_height wa))
     mouseDrag $ \(_, _, _, ex, ey, _, _, _, _, _) ->
-        resizeWindow d w (fromIntegral (max 1 (ex - fromIntegral (wa_x wa)))) (fromIntegral (max 1 (ey - fromIntegral (wa_y wa))))
-
-    makeFloating w
+        resizeWindow d w (fromIntegral (max 1 (ex - fromIntegral (wa_x wa))))
+                         (fromIntegral (max 1 (ey - fromIntegral (wa_y wa))))
+    float w
 
 -- ---------------------------------------------------------------------
 -- | Event handler. Map X events onto calls into Operations.hs, which

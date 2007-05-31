@@ -45,13 +45,13 @@ manage w = withDisplay $ \d -> do
     io $ setWindowBorderWidth d w borderWidth
 
     -- FIXME: This is pretty awkward. We can't can't let "refresh" happen
-    -- before the call to makeFloating, because that will resize the window and
+    -- before the call to float, because that will resize the window and
     -- lose the default sizing.
-    isTransient <- isJust `liftM` (io $ getTransientForHint d w)
+
+    isTransient <- isJust `liftM` io (getTransientForHint d w)
     if isTransient
-        then do
-            modify $ \s -> s { windowset = W.insertUp w (windowset s) }
-            makeFloating w
+        then do modify $ \s -> s { windowset = W.insertUp w (windowset s) }
+                float w -- ^^ now go the refresh.
         else windows $ W.insertUp w
 
 -- | unmanage. A window no longer exists, remove it from the window
@@ -61,7 +61,7 @@ manage w = withDisplay $ \d -> do
 -- there, floating status is lost when moving windows between workspaces,
 -- because W.shift calls W.delete.
 unmanage :: Window -> X ()
-unmanage w = windows $ W.clearFloating w . W.delete w
+unmanage w = windows $ W.sink w . W.delete w
 
 -- | focus. focus window up or down. or swap various windows.
 focusUp, focusDown, swapUp, swapDown, swapMaster :: X ()
@@ -154,10 +154,11 @@ refresh = do
         let n      = W.tag (W.workspace w)
             this   = W.view n ws
             Just l = fmap fst $ M.lookup n fls
-            (float, tiled) = partition (flip M.member (W.floating ws)) (W.index this)
+            (flt, tiled) = partition (flip M.member (W.floating ws)) (W.index this)
             (Rectangle sx sy sw sh) = genericIndex xinesc (W.screen w)
             (gt,gb,gl,gr)           = genericIndex gaps   (W.screen w)
 
+        -- just the tiled windows:
         -- now tile the windows on this workspace, modified by the gap
         rs <- doLayout l (Rectangle (sx + fromIntegral gl)
                                     (sy + fromIntegral gt)
@@ -165,16 +166,24 @@ refresh = do
                                     (sh - fromIntegral (gt + gb))) tiled
         mapM_ (\(win,rect) -> io (tileWindow d win rect)) rs
 
-        -- move/resize the floating windows
-        (`mapM_` float) $ \fw -> whenJust (M.lookup fw (W.floating ws)) $ \(W.RationalRect rx ry rw rh) -> do
+        -- now the floating windows:
+        -- move/resize the floating windows, if there are any
+        (`mapM_` flt) $ \fw -> whenJust (M.lookup fw (W.floating ws)) $
+          \(W.RationalRect rx ry rw rh) -> do
             let Rectangle px py pw ph = genericIndex xinesc (W.screen w)
-            io $ tileWindow d fw (Rectangle (px + floor (toRational pw*rx)) (py + floor (toRational ph*ry)) (floor (toRational pw*rw)) (floor (toRational ph*rh)))
+            io $ tileWindow d fw (Rectangle (px + floor (toRational pw*rx))
+                                            (py + floor (toRational ph*ry))
+                                            (floor (toRational pw*rw))
+                                            (floor (toRational ph*rh)))
 
-        -- urgh. This is required because the fullscreen layout assumes that
-        -- the focused window will be raised.
-        let tiled' = maybe tiled (\x -> if x `elem` tiled then x : delete x tiled else tiled) (W.peek this)
+        -- TODO seems fishy?
+        -- Urgh. This is required because the fullscreen layout assumes that
+        -- the focused window will be raised. Hmm. This is a reordering.
+        let tiled' = case W.peek this of
+                        Just x | x `elem` tiled -> x : delete x tiled
+                        _ -> tiled
 
-        io $ restackWindows d (float ++ tiled')
+        io $ restackWindows d (flt ++ tiled')
 
     setTopFocus
     clearEnterEvents
@@ -382,20 +391,30 @@ withFocused f = withWorkspace $ \w -> whenJust (W.peek w) f
 isClient :: Window -> X Bool
 isClient w = withWorkspace $ return . W.member w
 
--- | Make a floating window tiled
-clearFloating :: Window -> X ()
-clearFloating = windows . W.clearFloating
+------------------------------------------------------------------------
+-- | Floating layer support
 
--- | Make a tiled window floating
-makeFloating :: Window -> X ()
-makeFloating w = withDisplay $ \d -> do
+-- | Make a floating window tiled
+sink :: Window -> X ()
+sink = windows . W.sink
+
+-- | Make a tiled window floating, using its suggested rectangle
+float :: Window -> X ()
+float w = withDisplay $ \d -> do
     xinesc <- gets xineScreens
     sc     <- (genericIndex xinesc . W.screen . W.current) `liftM` gets windowset
     wa     <- io $ getWindowAttributes d w
-    let bw = fI . wa_border_width $ wa
-    windows $ W.makeFloating w
-        (W.RationalRect ((fI (wa_x wa) - fI (rect_x sc)) % fI (rect_width sc))
-                        ((fI (wa_y wa) - fI (rect_y sc)) % fI (rect_height sc))
-                        (fI (wa_width  wa + bw*2) % fI (rect_width sc))
-                        (fI (wa_height wa + bw*2) % fI (rect_height sc)))
-  where fI x = fromIntegral x
+    let bw = fi . wa_border_width $ wa
+    windows $ W.float w
+        (W.RationalRect ((fi (wa_x wa) - fi (rect_x sc)) % fi (rect_width sc))
+                        ((fi (wa_y wa) - fi (rect_y sc)) % fi (rect_height sc))
+                        (fi (wa_width  wa + bw*2) % fi (rect_width sc))
+                        (fi (wa_height wa + bw*2) % fi (rect_height sc)))
+  where fi x = fromIntegral x
+
+-- | Toggle floating bit
+--
+-- TODO not useful unless we remember the original size
+--
+-- toggleFloating :: Window -> X ()
+-- toggleFloating w = gets windowset >>= \ws -> if M.member w (W.floating ws) then sink w else float w
