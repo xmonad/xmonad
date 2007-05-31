@@ -15,11 +15,12 @@ module Operations where
 
 import XMonad
 import qualified StackSet as W
-import {-# SOURCE #-} Config (borderWidth)
+import {-# SOURCE #-} Config (borderWidth, modMask)
 
 import Data.Maybe
-import Data.List            (genericIndex, intersectBy)
+import Data.List            (genericIndex, intersectBy, partition, delete)
 import Data.Bits            ((.|.))
+import Data.Ratio
 import qualified Data.Map as M
 
 -- import System.Mem (performGC)
@@ -38,17 +39,29 @@ import Graphics.X11.Xlib.Extras
 -- Bring it into focus. If the window is already managed, nothing happens.
 --
 manage :: Window -> X ()
-manage w = do
-    withDisplay $ \d -> io $ do
-        selectInput d w $ structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
-        mapWindow d w
-        setWindowBorderWidth d w borderWidth
-    windows $ W.insertUp w
+manage w = withDisplay $ \d -> do
+    io $ selectInput d w $ structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
+    io $ mapWindow d w
+    io $ setWindowBorderWidth d w borderWidth
+
+    -- FIXME: This is pretty awkward. We can't can't let "refresh" happen
+    -- before the call to makeFloating, because that will resize the window and
+    -- lose the default sizing.
+    isTransient <- isJust `liftM` (io $ getTransientForHint d w)
+    if isTransient
+        then do
+            modify $ \s -> s { windowset = W.insertUp w (windowset s) }
+            makeFloating w
+        else windows $ W.insertUp w
 
 -- | unmanage. A window no longer exists, remove it from the window
 -- list, on whatever workspace it is.
+--
+-- FIXME: clearFloating should be taken care of in W.delete, but if we do it
+-- there, floating status is lost when moving windows between workspaces,
+-- because W.shift calls W.delete.
 unmanage :: Window -> X ()
-unmanage = windows . W.delete
+unmanage w = windows $ W.clearFloating w . W.delete w
 
 -- | focus. focus window up or down. or swap various windows.
 focusUp, focusDown, swapUp, swapDown, swapMaster :: X ()
@@ -141,6 +154,7 @@ refresh = do
         let n      = W.tag (W.workspace w)
             this   = W.view n ws
             Just l = fmap fst $ M.lookup n fls
+            (float, tiled) = partition (flip M.member (W.floating ws)) (W.index this)
             (Rectangle sx sy sw sh) = genericIndex xinesc (W.screen w)
             (gt,gb,gl,gr)           = genericIndex gaps   (W.screen w)
 
@@ -148,11 +162,19 @@ refresh = do
         rs <- doLayout l (Rectangle (sx + fromIntegral gl)
                                     (sy + fromIntegral gt)
                                     (sw - fromIntegral (gl + gr))
-                                    (sh - fromIntegral (gt + gb))) (W.index this)
+                                    (sh - fromIntegral (gt + gb))) tiled
         mapM_ (\(win,rect) -> io (tileWindow d win rect)) rs
 
-        -- and raise the focused window if there is one.
-        whenJust (W.peek this) $ io . raiseWindow d
+        -- move/resize the floating windows
+        (`mapM_` float) $ \fw -> whenJust (M.lookup fw (W.floating ws)) $ \(W.RationalRect rx ry rw rh) -> do
+            let Rectangle px py pw ph = genericIndex xinesc (W.screen w)
+            io $ tileWindow d fw (Rectangle (px + floor (toRational pw*rx)) (py + floor (toRational ph*ry)) (floor (toRational pw*rw)) (floor (toRational ph*rh)))
+
+        -- urgh. This is required because the fullscreen layout assumes that
+        -- the focused window will be raised.
+        let tiled' = maybe tiled (\x -> if x `elem` tiled then x : delete x tiled else tiled) (W.peek this)
+
+        io $ restackWindows d (float ++ tiled')
 
     setTopFocus
     clearEnterEvents
@@ -198,15 +220,13 @@ rescreen = do
 
 -- ---------------------------------------------------------------------
 
-buttonsToGrab :: [Button]
-buttonsToGrab = [button1, button2, button3]
-
 -- | setButtonGrab. Tell whether or not to intercept clicks on a given window
 setButtonGrab :: Bool -> Window -> X ()
-setButtonGrab grab w = withDisplay $ \d -> io $ (`mapM_` buttonsToGrab) $ \b ->
-    if grab then grabButton d b anyModifier w False (buttonPressMask .|. buttonReleaseMask)
-                   grabModeAsync grabModeSync none none
-            else ungrabButton d b anyModifier w
+setButtonGrab grab w = withDisplay $ \d -> io $ do
+    when (not grab) $ ungrabButton d anyButton anyModifier w
+    grabButton d anyButton mask w False (buttonPressMask .|. buttonReleaseMask)
+               grabModeAsync grabModeSync none none
+    where mask = if grab then anyModifier else modMask
 
 -- ---------------------------------------------------------------------
 -- Setting keyboard focus
@@ -239,10 +259,11 @@ setFocusX w = withWorkspace $ \ws -> do
             setButtonGrab True otherw
             io $ setWindowBorder dpy otherw (color_pixel nbc)
 
-    io $ do setInputFocus dpy w revertToPointerRoot 0
-            -- raiseWindow dpy w
-    setButtonGrab False w
-    io $ setWindowBorder dpy w (color_pixel fbc)
+    whenX (not `liftM` isRoot w) $ do
+        io $ do setInputFocus dpy w revertToPointerRoot 0
+                -- raiseWindow dpy w
+        setButtonGrab False w
+        io $ setWindowBorder dpy w (color_pixel fbc)
 
 -- ---------------------------------------------------------------------
 -- Managing layout
@@ -360,3 +381,21 @@ withFocused f = withWorkspace $ \w -> whenJust (W.peek w) f
 -- | True if window is under management by us
 isClient :: Window -> X Bool
 isClient w = withWorkspace $ return . W.member w
+
+-- | Make a floating window tiled
+clearFloating :: Window -> X ()
+clearFloating = windows . W.clearFloating
+
+-- | Make a tiled window floating
+makeFloating :: Window -> X ()
+makeFloating w = withDisplay $ \d -> do
+    xinesc <- gets xineScreens
+    sc     <- (genericIndex xinesc . W.screen . W.current) `liftM` gets windowset
+    wa     <- io $ getWindowAttributes d w
+    let bw = fI . wa_border_width $ wa
+    windows $ W.makeFloating w
+        (W.RationalRect ((fI (wa_x wa) - fI (rect_x sc)) % fI (rect_width sc))
+                        ((fI (wa_y wa) - fI (rect_y sc)) % fI (rect_height sc))
+                        (fI (wa_width  wa + bw*2) % fI (rect_width sc))
+                        (fI (wa_height wa + bw*2) % fI (rect_height sc)))
+  where fI x = fromIntegral x

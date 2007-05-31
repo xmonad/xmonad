@@ -75,15 +75,15 @@
 -- 'delete'.
 --
 module StackSet (
-        StackSet(..), Workspace(..), Screen(..), Stack(..),
+        StackSet(..), Workspace(..), Screen(..), Stack(..), RationalRect(..),
         new, view, lookupWorkspace, peek, index, focusUp, focusDown,
         focusWindow, member, findIndex, insertUp, delete, shift,
-        swapMaster, swapUp, swapDown, modify -- needed by users
+        swapMaster, swapUp, swapDown, modify, makeFloating, clearFloating -- needed by users
     ) where
 
 import Data.Maybe   (listToMaybe)
 import qualified Data.List as L (delete,find,genericSplitAt)
-
+import qualified Data.Map  as M (Map,insert,delete,empty)
 
 -- API changes from xmonad 0.1:
 --  StackSet constructor arguments changed. StackSet workspace window screen
@@ -112,10 +112,11 @@ import qualified Data.List as L (delete,find,genericSplitAt)
 -- Xinerama screens, and those workspaces not visible anywhere.
 --
 data StackSet i a sid =
-    StackSet { size    :: !i                -- number of workspaces
-             , current :: !(Screen i a sid) -- currently focused workspace
-             , visible :: [Screen i a sid]  -- non-focused workspaces, visible in xinerama
-             , hidden  :: [Workspace i a]   -- workspaces not visible anywhere
+    StackSet { size     :: !i                   -- number of workspaces
+             , current  :: !(Screen i a sid)    -- currently focused workspace
+             , visible  :: [Screen i a sid]     -- non-focused workspaces, visible in xinerama
+             , hidden   :: [Workspace i a]      -- workspaces not visible anywhere
+             , floating :: M.Map a RationalRect -- floating windows
              } deriving (Show, Read, Eq)
 
 -- Visible workspaces, and their Xinerama screens.
@@ -126,6 +127,9 @@ data Screen i a sid = Screen { workspace :: !(Workspace i a), screen :: !sid }
 -- A workspace is just a tag - its index - and a stack
 --
 data Workspace i a = Workspace  { tag :: !i, stack :: Stack a }
+    deriving (Show, Read, Eq)
+
+data RationalRect = RationalRect Rational Rational Rational Rational
     deriving (Show, Read, Eq)
 
 -- 
@@ -167,7 +171,7 @@ abort x = error $ "xmonad: StackSet: " ++ x
 -- Xinerama: Virtual workspaces are assigned to physical screens, starting at 0.
 --
 new :: (Integral i, Integral s) => i -> s -> StackSet i a s
-new n m | n > 0 && m > 0 = StackSet n cur visi unseen
+new n m | n > 0 && m > 0 = StackSet n cur visi unseen M.empty
         | otherwise      = abort "non-positive arguments to StackSet.new"
 
   where (seen,unseen) = L.genericSplitAt m $ Workspace 0 Empty : [ Workspace i Empty | i <- [1 ..n-1]]
@@ -351,7 +355,7 @@ insertUp a s = if member a s then s else insert
 --   * deleting the master window resets it to the newly focused window
 --   * otherwise, delete doesn't affect the master.
 --
-delete :: (Integral i, Eq a, Eq s) => a -> StackSet i a s -> StackSet i a s
+delete :: (Integral i, Ord a, Eq s) => a -> StackSet i a s -> StackSet i a s
 delete w s | Just w == peek s = remove s -- common case. 
            | otherwise = maybe s (removeWindow.tag.workspace.current $ s) (findIndex w s)
   where
@@ -366,6 +370,12 @@ delete w s | Just w == peek s = remove s -- common case.
         Node _ (l:ls) []     -> Node l ls []    -- else up
         Node _ []     []     -> Empty
       else c { up = w `L.delete` up c, down = w `L.delete` down c }
+
+makeFloating :: Ord a => a -> RationalRect -> StackSet i a s -> StackSet i a s
+makeFloating w r s = s { floating = M.insert w r (floating s) }
+
+clearFloating :: Ord a => a -> StackSet i a s -> StackSet i a s
+clearFloating w s = s { floating = M.delete w (floating s) }
 
 ------------------------------------------------------------------------
 -- Setting the master window
@@ -390,7 +400,7 @@ swapMaster = modify Empty $ \c -> case c of
 -- The actual focused workspace doesn't change. If there is -- no
 -- element on the current stack, the original stackSet is returned.
 --
-shift :: (Eq a, Eq s, Integral i) => i -> StackSet i a s -> StackSet i a s
+shift :: (Ord a, Eq s, Integral i) => i -> StackSet i a s -> StackSet i a s
 shift n s = if and [n >= 0,n < size s,n /= tag (workspace (current s))]
             then maybe s go (peek s) else s
     where go w = foldr ($) s [view (tag (workspace (current s))),insertUp w,view n,delete w]

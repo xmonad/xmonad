@@ -115,6 +115,8 @@ keys = M.fromList $
     , ((modMask,               xK_h     ), sendMessage Shrink) -- @@ Shrink the master area
     , ((modMask,               xK_l     ), sendMessage Expand) -- @@ Expand the master area
 
+    , ((modMask,               xK_t     ), withFocused clearFloating) -- @@ Make floating window tiled
+
     -- increase or decrease number of windows in the master area
     , ((modMask              , xK_comma ), sendMessage (IncMasterN 1)) -- @@ Increment the number of windows in the master area
     , ((modMask              , xK_period), sendMessage (IncMasterN (-1))) -- @@ Deincrement the number of windows in the master area

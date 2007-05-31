@@ -26,7 +26,7 @@ import Graphics.X11.Xinerama    (getScreenInfo)
 import XMonad
 import Config
 import StackSet (new)
-import Operations   (manage, unmanage, focus, setFocusX, full, isClient, rescreen)
+import Operations   (manage, unmanage, focus, setFocusX, full, isClient, rescreen, makeFloating, swapMaster)
 
 --
 -- The main entry point
@@ -111,6 +111,41 @@ grabKeys dpy rootw = do
 
   where grab kc m = grabKey dpy kc m rootw True grabModeAsync grabModeAsync
 
+cleanMask :: KeyMask -> KeyMask
+cleanMask = (complement (numlockMask .|. lockMask) .&.)
+
+mouseDrag :: (XMotionEvent -> IO ()) -> X ()
+mouseDrag f = do
+    XConf { theRoot = root, display = d } <- ask
+    io $ grabPointer d root False (buttonReleaseMask .|. pointerMotionMask) grabModeAsync grabModeAsync none none currentTime
+
+    io $ allocaXEvent $ \p -> fix $ \again -> do
+        maskEvent d (buttonReleaseMask .|. pointerMotionMask) p
+        et <- get_EventType p
+        when (et == motionNotify) $ get_MotionEvent p >>= f >> again
+
+    io $ ungrabPointer d currentTime
+
+mouseMoveWindow :: Window -> X ()
+mouseMoveWindow w = withDisplay $ \d -> do
+    io $ raiseWindow d w
+    wa <- io $ getWindowAttributes d w
+    (_, _, _, ox, oy, _, _, _) <- io $ queryPointer d w
+    mouseDrag $ \(_, _, _, ex, ey, _, _, _, _, _) ->
+        moveWindow d w (fromIntegral (fromIntegral (wa_x wa) + (ex - ox))) (fromIntegral (fromIntegral (wa_y wa) + (ey - oy)))
+
+    makeFloating w
+
+mouseResizeWindow :: Window -> X ()
+mouseResizeWindow w = withDisplay $ \d -> do
+    io $ raiseWindow d w
+    wa <- io $ getWindowAttributes d w
+    io $ warpPointer d none w 0 0 0 0 (fromIntegral (wa_width wa)) (fromIntegral (wa_height wa))
+    mouseDrag $ \(_, _, _, ex, ey, _, _, _, _, _) ->
+        resizeWindow d w (fromIntegral (max 1 (ex - fromIntegral (wa_x wa)))) (fromIntegral (max 1 (ey - fromIntegral (wa_y wa))))
+
+    makeFloating w
+
 -- ---------------------------------------------------------------------
 -- | Event handler. Map X events onto calls into Operations.hs, which
 -- modify our internal model of the window manager state.
@@ -128,7 +163,7 @@ handle :: Event -> X ()
 handle (KeyEvent {ev_event_type = t, ev_state = m, ev_keycode = code})
     | t == keyPress = withDisplay $ \dpy -> do
         s  <- io $ keycodeToKeysym dpy code 0
-        whenJust (M.lookup (complement (numlockMask .|. lockMask) .&. m,s) keys) id
+        whenJust (M.lookup (cleanMask m,s) keys) id
 
 -- manage a new window
 handle (MapRequestEvent    {ev_window = w}) = withDisplay $ \dpy -> do
@@ -146,7 +181,11 @@ handle e@(MappingNotifyEvent {ev_window = w}) = do
     when (ev_request e == mappingKeyboard) $ withDisplay $ io . flip grabKeys w
 
 -- click on an unfocused window, makes it focused on this workspace
-handle (ButtonEvent {ev_window = w, ev_event_type = t}) | t == buttonPress = focus w
+handle (ButtonEvent {ev_window = w, ev_event_type = t, ev_state = m, ev_button = b })
+    | t == buttonPress && cleanMask m == modMask && b == button1 = mouseMoveWindow w
+    | t == buttonPress && cleanMask m == modMask && b == button2 = focus w >> swapMaster
+    | t == buttonPress && cleanMask m == modMask && b == button3 = mouseResizeWindow w
+    | t == buttonPress = focus w
 
 -- entered a normal window, makes this focused.
 handle e@(CrossingEvent {ev_window = w, ev_event_type = t})
