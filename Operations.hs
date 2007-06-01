@@ -23,11 +23,11 @@ import Data.Bits            ((.|.))
 import Data.Ratio
 import qualified Data.Map as M
 
--- import System.Mem (performGC)
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Arrow
 
+import System.IO
 import Graphics.X11.Xlib
 import Graphics.X11.Xinerama (getScreenInfo)
 import Graphics.X11.Xlib.Extras
@@ -197,6 +197,7 @@ refresh = do
 
     setTopFocus
     clearEnterEvents
+    -- withWindowSet (io . hPrint stderr) -- logging state changes!
 --  io performGC -- really helps 
 
 -- | clearEnterEvents.  Remove all window entry events from the event queue.
