@@ -15,7 +15,7 @@ module Operations where
 
 import XMonad
 import qualified StackSet as W
-import {-# SOURCE #-} Config (borderWidth, modMask)
+import {-# SOURCE #-} Config (borderWidth, modMask, numlockMask)
 
 import Data.Maybe
 import Data.List            (genericIndex, intersectBy, partition, delete)
@@ -239,13 +239,17 @@ rescreen = do
 
 -- ---------------------------------------------------------------------
 
+extraModifiers :: [KeyMask]
+extraModifiers = [0, numlockMask, lockMask, numlockMask .|. lockMask ]
+
 -- | setButtonGrab. Tell whether or not to intercept clicks on a given window
 setButtonGrab :: Bool -> Window -> X ()
-setButtonGrab grab w = withDisplay $ \d -> io $ do
-    when (not grab) $ ungrabButton d anyButton anyModifier w
-    grabButton d anyButton mask w False (buttonPressMask .|. buttonReleaseMask)
-               grabModeAsync grabModeSync none none
-    where mask = if grab then anyModifier else modMask
+setButtonGrab grabAll w = withDisplay $ \d -> io $ do
+    when (not grabAll) $ ungrabButton d anyButton anyModifier w
+    mapM_ (grab d) masks
+  where masks = if grabAll then [anyModifier] else map (modMask .|.) extraModifiers
+        grab d m = grabButton d anyButton m w False (buttonPressMask .|. buttonReleaseMask)
+                                grabModeAsync grabModeSync none none
 
 -- ---------------------------------------------------------------------
 -- Setting keyboard focus

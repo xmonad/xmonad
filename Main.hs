@@ -106,8 +106,7 @@ grabKeys dpy rootw = do
          kc <- keysymToKeycode dpy sym
          -- "If the specified KeySym is not defined for any KeyCode,
          -- XKeysymToKeycode() returns zero."
-         when (kc /= '\0') $ mapM_ (grab kc . (mask .|.)) $
-            [0, numlockMask, lockMask, numlockMask .|. lockMask]
+         when (kc /= '\0') $ mapM_ (grab kc . (mask .|.)) extraModifiers
 
   where grab kc m = grabKey dpy kc m rootw True grabModeAsync grabModeAsync
 
