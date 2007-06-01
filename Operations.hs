@@ -259,7 +259,7 @@ setTopFocus = withWindowSet $ maybe (setFocusX =<< asks theRoot) setFocusX . W.p
 -- the mouse to a new screen).
 focus :: Window -> X ()
 focus w = withWindowSet $ \s -> do
-    if W.member w s then modify (\st -> st { windowset = W.focusWindow w s }) >> setFocusX w -- >> refresh
+    if W.member w s then modify (\st -> st { windowset = W.focusWindow w s }) >> refresh
                     else whenX (isRoot w) $ setFocusX w -- we could refresh here, moving gap too.
     -- XXX a focus change could be caused by switching workspaces in xinerama.
     -- if so, and the gap is in use, the gap should probably follow the
