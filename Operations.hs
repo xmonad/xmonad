@@ -252,13 +252,13 @@ setButtonGrab grab w = withDisplay $ \d -> io $ do
 
 -- | Set the focus to the window on top of the stack, or root
 setTopFocus :: X ()
-setTopFocus = withWorkspace $ maybe (setFocusX =<< asks theRoot) setFocusX . W.peek
+setTopFocus = withWindowSet $ maybe (setFocusX =<< asks theRoot) setFocusX . W.peek
 
 -- | Set focus explicitly to window 'w' if it is managed by us, or root.
 -- This happens if X notices we've moved the mouse (and perhaps moved
 -- the mouse to a new screen).
 focus :: Window -> X ()
-focus w = withWorkspace $ \s -> do
+focus w = withWindowSet $ \s -> do
     if W.member w s then modify (\st -> st { windowset = W.focusWindow w s }) >> setFocusX w -- >> refresh
                     else whenX (isRoot w) $ setFocusX w -- we could refresh here, moving gap too.
     -- XXX a focus change could be caused by switching workspaces in xinerama.
@@ -269,7 +269,7 @@ focus w = withWorkspace $ \s -> do
 
 -- | Call X to set the keyboard focus details.
 setFocusX :: Window -> X ()
-setFocusX w = withWorkspace $ \ws -> do
+setFocusX w = withWindowSet $ \ws -> do
     XConf { display = dpy , normalBorder = nbc, focusedBorder = fbc } <- ask
 
     -- clear mouse button grab and border on other windows
@@ -391,15 +391,15 @@ layout f = do
 
 -- | Return workspace visible on screen 'sc', or 0.
 screenWorkspace :: ScreenId -> X WorkspaceId
-screenWorkspace sc = withWorkspace $ return . fromMaybe 0 . W.lookupWorkspace sc
+screenWorkspace sc = withWindowSet $ return . fromMaybe 0 . W.lookupWorkspace sc
 
 -- | Apply an X operation to the currently focused window, if there is one.
 withFocused :: (Window -> X ()) -> X ()
-withFocused f = withWorkspace $ \w -> whenJust (W.peek w) f
+withFocused f = withWindowSet $ \w -> whenJust (W.peek w) f
 
 -- | True if window is under management by us
 isClient :: Window -> X Bool
-isClient w = withWorkspace $ return . W.member w
+isClient w = withWindowSet $ return . W.member w
 
 ------------------------------------------------------------------------
 -- | Floating layer support

@@ -18,7 +18,7 @@
 module XMonad (
     X, WindowSet, WorkspaceId(..), ScreenId(..), XState(..), XConf(..), Layout(..),
     Typeable, Message, SomeMessage(..), fromMessage,
-    runX, io, withDisplay, withWorkspace, isRoot, spawn, restart, trace, whenJust, whenX
+    runX, io, withDisplay, withWindowSet, isRoot, spawn, restart, trace, whenJust, whenX
   ) where
 
 import StackSet (StackSet)
@@ -84,9 +84,9 @@ runX c st (X a) = runStateT (runReaderT a c) st >> return ()
 withDisplay :: (Display -> X a) -> X a
 withDisplay f = asks display >>= f
 
--- | Run a monadic action with the current workspace
-withWorkspace :: (WindowSet -> X a) -> X a
-withWorkspace f = gets windowset >>= f
+-- | Run a monadic action with the current stack set
+withWindowSet :: (WindowSet -> X a) -> X a
+withWindowSet f = gets windowset >>= f
 
 -- | True if the given window is the root window
 isRoot :: Window -> X Bool
