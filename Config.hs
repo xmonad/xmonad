@@ -11,7 +11,7 @@
 ------------------------------------------------------------------------
 --
 -- This module specifies configurable defaults for xmonad. If you change
--- values here, be sure to recompile and restart (mod-shift-ctrl-q) xmonad,
+-- values here, be sure to recompile and restart (mod-q) xmonad,
 -- for the changes to take effect.
 --
 
