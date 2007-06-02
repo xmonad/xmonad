@@ -73,6 +73,8 @@ main = do
     selectInput dpy rootw $  substructureRedirectMask .|. substructureNotifyMask
                          .|. enterWindowMask .|. leaveWindowMask .|. structureNotifyMask
     grabKeys dpy rootw
+    grabButtons dpy rootw
+
     sync dpy False
 
     ws <- scan dpy rootw
@@ -110,44 +112,18 @@ grabKeys dpy rootw = do
 
   where grab kc m = grabKey dpy kc m rootw True grabModeAsync grabModeAsync
 
+grabButtons :: Display -> Window -> IO ()
+grabButtons dpy rootw = do
+    ungrabButton dpy anyButton anyModifier rootw
+    mapM_ (\(m,b) -> mapM_ (grab b . (m .|.)) extraModifiers) (M.keys mouseBindings)
+  where grab button mask = grabButton dpy button mask rootw False buttonPressMask
+                                      grabModeAsync grabModeSync none none
+
+extraModifiers :: [KeyMask]
+extraModifiers = [0, numlockMask, lockMask, numlockMask .|. lockMask ]
+
 cleanMask :: KeyMask -> KeyMask
 cleanMask = (complement (numlockMask .|. lockMask) .&.)
-
-------------------------------------------------------------------------
--- mouse handling
-
--- | Accumulate mouse motion events
-mouseDrag :: (XMotionEvent -> IO ()) -> X ()
-mouseDrag f = do
-    XConf { theRoot = root, display = d } <- ask
-    io $ grabPointer d root False (buttonReleaseMask .|. pointerMotionMask)
-            grabModeAsync grabModeAsync none none currentTime
-    io $ allocaXEvent $ \p -> fix $ \again -> do -- event loop
-        maskEvent d (buttonReleaseMask .|. pointerMotionMask) p
-        et <- get_EventType p
-        when (et == motionNotify) $ get_MotionEvent p >>= f >> again
-    io $ ungrabPointer d currentTime
-
-mouseMoveWindow :: Window -> X ()
-mouseMoveWindow w = withDisplay $ \d -> do
-    io $ raiseWindow d w
-    wa <- io $ getWindowAttributes d w
-    (_, _, _, ox, oy, _, _, _) <- io $ queryPointer d w
-    mouseDrag $ \(_, _, _, ex, ey, _, _, _, _, _) ->
-        moveWindow d w (fromIntegral (fromIntegral (wa_x wa) + (ex - ox)))
-                       (fromIntegral (fromIntegral (wa_y wa) + (ey - oy)))
-    float w
-
-mouseResizeWindow :: Window -> X ()
-mouseResizeWindow w = withDisplay $ \d -> do
-    io $ raiseWindow d w
-    wa <- io $ getWindowAttributes d w
-    io $ warpPointer d none w 0 0 0 0 (fromIntegral (wa_width wa))
-                                      (fromIntegral (wa_height wa))
-    mouseDrag $ \(_, _, _, ex, ey, _, _, _, _, _) ->
-        resizeWindow d w (fromIntegral (max 1 (ex - fromIntegral (wa_x wa))))
-                         (fromIntegral (max 1 (ey - fromIntegral (wa_y wa))))
-    float w
 
 -- ---------------------------------------------------------------------
 -- | Event handler. Map X events onto calls into Operations.hs, which
@@ -184,11 +160,14 @@ handle e@(MappingNotifyEvent {ev_window = w}) = do
     when (ev_request e == mappingKeyboard) $ withDisplay $ io . flip grabKeys w
 
 -- click on an unfocused window, makes it focused on this workspace
-handle (ButtonEvent {ev_window = w, ev_event_type = t, ev_state = m, ev_button = b })
-    | t == buttonPress && cleanMask m == modMask && b == button1 = mouseMoveWindow w
-    | t == buttonPress && cleanMask m == modMask && b == button2 = focus w >> swapMaster
-    | t == buttonPress && cleanMask m == modMask && b == button3 = mouseResizeWindow w
-    | t == buttonPress = focus w
+handle (ButtonEvent { ev_window = w, ev_subwindow = subw, ev_event_type = t, ev_state = m, ev_button = b })
+    | t == buttonPress = do isr <- isRoot w
+                            -- If it's the root window, then it's something we
+                            -- grabbed in grabButtons. Otherwise, it's
+                            -- click-to-focus.
+                            if isr
+                                then whenJust (M.lookup (cleanMask m, b) mouseBindings) ($ subw)
+                                else focus w
 
 -- entered a normal window, makes this focused.
 handle e@(CrossingEvent {ev_window = w, ev_event_type = t})

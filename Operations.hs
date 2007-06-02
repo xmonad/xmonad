@@ -15,7 +15,7 @@ module Operations where
 
 import XMonad
 import qualified StackSet as W
-import {-# SOURCE #-} Config (borderWidth, modMask, numlockMask)
+import {-# SOURCE #-} Config (borderWidth)
 
 import Data.Maybe
 import Data.List            (genericIndex, intersectBy, partition, delete)
@@ -240,17 +240,13 @@ rescreen = do
 
 -- ---------------------------------------------------------------------
 
-extraModifiers :: [KeyMask]
-extraModifiers = [0, numlockMask, lockMask, numlockMask .|. lockMask ]
-
 -- | setButtonGrab. Tell whether or not to intercept clicks on a given window
 setButtonGrab :: Bool -> Window -> X ()
-setButtonGrab grabAll w = withDisplay $ \d -> io $ do
-    when (not grabAll) $ ungrabButton d anyButton anyModifier w
-    mapM_ (grab d) masks
-  where masks = if grabAll then [anyModifier] else map (modMask .|.) extraModifiers
-        grab d m = grabButton d anyButton m w False (buttonPressMask .|. buttonReleaseMask)
-                                grabModeAsync grabModeSync none none
+setButtonGrab grab w = withDisplay $ \d -> io $
+    if grab
+        then grabButton d anyButton anyModifier w False buttonPressMask
+                        grabModeAsync grabModeSync none none
+        else ungrabButton d anyButton anyModifier w
 
 -- ---------------------------------------------------------------------
 -- Setting keyboard focus
@@ -433,3 +429,39 @@ float w = withDisplay $ \d -> do
 --
 -- toggleFloating :: Window -> X ()
 -- toggleFloating w = gets windowset >>= \ws -> if M.member w (W.floating ws) then sink w else float w
+
+------------------------------------------------------------------------
+-- mouse handling
+
+-- | Accumulate mouse motion events
+mouseDrag :: (XMotionEvent -> IO ()) -> X ()
+mouseDrag f = do
+    XConf { theRoot = root, display = d } <- ask
+    io $ grabPointer d root False (buttonReleaseMask .|. pointerMotionMask)
+            grabModeAsync grabModeAsync none none currentTime
+    io $ allocaXEvent $ \p -> fix $ \again -> do -- event loop
+        maskEvent d (buttonReleaseMask .|. pointerMotionMask) p
+        et <- get_EventType p
+        when (et == motionNotify) $ get_MotionEvent p >>= f >> again
+    io $ ungrabPointer d currentTime
+
+mouseMoveWindow :: Window -> X ()
+mouseMoveWindow w = withDisplay $ \d -> do
+    io $ raiseWindow d w
+    wa <- io $ getWindowAttributes d w
+    (_, _, _, ox, oy, _, _, _) <- io $ queryPointer d w
+    mouseDrag $ \(_, _, _, ex, ey, _, _, _, _, _) ->
+        moveWindow d w (fromIntegral (fromIntegral (wa_x wa) + (ex - ox)))
+                       (fromIntegral (fromIntegral (wa_y wa) + (ey - oy)))
+    float w
+
+mouseResizeWindow :: Window -> X ()
+mouseResizeWindow w = withDisplay $ \d -> do
+    io $ raiseWindow d w
+    wa <- io $ getWindowAttributes d w
+    io $ warpPointer d none w 0 0 0 0 (fromIntegral (wa_width wa))
+                                      (fromIntegral (wa_height wa))
+    mouseDrag $ \(_, _, _, ex, ey, _, _, _, _, _) ->
+        resizeWindow d w (fromIntegral (max 1 (ex - fromIntegral (wa_x wa))))
+                         (fromIntegral (max 1 (ey - fromIntegral (wa_y wa))))
+    float w

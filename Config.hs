@@ -141,3 +141,10 @@ keys = M.fromList $
     [((m .|. modMask, key), screenWorkspace sc >>= f)
         | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
         , (f, m) <- [(view, 0), (shift, shiftMask)]]
+
+mouseBindings :: M.Map (KeyMask, Button) (Window -> X ())
+mouseBindings = M.fromList $
+    [ ((modMask, button1), (\w -> focus w >> mouseMoveWindow w))
+    , ((modMask, button2), (\w -> focus w >> swapMaster))
+    , ((modMask, button3), (\w -> focus w >> mouseResizeWindow w))
+    ]
