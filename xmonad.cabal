@@ -18,13 +18,13 @@ license:            BSD3
 license-file:       LICENSE
 author:             Spencer Janssen
 maintainer:         sjanssen@cse.unl.edu
-build-depends:      base>=1.0, X11>=1.2.1, X11-extras>=0.2, mtl>=1.0, unix>=1.0
+build-depends:      base>=2.0, X11>=1.2.1, X11-extras>=0.2, mtl>=1.0, unix>=1.0
 extra-source-files: README TODO tests/loc.hs tests/Properties.hs man/xmonad.1.in
                     Config.hs-boot util/GenerateManpage.hs man/xmonad.1 man/xmonad.html
 
 executable:         xmonad
 main-is:            Main.hs
 other-modules:      Config Operations StackSet XMonad
-ghc-options:        -funbox-strict-fields -O -fasm -Wall -optl-Wl,-s
+ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
 ghc-prof-options:   -prof -auto-all
 extensions:         GeneralizedNewtypeDeriving
