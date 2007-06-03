@@ -26,7 +26,7 @@ import Graphics.X11.Xinerama    (getScreenInfo)
 
 import XMonad
 import Config
-import StackSet (new, floating)
+import StackSet (new, floating, member)
 import Operations
 
 --
@@ -183,10 +183,10 @@ handle e@(CrossingEvent {ev_event_type = t})
 
 -- configure a window
 handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
-    f  <- gets $ M.member w . floating . windowset
+    ws <- gets windowset
     wa <- io $ getWindowAttributes dpy w
 
-    if f
+    if M.member w (floating ws) || not (member w ws)
         then do io $ configureWindow dpy w (ev_value_mask e) $ WindowChanges
                     { wc_x            = ev_x e
                     , wc_y            = ev_y e
@@ -195,7 +195,7 @@ handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
                     , wc_border_width = fromIntegral borderWidth
                     , wc_sibling      = ev_above e
                     , wc_stack_mode   = ev_detail e }
-                float w
+                when (member w ws) (float w)
         else io $ allocaXEvent $ \ev -> do
                  setEventType ev configureNotify
                  setConfigureEvent ev w w
