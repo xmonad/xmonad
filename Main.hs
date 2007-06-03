@@ -16,6 +16,7 @@
 import Data.Bits
 import qualified Data.Map as M
 import Control.Monad.Reader
+import Control.Monad.State
 
 import System.Environment (getArgs)
 
@@ -25,7 +26,7 @@ import Graphics.X11.Xinerama    (getScreenInfo)
 
 import XMonad
 import Config
-import StackSet (new)
+import StackSet (new, floating)
 import Operations
 
 --
@@ -181,17 +182,26 @@ handle e@(CrossingEvent {ev_event_type = t})
          when (ev_window e == rootw && not (ev_same_screen e)) $ setFocusX rootw
 
 -- configure a window
-handle e@(ConfigureRequestEvent {}) = withDisplay $ \dpy -> do
-    io $ configureWindow dpy (ev_window e) (ev_value_mask e) $ WindowChanges
-        { wc_x            = ev_x e
-        , wc_y            = ev_y e
-        , wc_width        = ev_width e
-        , wc_height       = ev_height e
-        , wc_border_width = ev_border_width e
-        , wc_sibling      = ev_above e
-        -- this fromIntegral is only necessary with the old X11 version that uses
-        -- Int instead of CInt.  TODO delete it when there is a new release of X11
-        , wc_stack_mode   = fromIntegral $ ev_detail e }
+handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
+    floating <- gets $ M.member w . floating . windowset
+    rootw    <- asks theRoot
+    wa       <- io $ getWindowAttributes dpy w
+
+    if floating
+        then do io $ configureWindow dpy w (ev_value_mask e) $ WindowChanges
+                    { wc_x            = ev_x e
+                    , wc_y            = ev_y e
+                    , wc_width        = ev_width e
+                    , wc_height       = ev_height e
+                    , wc_border_width = fromIntegral borderWidth
+                    , wc_sibling      = ev_above e
+                    , wc_stack_mode   = ev_detail e }
+                float w
+        else io $ allocaXEvent $ \ev -> do
+                 setEventType ev configureNotify
+                 setConfigureEvent ev w w
+                     (wa_x wa) (wa_y wa) (wa_width wa) (wa_height wa) (ev_border_width e) none (wa_override_redirect wa)
+                 sendEvent dpy w False 0 ev
     io $ sync dpy False
 
 -- the root may have configured
