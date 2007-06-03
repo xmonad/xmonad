@@ -467,17 +467,26 @@ mouseMoveWindow w = withDisplay $ \d -> do
     wa <- io $ getWindowAttributes d w
     (_, _, _, ox, oy, _, _, _) <- io $ queryPointer d w
     mouseDrag $ \(_, _, _, ex, ey, _, _, _, _, _) ->
-        moveWindow d w (fromIntegral (fromIntegral (wa_x wa) + (ex - ox)))
-                       (fromIntegral (fromIntegral (wa_y wa) + (ey - oy)))
+       moveWindow d w (fromIntegral (fromIntegral (wa_x wa) + (ex - ox)))
+                      (fromIntegral (fromIntegral (wa_y wa) + (ey - oy)))
     float w
 
 mouseResizeWindow :: Window -> X ()
 mouseResizeWindow w = withDisplay $ \d -> do
     io $ raiseWindow d w
     wa <- io $ getWindowAttributes d w
-    io $ warpPointer d none w 0 0 0 0 (fromIntegral (wa_width wa))
-                                      (fromIntegral (wa_height wa))
+    io $ warpPointer d none w 0 0 0 0 (fromIntegral (wa_width wa)) (fromIntegral (wa_height wa))
     mouseDrag $ \(_, _, _, ex, ey, _, _, _, _, _) ->
         resizeWindow d w (fromIntegral (max 1 (ex - fromIntegral (wa_x wa))))
                          (fromIntegral (max 1 (ey - fromIntegral (wa_y wa))))
     float w
+--
+
+-- generic handler, but too complex:
+--
+-- mouseModifyWindow f g w = withDisplay $ \d -> do
+--     io $ raiseWindow d w
+--     wa <- io $ getWindowAttributes d w
+--     x  <- f d w wa
+--     mouseDrag $ \(_,_,_,ex,ey,_,_,_,_,_) -> g x ex ey d w wa
+--     float w
