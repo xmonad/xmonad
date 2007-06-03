@@ -28,36 +28,33 @@ import qualified Data.Map as M
 import System.Exit
 import Graphics.X11.Xlib
 
--- The number of workspaces (virtual screens)
+--
+-- The number of workspaces (virtual screens, or window groups)
+--
 workspaces :: Int
 workspaces = 9
 
--- modMask lets you specify which modkey you want to use. The default is mod1Mask
--- ("left alt").  You may also consider using mod3Mask ("right alt"), which
--- does not conflict with emacs keybindings. The "windows key" is usually
--- mod4Mask.
+--
+-- modMask lets you specify which modkey you want to use. The default is
+-- mod1Mask ("left alt").  You may also consider using mod3Mask ("right
+-- alt"), which does not conflict with emacs keybindings. The "windows
+-- key" is usually mod4Mask.
 --
 modMask :: KeyMask
 modMask = mod1Mask
 
--- When resizing a window, this ratio specifies by what percent to
--- resize in a single step
-defaultDelta :: Rational
-defaultDelta = 3%100
-
--- The default number of windows in the master area
-defaultWindowsInMaster :: Int
-defaultWindowsInMaster = 1
-
+--
 -- Default offset of drawable screen boundaries from each physical screen.
 -- Anything non-zero here will leave a gap of that many pixels on the
--- given edge, on the that screen. A useful gap at top of screen for a menu bar (e.g. 15)
+-- given edge, on the that screen. A useful gap at top of screen for a
+-- menu bar (e.g. 15)
 --
 -- Fields are: top, bottom, left, right.
 --
 defaultGaps :: [(Int,Int,Int,Int)]
 defaultGaps = [(0,0,0,0)] -- 15 for default dzen
 
+--
 -- numlock handling:
 --
 -- The mask for the numlock key. You may need to change this on some systems.
@@ -71,23 +68,42 @@ defaultGaps = [(0,0,0,0)] -- 15 for default dzen
 numlockMask :: KeyMask
 numlockMask = mod2Mask
 
+--
 -- Border colors for unfocused and focused windows, respectively.
+--
 normalBorderColor, focusedBorderColor :: String
 normalBorderColor  = "#dddddd"
 focusedBorderColor = "#ff0000"
 
+--
 -- Width of the window border in pixels
+--
 borderWidth :: Dimension
 borderWidth = 1
 
--- The default set of Layouts:
+--
+-- The default set of tiling algorithms
+--
 defaultLayouts :: [Layout]
-defaultLayouts = [ tall defaultWindowsInMaster defaultDelta (1%2)
-                 , wide defaultWindowsInMaster defaultDelta (1%2)
-                 , full ]
+defaultLayouts = [ tiled , mirror tiled , full ]
+  where
+     -- default tiling algorithm partitions the screen into two panes
+     tiled   = tall nmaster delta ratio
+
+     -- The default number of windows in the master pane
+     nmaster = 1
+
+     -- Default proportion of screen occupied by master pane
+     ratio   = 1%2
+
+     -- Percent of screen to increment by when resizing panes
+     delta   = 3%100
 
 --
 -- The key bindings list.
+-- 
+-- The unusual comment format is used to generate the documentation
+-- automatically.
 --
 keys :: M.Map (KeyMask, KeySym) (X ())
 keys = M.fromList $
@@ -142,9 +158,11 @@ keys = M.fromList $
         | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
         , (f, m) <- [(view, 0), (shift, shiftMask)]]
 
+--
+-- default actions bound to mouse events
+--
 mouseBindings :: M.Map (KeyMask, Button) (Window -> X ())
 mouseBindings = M.fromList $
     [ ((modMask, button1), (\w -> focus w >> mouseMoveWindow w))
     , ((modMask, button2), (\w -> focus w >> swapMaster))
-    , ((modMask, button3), (\w -> focus w >> mouseResizeWindow w))
-    ]
+    , ((modMask, button3), (\w -> focus w >> mouseResizeWindow w)) ]

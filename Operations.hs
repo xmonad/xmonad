@@ -312,7 +312,7 @@ sendMessage a = layout $ \x@(l, ls) -> maybe x (flip (,) ls) (modifyLayout l (So
 --
 --   fullscreen mode
 --   tall mode
---   wide mode
+--   wide mode (a mirror of tall mode)
 -- 
 -- The latter algorithms support the following operations:
 --
@@ -326,13 +326,27 @@ instance Message Resize
 data IncMasterN = IncMasterN Int deriving Typeable
 instance Message IncMasterN
 
+-- simple fullscreen mode, just render all windows fullscreen.
 full :: Layout
 full = Layout { doLayout     = \sc ws -> return [ (w,sc) | w <- ws ]
               , modifyLayout = const Nothing } -- no changes
 
-tall, wide :: Int -> Rational -> Rational -> Layout
-wide nmaster delta frac = mirrorLayout (tall nmaster delta frac)
+-- the true tiling mode of xmonad.
+--
+-- the screen is divided (currently) into two panes. all clients are
+-- then partioned between these two panes. one pane, the `master', by
+-- convention has the least number of windows in it (by default, 1). 
+-- the variable `nmaster' controls how many windows are rendered in the
+-- master pane.
+--
+-- `delta' specifies the ratio of the screen to resize by.
+--
+-- 'frac' specifies what proportion of the screen to devote to the
+-- master area.
+--
+-- 
 
+tall :: Int -> Rational -> Rational -> Layout
 tall nmaster delta frac =
     Layout { doLayout     = \r -> return . ap zip (tile frac r nmaster . length)
            , modifyLayout = \m -> fmap resize     (fromMessage m) `mplus`
@@ -346,11 +360,11 @@ tall nmaster delta frac =
 mirrorRect :: Rectangle -> Rectangle
 mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 
--- | Mirror a layout
-mirrorLayout :: Layout -> Layout
-mirrorLayout (Layout { doLayout = dl, modifyLayout = ml }) =
+-- | Mirror a layout, compute its 90 degree rotated form.
+mirror :: Layout -> Layout
+mirror (Layout { doLayout = dl, modifyLayout = ml }) =
               Layout { doLayout = \sc w -> map (second mirrorRect) `fmap` dl (mirrorRect sc) w
-                     , modifyLayout = fmap mirrorLayout . ml }
+                     , modifyLayout = fmap mirror . ml }
 
 -- | tile.  Compute the positions for windows in our default tiling modes
 -- Tiling algorithms in the core should satisify the constraint that
@@ -363,6 +377,7 @@ tile f r nmaster n | n <= nmaster = splitVertically n r
                    | otherwise    = splitVertically nmaster r1 ++ splitVertically (n-nmaster) r2
     where (r1,r2) = splitHorizontallyBy f r
 
+-- divide a rectangle, computing a number of subrectangles.
 splitVertically, splitHorizontally :: Int -> Rectangle -> [Rectangle]
 splitVertically n r | n < 2 = [r]
 splitVertically n (Rectangle sx sy sw sh) = Rectangle sx sy sw smallh :
