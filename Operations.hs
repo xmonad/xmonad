@@ -25,7 +25,7 @@ import qualified Data.Map as M
 
 import Control.Monad.State
 import Control.Monad.Reader
-import Control.Arrow
+import Control.Arrow ((***), second)
 
 import System.IO
 import Graphics.X11.Xlib
@@ -160,10 +160,9 @@ refresh = do
 
         -- just the tiled windows:
         -- now tile the windows on this workspace, modified by the gap
-        rs <- doLayout l (Rectangle (sx + fromIntegral gl)
-                                    (sy + fromIntegral gt)
-                                    (sw - fromIntegral (gl + gr))
-                                    (sh - fromIntegral (gt + gb))) tiled
+        rs <- doLayout l (Rectangle
+                (sx + fromIntegral gl)        (sy + fromIntegral gt)
+                (sw - fromIntegral (gl + gr)) (sh - fromIntegral (gt + gb))) tiled
         mapM_ (\(win,rect) -> io (tileWindow d win rect)) rs
 
         -- now the floating windows:
@@ -171,10 +170,9 @@ refresh = do
         (`mapM_` flt) $ \fw -> whenJust (M.lookup fw (W.floating ws)) $
           \(W.RationalRect rx ry rw rh) -> do
             let Rectangle px py pw ph = genericIndex xinesc (W.screen w)
-            io $ tileWindow d fw (Rectangle (px + floor (toRational pw*rx))
-                                            (py + floor (toRational ph*ry))
-                                            (floor (toRational pw*rw))
-                                            (floor (toRational ph*rh)))
+            io $ tileWindow d fw $ Rectangle
+                (px + floor (toRational pw*rx)) (py + floor (toRational ph*ry))
+                (floor (toRational pw*rw)) (floor (toRational ph*rh))
 
         -- TODO seems fishy?
         -- Urgh. This is required because the fullscreen layout assumes that
@@ -320,32 +318,20 @@ sendMessage a = layout $ \x@(l, ls) -> maybe x (flip (,) ls) (modifyLayout l (So
 --      Expand
 --
 
-data Resize = Shrink | Expand deriving Typeable
+data Resize     = Shrink | Expand   deriving Typeable
+data IncMasterN = IncMasterN Int   deriving Typeable
 instance Message Resize
-
-data IncMasterN = IncMasterN Int deriving Typeable
 instance Message IncMasterN
 
 -- simple fullscreen mode, just render all windows fullscreen.
+-- a plea for tuple sections: map . (,sc)
 full :: Layout
 full = Layout { doLayout     = \sc ws -> return [ (w,sc) | w <- ws ]
               , modifyLayout = const Nothing } -- no changes
 
--- the true tiling mode of xmonad.
 --
--- the screen is divided (currently) into two panes. all clients are
--- then partioned between these two panes. one pane, the `master', by
--- convention has the least number of windows in it (by default, 1). 
--- the variable `nmaster' controls how many windows are rendered in the
--- master pane.
+-- The tiling mode of xmonad, and its operations.
 --
--- `delta' specifies the ratio of the screen to resize by.
---
--- 'frac' specifies what proportion of the screen to devote to the
--- master area.
---
--- 
-
 tall :: Int -> Rational -> Rational -> Layout
 tall nmaster delta frac =
     Layout { doLayout     = \r -> return . ap zip (tile frac r nmaster . length)
@@ -354,7 +340,7 @@ tall nmaster delta frac =
 
     where resize Shrink = tall nmaster delta (frac-delta)
           resize Expand = tall nmaster delta (frac+delta)
-          incmastern (IncMasterN d) = tall (max 1 (nmaster+d)) delta frac
+          incmastern (IncMasterN d) = tall (max 0 (nmaster+d)) delta frac
 
 -- | Mirror a rectangle
 mirrorRect :: Rectangle -> Rectangle
@@ -363,33 +349,47 @@ mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 -- | Mirror a layout, compute its 90 degree rotated form.
 mirror :: Layout -> Layout
 mirror (Layout { doLayout = dl, modifyLayout = ml }) =
-              Layout { doLayout = \sc w -> map (second mirrorRect) `fmap` dl (mirrorRect sc) w
-                     , modifyLayout = fmap mirror . ml }
+    Layout { doLayout     = \sc w -> map (second mirrorRect) `fmap` dl (mirrorRect sc) w
+           , modifyLayout = fmap mirror . ml }
 
--- | tile.  Compute the positions for windows in our default tiling modes
--- Tiling algorithms in the core should satisify the constraint that
+-- | tile.  Compute the positions for windows using the default 2 pane tiling algorithm.
 --
---  * no windows overlap
---  * no gaps exist between windows.
+-- The screen is divided (currently) into two panes. all clients are
+-- then partioned between these two panes. one pane, the `master', by
+-- convention has the least number of windows in it (by default, 1). 
+-- the variable `nmaster' controls how many windows are rendered in the
+-- master pane. 
 --
+-- `delta' specifies the ratio of the screen to resize by.
+--
+-- 'frac' specifies what proportion of the screen to devote to the
+-- master area.
+-- 
 tile :: Rational -> Rectangle -> Int -> Int -> [Rectangle]
-tile f r nmaster n | n <= nmaster = splitVertically n r
-                   | otherwise    = splitVertically nmaster r1 ++ splitVertically (n-nmaster) r2
-    where (r1,r2) = splitHorizontallyBy f r
+tile f r nmaster n = if n <= nmaster || nmaster == 0
+    then splitVertically n r
+    else splitVertically nmaster r1 ++ splitVertically (n-nmaster) r2 -- two columns
+  where (r1,r2) = splitHorizontallyBy f r
 
--- divide a rectangle, computing a number of subrectangles.
+--
+-- Divide the screen vertically into n subrectangles
+--
 splitVertically, splitHorizontally :: Int -> Rectangle -> [Rectangle]
 splitVertically n r | n < 2 = [r]
 splitVertically n (Rectangle sx sy sw sh) = Rectangle sx sy sw smallh :
     splitVertically (n-1) (Rectangle sx (sy+fromIntegral smallh) sw (sh-smallh))
-    where smallh = sh `div` fromIntegral n
-splitHorizontally n r = map mirrorRect $ splitVertically n $ mirrorRect r
+  where smallh = sh `div` fromIntegral n --hmm, this is a fold or map.
 
+splitHorizontally n = map mirrorRect . splitVertically n . mirrorRect
+
+-- Divide the screen into two rectangles, using a rational to specify the ratio
 splitHorizontallyBy, splitVerticallyBy :: Rational -> Rectangle -> (Rectangle, Rectangle)
 splitHorizontallyBy f (Rectangle sx sy sw sh) =
-    (Rectangle sx sy leftw sh, Rectangle (sx + fromIntegral leftw) sy (sw-fromIntegral leftw) sh)
-        where leftw = floor $ fromIntegral sw * f
-splitVerticallyBy f r = (\(a,b)->(mirrorRect a,mirrorRect b)) $ splitHorizontallyBy f $ mirrorRect r
+    ( Rectangle sx sy leftw sh
+    , Rectangle (sx + fromIntegral leftw) sy (sw-fromIntegral leftw) sh)
+  where leftw = floor $ fromIntegral sw * f
+
+splitVerticallyBy f = (mirrorRect *** mirrorRect) . splitHorizontallyBy f . mirrorRect
 
 ------------------------------------------------------------------------
 
