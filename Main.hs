@@ -183,11 +183,10 @@ handle e@(CrossingEvent {ev_event_type = t})
 
 -- configure a window
 handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
-    floating <- gets $ M.member w . floating . windowset
-    rootw    <- asks theRoot
-    wa       <- io $ getWindowAttributes dpy w
+    f  <- gets $ M.member w . floating . windowset
+    wa <- io $ getWindowAttributes dpy w
 
-    if floating
+    if f
         then do io $ configureWindow dpy w (ev_value_mask e) $ WindowChanges
                     { wc_x            = ev_x e
                     , wc_y            = ev_y e
