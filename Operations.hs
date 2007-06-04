@@ -139,10 +139,9 @@ windows f = do
         -- move/resize the floating windows, if there are any
         forM_ flt $ \fw -> whenJust (M.lookup fw (W.floating ws)) $
           \(W.RationalRect rx ry rw rh) -> do
-            let Rectangle px py pw ph = genericIndex xinesc (W.screen w)
             tileWindow fw $ Rectangle
-                (px + floor (toRational pw*rx)) (py + floor (toRational ph*ry))
-                (floor (toRational pw*rw)) (floor (toRational ph*rh))
+                (sx + floor (toRational sw*rx)) (sy + floor (toRational sh*ry))
+                (floor (toRational sw*rw)) (floor (toRational sh*rh))
 
         -- TODO seems fishy?
         -- Urgh. This is required because the fullscreen layout assumes that
