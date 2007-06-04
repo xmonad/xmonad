@@ -272,14 +272,12 @@ index = with [] integrate
 -- 
 focusUp, focusDown, swapUp, swapDown :: StackSet i a s -> StackSet i a s
 focusUp = modify Empty $ \c -> case c of
-    Node _ []     [] -> c
     Node t (l:ls) rs -> Node l ls (t:rs)
-    Node t []     rs -> Node x (xs ++ [t]) [] where (x:xs) = reverse rs
+    Node t []     rs -> Node x xs [] where (x:xs) = reverse (t:rs)
 
 focusDown = modify Empty $ \c -> case c of
-    Node _ []     [] -> c
     Node t ls (r:rs) -> Node r (t:ls) rs
-    Node t ls     [] -> Node x [] (xs ++ [t]) where (x:xs) = reverse ls
+    Node t ls     [] -> Node x [] xs where (x:xs) = reverse (t:ls)
 
 swapUp = modify Empty $ \c -> case c of
     Node _ []     [] -> c
