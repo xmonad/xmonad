@@ -122,7 +122,7 @@ windows f = do
     -- We now go to some effort to compute the minimal set of windows to hide.
     -- The minimal set being only those windows which weren't previously hidden,
     -- which is the intersection of previously visible windows with those now hidden
-    mapM_ hide . concatMap (integrate . W.stack) $
+    mapM_ hide . concatMap (W.integrate . W.stack) $
         intersectBy (\w x -> W.tag w == W.tag x)
             (map W.workspace $ W.current old : W.visible old)
             (W.hidden new)
@@ -130,8 +130,6 @@ windows f = do
     clearEnterEvents
 
     -- TODO: move this into StackSet.  This isn't exactly the usual integrate.
- where integrate W.Empty        = []
-       integrate (W.Node x l r) = x : l ++ r
 
 -- | setWMState.  set the WM_STATE property
 setWMState :: Window -> Int -> X ()

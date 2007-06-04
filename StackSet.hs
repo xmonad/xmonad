@@ -257,7 +257,7 @@ integrate (Node x l r) = reverse l ++ x : r
 -- integration of a one-hole list cursor, back to a list.
 --
 index :: Eq a => StackSet i a s -> [a]
-index = with [] $ \(Node t l r) -> reverse l ++ t : r
+index = with [] integrate
 
 --  let is = t : r ++ reverse l in take (length is) (dropWhile (/= m) (cycle is))
 
