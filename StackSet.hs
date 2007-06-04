@@ -278,13 +278,12 @@ focusUp' (Node t []     rs) = Node x xs [] where (x:xs) = reverse (t:rs)
 
 focusDown = modify Empty (reverseStack . focusUp' . reverseStack)
 
-swapUp = modify Empty $ \c -> case c of
-    Node t (l:ls) rs -> Node t ls (l:rs)
-    Node t []     rs -> Node t (reverse rs) []
+swapUp = modify Empty swapUp'
 
-swapDown = modify Empty $ \c -> case c of
-    Node t ls (r:rs) -> Node t (r:ls) rs
-    Node t ls     [] -> Node t [] (reverse ls)
+swapUp' (Node t (l:ls) rs) = Node t ls (l:rs)
+swapUp' (Node t []     rs) = Node t (reverse rs) []
+
+swapDown = modify Empty (reverseStack . swapUp' . reverseStack)
 
 -- reverse a stack: up becomes down and down becomes up.
 reverseStack (Node t ls rs) = Node t rs ls
