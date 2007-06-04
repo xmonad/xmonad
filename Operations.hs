@@ -235,12 +235,7 @@ rescreen :: X ()
 rescreen = do
     xinesc <- withDisplay (io . getScreenInfo)
 
-    -- TODO: This stuff is necessary because Xlib apparently caches screen
-    -- width/height.  Find a better solution later.  I hate Xlib.
-    let sx = maximum $ map (\r -> rect_x r + fromIntegral (rect_width  r)) xinesc
-        sy = maximum $ map (\r -> rect_y r + fromIntegral (rect_height r)) xinesc
-
-    modify (\s -> s { xineScreens = xinesc , dimensions  = (sx, sy)
+    modify (\s -> s { xineScreens = xinesc
                     , statusGaps  = take (length xinesc) $ (statusGaps s) ++ repeat (0,0,0,0) })
 
     windows $ \ws@(W.StackSet { W.current = v, W.visible = vs, W.hidden = hs }) ->

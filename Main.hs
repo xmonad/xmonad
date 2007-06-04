@@ -59,9 +59,7 @@ main = do
             { windowset     = winset
             , layouts       = M.fromList [(w, safeLayouts) | w <- [0 .. W workspaces - 1]]
             , statusGaps    = take (length xinesc) $ defaultGaps ++ repeat (0,0,0,0)
-            , xineScreens   = xinesc
-            , dimensions    = (fromIntegral (displayWidth  dpy dflt),
-                               fromIntegral (displayHeight dpy dflt)) }
+            , xineScreens   = xinesc }
 
     xSetErrorHandler -- in C, I'm too lazy to write the binding: dons
 
