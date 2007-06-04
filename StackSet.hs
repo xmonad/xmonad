@@ -273,19 +273,22 @@ index = with [] integrate
 focusUp, focusDown, swapUp, swapDown :: StackSet i a s -> StackSet i a s
 focusUp = modify Empty focusUp'
 
-focusUp' (Node t (l:ls) rs) = Node l ls (t:rs)
-focusUp' (Node t []     rs) = Node x xs [] where (x:xs) = reverse (t:rs)
-
 focusDown = modify Empty (reverseStack . focusUp' . reverseStack)
 
 swapUp = modify Empty swapUp'
 
+swapDown = modify Empty (reverseStack . swapUp' . reverseStack)
+
+focusUp', swapUp' :: Stack a -> Stack a
+
+focusUp' (Node t (l:ls) rs) = Node l ls (t:rs)
+focusUp' (Node t []     rs) = Node x xs [] where (x:xs) = reverse (t:rs)
+
 swapUp' (Node t (l:ls) rs) = Node t ls (l:rs)
 swapUp' (Node t []     rs) = Node t (reverse rs) []
 
-swapDown = modify Empty (reverseStack . swapUp' . reverseStack)
-
 -- reverse a stack: up becomes down and down becomes up.
+reverseStack :: Stack a -> Stack a
 reverseStack (Node t ls rs) = Node t rs ls
 reverseStack x              = x
 
