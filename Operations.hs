@@ -74,7 +74,8 @@ swapMaster = windows W.swapMaster
 -- | shift. Move a window to a new workspace, 0 indexed.
 shift :: WorkspaceId -> X ()
 shift n = withFocused hide >> windows (W.shift n)
-    -- refresh will raise it if we didn't need to move it.
+-- TODO: get rid of the above hide.  'windows' should handle all hiding and
+-- revealing of windows
 
 -- | view. Change the current workspace to workspace at offset n (0 indexed).
 view :: WorkspaceId -> X ()
