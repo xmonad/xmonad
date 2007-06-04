@@ -157,14 +157,13 @@ handle e@(MappingNotifyEvent {ev_window = w}) = do
     when (ev_request e == mappingKeyboard) $ withDisplay $ io . flip grabKeys w
 
 -- click on an unfocused window, makes it focused on this workspace
-handle (ButtonEvent { ev_window = w, ev_subwindow = subw, ev_event_type = t, ev_state = m, ev_button = b })
-    | t == buttonPress = do isr <- isRoot w
-                            -- If it's the root window, then it's something we
-                            -- grabbed in grabButtons. Otherwise, it's
-                            -- click-to-focus.
-                            if isr
-                                then whenJust (M.lookup (cleanMask m, b) mouseBindings) ($ subw)
-                                else focus w
+handle e@(ButtonEvent {ev_window = w,ev_event_type = t,ev_button = b })
+    | t == buttonPress = do
+    isr <- isRoot w
+    if isr then whenJust (M.lookup (cleanMask (ev_state e), b) mouseBindings) ($ ev_subwindow e)
+           else focus w
+    -- If it's the root window, then it's something we
+    -- grabbed in grabButtons. Otherwise, it's click-to-focus.
 
 -- entered a normal window, makes this focused.
 handle e@(CrossingEvent {ev_window = w, ev_event_type = t})
@@ -195,7 +194,8 @@ handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
         else io $ allocaXEvent $ \ev -> do
                  setEventType ev configureNotify
                  setConfigureEvent ev w w
-                     (wa_x wa) (wa_y wa) (wa_width wa) (wa_height wa) (ev_border_width e) none (wa_override_redirect wa)
+                     (wa_x wa) (wa_y wa) (wa_width wa)
+                     (wa_height wa) (ev_border_width e) none (wa_override_redirect wa)
                  sendEvent dpy w False 0 ev
     io $ sync dpy False
 
