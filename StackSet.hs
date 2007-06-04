@@ -76,7 +76,7 @@
 --
 module StackSet (
         StackSet(..), Workspace(..), Screen(..), Stack(..), RationalRect(..),
-        new, view, lookupWorkspace, peek, index, focusUp, focusDown,
+        new, view, lookupWorkspace, peek, index, integrate, focusUp, focusDown,
         focusWindow, member, findIndex, insertUp, delete, shift,
         swapMaster, swapUp, swapDown, modify, float, sink -- needed by users
     ) where
@@ -242,6 +242,13 @@ modify d f s = s { current = (current s)
 --
 peek :: StackSet i a s -> Maybe a
 peek = with Nothing (return . focus)
+
+--
+-- /O(n)/. Flatten a Stack into a list.
+--
+integrate :: Stack a -> [a]
+integrate Empty        = []
+integrate (Node x l r) = reverse l ++ x : r
 
 --
 -- /O(s)/. Extract the stack on the current workspace, as a list.
