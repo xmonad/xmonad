@@ -140,9 +140,6 @@ setWMState w v = withDisplay $ \dpy -> do
     io $ changeProperty32 dpy w a a propModeReplace [fromIntegral v, fromIntegral none]
 
 -- | hide. Hide a window by unmapping it.
---
--- If you call this on a window that is marked as visible, very bad things will
--- happen (currently unmanaging, but don't count on it).
 hide :: Window -> X ()
 hide w = withDisplay $ \d -> do
     io $ unmapWindow d w
