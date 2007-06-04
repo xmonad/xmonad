@@ -80,7 +80,7 @@ runX c st (X a) = runStateT (runReaderT a c) st >> return ()
 
 -- | Run a monad action with the current display settings
 withDisplay :: (Display -> X a) -> X a
-withDisplay f = asks display >>= f
+withDisplay   f = asks display >>= f
 
 -- | Run a monadic action with the current stack set
 withWindowSet :: (WindowSet -> X a) -> X a
@@ -96,8 +96,8 @@ getAtom str = withDisplay $ \dpy -> io $ internAtom dpy str False
 
 -- | Common non-predefined atoms
 atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW :: X Atom
-atom_WM_PROTOCOLS = getAtom "WM_PROTOCOLS"
-atom_WM_DELETE_WINDOW = getAtom "WM_DELETE_WINDOW"
+atom_WM_PROTOCOLS       = getAtom "WM_PROTOCOLS"
+atom_WM_DELETE_WINDOW   = getAtom "WM_DELETE_WINDOW"
 
 ------------------------------------------------------------------------
 -- Layout handling
