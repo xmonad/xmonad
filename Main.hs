@@ -76,6 +76,8 @@ main = do
     allocaXEvent $ \e ->
         runX cf st $ do
             mapM_ manage ws
+            -- withWindowSet (io . hPrint stderr) -- uncomment for state logging
+
             -- main loop, for all you HOF/recursion fans out there.
             forever $ handle =<< io (nextEvent dpy e >> getEvent e)
 
