@@ -18,7 +18,8 @@
 module XMonad (
     X, WindowSet, WorkspaceId(..), ScreenId(..), XState(..), XConf(..), Layout(..),
     Typeable, Message, SomeMessage(..), fromMessage, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW,
-    runX, io, withDisplay, withWindowSet, isRoot, spawn, restart, trace, whenJust, whenX
+    runX, io, withDisplay, withWindowSet, isRoot, spawn, restart, trace, whenJust, whenX,
+    atom_WM_STATE
   ) where
 
 import StackSet (StackSet)
@@ -95,9 +96,10 @@ getAtom :: String -> X Atom
 getAtom str = withDisplay $ \dpy -> io $ internAtom dpy str False
 
 -- | Common non-predefined atoms
-atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW :: X Atom
+atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, atom_WM_STATE :: X Atom
 atom_WM_PROTOCOLS       = getAtom "WM_PROTOCOLS"
 atom_WM_DELETE_WINDOW   = getAtom "WM_DELETE_WINDOW"
+atom_WM_STATE           = getAtom "WM_STATE"
 
 ------------------------------------------------------------------------
 -- Layout handling

@@ -144,12 +144,23 @@ handle (KeyEvent {ev_event_type = t, ev_state = m, ev_keycode = code})
 -- manage a new window
 handle (MapRequestEvent    {ev_window = w}) = withDisplay $ \dpy -> do
     wa <- io $ getWindowAttributes dpy w -- ignore override windows
-    when (not (wa_override_redirect wa)) $ manage w
+    -- need to ignore mapping requests by managed windows not on the current workspace
+    managed <- isClient w
+    when (not (wa_override_redirect wa) && not managed) $ do manage w
 
 -- window destroyed, unmanage it
 -- window gone,      unmanage it
 handle (DestroyWindowEvent {ev_window = w}) = whenX (isClient w) $ unmanage w
-handle (UnmapEvent         {ev_window = w}) = whenX (isClient w) $ unmanage w
+
+-- We only handle synthetic unmap events, because real events are confusable
+-- with the events produced by 'hide'.  ICCCM says that all clients should send
+-- synthetic unmap events immediately after unmapping, and later describes
+-- clients that do not follow the rule as "obsolete".  For now, we make the
+-- simplifying assumption that nobody uses clients that were already obsolete
+-- in 1994.  Note that many alternative methods for resolving the hide/withdraw
+-- ambiguity are racy.
+
+handle (UnmapEvent         {ev_window = w, ev_send_event = True}) = whenX (isClient w) $ unmanage w
 
 -- set keyboard mapping
 handle e@(MappingNotifyEvent {ev_window = w}) = do

@@ -61,7 +61,7 @@ manage w = withDisplay $ \d -> do
 -- there, floating status is lost when moving windows between workspaces,
 -- because W.shift calls W.delete.
 unmanage :: Window -> X ()
-unmanage w = windows $ W.sink w . W.delete w
+unmanage w = setWMState w 0{-withdrawn-} >> windows (W.sink w . W.delete w)
 
 -- | focus. focus window up or down. or swap various windows.
 focusUp, focusDown, swapUp, swapDown, swapMaster :: X ()
@@ -133,11 +133,20 @@ windows f = do
  where integrate W.Empty        = []
        integrate (W.Node x l r) = x : l ++ r
 
--- | hide. Hide a window by moving it off screen.
+-- | setWMState.  set the WM_STATE property
+setWMState :: Window -> Int -> X ()
+setWMState w v = withDisplay $ \dpy -> do
+    a <- atom_WM_STATE
+    io $ changeProperty32 dpy w a a propModeReplace [fromIntegral v, fromIntegral none]
+
+-- | hide. Hide a window by unmapping it.
+--
+-- If you call this on a window that is marked as visible, very bad things will
+-- happen (currently unmanaging, but don't count on it).
 hide :: Window -> X ()
 hide w = withDisplay $ \d -> do
-    (sw,sh) <- gets dimensions
-    io $ moveWindow d w sw sh
+    io $ unmapWindow d w
+    setWMState w 3 --iconic
 
 -- | refresh. Render the currently visible workspaces, as determined by
 -- the StackSet. Also, set focus to the focused window.
@@ -164,14 +173,14 @@ refresh = do
         rs <- doLayout l (Rectangle
                 (sx + fromIntegral gl)        (sy + fromIntegral gt)
                 (sw - fromIntegral (gl + gr)) (sh - fromIntegral (gt + gb))) tiled
-        mapM_ (\(win,rect) -> io (tileWindow d win rect)) rs
+        mapM_ (\(win,rect) -> tileWindow win rect) rs
 
         -- now the floating windows:
         -- move/resize the floating windows, if there are any
         (`mapM_` flt) $ \fw -> whenJust (M.lookup fw (W.floating ws)) $
           \(W.RationalRect rx ry rw rh) -> do
             let Rectangle px py pw ph = genericIndex xinesc (W.screen w)
-            io $ tileWindow d fw $ Rectangle
+            tileWindow fw $ Rectangle
                 (px + floor (toRational pw*rx)) (py + floor (toRational ph*ry))
                 (floor (toRational pw*rw)) (floor (toRational ph*rh))
 
@@ -209,11 +218,14 @@ clearEnterEvents = withDisplay $ \d -> io $ do
 
 -- | tileWindow. Moves and resizes w such that it fits inside the given
 -- rectangle, including its border.
-tileWindow :: Display -> Window -> Rectangle -> IO ()
-tileWindow d w r = do
-    bw <- (fromIntegral . wa_border_width) `liftM` getWindowAttributes d w
-    moveResizeWindow d w (rect_x r) (rect_y r)
-                         (rect_width  r - bw*2) (rect_height r - bw*2)
+tileWindow :: Window -> Rectangle -> X ()
+tileWindow w r = withDisplay $ \d -> do
+    bw <- (fromIntegral . wa_border_width) `liftM` io (getWindowAttributes d w)
+    io $ moveResizeWindow d w (rect_x r) (rect_y r)
+                              (rect_width  r - bw*2) (rect_height r - bw*2)
+    -- this is harmless if the window was already visible
+    setWMState w 1 --normal
+    io $ mapWindow d w
 
 -- ---------------------------------------------------------------------
 
