@@ -51,7 +51,6 @@ main = do
         cf = XConf
             { display       = dpy
             , theRoot       = rootw
-            -- fromIntegral needed for X11 versions that use Int instead of CInt.
             , normalBorder  = nbc
             , focusedBorder = fbc
             }
