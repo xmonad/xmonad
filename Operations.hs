@@ -176,8 +176,6 @@ windows f = do
 
     clearEnterEvents
 
-    -- TODO: move this into StackSet.  This isn't exactly the usual integrate.
-
 -- | setWMState.  set the WM_STATE property
 setWMState :: Window -> Int -> X ()
 setWMState w v = withDisplay $ \dpy -> do
