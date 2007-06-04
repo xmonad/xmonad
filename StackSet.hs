@@ -185,9 +185,6 @@ new n m | n > 0 && m > 0 = StackSet n cur visi unseen M.empty
 -- Xinerama: If the workspace is not visible on any Xinerama screen, it
 -- becomes the current screen. If it is in the visible list, it becomes
 -- current.
-
--- is raised to the current screen. If it is already visible, focus is
--- just moved.
 --
 view :: (Eq i, Eq a, Eq s, Integral i) => i -> StackSet i a s -> StackSet i a s
 view i s
