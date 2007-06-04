@@ -26,7 +26,6 @@ import StackSet (StackSet)
 import Control.Monad.State
 import Control.Monad.Reader
 import System.IO
-import System.IO.Unsafe (unsafePerformIO)
 import System.Posix.Process (executeFile, forkProcess, getProcessStatus, createSession)
 import System.Exit
 import System.Environment
