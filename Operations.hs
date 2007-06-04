@@ -114,44 +114,9 @@ kill = withDisplay $ \d -> withFocused $ \w -> do
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WindowSet -> WindowSet) -> X ()
 windows f = do
-    old  <- gets windowset
-    let new = f old
-    modify (\s -> s { windowset = new })
-    refresh
-
-    -- We now go to some effort to compute the minimal set of windows to hide.
-    -- The minimal set being only those windows which weren't previously hidden,
-    -- which is the intersection of previously visible windows with those now hidden
-    mapM_ hide . concatMap (W.integrate . W.stack) $
-        intersectBy (\w x -> W.tag w == W.tag x)
-            (map W.workspace $ W.current old : W.visible old)
-            (W.hidden new)
-
-    clearEnterEvents
-
-    -- TODO: move this into StackSet.  This isn't exactly the usual integrate.
-
--- | setWMState.  set the WM_STATE property
-setWMState :: Window -> Int -> X ()
-setWMState w v = withDisplay $ \dpy -> do
-    a <- atom_WM_STATE
-    io $ changeProperty32 dpy w a a propModeReplace [fromIntegral v, fromIntegral none]
-
--- | hide. Hide a window by unmapping it.
-hide :: Window -> X ()
-hide w = withDisplay $ \d -> do
-    io $ unmapWindow d w
-    setWMState w 3 --iconic
-
--- | refresh. Render the currently visible workspaces, as determined by
--- the StackSet. Also, set focus to the focused window.
---
--- This is our 'view' operation (MVC), in that it pretty prints our model
--- with X calls.
---
-refresh :: X ()
-refresh = do
-    XState { windowset = ws, layouts = fls, xineScreens = xinesc, statusGaps = gaps } <- get
+    XState { windowset = old, layouts = fls, xineScreens = xinesc, statusGaps = gaps } <- get
+    let ws = f old
+    modify (\s -> s { windowset = ws })
     d <- asks display
 
     -- for each workspace, layout the currently visible workspaces
@@ -199,9 +164,41 @@ refresh = do
         io $ restackWindows d (flt ++ tiled')
 
     setTopFocus
-    clearEnterEvents
     -- withWindowSet (io . hPrint stderr) -- logging state changes!
---  io performGC -- really helps 
+    -- io performGC -- really helps 
+
+    -- We now go to some effort to compute the minimal set of windows to hide.
+    -- The minimal set being only those windows which weren't previously hidden,
+    -- which is the intersection of previously visible windows with those now hidden
+    mapM_ hide . concatMap (W.integrate . W.stack) $
+        intersectBy (\w x -> W.tag w == W.tag x)
+            (map W.workspace $ W.current old : W.visible old)
+            (W.hidden ws)
+
+    clearEnterEvents
+
+    -- TODO: move this into StackSet.  This isn't exactly the usual integrate.
+
+-- | setWMState.  set the WM_STATE property
+setWMState :: Window -> Int -> X ()
+setWMState w v = withDisplay $ \dpy -> do
+    a <- atom_WM_STATE
+    io $ changeProperty32 dpy w a a propModeReplace [fromIntegral v, fromIntegral none]
+
+-- | hide. Hide a window by unmapping it.
+hide :: Window -> X ()
+hide w = withDisplay $ \d -> do
+    io $ unmapWindow d w
+    setWMState w 3 --iconic
+
+-- | refresh. Render the currently visible workspaces, as determined by
+-- the StackSet. Also, set focus to the focused window.
+--
+-- This is our 'view' operation (MVC), in that it pretty prints our model
+-- with X calls.
+--
+refresh :: X ()
+refresh = windows id
 
 -- | clearEnterEvents.  Remove all window entry events from the event queue.
 clearEnterEvents :: X ()
