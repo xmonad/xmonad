@@ -467,10 +467,12 @@ mouseResizeWindow :: Window -> X ()
 mouseResizeWindow w = withDisplay $ \d -> do
     io $ raiseWindow d w
     wa <- io $ getWindowAttributes d w
+    sh <- io $ getWMNormalHints d w
     io $ warpPointer d none w 0 0 0 0 (fromIntegral (wa_width wa)) (fromIntegral (wa_height wa))
     mouseDrag $ \(_, _, _, ex, ey, _, _, _, _, _) ->
-        resizeWindow d w (fromIntegral (max 1 (ex - fromIntegral (wa_x wa))))
-                         (fromIntegral (max 1 (ey - fromIntegral (wa_y wa))))
+        resizeWindow d w `uncurry`
+                         applySizeHints sh ((fromIntegral (max 1 (ex - fromIntegral (wa_x wa)))),
+                                            (fromIntegral (max 1 (ey - fromIntegral (wa_y wa)))))
     float w
 --
 
