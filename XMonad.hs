@@ -17,7 +17,7 @@
 
 module XMonad (
     X, WindowSet, WorkspaceId(..), ScreenId(..), XState(..), XConf(..), Layout(..),
-    Typeable, Message, SomeMessage(..), fromMessage,
+    Typeable, Message, SomeMessage(..), fromMessage, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW,
     runX, io, withDisplay, withWindowSet, isRoot, spawn, restart, trace, whenJust, whenX
   ) where
 
@@ -26,6 +26,7 @@ import StackSet (StackSet)
 import Control.Monad.State
 import Control.Monad.Reader
 import System.IO
+import System.IO.Unsafe (unsafePerformIO)
 import System.Posix.Process (executeFile, forkProcess, getProcessStatus, createSession)
 import System.Exit
 import System.Environment
@@ -47,8 +48,6 @@ data XState = XState
 data XConf = XConf
     { display       :: Display      -- ^ the X11 display
     , theRoot       :: !Window      -- ^ the root window
-    , wmdelete      :: !Atom        -- ^ window deletion atom
-    , wmprotocols   :: !Atom        -- ^ wm protocols atom
     , normalBorder  :: !Color       -- ^ border color of unfocused windows
     , focusedBorder :: !Color     } -- ^ border color of the focused window
 
@@ -91,6 +90,15 @@ withWindowSet f = gets windowset >>= f
 -- | True if the given window is the root window
 isRoot :: Window -> X Bool
 isRoot w = liftM (w==) (asks theRoot)
+
+-- | Wrapper for the common case of atom internment
+getAtom :: String -> X Atom
+getAtom str = withDisplay $ \dpy -> io $ internAtom dpy str False
+
+-- | Common non-predefined atoms
+atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW :: X Atom
+atom_WM_PROTOCOLS = getAtom "WM_PROTOCOLS"
+atom_WM_DELETE_WINDOW = getAtom "WM_DELETE_WINDOW"
 
 ------------------------------------------------------------------------
 -- Layout handling

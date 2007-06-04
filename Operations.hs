@@ -98,7 +98,8 @@ modifyGap f = do
 --
 kill :: X ()
 kill = withDisplay $ \d -> withFocused $ \w -> do
-    XConf {wmdelete = wmdelt, wmprotocols = wmprot} <- ask
+    wmdelt <- atom_WM_DELETE_WINDOW  ;  wmprot <- atom_WM_PROTOCOLS
+
     protocols <- io $ getWMProtocols d w
     io $ if wmdelt `elem` protocols
         then allocaXEvent $ \ev -> do

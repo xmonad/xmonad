@@ -39,8 +39,6 @@ main = do
         initcolor c = fst `liftM` allocNamedColor dpy (defaultColormap dpy dflt) c
 
     rootw  <- rootWindow dpy dflt
-    wmdelt <- internAtom dpy "WM_DELETE_WINDOW" False
-    wmprot <- internAtom dpy "WM_PROTOCOLS"     False
     xinesc <- getScreenInfo dpy
     nbc    <- initcolor normalBorderColor
     fbc    <- initcolor focusedBorderColor
@@ -53,8 +51,6 @@ main = do
         cf = XConf
             { display       = dpy
             , theRoot       = rootw
-            , wmdelete      = wmdelt
-            , wmprotocols   = wmprot
             -- fromIntegral needed for X11 versions that use Int instead of CInt.
             , normalBorder  = nbc
             , focusedBorder = fbc
