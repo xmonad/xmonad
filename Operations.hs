@@ -61,7 +61,7 @@ manage w = withDisplay $ \d -> do
 -- there, floating status is lost when moving windows between workspaces,
 -- because W.shift calls W.delete.
 unmanage :: Window -> X ()
-unmanage w = setWMState w 0{-withdrawn-} >> windows (W.sink w . W.delete w)
+unmanage w = setWMState w 0 {-withdrawn-} >> windows (W.sink w . W.delete w)
 
 -- | focus. focus window up or down. or swap various windows.
 focusUp, focusDown, swapUp, swapDown, swapMaster :: X ()
