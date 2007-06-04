@@ -258,7 +258,7 @@ setTopFocus = withWindowSet $ maybe (setFocusX =<< asks theRoot) setFocusX . W.p
 -- the mouse to a new screen).
 focus :: Window -> X ()
 focus w = withWindowSet $ \s -> do
-    if W.member w s then modify (\st -> st { windowset = W.focusWindow w s }) >> refresh
+    if W.member w s then windows (W.focusWindow w)
                     else whenX (isRoot w) $ setFocusX w
 
 -- | Call X to set the keyboard focus details.
