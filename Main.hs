@@ -99,7 +99,7 @@ scan dpy rootw = do
 grabKeys :: Display -> Window -> IO ()
 grabKeys dpy rootw = do
     ungrabKey dpy anyKey anyModifier rootw
-    flip mapM_ (M.keys keys) $ \(mask,sym) -> do
+    forM_ (M.keys keys) $ \(mask,sym) -> do
          kc <- keysymToKeycode dpy sym
          -- "If the specified KeySym is not defined for any KeyCode,
          -- XKeysymToKeycode() returns zero."

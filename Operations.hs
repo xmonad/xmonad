@@ -160,7 +160,7 @@ refresh = do
     d <- asks display
 
     -- for each workspace, layout the currently visible workspaces
-    (`mapM_` (W.current ws : W.visible ws)) $ \w -> do
+    forM_ (W.current ws : W.visible ws) $ \w -> do
         let n      = W.tag (W.workspace w)
             this   = W.view n ws
             Just l = fmap fst $ M.lookup n fls
@@ -177,7 +177,7 @@ refresh = do
 
         -- now the floating windows:
         -- move/resize the floating windows, if there are any
-        (`mapM_` flt) $ \fw -> whenJust (M.lookup fw (W.floating ws)) $
+        forM_ flt $ \fw -> whenJust (M.lookup fw (W.floating ws)) $
           \(W.RationalRect rx ry rw rh) -> do
             let Rectangle px py pw ph = genericIndex xinesc (W.screen w)
             tileWindow fw $ Rectangle
@@ -250,7 +250,7 @@ rescreen = do
 setButtonGrab :: Bool -> Window -> X ()
 setButtonGrab grab w = withDisplay $ \d -> io $
     if grab
-        then flip mapM_ [button1, button2, button3] $ \b ->
+        then forM_ [button1, button2, button3] $ \b ->
             grabButton d b anyModifier w False buttonPressMask
                        grabModeAsync grabModeSync none none
         else ungrabButton d anyButton anyModifier w
@@ -281,8 +281,8 @@ setFocusX w = withWindowSet $ \ws -> do
     XConf { display = dpy , normalBorder = nbc, focusedBorder = fbc } <- ask
 
     -- clear mouse button grab and border on other windows
-    (`mapM_` (W.current ws : W.visible ws)) $ \wk -> do
-        (`mapM_` (W.index (W.view (W.tag (W.workspace wk)) ws))) $ \otherw -> do
+    forM_ (W.current ws : W.visible ws) $ \wk -> do
+        forM_ (W.index (W.view (W.tag (W.workspace wk)) ws)) $ \otherw -> do
             setButtonGrab True otherw
             io $ setWindowBorder dpy otherw (color_pixel nbc)
 
