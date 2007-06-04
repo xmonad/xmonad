@@ -271,13 +271,12 @@ index = with [] integrate
 -- the current stack.
 -- 
 focusUp, focusDown, swapUp, swapDown :: StackSet i a s -> StackSet i a s
-focusUp = modify Empty $ \c -> case c of
-    Node t (l:ls) rs -> Node l ls (t:rs)
-    Node t []     rs -> Node x xs [] where (x:xs) = reverse (t:rs)
+focusUp = modify Empty focusUp'
 
-focusDown = modify Empty $ \c -> case c of
-    Node t ls (r:rs) -> Node r (t:ls) rs
-    Node t ls     [] -> Node x [] xs where (x:xs) = reverse (t:ls)
+focusUp' (Node t (l:ls) rs) = Node l ls (t:rs)
+focusUp' (Node t []     rs) = Node x xs [] where (x:xs) = reverse (t:rs)
+
+focusDown = modify Empty (reverseStack . focusUp' . reverseStack)
 
 swapUp = modify Empty $ \c -> case c of
     Node _ []     [] -> c
@@ -288,6 +287,10 @@ swapDown = modify Empty $ \c -> case c of
     Node _ []     [] -> c
     Node t ls (r:rs) -> Node t (r:ls) rs
     Node t ls     [] -> Node t [] (reverse ls)
+
+-- reverse a stack: up becomes down and down becomes up.
+reverseStack (Node t ls rs) = Node t rs ls
+reverseStack x              = x
 
 --
 -- | /O(1) on current window, O(n) in general/. Focus the window 'w', 
