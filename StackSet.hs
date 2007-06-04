@@ -186,7 +186,7 @@ new n m | n > 0 && m > 0 = StackSet n cur visi unseen M.empty
 -- becomes the current screen. If it is in the visible list, it becomes
 -- current.
 --
-view :: (Eq i, Eq a, Eq s, Integral i) => i -> StackSet i a s -> StackSet i a s
+view :: (Eq a, Eq s, Integral i) => i -> StackSet i a s -> StackSet i a s
 view i s
     | i < 0 && i >= size s || i == tag (workspace (current s)) = s  -- out of bounds or current
 
