@@ -194,7 +194,7 @@ view i s
     -- if it is visible, it is just raised
     = s { current = x, visible = current s : L.delete x (visible s) }
 
-    | Just x <- L.find ((i==).tag)     (hidden  s)
+    | Just x <- L.find ((i==).tag)           (hidden  s)
     -- if it was hidden, it is raised on the xine screen currently used
     = s { current = Screen x (screen (current s))
         , hidden = workspace (current s) : L.delete x (hidden s) }
