@@ -27,7 +27,10 @@ import Graphics.X11.Xinerama    (getScreenInfo)
 import XMonad
 import Config
 import StackSet (new, floating, member)
+import qualified StackSet as W
 import Operations
+
+import System.IO
 
 --
 -- The main entry point
@@ -47,6 +50,7 @@ main = do
     let winset | ("--resume" : s : _) <- args
                , [(x, "")]            <- reads s = x
                | otherwise = new (fromIntegral workspaces) (fromIntegral $ length xinesc)
+
         safeLayouts = case defaultLayouts of [] -> (full, []); (x:xs) -> (x, xs)
         cf = XConf
             { display       = dpy
@@ -71,14 +75,27 @@ main = do
 
     sync dpy False
 
-    ws <- scan dpy rootw
+    ws <- scan dpy rootw -- on the resume case, will pick up new windows
     allocaXEvent $ \e ->
         runX cf st $ do
-            mapM_ manage ws
+
+            -- walk workspace, resetting X states/mask for windows
+            -- TODO, general iterators for these lists.
+            sequence_ [ setInitialProperties w >> reveal w
+                      | wk <- map W.workspace (W.current winset : W.visible winset)
+                      , w  <- W.integrate (W.stack wk) ]
+
+            sequence_ [ setInitialProperties w >> hide w
+                      | wk <- W.hidden winset
+                      , w  <- W.integrate (W.stack wk) ]
+
+            mapM_ manage ws -- find new windows
             -- withWindowSet (io . hPrint stderr) -- uncomment for state logging
 
             -- main loop, for all you HOF/recursion fans out there.
-            forever $ handle =<< io (nextEvent dpy e >> getEvent e)
+            forever $ do x <- io (nextEvent dpy e >> getEvent e)
+                         io (hPrint stderr (eventName x, x))
+                         handle x
 
       where forever a = a >> forever a
 
@@ -86,12 +103,12 @@ main = do
 -- IO stuff. Doesn't require any X state
 -- Most of these things run only on startup (bar grabkeys)
 
--- | scan for any initial windows to manage
+-- | scan for any new windows to manage. If they're already managed,
+-- this should be idempotent.
 scan :: Display -> Window -> IO [Window]
 scan dpy rootw = do
     (_, _, ws) <- queryTree dpy rootw
     filterM ok ws
-
   where ok w = do wa <- getWindowAttributes dpy w
                   return $ not (wa_override_redirect wa)
                          && wa_map_state wa == waIsViewable

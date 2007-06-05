@@ -36,13 +36,14 @@ import Graphics.X11.Xlib.Extras
 -- Window manager operations
 
 -- | manage. Add a new window to be managed in the current workspace.
--- Bring it into focus. If the window is already managed, nothing happens.
+-- Bring it into focus.
+--
+-- Whether the window is already managed, or not, it is mapped, has its
+-- border set, and its event mask set.
 --
 manage :: Window -> X ()
 manage w = withDisplay $ \d -> do
-    io $ selectInput d w $ structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
-    io $ mapWindow d w
-    io $ setWindowBorderWidth d w borderWidth
+    setInitialProperties w >> reveal w
 
     -- FIXME: This is pretty awkward. We can't can't let "refresh" happen
     -- before the call to float, because that will resize the window and
@@ -60,6 +61,9 @@ manage w = withDisplay $ \d -> do
 -- FIXME: clearFloating should be taken care of in W.delete, but if we do it
 -- there, floating status is lost when moving windows between workspaces,
 -- because W.shift calls W.delete.
+--
+-- should also unmap?
+--
 unmanage :: Window -> X ()
 unmanage w = setWMState w 0 {-withdrawn-} >> windows (W.sink w . W.delete w)
 
@@ -183,11 +187,24 @@ setWMState w v = withDisplay $ \dpy -> do
     a <- atom_WM_STATE
     io $ changeProperty32 dpy w a a propModeReplace [fromIntegral v, fromIntegral none]
 
--- | hide. Hide a window by unmapping it.
+-- | hide. Hide a window by unmapping it, and setting Iconified.
 hide :: Window -> X ()
-hide w = withDisplay $ \d -> do
+hide  w = withDisplay $ \d -> do
     io $ unmapWindow d w
     setWMState w 3 --iconic
+
+-- | reveal. Show a window by mapping it and setting Normal
+-- this is harmless if the window was already visible
+reveal :: Window -> X ()
+reveal w = withDisplay $ \d -> do
+    setWMState w 1 --normal
+    io $ mapWindow d w
+
+-- | Set some properties when we initially gain control of a window
+setInitialProperties :: Window -> X ()
+setInitialProperties w = withDisplay $ \d -> io $ do
+    selectInput d w $ structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
+    setWindowBorderWidth d w borderWidth
 
 -- | refresh. Render the currently visible workspaces, as determined by
 -- the StackSet. Also, set focus to the focused window.
@@ -213,9 +230,7 @@ tileWindow w r = withDisplay $ \d -> do
     bw <- (fromIntegral . wa_border_width) `liftM` io (getWindowAttributes d w)
     io $ moveResizeWindow d w (rect_x r) (rect_y r)
                               (rect_width  r - bw*2) (rect_height r - bw*2)
-    -- this is harmless if the window was already visible
-    setWMState w 1 --normal
-    io $ mapWindow d w
+    reveal w
 
 -- ---------------------------------------------------------------------
 
