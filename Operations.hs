@@ -1,5 +1,6 @@
 {-# OPTIONS -fglasgow-exts #-}
------------------------------------------------------------------------------
+-- ^^ deriving Typeable
+-- --------------------------------------------------------------------------
 -- |
 -- Module      :  Operations.hs
 -- Copyright   :  (c) Spencer Janssen 2007
@@ -7,7 +8,7 @@
 -- 
 -- Maintainer  :  dons@cse.unsw.edu.au
 -- Stability   :  unstable
--- Portability :  not portable, mtl, posix
+-- Portability :  not portable, Typeable deriving, mtl, posix
 --
 -----------------------------------------------------------------------------
 
