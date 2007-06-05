@@ -502,34 +502,34 @@ mouseResizeWindow w = withDisplay $ \d -> do
 --     float w
 
 
-------------------------------------------------------------------------
--- size hints
+-- ---------------------------------------------------------------------
+-- | Support for window size hints
+
+type D = (Dimension, Dimension)
 
 -- | Reduce the dimensions if needed to comply to the given SizeHints.
-applySizeHints :: SizeHints -> (Dimension, Dimension) -> (Dimension, Dimension)
+applySizeHints :: SizeHints -> D -> D
 applySizeHints sh =
-    maybe id applyMaxSizeHint (sh_max_size sh) .
-    maybe id (\(bw, bh) (w, h) -> (w+bw, h+bh)) (sh_base_size sh) .
-    maybe id applyResizeIncHint (sh_resize_inc sh) .
-    maybe id applyAspectHint (sh_aspect sh) .
-    maybe id (\(bw, bh) (w, h) -> (w-bw, h-bh)) (sh_base_size sh)
+      maybe id applyMaxSizeHint                   (sh_max_size   sh)
+    . maybe id (\(bw, bh) (w, h) -> (w+bw, h+bh)) (sh_base_size  sh)
+    . maybe id applyResizeIncHint                 (sh_resize_inc sh)
+    . maybe id applyAspectHint                    (sh_aspect     sh)
+    . maybe id (\(bw,bh) (w,h)   -> (w-bw, h-bh)) (sh_base_size  sh) -- TODO
 
 -- | Reduce the dimensions so their aspect ratio falls between the two given aspect ratios.
-applyAspectHint :: ((Dimension, Dimension), (Dimension, Dimension)) -> (Dimension, Dimension) -> (Dimension, Dimension)
-applyAspectHint ((minx, miny), (maxx, maxy)) (w, h)
-    | or [minx < 1, miny < 1, maxx < 1, maxy < 1] = (w, h)
-    | w * maxy > h * maxx = (h * maxx `div` maxy, h)
-    | w * miny < h * minx = (w, w * miny `div` minx)
-    | otherwise = (w, h)
+applyAspectHint :: (D, D) -> D -> D
+applyAspectHint ((minx, miny), (maxx, maxy)) x@(w,h)
+    | or [minx < 1, miny < 1, maxx < 1, maxy < 1] = x
+    | w * maxy > h * maxx                         = (h * maxx `div` maxy, h)
+    | w * miny < h * minx                         = (w, w * miny `div` minx)
+    | otherwise                                   = x
 
 -- | Reduce the dimensions so they are a multiple of the size increments.
-applyResizeIncHint :: (Dimension, Dimension) -> (Dimension, Dimension) -> (Dimension, Dimension)
-applyResizeIncHint (iw, ih) (w, h)
-    | iw > 0 && ih > 0 = (w - w `mod` iw, h - h `mod` ih)
-    | otherwise = (w, h)
+applyResizeIncHint :: D -> D -> D
+applyResizeIncHint (iw,ih) x@(w,h) =
+    if iw > 0 && ih > 0 then (w - w `mod` iw, h - h `mod` ih) else x
 
 -- | Reduce the dimensions if they exceed the given maximum dimensions.
-applyMaxSizeHint :: (Dimension, Dimension) -> (Dimension, Dimension) -> (Dimension, Dimension)
-applyMaxSizeHint (maxw, maxh) (w, h)
-    | maxw > 0 && maxh > 0 = (min w maxw, min h maxh)
-    | otherwise = (w, h)
+applyMaxSizeHint  :: D -> D -> D
+applyMaxSizeHint (mw,mh) x@(w,h) =
+    if mw > 0 && mh > 0 then (min w mw,min h mh) else x
