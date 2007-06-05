@@ -45,6 +45,7 @@ main = do
     xinesc <- getScreenInfo dpy
     nbc    <- initcolor normalBorderColor
     fbc    <- initcolor focusedBorderColor
+    hSetBuffering stdout NoBuffering
     args <- getArgs
 
     let winset | ("--resume" : s : _) <- args
@@ -89,7 +90,7 @@ main = do
                       , w  <- W.integrate (W.stack wk) ]
 
             mapM_ manage ws -- find new windows
-            -- withWindowSet (io . hPrint stderr) -- uncomment for state logging
+            when logging $ withWindowSet (io . hPrint stdout)
 
             -- main loop, for all you HOF/recursion fans out there.
             forever $ handle =<< io (nextEvent dpy e >> getEvent e)

@@ -15,7 +15,7 @@ module Operations where
 
 import XMonad
 import qualified StackSet as W
-import {-# SOURCE #-} Config (borderWidth)
+import {-# SOURCE #-} Config (borderWidth,logging)
 
 import Data.Maybe
 import Data.List            (genericIndex, intersectBy, partition, delete)
@@ -168,8 +168,8 @@ windows f = do
         io $ restackWindows d (flt ++ tiled')
 
     setTopFocus
-    -- withWindowSet (io . hPrint stderr) -- logging state changes!
-    -- io performGC -- really helps 
+    when logging $ withWindowSet (io . hPrint stdout)
+    -- io performGC -- really helps, but seems to trigger GC bugs?
 
     -- We now go to some effort to compute the minimal set of windows to hide.
     -- The minimal set being only those windows which weren't previously hidden,

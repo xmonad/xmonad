@@ -100,6 +100,13 @@ defaultLayouts = [ tiled , mirror tiled , full ]
      delta   = 3%100
 
 --
+-- Enable logging of state changes to stdout.
+-- The internal state of the window manager is 'shown' in Haskell data format
+--
+logging :: Bool
+logging = False
+
+--
 -- The key bindings list.
 -- 
 -- The unusual comment format is used to generate the documentation
