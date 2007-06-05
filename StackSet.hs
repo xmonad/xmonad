@@ -271,21 +271,18 @@ index = with [] integrate
 -- the current stack.
 -- 
 focusUp, focusDown, swapUp, swapDown :: StackSet i a s -> StackSet i a s
-focusUp = modify Empty focusUp'
-
+focusUp   = modify Empty focusUp'
 focusDown = modify Empty (reverseStack . focusUp' . reverseStack)
 
-swapUp = modify Empty swapUp'
-
-swapDown = modify Empty (reverseStack . swapUp' . reverseStack)
+swapUp    = modify Empty swapUp'
+swapDown  = modify Empty (reverseStack . swapUp' . reverseStack)
 
 focusUp', swapUp' :: Stack a -> Stack a
-
 focusUp' (Node t (l:ls) rs) = Node l ls (t:rs)
 focusUp' (Node t []     rs) = Node x xs [] where (x:xs) = reverse (t:rs)
 
-swapUp' (Node t (l:ls) rs) = Node t ls (l:rs)
-swapUp' (Node t []     rs) = Node t (reverse rs) []
+swapUp'  (Node t (l:ls) rs) = Node t ls (l:rs)
+swapUp'  (Node t []     rs) = Node t (reverse rs) []
 
 -- reverse a stack: up becomes down and down becomes up.
 reverseStack :: Stack a -> Stack a
@@ -375,6 +372,8 @@ delete w s | Just w == peek s = remove s -- common case.
         Node _ (l:ls) []     -> Node l ls []    -- else up
         Node _ []     []     -> Empty
       else c { up = w `L.delete` up c, down = w `L.delete` down c }
+
+------------------------------------------------------------------------
 
 -- | Given a window, and its preferred rectangle, set it as floating
 -- A floating window should already be managed by the StackSet.
