@@ -51,13 +51,12 @@ main = do
                , [(x, "")]            <- reads s = x
                | otherwise = new (fromIntegral workspaces) (fromIntegral $ length xinesc)
 
-        safeLayouts = case defaultLayouts of [] -> (full, []); (x:xs) -> (x, xs)
+        safeLayouts = case defaultLayouts of [] -> (full, []); (x:xs) -> (x,xs)
         cf = XConf
             { display       = dpy
             , theRoot       = rootw
             , normalBorder  = nbc
-            , focusedBorder = fbc
-            }
+            , focusedBorder = fbc }
         st = XState
             { windowset     = winset
             , layouts       = M.fromList [(w, safeLayouts) | w <- [0 .. W workspaces - 1]]
@@ -93,9 +92,7 @@ main = do
             -- withWindowSet (io . hPrint stderr) -- uncomment for state logging
 
             -- main loop, for all you HOF/recursion fans out there.
-            forever $ do x <- io (nextEvent dpy e >> getEvent e)
-                         io (hPrint stderr (eventName x, x))
-                         handle x
+            forever $ handle =<< io (nextEvent dpy e >> getEvent e)
 
       where forever a = a >> forever a
 
