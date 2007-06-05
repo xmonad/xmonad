@@ -447,15 +447,8 @@ float w = withDisplay $ \d -> do
                         (fi (wa_height wa + bw*2) % fi (rect_height sc)))
   where fi x = fromIntegral x
 
--- | Toggle floating bit
---
--- TODO not useful unless we remember the original size
---
--- toggleFloating :: Window -> X ()
--- toggleFloating w = gets windowset >>= \ws -> if M.member w (W.floating ws) then sink w else float w
-
-------------------------------------------------------------------------
--- mouse handling
+-- ---------------------------------------------------------------------
+-- Mouse handling
 
 -- | Accumulate mouse motion events
 mouseDrag :: (XMotionEvent -> IO ()) -> X ()
@@ -487,20 +480,9 @@ mouseResizeWindow w = withDisplay $ \d -> do
     io $ warpPointer d none w 0 0 0 0 (fromIntegral (wa_width wa)) (fromIntegral (wa_height wa))
     mouseDrag $ \(_, _, _, ex, ey, _, _, _, _, _) ->
         resizeWindow d w `uncurry`
-                         applySizeHints sh ((fromIntegral (max 1 (ex - fromIntegral (wa_x wa)))),
-                                            (fromIntegral (max 1 (ey - fromIntegral (wa_y wa)))))
+             applySizeHints sh ((fromIntegral (max 1 (ex - fromIntegral (wa_x wa)))),
+                                (fromIntegral (max 1 (ey - fromIntegral (wa_y wa)))))
     float w
---
-
--- generic handler, but too complex:
---
--- mouseModifyWindow f g w = withDisplay $ \d -> do
---     io $ raiseWindow d w
---     wa <- io $ getWindowAttributes d w
---     x  <- f d w wa
---     mouseDrag $ \(_,_,_,ex,ey,_,_,_,_,_) -> g x ex ey d w wa
---     float w
-
 
 -- ---------------------------------------------------------------------
 -- | Support for window size hints
@@ -514,7 +496,7 @@ applySizeHints sh =
     . maybe id (\(bw, bh) (w, h) -> (w+bw, h+bh)) (sh_base_size  sh)
     . maybe id applyResizeIncHint                 (sh_resize_inc sh)
     . maybe id applyAspectHint                    (sh_aspect     sh)
-    . maybe id (\(bw,bh) (w,h)   -> (w-bw, h-bh)) (sh_base_size  sh) -- TODO
+    . maybe id (\(bw,bh) (w,h)   -> (w-bw, h-bh)) (sh_base_size  sh)
 
 -- | Reduce the dimensions so their aspect ratio falls between the two given aspect ratios.
 applyAspectHint :: (D, D) -> D -> D
