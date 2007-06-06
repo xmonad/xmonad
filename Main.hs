@@ -174,7 +174,7 @@ handle (DestroyWindowEvent {ev_window = w}) = whenX (isClient w) $ unmanage w
 -- in 1994.  Note that many alternative methods for resolving the hide/withdraw
 -- ambiguity are racy.
 
-handle (UnmapEvent         {ev_window = w, ev_send_event = True}) = whenX (isClient w) $ unmanage w
+handle (UnmapEvent {ev_window = w, ev_send_event = True}) = whenX (isClient w) $ unmanage w
 
 -- set keyboard mapping
 handle e@(MappingNotifyEvent {ev_window = w}) = do
