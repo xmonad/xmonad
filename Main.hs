@@ -130,12 +130,6 @@ grabButtons dpy rootw = do
   where grab button mask = grabButton dpy button mask rootw False buttonPressMask
                                       grabModeAsync grabModeSync none none
 
-extraModifiers :: [KeyMask]
-extraModifiers = [0, numlockMask, lockMask, numlockMask .|. lockMask ]
-
-cleanMask :: KeyMask -> KeyMask
-cleanMask = (complement (numlockMask .|. lockMask) .&.)
-
 -- ---------------------------------------------------------------------
 -- | Event handler. Map X events onto calls into Operations.hs, which
 -- modify our internal model of the window manager state.

@@ -16,11 +16,11 @@ module Operations where
 
 import XMonad
 import qualified StackSet as W
-import {-# SOURCE #-} Config (borderWidth,logging)
+import {-# SOURCE #-} Config (borderWidth,logging,numlockMask)
 
 import Data.Maybe
 import Data.List            (genericIndex, intersectBy, partition, delete)
-import Data.Bits            ((.|.))
+import Data.Bits            ((.|.), (.&.), complement)
 import Data.Ratio
 import qualified Data.Map as M
 
@@ -432,6 +432,15 @@ withFocused f = withWindowSet $ \w -> whenJust (W.peek w) f
 -- | True if window is under management by us
 isClient :: Window -> X Bool
 isClient w = withWindowSet $ return . W.member w
+
+-- | Combinations of extra modifier masks we need to grab keys/buttons for.
+-- (numlock and capslock)
+extraModifiers :: [KeyMask]
+extraModifiers = [0, numlockMask, lockMask, numlockMask .|. lockMask ]
+
+-- | Strip numlock/capslock from a mask
+cleanMask :: KeyMask -> KeyMask
+cleanMask = (complement (numlockMask .|. lockMask) .&.)
 
 ------------------------------------------------------------------------
 -- | Floating layer support
