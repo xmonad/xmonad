@@ -149,24 +149,30 @@ windows f = do
                 (sx + floor (toRational sw*rx)) (sy + floor (toRational sh*ry))
                 (floor (toRational sw*rw)) (floor (toRational sh*rh))
 
-        -- TODO seems fishy?
-        -- Urgh. This is required because the fullscreen layout assumes that
-        -- the focused window will be raised. Hmm. This is a reordering.
-
-        -- This really doesn't work with fullscreen mode, where 
-        -- focus is used to find the raised window. moving the floating
-        -- layer will move focus there, so we now have forgotten the
-        -- window on the top of the fullscreen
+        -- TODO temporary work around!
         --
-        -- I think the solution must be to track the floating layer separately
-        -- in its own zipper, on each workspace. And from there to
-        -- handle pushing between the two.
+        -- fullscreen mode requires that the focused window in 
+        -- the tiled layer is raised to the top, just under the floating
+        -- layer. now we don't get 'real unmap' events, unfortunately we
+        -- get a focus enter event if we delete a window. in fullscreen
+        -- mode, this will move focus to the next window down in the
+        -- stack order
         --
-        let tiled' = case W.peek this of
-                        Just x | x `elem` tiled -> x : delete x tiled
-                        _ -> tiled
-
-        io $ restackWindows d (flt ++ tiled')
+        -- the 'true' solution is to hide windows not visible on the
+        -- screen, so they don't get enter events.
+        -- to do that, doLayout needs to return a list of windows to
+        -- raise, and a list to hide.
+        --
+        -- and the only way to remember where focus is on the tiled
+        -- layer appears to be to track the floating and tiled layers as
+        -- separate stacks.
+        --
+        whenJust (W.peek this) $ io . raiseWindow d
+        io $ mapM_ (raiseWindow d) (reverse flt)
+        -- 
+        -- this code will cause a delete on the raiseWindow to 
+        -- pass to the last tiled window that had focus. 
+        -- urgh : not our delete policy, but close.
 
     setTopFocus
     when logging $ withWindowSet (io . hPrint stdout)
