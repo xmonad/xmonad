@@ -19,7 +19,7 @@ import qualified StackSet as W
 import {-# SOURCE #-} Config (borderWidth,logging,numlockMask)
 
 import Data.Maybe
-import Data.List            (genericIndex, intersectBy, partition, delete)
+import Data.List            (genericIndex, intersectBy, partition)
 import Data.Bits            ((.|.), (.&.), complement)
 import Data.Ratio
 import qualified Data.Map as M
