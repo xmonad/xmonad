@@ -139,7 +139,7 @@ windows f = do
         rs <- doLayout l (Rectangle
                 (sx + fromIntegral gl)        (sy + fromIntegral gt)
                 (sw - fromIntegral (gl + gr)) (sh - fromIntegral (gt + gb))) tiled
-        mapM_ (\(win,rect) -> tileWindow win rect) rs
+        mapM_ (uncurry tileWindow) rs
 
         -- now the floating windows:
         -- move/resize the floating windows, if there are any
