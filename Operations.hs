@@ -23,6 +23,7 @@ import Data.List            (genericIndex, intersectBy, partition)
 import Data.Bits            ((.|.), (.&.), complement)
 import Data.Ratio
 import qualified Data.Map as M
+import qualified Data.Set as S
 
 import Control.Monad.State
 import Control.Monad.Reader
@@ -66,7 +67,10 @@ manage w = withDisplay $ \d -> do
 -- should also unmap?
 --
 unmanage :: Window -> X ()
-unmanage w = setWMState w 0 {-withdrawn-} >> windows (W.sink w . W.delete w)
+unmanage w = do
+    setWMState w 0 {-withdrawn-}
+    windows (W.sink w . W.delete w)
+    modify (\s -> s {mapped = S.delete w (mapped s), waitingUnmap = M.delete w (waitingUnmap s)})
 
 -- | focus. focus window up or down. or swap various windows.
 focusUp, focusDown, swapUp, swapDown, swapMaster :: X ()
@@ -196,9 +200,15 @@ setWMState w v = withDisplay $ \dpy -> do
 
 -- | hide. Hide a window by unmapping it, and setting Iconified.
 hide :: Window -> X ()
-hide  w = withDisplay $ \d -> do
-    io $ unmapWindow d w
+hide w = whenX (gets (S.member w . mapped)) $ withDisplay $ \d -> do
+    io $ do selectInput d w (clientMask .&. complement structureNotifyMask)
+            unmapWindow d w
+            selectInput d w clientMask
     setWMState w 3 --iconic
+    -- this part is key: we increment the waitingUnmap counter to distinguish
+    -- between client and xmonad initiated unmaps.
+    modify (\s -> s { waitingUnmap = M.insertWith (+) w 1 (waitingUnmap s)
+                    , mapped       = S.delete w (mapped s) })
 
 -- | reveal. Show a window by mapping it and setting Normal
 -- this is harmless if the window was already visible
@@ -206,11 +216,16 @@ reveal :: Window -> X ()
 reveal w = withDisplay $ \d -> do
     setWMState w 1 --normal
     io $ mapWindow d w
+    modify (\s -> s { mapped = S.insert w (mapped s) })
+
+-- | The client events that xmonad is interested in
+clientMask :: EventMask
+clientMask = structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
 
 -- | Set some properties when we initially gain control of a window
 setInitialProperties :: Window -> X ()
 setInitialProperties w = withDisplay $ \d -> io $ do
-    selectInput d w $ structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
+    selectInput d w $ clientMask
     setWindowBorderWidth d w borderWidth
 
 -- | refresh. Render the currently visible workspaces, as determined by

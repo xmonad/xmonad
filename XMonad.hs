@@ -34,16 +34,18 @@ import Graphics.X11.Xlib
 import Data.Typeable
 
 import qualified Data.Map as M
+import qualified Data.Set as S
 
 -- | XState, the window manager state.
 -- Just the display, width, height and a window list
 data XState = XState
-    { windowset   :: !WindowSet           -- ^ workspace list
-    , xineScreens :: ![Rectangle]         -- ^ dimensions of each screen
-    , statusGaps  :: ![(Int,Int,Int,Int)] -- ^ width of status bar on each screen
-    , layouts     :: !(M.Map WorkspaceId (Layout, [Layout]))  }
+    { windowset    :: !WindowSet           -- ^ workspace list
+    , xineScreens  :: ![Rectangle]         -- ^ dimensions of each screen
+    , statusGaps   :: ![(Int,Int,Int,Int)] -- ^ width of status bar on each screen
+    , mapped       :: !(S.Set Window)      -- ^ the Set of mapped windows
+    , waitingUnmap :: !(M.Map Window Int)  -- ^ the number of expected UnmapEvents
+    , layouts      :: !(M.Map WorkspaceId (Layout, [Layout])) }
                        -- ^ mapping of workspaces to descriptions of their layouts
-
 data XConf = XConf
     { display       :: Display      -- ^ the X11 display
     , theRoot       :: !Window      -- ^ the root window

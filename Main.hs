@@ -15,8 +15,10 @@
 
 import Data.Bits
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Control.Monad.Reader
 import Control.Monad.State
+import Data.Maybe (fromMaybe)
 
 import System.Environment (getArgs)
 
@@ -62,7 +64,9 @@ main = do
             { windowset     = winset
             , layouts       = M.fromList [(w, safeLayouts) | w <- [0 .. W workspaces - 1]]
             , statusGaps    = take (length xinesc) $ defaultGaps ++ repeat (0,0,0,0)
-            , xineScreens   = xinesc }
+            , xineScreens   = xinesc
+            , mapped        = S.empty
+            , waitingUnmap  = M.empty }
 
     xSetErrorHandler -- in C, I'm too lazy to write the binding: dons
 
@@ -160,15 +164,13 @@ handle (MapRequestEvent    {ev_window = w}) = withDisplay $ \dpy -> do
 -- window gone,      unmanage it
 handle (DestroyWindowEvent {ev_window = w}) = whenX (isClient w) $ unmanage w
 
--- We only handle synthetic unmap events, because real events are confusable
--- with the events produced by 'hide'.  ICCCM says that all clients should send
--- synthetic unmap events immediately after unmapping, and later describes
--- clients that do not follow the rule as "obsolete".  For now, we make the
--- simplifying assumption that nobody uses clients that were already obsolete
--- in 1994.  Note that many alternative methods for resolving the hide/withdraw
--- ambiguity are racy.
-
-handle (UnmapEvent {ev_window = w, ev_send_event = True}) = whenX (isClient w) $ unmanage w
+-- We track expected unmap events in waitingUnmap.  We ignore this event unless
+-- it is synthetic or we are not expecting an unmap notification from a window.
+handle (UnmapEvent {ev_window = w, ev_send_event = synthetic}) = whenX (isClient w) $ do
+    e <- gets (fromMaybe 0 . M.lookup w . waitingUnmap)
+    if (synthetic || e == 0)
+        then unmanage w
+        else modify (\s -> s { waitingUnmap = M.adjust pred w (waitingUnmap s) })
 
 -- set keyboard mapping
 handle e@(MappingNotifyEvent {ev_window = w}) = do
