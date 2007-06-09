@@ -137,12 +137,12 @@ windows f = do
             (flt, tiled) = partition (flip M.member (W.floating ws)) (W.index this)
             (Rectangle sx sy sw sh) = genericIndex xinesc (W.screen w)
             (gt,gb,gl,gr)           = genericIndex gaps   (W.screen w)
+            viewrect = Rectangle (sx + fromIntegral gl)        (sy + fromIntegral gt)
+                                 (sw - fromIntegral (gl + gr)) (sh - fromIntegral (gt + gb))
 
         -- just the tiled windows:
         -- now tile the windows on this workspace, modified by the gap
-        rs <- doLayout l (Rectangle
-                (sx + fromIntegral gl)        (sy + fromIntegral gt)
-                (sw - fromIntegral (gl + gr)) (sh - fromIntegral (gt + gb))) tiled
+        rs <- doLayout l viewrect tiled -- `mplus` doLayout full viewrect tiled
         mapM_ (uncurry tileWindow) rs
 
         -- now the floating windows:
