@@ -18,11 +18,11 @@
 module XMonad (
     X, WindowSet, WorkspaceId(..), ScreenId(..), XState(..), XConf(..), Layout(..),
     Typeable, Message, SomeMessage(..), fromMessage, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW,
-    runX, io, withDisplay, withWindowSet, isRoot, spawn, restart, trace, whenJust, whenX,
+    runX, io, serial, withDisplay, withWindowSet, isRoot, spawn, restart, trace, whenJust, whenX,
     atom_WM_STATE
   ) where
 
-import StackSet (StackSet)
+import StackSet
 
 import Control.Monad.State
 import Control.Monad.Reader
@@ -32,6 +32,8 @@ import System.Exit
 import System.Environment
 import Graphics.X11.Xlib
 import Data.Typeable
+import Data.List (intersperse,sortBy)
+import Text.PrettyPrint
 
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -181,3 +183,41 @@ whenX a f = a >>= \b -> when b f
 -- be found in your .xsession-errors file
 trace :: String -> X ()
 trace msg = io $! do hPutStrLn stderr msg; hFlush stderr
+
+-- ---------------------------------------------------------------------
+-- Serialise a StackSet in a simple format
+--
+--   4|1:16777220:16777220,2:18874372:18874372,3::,4::,5::,6::,7::,8::,9::
+--
+
+infixl 6 <:>, <|>
+(<:>), (<|>)  :: Doc -> Doc -> Doc
+p <:> q = p <> char ':' <> q
+p <|> q = p <> char '|' <> q
+
+serial :: WindowSet -> String
+serial = render . ppr
+
+newtype Windows = Windows [Window]
+
+class Pretty a where ppr :: a -> Doc
+
+instance Pretty Window where ppr = text . show
+
+instance Pretty a => Pretty [a] where
+    ppr = hcat . intersperse (char ',') . map ppr
+
+instance Pretty Windows where
+    ppr (Windows s) = hcat . intersperse (char ';') . map ppr $ s
+
+instance Pretty WindowSet where
+    ppr s = int (1 + fromIntegral (tag . workspace . current $ s)) <|>
+            ppr (sortBy (\a b -> tag a `compare` tag b)
+                    (map workspace (current s : visible s) ++ hidden s))
+
+instance Pretty (Workspace WorkspaceId Window) where
+    ppr (Workspace i s) =
+        int (1 + fromIntegral i)
+             <:> (case s of Empty -> empty ; _ -> ppr (focus s))
+             <:> ppr (Windows (integrate s))
+

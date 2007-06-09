@@ -412,4 +412,3 @@ shift n s = if and [n >= 0,n < size s,n /= tag (workspace (current s))]
             then maybe s go (peek s) else s
     where go w = foldr ($) s [view (tag (workspace (current s))),insertUp w,view n,delete w]
                            -- ^^ poor man's state monad :-)
-

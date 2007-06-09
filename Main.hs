@@ -94,7 +94,7 @@ main = do
                       , w  <- W.integrate (W.stack wk) ]
 
             mapM_ manage ws -- find new windows
-            when logging $ withWindowSet (io . hPrint stdout)
+            when logging $ withWindowSet (io . putStrLn . serial)
 
             -- main loop, for all you HOF/recursion fans out there.
             forever $ handle =<< io (nextEvent dpy e >> getEvent e)

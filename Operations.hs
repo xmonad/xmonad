@@ -179,7 +179,7 @@ windows f = do
         -- urgh : not our delete policy, but close.
 
     setTopFocus
-    when logging $ withWindowSet (io . hPrint stdout)
+    when logging $ withWindowSet (io . putStrLn . serial)
     -- io performGC -- really helps, but seems to trigger GC bugs?
 
     -- We now go to some effort to compute the minimal set of windows to hide.
