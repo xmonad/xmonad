@@ -62,6 +62,17 @@ And then build with Cabal:
 
 ------------------------------------------------------------------------
 
+Notes for using the darcs version
+
+    If you're building the darcs version of xmonad, be sure to also
+    use the darcs version of X11-extras, which is developed concurrently
+    with xmonad.
+
+    Not using X11-extras from darcs, is the most common reason for the
+    darcs version of xmonad to fail to build.
+
+------------------------------------------------------------------------
+
 Running xmonad:
 
     Add:
