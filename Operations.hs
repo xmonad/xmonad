@@ -45,7 +45,7 @@ import Graphics.X11.Xlib.Extras
 --
 manage :: Window -> X ()
 manage w = withDisplay $ \d -> do
-    setInitialProperties w -- we need this so that the modify below will not capture the wrong border size...
+    setInitialProperties w >> reveal w
 
     -- FIXME: This is pretty awkward. We can't can't let "refresh" happen
     -- before the call to float, because that will resize the window and
@@ -201,7 +201,6 @@ setWMState w v = withDisplay $ \dpy -> do
 -- | hide. Hide a window by unmapping it, and setting Iconified.
 hide :: Window -> X ()
 hide w = whenX (gets (S.member w . mapped)) $ withDisplay $ \d -> do
-    setInitialProperties w
     io $ do selectInput d w (clientMask .&. complement structureNotifyMask)
             unmapWindow d w
             selectInput d w clientMask
@@ -215,7 +214,6 @@ hide w = whenX (gets (S.member w . mapped)) $ withDisplay $ \d -> do
 -- this is harmless if the window was already visible
 reveal :: Window -> X ()
 reveal w = withDisplay $ \d -> do
-    setInitialProperties w
     setWMState w 1 --normal
     io $ mapWindow d w
     modify (\s -> s { mapped = S.insert w (mapped s) })

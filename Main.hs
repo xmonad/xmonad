@@ -28,6 +28,7 @@ import Graphics.X11.Xinerama    (getScreenInfo)
 
 import XMonad
 import Config
+import StackSet (new, floating, member)
 import qualified StackSet as W
 import Operations
 
@@ -51,7 +52,7 @@ main = do
 
     let winset | ("--resume" : s : _) <- args
                , [(x, "")]            <- reads s = x
-               | otherwise = W.new (fromIntegral workspaces) (fromIntegral $ length xinesc)
+               | otherwise = new (fromIntegral workspaces) (fromIntegral $ length xinesc)
 
         safeLayouts = case defaultLayouts of [] -> (full, []); (x:xs) -> (x,xs)
         cf = XConf
@@ -79,11 +80,19 @@ main = do
     sync dpy False
 
     ws <- scan dpy rootw -- on the resume case, will pick up new windows
-    -- We mark the initial state as having all workspaces visible to
-    -- defeat the delta code in refresh.
     allocaXEvent $ \e ->
-        runX cf st{ windowset = allVisible winset } $ do
-	    windows $ \_st -> winset
+        runX cf st $ do
+
+            -- walk workspace, resetting X states/mask for windows
+            -- TODO, general iterators for these lists.
+            sequence_ [ setInitialProperties w >> reveal w
+                      | wk <- map W.workspace (W.current winset : W.visible winset)
+                      , w  <- W.integrate (W.stack wk) ]
+
+            sequence_ [ setInitialProperties w >> hide w
+                      | wk <- W.hidden winset
+                      , w  <- W.integrate (W.stack wk) ]
+
             mapM_ manage ws -- find new windows
             when logging $ withWindowSet (io . putStrLn . serial)
 
@@ -91,7 +100,6 @@ main = do
             forever $ handle =<< io (nextEvent dpy e >> getEvent e)
 
       where forever a = a >> forever a
-            allVisible ss = ss{ W.hidden=[], W.visible = W.visible ss ++ [ W.Screen s (S 0) | s <- W.hidden ss ] }
 
 -- ---------------------------------------------------------------------
 -- IO stuff. Doesn't require any X state
@@ -194,7 +202,7 @@ handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
     ws <- gets windowset
     wa <- io $ getWindowAttributes dpy w
 
-    if M.member w (W.floating ws) || not (W.member w ws)
+    if M.member w (floating ws) || not (member w ws)
         then do io $ configureWindow dpy w (ev_value_mask e) $ WindowChanges
                     { wc_x            = ev_x e
                     , wc_y            = ev_y e
@@ -203,7 +211,7 @@ handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
                     , wc_border_width = fromIntegral borderWidth
                     , wc_sibling      = ev_above e
                     , wc_stack_mode   = ev_detail e }
-                when (W.member w ws) (float w)
+                when (member w ws) (float w)
         else io $ allocaXEvent $ \ev -> do
                  setEventType ev configureNotify
                  setConfigureEvent ev w w
