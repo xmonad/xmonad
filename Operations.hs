@@ -340,7 +340,6 @@ sendMessage a = layout $ \x@(l, ls) -> maybe x (flip (,) ls) (modifyLayout l (So
 --
 --   fullscreen mode
 --   tall mode
---   wide mode (a mirror of tall mode)
 -- 
 -- The latter algorithms support the following operations:
 --
