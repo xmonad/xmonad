@@ -109,7 +109,7 @@ atom_WM_STATE           = getAtom "WM_STATE"
 -- 'modifyLayout' can be considered a branch of an exception handler.
 --
 data Layout = Layout { doLayout     :: Rectangle -> [Window] -> X [(Window, Rectangle)]
-                     , modifyLayout :: SomeMessage -> Maybe Layout }
+                     , modifyLayout :: SomeMessage -> X (Maybe Layout) }
 
 -- Based on ideas in /An Extensible Dynamically-Typed Hierarchy of Exceptions/,
 -- Simon Marlow, 2006. Use extensible messages to the modifyLayout handler.

@@ -335,7 +335,11 @@ switchLayout = layout (\(x, xs) -> let xs' = xs ++ [x] in (head xs', tail xs'))
 -- TODO, this will refresh on Nothing.
 --
 sendMessage :: Message a => a -> X ()
-sendMessage a = layout $ \x@(l, ls) -> maybe x (flip (,) ls) (modifyLayout l (SomeMessage a))
+sendMessage a = do n <- (W.tag . W.workspace . W.current) `fmap` gets windowset
+                   Just (l,ls) <- M.lookup n `fmap` gets layouts
+                   ml' <- modifyLayout l (SomeMessage a)
+                   whenJust ml' $ \l' -> do modify $ \s -> s { layouts = M.insert n (l',ls) (layouts s) }
+                                            refresh
 
 --
 -- Builtin layout algorithms:
@@ -358,7 +362,7 @@ instance Message IncMasterN
 -- a plea for tuple sections: map . (,sc)
 full :: Layout
 full = Layout { doLayout     = \sc ws -> return [ (w,sc) | w <- ws ]
-              , modifyLayout = const Nothing } -- no changes
+              , modifyLayout = const (return Nothing) } -- no changes
 
 --
 -- The tiling mode of xmonad, and its operations.
@@ -366,8 +370,8 @@ full = Layout { doLayout     = \sc ws -> return [ (w,sc) | w <- ws ]
 tall :: Int -> Rational -> Rational -> Layout
 tall nmaster delta frac =
     Layout { doLayout     = \r -> return . ap zip (tile frac r nmaster . length)
-           , modifyLayout = \m -> fmap resize     (fromMessage m) `mplus`
-                                  fmap incmastern (fromMessage m) }
+           , modifyLayout = \m -> return $ msum [fmap resize     (fromMessage m)
+                                                ,fmap incmastern (fromMessage m)] }
 
     where resize Shrink = tall nmaster delta (frac-delta)
           resize Expand = tall nmaster delta (frac+delta)
@@ -381,7 +385,7 @@ mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 mirror :: Layout -> Layout
 mirror (Layout { doLayout = dl, modifyLayout = ml }) =
     Layout { doLayout     = \sc w -> map (second mirrorRect) `fmap` dl (mirrorRect sc) w
-           , modifyLayout = fmap mirror . ml }
+           , modifyLayout = fmap (fmap mirror) . ml }
 
 -- | tile.  Compute the positions for windows using the default 2 pane tiling algorithm.
 --
