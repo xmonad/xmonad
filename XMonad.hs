@@ -187,37 +187,43 @@ trace msg = io $! do hPutStrLn stderr msg; hFlush stderr
 -- ---------------------------------------------------------------------
 -- Serialise a StackSet in a simple format
 --
---   4|1:16777220:16777220,2:18874372:18874372,3::,4::,5::,6::,7::,8::,9::
+--   432|1:16777220:16777220,2:18874372:18874372,3::,4::,5::,6::,7::,8::,9::
 --
-
-infixl 6 <:>, <|>
-(<:>), (<|>)  :: Doc -> Doc -> Doc
-p <:> q = p <> char ':' <> q
-p <|> q = p <> char '|' <> q
+-- format, roughly,:
+--
+--  fmt         := current visible '|' workspaces
+--
+--  current     := int
+--  visible     := int* | epsilon
+--
+--  workspaces  := workspace ',' workspaces0
+--  workspaces0 := workspace ',' workspaces0 | epsilon
+--
+--  workspace   := tag ':' focus* ':' clients
+--  clients     := epsilon | client ';' clients
+--
+--  tag         := int
+--  focus       := client
+--
+--  client       = int+
+--  int         := 0 .. 9
+--
 
 serial :: WindowSet -> String
 serial = render . ppr
+  where
+    ppr s = pprtag (current s) <>  hcat (map pprtag (visible s))
+        <|> (hcat . intersperse (char ',') . map pprWorkspace $
+                (sortBy (\a b -> tag a `compare` tag b)
+                    (map workspace (current s : visible s) ++ hidden s)))
+       where infixl 6 <|>
+             p <|> q = p <> char '|' <> q
 
-newtype Windows = Windows [Window]
+             pprtag = int . (+1) . fromIntegral . tag . workspace
 
-class Pretty a where ppr :: a -> Doc
+    pprWorkspace (Workspace i s) = int (1 + fromIntegral i)
+             <:> (if s == Empty then empty else text (show (focus s)))
+             <:> pprWindows (integrate s)
+       where p <:> q = p <> char ':' <> q
 
-instance Pretty Window where ppr = text . show
-
-instance Pretty a => Pretty [a] where
-    ppr = hcat . intersperse (char ',') . map ppr
-
-instance Pretty Windows where
-    ppr (Windows s) = hcat . intersperse (char ';') . map ppr $ s
-
-instance Pretty WindowSet where
-    ppr s = int (1 + fromIntegral (tag . workspace . current $ s)) <|>
-            ppr (sortBy (\a b -> tag a `compare` tag b)
-                    (map workspace (current s : visible s) ++ hidden s))
-
-instance Pretty (Workspace WorkspaceId Window) where
-    ppr (Workspace i s) =
-        int (1 + fromIntegral i)
-             <:> (case s of Empty -> empty ; _ -> ppr (focus s))
-             <:> ppr (Windows (integrate s))
-
+    pprWindows = hcat . intersperse (char ';') . map (text.show)
