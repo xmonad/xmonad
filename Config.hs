@@ -7,13 +7,13 @@
 -- Maintainer  :  dons@cse.unsw.edu.au
 -- Stability   :  stable
 -- Portability :  portable
---
-------------------------------------------------------------------------
+-- 
 --
 -- This module specifies configurable defaults for xmonad. If you change
 -- values here, be sure to recompile and restart (mod-q) xmonad,
 -- for the changes to take effect.
---
+-- 
+------------------------------------------------------------------------
 
 module Config where
 
@@ -34,7 +34,7 @@ import Graphics.X11.Xlib
 workspaces :: Int
 workspaces = 9
 
---
+-- |
 -- modMask lets you specify which modkey you want to use. The default is
 -- mod1Mask ("left alt").  You may also consider using mod3Mask ("right
 -- alt"), which does not conflict with emacs keybindings. The "windows
@@ -43,7 +43,7 @@ workspaces = 9
 modMask :: KeyMask
 modMask = mod1Mask
 
---
+-- |
 -- Default offset of drawable screen boundaries from each physical screen.
 -- Anything non-zero here will leave a gap of that many pixels on the
 -- given edge, on the that screen. A useful gap at top of screen for a
@@ -54,7 +54,7 @@ modMask = mod1Mask
 defaultGaps :: [(Int,Int,Int,Int)]
 defaultGaps = [(0,0,0,0)] -- 15 for default dzen
 
---
+-- |
 -- numlock handling:
 --
 -- The mask for the numlock key. You may need to change this on some systems.
@@ -68,20 +68,20 @@ defaultGaps = [(0,0,0,0)] -- 15 for default dzen
 numlockMask :: KeyMask
 numlockMask = mod2Mask
 
---
+-- |
 -- Border colors for unfocused and focused windows, respectively.
 --
 normalBorderColor, focusedBorderColor :: String
 normalBorderColor  = "#dddddd"
 focusedBorderColor = "#ff0000"
 
---
+-- |
 -- Width of the window border in pixels
 --
 borderWidth :: Dimension
 borderWidth = 1
 
---
+-- |
 -- The default set of tiling algorithms
 --
 defaultLayouts :: [Layout]
@@ -99,7 +99,7 @@ defaultLayouts = [ tiled , mirror tiled , full ]
      -- Percent of screen to increment by when resizing panes
      delta   = 3%100
 
---
+-- |
 -- Perform an arbitrary action on each state change.
 -- Examples include:
 --      * do nothing
@@ -108,7 +108,7 @@ defaultLayouts = [ tiled , mirror tiled , full ]
 logHook :: X ()
 logHook = return ()
 
---
+-- |
 -- The key bindings list.
 -- 
 -- The unusual comment format is used to generate the documentation
@@ -167,7 +167,7 @@ keys = M.fromList $
         | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
         , (f, m) <- [(view, 0), (shift, shiftMask)]]
 
---
+-- |
 -- default actions bound to mouse events
 --
 mouseBindings :: M.Map (KeyMask, Button) (Window -> X ())

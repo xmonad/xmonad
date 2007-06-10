@@ -8,9 +8,7 @@
 -- Stability   :  experimental
 -- Portability :  portable, Haskell 98
 --
------------------------------------------------------------------------------
---
--- ** Introduction
+-- Introduction
 --
 -- The 'StackSet' data type encodes a window manager abstraction. The
 -- window manager is a set of virtual workspaces. On each workspace is a
@@ -18,18 +16,18 @@
 -- window on each workspace has focus. The focused window on the current
 -- workspace is the one which will take user input. It can be visualised
 -- as follows:
---
---  Workspace  { 0*}   { 1 }   { 2 }   { 3 }   { 4 }
---  
---  Windows    [1      []      [3*     [6*]    []
---             ,2*]            ,4
---                             ,5]
---
+-- 
+-- > Workspace  { 0*}   { 1 }   { 2 }   { 3 }   { 4 }
+-- > 
+-- > Windows    [1      []      [3*     [6*]    []
+-- >            ,2*]            ,4
+-- >                            ,5]
+-- 
 -- Note that workspaces are indexed from 0, windows are numbered
 -- uniquely. A '*' indicates the window on each workspace that has
 -- focus, and which workspace is current.
 --
--- ** Zipper 
+-- Zipper 
 --
 -- We encode all the focus tracking directly in the data structure, with a 'zipper':
 --
@@ -42,7 +40,7 @@
 --    resulting data structure will share as much of its components with
 --    the old structure as possible. 
 --
---      Oleg Kiselyov, 27 Apr 2005, haskell@, "Zipper as a delimited continuation"
+--      Oleg Kiselyov, 27 Apr 2005, haskell\@, "Zipper as a delimited continuation"
 --
 -- We use the zipper to keep track of the focused workspace and the
 -- focused window on each workspace, allowing us to have correct focus
@@ -58,7 +56,7 @@
 --
 --      The Zipper, Haskell wikibook
 -- 
--- ** Xinerama support:
+-- Xinerama support:
 --
 -- Xinerama in X11 lets us view multiple virtual workspaces
 -- simultaneously. While only one will ever be in focus (i.e. will
@@ -67,13 +65,14 @@
 -- (viewed) on which physical screens. We use a simple Map Workspace
 -- Screen for this.
 --
--- ** Master and Focus
+-- Master and Focus
 --
 -- Each stack tracks a focused item, and for tiling purposes also tracks
 -- a 'master' position. The connection between 'master' and 'focus'
 -- needs to be well defined. Particular in relation to 'insert' and
 -- 'delete'.
 --
+
 module StackSet (
         StackSet(..), Workspace(..), Screen(..), Stack(..), RationalRect(..),
         new, view, lookupWorkspace, peek, index, integrate, focusUp, focusDown,
@@ -85,45 +84,60 @@ import Data.Maybe   (listToMaybe)
 import qualified Data.List as L (delete,find,genericSplitAt)
 import qualified Data.Map  as M (Map,insert,delete,empty)
 
+-- | 
 -- API changes from xmonad 0.1:
 --  StackSet constructor arguments changed. StackSet workspace window screen
---  new,                    -- was: empty
---  view,
---  index,
---  peek,                   -- was: peek/peekStack
---  focusUp, focusDown,  -- was: rotate
---  swapUp, swapDown
---  focus                   -- was: raiseFocus
---  insertUp,             -- was: insert/push
---  delete,
---  swapMaster,             -- was: promote/swap
---  member, 
---  shift,
---  lookupWorkspace,        -- was: workspace
---  visibleWorkspaces       -- gone.
+--
+-- * new,                    -- was: empty
+--
+-- * view,
+--
+-- * index,
+--
+-- * peek,                   -- was: peek\/peekStack
+--
+-- * focusUp, focusDown,  -- was: rotate
+--
+-- * swapUp, swapDown
+--
+-- * focus                   -- was: raiseFocus
+--
+-- * insertUp,             -- was: insert\/push
+--
+-- * delete,
+--
+-- * swapMaster,             -- was: promote\/swap
+--
+-- * member, 
+--
+-- * shift,
+--
+-- * lookupWorkspace,        -- was: workspace
+--
+-- * visibleWorkspaces       -- gone.
 --
 ------------------------------------------------------------------------
-
---
+-- |
 -- A cursor into a non-empty list of workspaces. 
+-- 
 -- We puncture the workspace list, producing a hole in the structure
 -- used to track the currently focused workspace. The two other lists
 -- that are produced are used to track those workspaces visible as
 -- Xinerama screens, and those workspaces not visible anywhere.
---
+
 data StackSet i a sid =
-    StackSet { size     :: !i                   -- number of workspaces
-             , current  :: !(Screen i a sid)    -- currently focused workspace
-             , visible  :: [Screen i a sid]     -- non-focused workspaces, visible in xinerama
-             , hidden   :: [Workspace i a]      -- workspaces not visible anywhere
-             , floating :: M.Map a RationalRect -- floating windows
+    StackSet { size     :: !i                   -- ^ number of workspaces
+             , current  :: !(Screen i a sid)    -- ^ currently focused workspace
+             , visible  :: [Screen i a sid]     -- ^ non-focused workspaces, visible in xinerama
+             , hidden   :: [Workspace i a]      -- ^ workspaces not visible anywhere
+             , floating :: M.Map a RationalRect -- ^ floating windows
              } deriving (Show, Read, Eq)
 
--- Visible workspaces, and their Xinerama screens.
+-- | Visible workspaces, and their Xinerama screens.
 data Screen i a sid = Screen { workspace :: !(Workspace i a), screen :: !sid }
     deriving (Show, Read, Eq)
 
--- 
+-- |
 -- A workspace is just a tag - its index - and a stack
 --
 data Workspace i a = Workspace  { tag :: !i, stack :: Stack a }
@@ -132,21 +146,21 @@ data Workspace i a = Workspace  { tag :: !i, stack :: Stack a }
 data RationalRect = RationalRect Rational Rational Rational Rational
     deriving (Show, Read, Eq)
 
--- 
+-- |
 -- A stack is a cursor onto a (possibly empty) window list.
 -- The data structure tracks focus by construction, and
 -- the master window is by convention the top-most item.
 -- Focus operations will not reorder the list that results from
 -- flattening the cursor. The structure can be envisaged as:
 --
---     +-- master:  < '7' >
---  up |            [ '2' ]
---     +---------   [ '3' ]
---  focus:          < '4' >
---  dn +----------- [ '8' ]
+-- >    +-- master:  < '7' >
+-- > up |            [ '2' ]
+-- >    +---------   [ '3' ]
+-- > focus:          < '4' >
+-- > dn +----------- [ '8' ]
 --
 -- A 'Stack' can be viewed as a list with a hole punched in it to make
--- the focused position. Under the zipper/calculus view of such
+-- the focused position. Under the zipper\/calculus view of such
 -- structures, it is the differentiation of a [a], and integrating it
 -- back has a natural implementation used in 'index'.
 --
@@ -162,7 +176,7 @@ abort :: String -> a
 abort x = error $ "xmonad: StackSet: " ++ x
 
 -- ---------------------------------------------------------------------
--- Construction
+-- | Construction
 
 -- | /O(n)/. Create a new stackset, of empty stacks, of size 'n', with
 -- 'm' physical screens. 'm' should be less than or equal to 'n'.
@@ -178,14 +192,14 @@ new n m | n > 0 && m > 0 = StackSet n cur visi unseen M.empty
         (cur:visi)    = [ Screen i s |  (i,s) <- zip seen [0..] ]
                 -- now zip up visibles with their screen id
 
--- 
--- /O(w)/. Set focus to the workspace with index 'i'. 
+-- |
+-- /O(w)/. Set focus to the workspace with index \'i\'. 
 -- If the index is out of range, return the original StackSet.
 --
 -- Xinerama: If the workspace is not visible on any Xinerama screen, it
 -- becomes the current screen. If it is in the visible list, it becomes
 -- current.
---
+
 view :: (Eq a, Eq s, Integral i) => i -> StackSet i a s -> StackSet i a s
 view i s
     | i < 0 && i >= size s || i == tag (workspace (current s)) = s  -- out of bounds or current
@@ -205,7 +219,7 @@ view i s
     -- workspace tags defined in 'new'
 
 -- ---------------------------------------------------------------------
--- Xinerama operations
+-- | Xinerama operations
 
 -- | Find the tag of the workspace visible on Xinerama screen 'sc'.
 -- Nothing if screen is out of bounds.
@@ -215,7 +229,7 @@ lookupWorkspace sc w = listToMaybe [ tag i | Screen i s <- current w : visible w
 -- ---------------------------------------------------------------------
 -- Operations on the current stack
 
---
+-- |
 -- The 'with' function takes a default value, a function, and a
 -- StackSet. If the current stack is Empty, 'with' returns the
 -- default value. Otherwise, it applies the function to the stack,
@@ -226,28 +240,28 @@ with dflt f s = case stack (workspace (current s)) of Empty -> dflt; v -> f v
     -- TODO: ndm: a 'catch' proof here that 'f' only gets Node
     --            constructors, hence all 'f's are safe below?
 
---
+-- |
 -- Apply a function, and a default value for Empty, to modify the current stack.
 --
 modify :: Stack a -> (Stack a -> Stack a) -> StackSet i a s -> StackSet i a s
 modify d f s = s { current = (current s)
                         { workspace = (workspace (current s)) { stack = with d f s }}}
 
---
+-- |
 -- /O(1)/. Extract the focused element of the current stack. 
 -- Return Just that element, or Nothing for an empty stack.
 --
 peek :: StackSet i a s -> Maybe a
 peek = with Nothing (return . focus)
 
---
+-- |
 -- /O(n)/. Flatten a Stack into a list.
 --
 integrate :: Stack a -> [a]
 integrate Empty        = []
 integrate (Node x l r) = reverse l ++ x : r
 
---
+-- |
 -- /O(s)/. Extract the stack on the current workspace, as a list.
 -- The order of the stack is determined by the master window -- it will be
 -- the head of the list. The implementation is given by the natural
@@ -258,7 +272,7 @@ index = with [] integrate
 
 --  let is = t : r ++ reverse l in take (length is) (dropWhile (/= m) (cycle is))
 
---
+-- |
 -- /O(1), O(w) on the wrapping case/. 
 --
 -- focusUp, focusDown. Move the window focus up or down the stack,
@@ -284,7 +298,7 @@ focusUp' (Node t []     rs) = Node x xs [] where (x:xs) = reverse (t:rs)
 swapUp'  (Node t (l:ls) rs) = Node t ls (l:rs)
 swapUp'  (Node t []     rs) = Node t (reverse rs) []
 
--- reverse a stack: up becomes down and down becomes up.
+-- | reverse a stack: up becomes down and down becomes up.
 reverseStack :: Stack a -> Stack a
 reverseStack (Node t ls rs) = Node t rs ls
 reverseStack x              = x
@@ -299,7 +313,7 @@ focusWindow w s | Just w == peek s = s
                     n <- findIndex w s
                     return $ until ((Just w ==) . peek) focusUp (view n s)
 
---
+-- |
 -- Finding if a window is in the stackset is a little tedious. We could
 -- keep a cache :: Map a i, but with more bookkeeping.
 --
@@ -318,9 +332,9 @@ findIndex a s = listToMaybe
           has x (Node t l r) = x `elem` (t : l ++ r)
 
 -- ---------------------------------------------------------------------
--- Modifying the stackset
+-- | Modifying the stackset
 
---
+-- |
 -- /O(n)/. (Complexity due to duplicate check). Insert a new element into
 -- the stack, above the currently focused element.
 --
@@ -343,7 +357,7 @@ insertUp a s = if member a s then s else insert
 -- Old semantics, from Huet.
 -- >    w { down = a : down w }
 
---
+-- |
 -- /O(1) on current window, O(n) in general/. Delete window 'w' if it exists.
 -- There are 4 cases to consider:
 --
@@ -385,8 +399,8 @@ sink :: Ord a => a -> StackSet i a s -> StackSet i a s
 sink w s = s { floating = M.delete w (floating s) }
 
 ------------------------------------------------------------------------
--- Setting the master window
-
+-- | Setting the master window
+-- 
 -- /O(s)/. Set the master window to the focused window.
 -- The old master window is swapped in the tiling order with the focused window.
 -- Focus stays with the item moved.
@@ -395,12 +409,11 @@ swapMaster = modify Empty $ \c -> case c of
     Node _ [] _  -> c    -- already master.
     Node t ls rs -> Node t [] (ys ++ x : rs) where (x:ys) = reverse ls
 
- -- natural! keep focus, move current to the top, move top to current.
-
+-- natural! keep focus, move current to the top, move top to current.
+-- 
 -- ---------------------------------------------------------------------
--- Composite operations
+-- | Composite operations
 --
-
 -- /O(w)/. shift. Move the focused element of the current stack to stack
 -- 'n', leaving it as the focused element on that stack. The item is
 -- inserted above the currently focused element on that workspace.  --
@@ -411,4 +424,4 @@ shift :: (Ord a, Eq s, Integral i) => i -> StackSet i a s -> StackSet i a s
 shift n s = if and [n >= 0,n < size s,n /= tag (workspace (current s))]
             then maybe s go (peek s) else s
     where go w = foldr ($) s [view (tag (workspace (current s))),insertUp w,view n,delete w]
-                           -- ^^ poor man's state monad :-)
+                           --  ^^ poor man's state monad :-)

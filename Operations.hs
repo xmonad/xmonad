@@ -1,5 +1,5 @@
 {-# OPTIONS -fglasgow-exts #-}
--- ^^ deriving Typeable
+-- \^^ deriving Typeable
 -- --------------------------------------------------------------------------
 -- |
 -- Module      :  Operations.hs
@@ -9,6 +9,8 @@
 -- Maintainer  :  dons@cse.unsw.edu.au
 -- Stability   :  unstable
 -- Portability :  not portable, Typeable deriving, mtl, posix
+--
+-- Operations.
 --
 -----------------------------------------------------------------------------
 
@@ -35,9 +37,9 @@ import Graphics.X11.Xinerama (getScreenInfo)
 import Graphics.X11.Xlib.Extras
 
 -- ---------------------------------------------------------------------
+-- |
 -- Window manager operations
-
--- | manage. Add a new window to be managed in the current workspace.
+-- manage. Add a new window to be managed in the current workspace.
 -- Bring it into focus.
 --
 -- Whether the window is already managed, or not, it is mapped, has its
@@ -54,7 +56,7 @@ manage w = withDisplay $ \d -> do
     isTransient <- isJust `liftM` io (getTransientForHint d w)
     if isTransient
         then do modify $ \s -> s { windowset = W.insertUp w (windowset s) }
-                float w -- ^^ now go the refresh.
+                float w -- \^^ now go the refresh.
         else windows $ W.insertUp w
 
 -- | unmanage. A window no longer exists, remove it from the window
@@ -447,12 +449,12 @@ withFocused f = withWindowSet $ \w -> whenJust (W.peek w) f
 isClient :: Window -> X Bool
 isClient w = withWindowSet $ return . W.member w
 
--- | Combinations of extra modifier masks we need to grab keys/buttons for.
+-- | Combinations of extra modifier masks we need to grab keys\/buttons for.
 -- (numlock and capslock)
 extraModifiers :: [KeyMask]
 extraModifiers = [0, numlockMask, lockMask, numlockMask .|. lockMask ]
 
--- | Strip numlock/capslock from a mask
+-- | Strip numlock\/capslock from a mask
 cleanMask :: KeyMask -> KeyMask
 cleanMask = (complement (numlockMask .|. lockMask) .&.)
 

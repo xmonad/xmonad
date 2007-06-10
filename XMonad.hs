@@ -9,11 +9,10 @@
 -- Stability   :  unstable
 -- Portability :  not portable, uses cunning newtype deriving
 --
------------------------------------------------------------------------------
---
 -- The X monad, a state monad transformer over IO, for the window
 -- manager state, and support routines.
 --
+-----------------------------------------------------------------------------
 
 module XMonad (
     X, WindowSet, WorkspaceId(..), ScreenId(..), XState(..), XConf(..), Layout(..),
