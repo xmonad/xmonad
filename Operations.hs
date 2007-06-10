@@ -123,7 +123,7 @@ kill = withDisplay $ \d -> withFocused $ \w -> do
 -- ---------------------------------------------------------------------
 -- Managing windows
 
-data ModifyWindows = ModifyWindows deriving Typeable
+data ModifyWindows = ModifyWindows deriving ( Typeable, Eq )
 instance Message ModifyWindows
 
 -- | windows. Modify the current window list with a pure function, and refresh
@@ -345,6 +345,8 @@ sendMessage a = do n <- (W.tag . W.workspace . W.current) `fmap` gets windowset
                    whenJust ml' $ \l' -> do modify $ \s -> s { layouts = M.insert n (l',ls) (layouts s) }
                                             refresh
 
+instance Message Event
+
 --
 -- Builtin layout algorithms:
 --
@@ -436,6 +438,7 @@ splitVerticallyBy f = (mirrorRect *** mirrorRect) . splitHorizontallyBy f . mirr
 -- function and refresh.
 layout :: ((Layout, [Layout]) -> (Layout, [Layout])) -> X ()
 layout f = do
+    sendMessage ModifyWindows
     modify $ \s ->
         let n          = W.tag . W.workspace . W.current . windowset $ s
             (Just fl)  = M.lookup n $ layouts s

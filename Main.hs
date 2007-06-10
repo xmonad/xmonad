@@ -186,6 +186,7 @@ handle e@(ButtonEvent {ev_window = w,ev_event_type = t,ev_button = b })
            else focus w
     -- If it's the root window, then it's something we
     -- grabbed in grabButtons. Otherwise, it's click-to-focus.
+    sendMessage e -- Always send button events.
 
 -- entered a normal window, makes this focused.
 handle e@(CrossingEvent {ev_window = w, ev_event_type = t})
@@ -225,5 +226,3 @@ handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
 handle (ConfigureEvent {ev_window = w}) = whenX (isRoot w) rescreen
 
 handle e = sendMessage e -- trace (eventName e) -- ignoring
-
-instance Message Event
