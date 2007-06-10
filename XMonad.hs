@@ -17,9 +17,9 @@
 
 module XMonad (
     X, WindowSet, WorkspaceId(..), ScreenId(..), XState(..), XConf(..), Layout(..),
-    Typeable, Message, SomeMessage(..), fromMessage, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW,
-    runX, io, serial, withDisplay, withWindowSet, isRoot, spawn, restart, trace, whenJust, whenX,
-    atom_WM_STATE
+    Typeable, Message, SomeMessage(..), fromMessage,
+    runX, io, withDisplay, withWindowSet, isRoot, spawn, restart, trace, whenJust, whenX,
+    atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
   ) where
 
 import StackSet
@@ -32,8 +32,6 @@ import System.Exit
 import System.Environment
 import Graphics.X11.Xlib
 import Data.Typeable
-import Data.List (intersperse,sortBy)
-import Text.PrettyPrint
 
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -183,47 +181,3 @@ whenX a f = a >>= \b -> when b f
 -- be found in your .xsession-errors file
 trace :: String -> X ()
 trace msg = io $! do hPutStrLn stderr msg; hFlush stderr
-
--- ---------------------------------------------------------------------
--- Serialise a StackSet in a simple format
---
---   432|1:16777220:16777220,2:18874372:18874372,3::,4::,5::,6::,7::,8::,9::
---
--- format, roughly,:
---
---  fmt         := current visible '|' workspaces
---
---  current     := int
---  visible     := int* | epsilon
---
---  workspaces  := workspace ',' workspaces0
---  workspaces0 := workspace ',' workspaces0 | epsilon
---
---  workspace   := tag ':' focus* ':' clients
---  clients     := epsilon | client ';' clients
---
---  tag         := int
---  focus       := client
---
---  client       = int+
---  int         := 0 .. 9
---
-
-serial :: WindowSet -> String
-serial = render . ppr
-  where
-    ppr s = pprtag (current s) <>  hcat (map pprtag (visible s))
-        <|> (hcat . intersperse (char ',') . map pprWorkspace $
-                (sortBy (\a b -> tag a `compare` tag b)
-                    (map workspace (current s : visible s) ++ hidden s)))
-       where infixl 6 <|>
-             p <|> q = p <> char '|' <> q
-
-             pprtag = int . (+1) . fromIntegral . tag . workspace
-
-    pprWorkspace (Workspace i s) = int (1 + fromIntegral i)
-             <:> (if s == Empty then empty else text (show (focus s)))
-             <:> pprWindows (integrate s)
-       where p <:> q = p <> char ':' <> q
-
-    pprWindows = hcat . intersperse (char ';') . map (text.show)

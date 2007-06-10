@@ -100,11 +100,13 @@ defaultLayouts = [ tiled , mirror tiled , full ]
      delta   = 3%100
 
 --
--- Enable logging of state changes to stdout.
--- The internal state of the window manager is 'shown' in Haskell data format
+-- Perform an arbitrary action on each state change.
+-- Examples include:
+--      * do nothing
+--      * log the state to stdout
 --
-logging :: Bool
-logging = False
+logHook :: X ()
+logHook = return ()
 
 --
 -- The key bindings list.

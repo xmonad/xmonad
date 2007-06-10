@@ -1,6 +1,7 @@
 module Config where
 import Graphics.X11.Xlib.Types (Dimension)
 import Graphics.X11.Xlib (KeyMask)
+import XMonad
 borderWidth :: Dimension
-logging     :: Bool
+logHook     :: X ()
 numlockMask :: KeyMask
