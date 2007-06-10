@@ -123,9 +123,13 @@ kill = withDisplay $ \d -> withFocused $ \w -> do
 -- ---------------------------------------------------------------------
 -- Managing windows
 
+data ModifyWindows = ModifyWindows deriving Typeable
+instance Message ModifyWindows
+
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WindowSet -> WindowSet) -> X ()
 windows f = do
+    sendMessage ModifyWindows
     XState { windowset = old, layouts = fls, xineScreens = xinesc, statusGaps = gaps } <- get
     let ws = f old
     modify (\s -> s { windowset = ws })
