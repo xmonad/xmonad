@@ -379,8 +379,8 @@ tall nmaster delta frac =
            , modifyLayout = \m -> return $ msum [fmap resize     (fromMessage m)
                                                 ,fmap incmastern (fromMessage m)] }
 
-    where resize Shrink = tall nmaster delta (frac-delta)
-          resize Expand = tall nmaster delta (frac+delta)
+    where resize Shrink = tall nmaster delta (max 0 $ frac-delta)
+          resize Expand = tall nmaster delta (min 1 $ frac+delta)
           incmastern (IncMasterN d) = tall (max 0 (nmaster+d)) delta frac
 
 -- | Mirror a rectangle
