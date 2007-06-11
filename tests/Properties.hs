@@ -1,6 +1,6 @@
 {-# OPTIONS -fglasgow-exts #-}
 
-import StackSet
+import StackSet hiding (filter)
 import Operations (tile)
 
 import Debug.Trace

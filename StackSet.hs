@@ -76,12 +76,13 @@
 module StackSet (
         StackSet(..), Workspace(..), Screen(..), Stack(..), RationalRect(..),
         new, view, lookupWorkspace, peek, index, integrate, focusUp, focusDown,
-        focusWindow, member, findIndex, insertUp, delete, shift,
+        focusWindow, member, findIndex, insertUp, delete, shift, filter,
         swapMaster, swapUp, swapDown, modify, float, sink -- needed by users
     ) where
 
+import Prelude hiding (filter)
 import Data.Maybe   (listToMaybe)
-import qualified Data.List as L (delete,find,genericSplitAt)
+import qualified Data.List as L (delete,find,genericSplitAt,filter)
 import qualified Data.Map  as M (Map,insert,delete,empty)
 
 -- | 
@@ -260,6 +261,18 @@ peek = with Nothing (return . focus)
 integrate :: Stack a -> [a]
 integrate Empty        = []
 integrate (Node x l r) = reverse l ++ x : r
+
+-- |
+-- /O(n)/. 'filter p s' returns the elements of 's' such that 'p' evaluates to
+-- True.  Order is preserved, and focus moves to the next node to the right (if
+-- necessary).
+filter :: (a -> Bool) -> Stack a -> Stack a
+filter p Empty          = Empty
+filter p (Node f ls rs) = case L.filter p (f:rs) of
+                            (f':rs') -> Node f' (L.filter p ls) rs'
+                            []       -> case reverse $ L.filter p ls of
+                                            []       -> Empty
+                                            (f':rs') -> Node f' [] rs'
 
 -- |
 -- /O(s)/. Extract the stack on the current workspace, as a list.
