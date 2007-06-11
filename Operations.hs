@@ -256,8 +256,11 @@ clearEnterEvents = withDisplay $ \d -> io $ do
 tileWindow :: Window -> Rectangle -> X ()
 tileWindow w r = withDisplay $ \d -> do
     bw <- (fromIntegral . wa_border_width) `liftM` io (getWindowAttributes d w)
+    -- give all windows at least 1x1 pixels
+    let least x | x <= bw*2  = 1
+                | otherwise  = x - bw*2
     io $ moveResizeWindow d w (rect_x r) (rect_y r)
-                              (rect_width  r - bw*2) (rect_height r - bw*2)
+                              (least $ rect_width r) (least $ rect_height r)
     reveal w
 
 -- ---------------------------------------------------------------------
