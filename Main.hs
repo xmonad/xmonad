@@ -181,11 +181,11 @@ handle e@(MappingNotifyEvent {ev_window = w}) = do
 -- click on an unfocused window, makes it focused on this workspace
 handle e@(ButtonEvent {ev_window = w,ev_event_type = t,ev_button = b })
     | t == buttonPress = do
+    -- If it's the root window, then it's something we
+    -- grabbed in grabButtons. Otherwise, it's click-to-focus.
     isr <- isRoot w
     if isr then whenJust (M.lookup (cleanMask (ev_state e), b) mouseBindings) ($ ev_subwindow e)
            else focus w
-    -- If it's the root window, then it's something we
-    -- grabbed in grabButtons. Otherwise, it's click-to-focus.
     sendMessage e -- Always send button events.
 
 -- entered a normal window, makes this focused.
