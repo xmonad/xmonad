@@ -17,7 +17,7 @@
 module XMonad (
     X, WindowSet, WorkspaceId(..), ScreenId(..), XState(..), XConf(..), Layout(..),
     Typeable, Message, SomeMessage(..), fromMessage,
-    runX, io, withDisplay, withWindowSet, isRoot, spawn, restart, trace, whenJust, whenX,
+    runX, io, safeIO, withDisplay, withWindowSet, isRoot, spawn, restart, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
   ) where
 
@@ -136,6 +136,9 @@ fromMessage (SomeMessage m) = cast m
 -- | Lift an IO action into the X monad
 io :: IO a -> X a
 io = liftIO
+
+safeIO :: IO () -> X ()
+safeIO f = liftIO (f `catch` \e -> do hPutStrLn stderr (show e); hFlush stderr)
 
 -- | spawn. Launch an external application
 spawn :: String -> X ()
