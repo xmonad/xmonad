@@ -21,7 +21,7 @@ import qualified StackSet as W
 import {-# SOURCE #-} Config (borderWidth,logHook,numlockMask)
 
 import Data.Maybe
-import Data.List            (genericIndex, intersectBy)
+import Data.List            (genericIndex, intersectBy, nub, (\\))
 import Data.Bits            ((.|.), (.&.), complement)
 import Data.Ratio
 import qualified Data.Map as M
@@ -84,9 +84,7 @@ swapMaster = windows W.swapMaster
 
 -- | shift. Move a window to a new workspace, 0 indexed.
 shift :: WorkspaceId -> X ()
-shift n = withFocused hide >> windows (W.shift n)
--- TODO: get rid of the above hide.  'windows' should handle all hiding and
--- revealing of windows
+shift n = windows (W.shift n)
 
 -- | view. Change the current workspace to workspace at offset n (0 indexed).
 view :: WorkspaceId -> X ()
@@ -131,12 +129,13 @@ windows :: (WindowSet -> WindowSet) -> X ()
 windows f = do
     sendMessage ModifyWindows
     XState { windowset = old, layouts = fls, xineScreens = xinesc, statusGaps = gaps } <- get
-    let ws = f old
+    let oldvisible = concatMap (W.integrate . W.stack . W.workspace) $ W.current old : W.visible old
+        ws = f old
     modify (\s -> s { windowset = ws })
     d <- asks display
 
     -- for each workspace, layout the currently visible workspaces
-    forM_ (W.current ws : W.visible ws) $ \w -> do
+    visible <- fmap concat $ forM (W.current ws : W.visible ws) $ \w -> do
         let n      = W.tag (W.workspace w)
             this   = W.view n ws
             Just l = fmap fst $ M.lookup n fls
@@ -185,17 +184,16 @@ windows f = do
         -- pass to the last tiled window that had focus. 
         -- urgh : not our delete policy, but close.
 
+        -- return the visible windows for this workspace:
+        return (map fst rs ++ flt)
+
     setTopFocus
     logHook
     -- io performGC -- really helps, but seems to trigger GC bugs?
 
-    -- We now go to some effort to compute the minimal set of windows to hide.
-    -- The minimal set being only those windows which weren't previously hidden,
-    -- which is the intersection of previously visible windows with those now hidden
-    mapM_ hide . concatMap (W.integrate . W.stack) $
-        intersectBy (\w x -> W.tag w == W.tag x)
-            (map W.workspace $ W.current old : W.visible old)
-            (W.hidden ws)
+    -- hide every window that was potentially visible before, but is not
+    -- given a position by a layout now.
+    mapM_ hide (nub oldvisible \\ visible)
 
     clearEnterEvents
 
