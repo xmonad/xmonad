@@ -140,7 +140,8 @@ windows f = do
         let n      = W.tag (W.workspace w)
             this   = W.view n ws
             Just l = fmap fst $ M.lookup n fls
-            (flt, tiled) = partition (flip M.member (W.floating ws)) (W.index this)
+            flt = filter (flip M.member (W.floating ws)) (W.index this)
+            tiled = W.filter (not . flip M.member (W.floating ws)) . W.stack . W.workspace . W.current $ this
             (Rectangle sx sy sw sh) = genericIndex xinesc (W.screen w)
             (gt,gb,gl,gr)           = genericIndex gaps   (W.screen w)
             viewrect = Rectangle (sx + fromIntegral gl)        (sy + fromIntegral gt)
@@ -370,7 +371,9 @@ instance Message IncMasterN
 -- simple fullscreen mode, just render all windows fullscreen.
 -- a plea for tuple sections: map . (,sc)
 full :: Layout
-full = Layout { doLayout     = \sc ws -> return [ (w,sc) | w <- ws ]
+full = Layout { doLayout     = \sc ws -> return $ case ws of
+                                                    W.Empty        -> []
+                                                    (W.Node f _ _) -> [(f, sc)]
               , modifyLayout = const (return Nothing) } -- no changes
 
 --
@@ -378,7 +381,7 @@ full = Layout { doLayout     = \sc ws -> return [ (w,sc) | w <- ws ]
 --
 tall :: Int -> Rational -> Rational -> Layout
 tall nmaster delta frac =
-    Layout { doLayout     = \r -> return . ap zip (tile frac r nmaster . length)
+    Layout { doLayout     = \r -> return . ap zip (tile frac r nmaster . length) . W.integrate
            , modifyLayout = \m -> return $ msum [fmap resize     (fromMessage m)
                                                 ,fmap incmastern (fromMessage m)] }
 

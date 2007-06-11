@@ -108,7 +108,7 @@ atom_WM_STATE           = getAtom "WM_STATE"
 -- 'doLayout', a pure function to layout a Window set 'modifyLayout', 
 -- 'modifyLayout' can be considered a branch of an exception handler.
 --
-data Layout = Layout { doLayout     :: Rectangle -> [Window] -> X [(Window, Rectangle)]
+data Layout = Layout { doLayout     :: Rectangle -> Stack Window -> X [(Window, Rectangle)]
                      , modifyLayout :: SomeMessage -> X (Maybe Layout) }
 
 -- Based on ideas in /An Extensible Dynamically-Typed Hierarchy of Exceptions/,
