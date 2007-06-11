@@ -335,10 +335,8 @@ setFocusX w = withWindowSet $ \ws -> do
 switchLayout :: X ()
 switchLayout = layout (\(x, xs) -> let xs' = xs ++ [x] in (head xs', tail xs'))
 
--- | Throw an (extensible) message value to the current Layout scheme,
--- possibly modifying how we layout the windows, then refresh.
---
--- TODO, this will refresh on Nothing.
+-- | Throw a message to the current Layout possibly modifying how we
+-- layout the windows, then refresh.
 --
 sendMessage :: Message a => a -> X ()
 sendMessage a = do n <- (W.tag . W.workspace . W.current) `fmap` gets windowset
