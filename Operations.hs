@@ -333,7 +333,12 @@ setFocusX w = withWindowSet $ \ws -> do
 -- uppermost.
 --
 switchLayout :: X ()
-switchLayout = layout (\(x, xs) -> let xs' = xs ++ [x] in (head xs', tail xs'))
+switchLayout = do
+    sendMessage ModifyWindows
+    n <- gets (W.tag . W.workspace . W.current . windowset)
+    modify $ \s -> s { layouts = M.adjust switch n (layouts s) }
+    refresh
+ where switch (x, xs) = let xs' =  xs ++ [x] in (head xs', tail xs')
 
 -- | Throw a message to the current Layout possibly modifying how we
 -- layout the windows, then refresh.
@@ -433,19 +438,6 @@ splitHorizontallyBy f (Rectangle sx sy sw sh) =
   where leftw = floor $ fromIntegral sw * f
 
 splitVerticallyBy f = (mirrorRect *** mirrorRect) . splitHorizontallyBy f . mirrorRect
-
-------------------------------------------------------------------------
-
--- | layout. Modify the current workspace's layout with a pure
--- function and refresh.
-layout :: ((Layout, [Layout]) -> (Layout, [Layout])) -> X ()
-layout f = do
-    sendMessage ModifyWindows
-    modify $ \s ->
-        let n          = W.tag . W.workspace . W.current . windowset $ s
-            (Just fl)  = M.lookup n $ layouts s
-        in s { layouts = M.insert n (f fl) (layouts s) }
-    refresh
 
 ------------------------------------------------------------------------
 -- Utilities
