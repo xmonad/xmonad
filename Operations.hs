@@ -70,8 +70,8 @@ manage w = withDisplay $ \d -> do
 --
 unmanage :: Window -> X ()
 unmanage w = do
-    setWMState w 0 {-withdrawn-}
     windows (W.sink w . W.delete w)
+    setWMState w 0 {-withdrawn-}
     modify (\s -> s {mapped = S.delete w (mapped s), waitingUnmap = M.delete w (waitingUnmap s)})
 
 -- | focus. focus window up or down. or swap various windows.
