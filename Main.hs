@@ -112,6 +112,8 @@ scan :: Display -> Window -> IO [Window]
 scan dpy rootw = do
     (_, _, ws) <- queryTree dpy rootw
     filterM ok ws
+  -- TODO: scan for windows that are either 'IsViewable' or where WM_STATE ==
+  -- Iconic
   where ok w = do wa <- getWindowAttributes dpy w
                   return $ not (wa_override_redirect wa)
                          && wa_map_state wa == waIsViewable
