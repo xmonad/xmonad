@@ -267,7 +267,7 @@ integrate (Node x l r) = reverse l ++ x : r
 -- True.  Order is preserved, and focus moves to the next node to the right (if
 -- necessary).
 filter :: (a -> Bool) -> Stack a -> Stack a
-filter p Empty          = Empty
+filter _ Empty          = Empty
 filter p (Node f ls rs) = case L.filter p (f:rs) of
                             (f':rs') -> Node f' (L.filter p ls) rs'
                             []       -> case reverse $ L.filter p ls of
