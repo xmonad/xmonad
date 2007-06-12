@@ -214,7 +214,7 @@ view i s
     = s { current = Screen x (screen (current s))
         , hidden = workspace (current s) : L.delete x (hidden s) }
 
-    | otherwise = abort "Inconsistent StackSet: workspace not found"
+    | otherwise = s
 
     -- 'Catch'ing this might be hard. Relies on monotonically increasing
     -- workspace tags defined in 'new'
