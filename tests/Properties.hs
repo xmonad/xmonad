@@ -114,7 +114,7 @@ invariant (s :: T) = and
   where
     ws = concat [ focus t : up t ++ down t
                   | w <- workspace (current s) : map workspace (visible s) ++ hidden s
-                , let t = stack w, t /= Empty ] :: [Char]
+                  , t <- maybeToList (stack w)] :: [Char]
     noDuplicates = nub ws == ws
     calculatedSize = length (visible s) + length (hidden s) + 1   -- +1 is for current
     accurateSize = calculatedSize == size s
@@ -148,7 +148,7 @@ prop_focusDown_I (n :: NonNegative Int) (x :: T) =
 prop_focus_I (n :: NonNegative Int) (x :: T) =
     case peek x of
         Nothing -> True
-        Just _  -> let w = focus . stack . workspace . current $ foldr (const focusUp) x [1..n]
+        Just _  -> let w = focus . fromJust . stack . workspace . current $ foldr (const focusUp) x [1..n]
                    in invariant $ focusWindow w x
 
 prop_insertUp_I n (x :: T) = invariant $ insertUp n x
@@ -175,7 +175,7 @@ prop_shift_I (n :: NonNegative Int) (x :: T) =
 -- empty StackSets have no windows in them
 prop_empty (n :: Positive Int)
            (m :: Positive Int) =
-       all (== Empty) [ stack w | w <- workspace (current x)
+       all (== Nothing) [ stack w | w <- workspace (current x)
                                         : map workspace (visible x) ++ hidden x ]
 
     where x = new (fromIntegral n) (fromIntegral m) :: T
@@ -257,12 +257,9 @@ prop_member_peek (x :: T) =
 -- the list returned by index should be the same length as the actual
 -- windows kept in the zipper
 prop_index_length (x :: T) =
-    case it of
-        Empty   -> length (index x) == 0
-        Node {} -> length (index x) == length list
-  where
-    it   = stack . workspace . current $ x
-    list = focus it : up it ++ down it
+    case stack . workspace . current $ x of
+        Nothing   -> length (index x) == 0
+        Just it -> length (index x) == length (focus it : up it ++ down it)
 
 -- ---------------------------------------------------------------------
 -- rotating focus
@@ -293,7 +290,7 @@ prop_focusWindow_works (n :: NonNegative Int) (x :: T) =
         Nothing -> True
         Just _  -> let s = index x
                        i = fromIntegral n `mod` length s
-                   in (focus . stack . workspace . current) (focusWindow (s !! i) x) == (s !! i)
+                   in (focus . fromJust . stack . workspace . current) (focusWindow (s !! i) x) == (s !! i)
 
 -- rotation through the height of a stack gets us back to the start
 prop_focus_all_l (x :: T) = (foldr (const focusUp) x [1..n]) == x
@@ -324,9 +321,8 @@ prop_focusWindow_local (n :: NonNegative Int) (x::T ) =
 prop_findIndex (x :: T) =
     and [ tag w == fromJust (findIndex i x)
         | w <- workspace (current x) : map workspace (visible x)  ++ hidden x
-        , let t = stack w
-        , t /= Empty
-        , i <- focus (stack w) : up (stack w) ++ down (stack w)
+        , t <- maybeToList (stack w)
+        , i <- focus t : up t ++ down t
         ]
 
 -- ---------------------------------------------------------------------

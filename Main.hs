@@ -88,11 +88,11 @@ main = do
             -- TODO, general iterators for these lists.
             sequence_ [ setInitialProperties w >> reveal w
                       | wk <- map W.workspace (W.current winset : W.visible winset)
-                      , w  <- W.integrate (W.stack wk) ]
+                      , w  <- W.integrate' (W.stack wk) ]
 
             sequence_ [ setInitialProperties w >> hide w
                       | wk <- W.hidden winset
-                      , w  <- W.integrate (W.stack wk) ]
+                      , w  <- W.integrate' (W.stack wk) ]
 
             mapM_ manage ws -- find new windows
             logHook

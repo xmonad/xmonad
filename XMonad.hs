@@ -16,7 +16,7 @@
 
 module XMonad (
     X, WindowSet, WorkspaceId(..), ScreenId(..), XState(..), XConf(..), Layout(..),
-    Typeable, Message, SomeMessage(..), fromMessage,
+    Typeable, Message, SomeMessage(..), fromMessage, runLayout,
     runX, io, catchIO, withDisplay, withWindowSet, isRoot, spawn, restart, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
   ) where
@@ -110,6 +110,9 @@ atom_WM_STATE           = getAtom "WM_STATE"
 --
 data Layout = Layout { doLayout     :: Rectangle -> Stack Window -> X [(Window, Rectangle)]
                      , modifyLayout :: SomeMessage -> X (Maybe Layout) }
+
+runLayout :: Layout -> Rectangle -> StackOrNot Window -> X [(Window, Rectangle)]
+runLayout l r = maybe (return []) (doLayout l r)
 
 -- Based on ideas in /An Extensible Dynamically-Typed Hierarchy of Exceptions/,
 -- Simon Marlow, 2006. Use extensible messages to the modifyLayout handler.

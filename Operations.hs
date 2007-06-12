@@ -134,7 +134,7 @@ windows f = do
     -- and must be called on all visible workspaces.
     broadcastMessage UnDoLayout
     XState { windowset = old, layouts = fls, xineScreens = xinesc, statusGaps = gaps } <- get
-    let oldvisible = concatMap (W.integrate . W.stack . W.workspace) $ W.current old : W.visible old
+    let oldvisible = concatMap (W.integrate' . W.stack . W.workspace) $ W.current old : W.visible old
         ws = f old
     modify (\s -> s { windowset = ws })
     d <- asks display
@@ -145,8 +145,7 @@ windows f = do
             this   = W.view n ws
             Just l = fmap fst $ M.lookup n fls
             flt = filter (flip M.member (W.floating ws)) (W.index this)
-            tiled = W.filter (not . flip M.member (W.floating ws)) 
-                        . W.stack . W.workspace . W.current $ this
+            tiled = W.filter (not . flip M.member (W.floating ws)) . W.stack . W.workspace . W.current $ this
             (Rectangle sx sy sw sh) = genericIndex xinesc (W.screen w)
             (gt,gb,gl,gr)           = genericIndex gaps   (W.screen w)
             viewrect = Rectangle (sx + fromIntegral gl)        (sy + fromIntegral gt)
@@ -154,7 +153,7 @@ windows f = do
 
         -- just the tiled windows:
         -- now tile the windows on this workspace, modified by the gap
-        rs <- doLayout l viewrect tiled -- `mplus` doLayout full viewrect tiled
+        rs <- runLayout l viewrect tiled -- `mplus` doLayout full viewrect tiled
         mapM_ (uncurry tileWindow) rs
 
         -- now the floating windows:
@@ -388,9 +387,7 @@ instance Message IncMasterN
 -- simple fullscreen mode, just render all windows fullscreen.
 -- a plea for tuple sections: map . (,sc)
 full :: Layout
-full = Layout { doLayout     = \sc ws -> return $ case ws of
-                                                    W.Empty        -> []
-                                                    (W.Node f _ _) -> [(f, sc)]
+full = Layout { doLayout     = \sc (W.Stack f _ _) -> return [(f, sc)]
               , modifyLayout = const (return Nothing) } -- no changes
 
 --

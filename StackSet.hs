@@ -74,10 +74,11 @@
 --
 
 module StackSet (
-        StackSet(..), Workspace(..), Screen(..), Stack(..), RationalRect(..),
-        new, view, lookupWorkspace, peek, index, integrate, differentiate, focusUp, focusDown,
+        StackSet(..), Workspace(..), Screen(..), StackOrNot, Stack(..), RationalRect(..),
+        new, view, lookupWorkspace, peek, index, integrate, integrate', differentiate,
+        focusUp, focusDown,
         focusWindow, member, findIndex, insertUp, delete, shift, filter,
-        swapMaster, swapUp, swapDown, modify, float, sink -- needed by users
+        swapMaster, swapUp, swapDown, modify, modify', float, sink -- needed by users
     ) where
 
 import Prelude hiding (filter)
@@ -141,7 +142,7 @@ data Screen i a sid = Screen { workspace :: !(Workspace i a), screen :: !sid }
 -- |
 -- A workspace is just a tag - its index - and a stack
 --
-data Workspace i a = Workspace  { tag :: !i, stack :: Stack a }
+data Workspace i a = Workspace  { tag :: !i, stack :: StackOrNot a }
     deriving (Show, Read, Eq)
 
 data RationalRect = RationalRect Rational Rational Rational Rational
@@ -165,10 +166,11 @@ data RationalRect = RationalRect Rational Rational Rational Rational
 -- structures, it is the differentiation of a [a], and integrating it
 -- back has a natural implementation used in 'index'.
 --
-data Stack a = Empty
-             | Node { focus  :: !a        -- focused thing in this set
-                    , up     :: [a]       -- clowns to the left
-                    , down   :: [a] }     -- jokers to the right
+type StackOrNot a = Maybe (Stack a)
+
+data Stack a = Stack { focus  :: !a        -- focused thing in this set
+                     , up     :: [a]       -- clowns to the left
+                     , down   :: [a] }     -- jokers to the right
     deriving (Show, Read, Eq)
 
 
@@ -189,7 +191,7 @@ new :: (Integral i, Integral s) => i -> s -> StackSet i a s
 new n m | n > 0 && m > 0 = StackSet n cur visi unseen M.empty
         | otherwise      = abort "non-positive arguments to StackSet.new"
 
-  where (seen,unseen) = L.genericSplitAt m $ Workspace 0 Empty : [ Workspace i Empty | i <- [1 ..n-1]]
+  where (seen,unseen) = L.genericSplitAt m $ Workspace 0 Nothing : [ Workspace i Nothing | i <- [1 ..n-1]]
         (cur:visi)    = [ Screen i s |  (i,s) <- zip seen [0..] ]
                 -- now zip up visibles with their screen id
 
@@ -232,21 +234,26 @@ lookupWorkspace sc w = listToMaybe [ tag i | Screen i s <- current w : visible w
 
 -- |
 -- The 'with' function takes a default value, a function, and a
--- StackSet. If the current stack is Empty, 'with' returns the
+-- StackSet. If the current stack is Nothing, 'with' returns the
 -- default value. Otherwise, it applies the function to the stack,
 -- returning the result. It is like 'maybe' for the focused workspace.
 --
 with :: b -> (Stack a -> b) -> StackSet i a s -> b
-with dflt f s = case stack (workspace (current s)) of Empty -> dflt; v -> f v
-    -- TODO: ndm: a 'catch' proof here that 'f' only gets Node
-    --            constructors, hence all 'f's are safe below?
+with dflt f = maybe dflt f . stack . workspace . current
 
 -- |
--- Apply a function, and a default value for Empty, to modify the current stack.
+-- Apply a function, and a default value for Nothing, to modify the current stack.
 --
-modify :: Stack a -> (Stack a -> Stack a) -> StackSet i a s -> StackSet i a s
+modify :: StackOrNot a -> (Stack a -> StackOrNot a) -> StackSet i a s -> StackSet i a s
 modify d f s = s { current = (current s)
                         { workspace = (workspace (current s)) { stack = with d f s }}}
+
+-- |
+-- Apply a function to modify the current stack if it isn't empty, and we don't
+--  want to empty it.
+--
+modify' :: (Stack a -> Stack a) -> StackSet i a s -> StackSet i a s
+modify' f = modify Nothing (Just . f)
 
 -- |
 -- /O(1)/. Extract the focused element of the current stack. 
@@ -259,27 +266,27 @@ peek = with Nothing (return . focus)
 -- /O(n)/. Flatten a Stack into a list.
 --
 integrate :: Stack a -> [a]
-integrate Empty        = []
-integrate (Node x l r) = reverse l ++ x : r
+integrate (Stack x l r) = reverse l ++ x : r
+
+integrate' :: StackOrNot a -> [a]
+integrate' = maybe [] integrate
 
 -- |
 -- /O(n)/. Texture a list.
 --
-differentiate :: [a] -> Stack a
-differentiate [] = Empty
-differentiate (x:xs) = Node x [] xs
+differentiate :: [a] -> StackOrNot a
+differentiate [] = Nothing
+differentiate (x:xs) = Just $ Stack x [] xs
 
 -- |
 -- /O(n)/. 'filter p s' returns the elements of 's' such that 'p' evaluates to
 -- True.  Order is preserved, and focus moves to the next node to the right (if
 -- necessary).
-filter :: (a -> Bool) -> Stack a -> Stack a
-filter _ Empty          = Empty
-filter p (Node f ls rs) = case L.filter p (f:rs) of
-                            (f':rs') -> Node f' (L.filter p ls) rs'
-                            []       -> case reverse $ L.filter p ls of
-                                            []       -> Empty
-                                            (f':rs') -> Node f' [] rs'
+filter :: (a -> Bool) -> Stack a -> StackOrNot a
+filter p (Stack f ls rs) = case L.filter p (f:rs) of
+                            (f':rs') -> Just $ Stack f' (L.filter p ls) rs'
+                            []       -> do f':rs' <- return $ reverse $ L.filter p ls
+                                           Just $ Stack f' [] rs'
 
 -- |
 -- /O(s)/. Extract the stack on the current workspace, as a list.
@@ -305,23 +312,22 @@ index = with [] integrate
 -- the current stack.
 -- 
 focusUp, focusDown, swapUp, swapDown :: StackSet i a s -> StackSet i a s
-focusUp   = modify Empty focusUp'
-focusDown = modify Empty (reverseStack . focusUp' . reverseStack)
+focusUp   = modify' focusUp'
+focusDown = modify' (reverseStack . focusUp' . reverseStack)
 
-swapUp    = modify Empty swapUp'
-swapDown  = modify Empty (reverseStack . swapUp' . reverseStack)
+swapUp    = modify' swapUp'
+swapDown  = modify' (reverseStack . swapUp' . reverseStack)
 
 focusUp', swapUp' :: Stack a -> Stack a
-focusUp' (Node t (l:ls) rs) = Node l ls (t:rs)
-focusUp' (Node t []     rs) = Node x xs [] where (x:xs) = reverse (t:rs)
+focusUp' (Stack t (l:ls) rs) = Stack l ls (t:rs)
+focusUp' (Stack t []     rs) = Stack x xs [] where (x:xs) = reverse (t:rs)
 
-swapUp'  (Node t (l:ls) rs) = Node t ls (l:rs)
-swapUp'  (Node t []     rs) = Node t (reverse rs) []
+swapUp'  (Stack t (l:ls) rs) = Stack t ls (l:rs)
+swapUp'  (Stack t []     rs) = Stack t (reverse rs) []
 
 -- | reverse a stack: up becomes down and down becomes up.
 reverseStack :: Stack a -> Stack a
-reverseStack (Node t ls rs) = Node t rs ls
-reverseStack x              = x
+reverseStack (Stack t ls rs) = Stack t rs ls
 
 --
 -- | /O(1) on current window, O(n) in general/. Focus the window 'w', 
@@ -348,8 +354,8 @@ member a s = maybe False (const True) (findIndex a s)
 findIndex :: Eq a => a -> StackSet i a s -> Maybe i
 findIndex a s = listToMaybe
     [ tag w | w <- workspace (current s) : map workspace (visible s) ++ hidden s, has a (stack w) ]
-    where has _ Empty         = False
-          has x (Node t l r) = x `elem` (t : l ++ r)
+    where has _ Nothing         = False
+          has x (Just (Stack t l r)) = x `elem` (t : l ++ r)
 
 -- ---------------------------------------------------------------------
 -- | Modifying the stackset
@@ -370,10 +376,10 @@ findIndex a s = listToMaybe
 --
 insertUp :: Eq a => a -> StackSet i a s -> StackSet i a s
 insertUp a s = if member a s then s else insert
-  where insert = modify (Node a [] []) (\(Node t l r) -> Node a l (t:r)) s
+  where insert = modify (Just $ Stack a [] []) (\(Stack t l r) -> Just $ Stack a l (t:r)) s
 
 -- insertDown :: a -> StackSet i a s -> StackSet i a s
--- insertDown a = modify (Node a [] []) $ \(Node t l r) -> Node a (t:l) r
+-- insertDown a = modify (Stack a [] []) $ \(Stack t l r) -> Stack a (t:l) r
 -- Old semantics, from Huet.
 -- >    w { down = a : down w }
 
@@ -381,10 +387,10 @@ insertUp a s = if member a s then s else insert
 -- /O(1) on current window, O(n) in general/. Delete window 'w' if it exists.
 -- There are 4 cases to consider:
 --
---   * delete on an Empty workspace leaves it Empty
+--   * delete on an Nothing workspace leaves it Nothing
 --   * otherwise, try to move focus to the down
 --   * otherwise, try to move focus to the up
---   * otherwise, you've got an empty workspace, becomes Empty
+--   * otherwise, you've got an empty workspace, becomes Nothing
 --
 -- Behaviour with respect to the master:
 --
@@ -399,13 +405,13 @@ delete w s | Just w == peek s = remove s -- common case.
     removeWindow o n = foldr ($) s [view o,remove,view n]
 
     -- actual removal logic, and focus/master logic:
-    remove = modify Empty $ \c ->
+    remove = modify Nothing $ \c ->
       if focus c == w
       then case c of
-        Node _ ls     (r:rs) -> Node r ls rs    -- try down first
-        Node _ (l:ls) []     -> Node l ls []    -- else up
-        Node _ []     []     -> Empty
-      else c { up = w `L.delete` up c, down = w `L.delete` down c }
+        Stack _ ls     (r:rs) -> Just $ Stack r ls rs    -- try down first
+        Stack _ (l:ls) []     -> Just $ Stack l ls []    -- else up
+        Stack _ []     []     -> Nothing
+      else Just $ c { up = w `L.delete` up c, down = w `L.delete` down c }
 
 ------------------------------------------------------------------------
 
@@ -425,9 +431,9 @@ sink w s = s { floating = M.delete w (floating s) }
 -- The old master window is swapped in the tiling order with the focused window.
 -- Focus stays with the item moved.
 swapMaster :: StackSet i a s -> StackSet i a s
-swapMaster = modify Empty $ \c -> case c of
-    Node _ [] _  -> c    -- already master.
-    Node t ls rs -> Node t [] (ys ++ x : rs) where (x:ys) = reverse ls
+swapMaster = modify' $ \c -> case c of
+    Stack _ [] _  -> c    -- already master.
+    Stack t ls rs -> Stack t [] (ys ++ x : rs) where (x:ys) = reverse ls
 
 -- natural! keep focus, move current to the top, move top to current.
 -- 
