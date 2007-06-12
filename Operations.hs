@@ -145,13 +145,13 @@ windows f = do
             this   = W.view n ws
             Just l = fmap fst $ M.lookup n fls
             flt = filter (flip M.member (W.floating ws)) (W.index this)
-            tiled = W.filter (not . flip M.member (W.floating ws)) . W.stack . W.workspace . W.current $ this
+            tiled = W.filter (not . flip M.member (W.floating ws)) 
+                        . W.stack . W.workspace . W.current $ this
             (Rectangle sx sy sw sh) = genericIndex xinesc (W.screen w)
             (gt,gb,gl,gr)           = genericIndex gaps   (W.screen w)
             viewrect = Rectangle (sx + fromIntegral gl)        (sy + fromIntegral gt)
                                  (sw - fromIntegral (gl + gr)) (sh - fromIntegral (gt + gb))
 
-       
         -- just the tiled windows:
         -- now tile the windows on this workspace, modified by the gap
         rs <- doLayout l viewrect tiled -- `mplus` doLayout full viewrect tiled
