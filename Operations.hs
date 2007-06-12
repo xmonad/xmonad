@@ -129,7 +129,10 @@ instance Message ModifyWindows
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WindowSet -> WindowSet) -> X ()
 windows f = do
-    sendMessage ModifyWindows
+    -- Notify visible layouts to remove decorations etc
+    -- We cannot use sendMessage because this must not call refresh ever,
+    -- and must be called on all visible workspaces.
+    broadcastMessage ModifyWindows
     XState { windowset = old, layouts = fls, xineScreens = xinesc, statusGaps = gaps } <- get
     let oldvisible = concatMap (W.integrate . W.stack . W.workspace) $ W.current old : W.visible old
         ws = f old
@@ -140,7 +143,7 @@ windows f = do
     visible <- fmap concat $ forM (W.current ws : W.visible ws) $ \w -> do
         let n      = W.tag (W.workspace w)
             this   = W.view n ws
-            Just l = fmap fst $ M.lookup n fls
+            Just (l,ls) = M.lookup n fls
             flt = filter (flip M.member (W.floating ws)) (W.index this)
             tiled = W.filter (not . flip M.member (W.floating ws)) . W.stack . W.workspace . W.current $ this
             (Rectangle sx sy sw sh) = genericIndex xinesc (W.screen w)
@@ -148,6 +151,7 @@ windows f = do
             viewrect = Rectangle (sx + fromIntegral gl)        (sy + fromIntegral gt)
                                  (sw - fromIntegral (gl + gr)) (sh - fromIntegral (gt + gb))
 
+       
         -- just the tiled windows:
         -- now tile the windows on this workspace, modified by the gap
         rs <- doLayout l viewrect tiled -- `mplus` doLayout full viewrect tiled
@@ -334,9 +338,11 @@ setFocusX w = withWindowSet $ \ws -> do
 -- becomes a master. When switching back , the focused window is
 -- uppermost.
 --
+-- Note that the new layout's deconstructor will be called, so it should be
+-- idempotent.
 switchLayout :: X ()
 switchLayout = do
-    sendMessage ModifyWindows
+    broadcastMessage ModifyWindows  -- calling refresh now would defeat the point of deconstruction
     n <- gets (W.tag . W.workspace . W.current . windowset)
     modify $ \s -> s { layouts = M.adjust switch n (layouts s) }
     refresh
