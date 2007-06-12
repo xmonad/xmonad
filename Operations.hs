@@ -36,6 +36,8 @@ import Graphics.X11.Xlib
 import Graphics.X11.Xinerama (getScreenInfo)
 import Graphics.X11.Xlib.Extras
 
+import qualified Data.Traversable as T
+
 -- ---------------------------------------------------------------------
 -- |
 -- Window manager operations
@@ -349,6 +351,14 @@ sendMessage a = do n <- (W.tag . W.workspace . W.current) `fmap` gets windowset
                    ml' <- modifyLayout l (SomeMessage a)
                    whenJust ml' $ \l' -> do modify $ \s -> s { layouts = M.insert n (l',ls) (layouts s) }
                                             refresh
+
+-- | Send a message to all visible layouts, without necessarily refreshing.
+-- This is how we implement the hooks, such as ModifyWindows.
+broadcastMessage :: Message a => a -> X ()
+broadcastMessage a = do
+    ol <- gets layouts
+    nl <- T.forM ol $ \ (l,ls) -> maybe (l,ls) (flip (,) ls) `fmap` modifyLayout l (SomeMessage a)
+    modify $ \s -> s { layouts = nl }
 
 instance Message Event
 
