@@ -153,7 +153,7 @@ windows f = do
 
         -- just the tiled windows:
         -- now tile the windows on this workspace, modified by the gap
-        rs <- runLayout l viewrect tiled -- `mplus` doLayout full viewrect tiled
+        rs <- runLayout l viewrect tiled `catchX` runLayout full viewrect tiled
         mapM_ (uncurry tileWindow) rs
 
         -- now the floating windows:
@@ -353,7 +353,7 @@ switchLayout = do
 sendMessage :: Message a => a -> X ()
 sendMessage a = do n <- (W.tag . W.workspace . W.current) `fmap` gets windowset
                    Just (l,ls) <- M.lookup n `fmap` gets layouts
-                   ml' <- modifyLayout l (SomeMessage a)
+                   ml' <- modifyLayout l (SomeMessage a) `catchX` return (Just l)
                    whenJust ml' $ \l' -> do modify $ \s -> s { layouts = M.insert n (l',ls) (layouts s) }
                                             refresh
 
@@ -362,7 +362,8 @@ sendMessage a = do n <- (W.tag . W.workspace . W.current) `fmap` gets windowset
 broadcastMessage :: Message a => a -> X ()
 broadcastMessage a = do
     ol <- gets layouts
-    nl <- T.forM ol $ \ (l,ls) -> maybe (l,ls) (flip (,) ls) `fmap` modifyLayout l (SomeMessage a)
+    nl <- T.forM ol $ \ (l,ls) -> maybe (l,ls) (flip (,) ls) `fmap`
+          (modifyLayout l (SomeMessage a) `catchX` return (Just l))
     modify $ \s -> s { layouts = nl }
 
 instance Message Event

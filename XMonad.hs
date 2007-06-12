@@ -17,7 +17,7 @@
 module XMonad (
     X, WindowSet, WorkspaceId(..), ScreenId(..), XState(..), XConf(..), Layout(..),
     Typeable, Message, SomeMessage(..), fromMessage, runLayout,
-    runX, io, catchIO, withDisplay, withWindowSet, isRoot, spawn, restart, trace, whenJust, whenX,
+    runX, catchX, io, catchIO, withDisplay, withWindowSet, isRoot, spawn, restart, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
   ) where
 
@@ -75,6 +75,17 @@ newtype X a = X (ReaderT XConf (StateT XState IO) a)
 -- Return the result, and final state
 runX :: XConf -> XState -> X a -> IO ()
 runX c st (X a) = runStateT (runReaderT a c) st >> return ()
+
+-- | Run in the X monad, and in case of exception, and catch it and log it
+-- to stderr, and run the error case.
+catchX :: X a -> X a -> X a
+catchX (X job) (X errcase) =
+    do st <- get
+       c <- ask
+       (a,s') <- io ((runStateT (runReaderT job c) st) `catch`
+                     \e -> (do hPutStrLn stderr (show e); runStateT (runReaderT errcase c) st))
+       put s'
+       return a
 
 -- ---------------------------------------------------------------------
 -- Convenient wrappers to state
