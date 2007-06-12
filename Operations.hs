@@ -123,8 +123,8 @@ kill = withDisplay $ \d -> withFocused $ \w -> do
 -- ---------------------------------------------------------------------
 -- Managing windows
 
-data ModifyWindows = ModifyWindows deriving ( Typeable, Eq )
-instance Message ModifyWindows
+data UnDoLayout = UnDoLayout deriving ( Typeable, Eq )
+instance Message UnDoLayout
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WindowSet -> WindowSet) -> X ()
@@ -132,7 +132,7 @@ windows f = do
     -- Notify visible layouts to remove decorations etc
     -- We cannot use sendMessage because this must not call refresh ever,
     -- and must be called on all visible workspaces.
-    broadcastMessage ModifyWindows
+    broadcastMessage UnDoLayout
     XState { windowset = old, layouts = fls, xineScreens = xinesc, statusGaps = gaps } <- get
     let oldvisible = concatMap (W.integrate . W.stack . W.workspace) $ W.current old : W.visible old
         ws = f old
@@ -342,7 +342,7 @@ setFocusX w = withWindowSet $ \ws -> do
 -- idempotent.
 switchLayout :: X ()
 switchLayout = do
-    broadcastMessage ModifyWindows  -- calling refresh now would defeat the point of deconstruction
+    broadcastMessage UnDoLayout  -- calling refresh now would defeat the point of deconstruction
     n <- gets (W.tag . W.workspace . W.current . windowset)
     modify $ \s -> s { layouts = M.adjust switch n (layouts s) }
     refresh
@@ -359,7 +359,7 @@ sendMessage a = do n <- (W.tag . W.workspace . W.current) `fmap` gets windowset
                                             refresh
 
 -- | Send a message to all visible layouts, without necessarily refreshing.
--- This is how we implement the hooks, such as ModifyWindows.
+-- This is how we implement the hooks, such as UnDoLayout.
 broadcastMessage :: Message a => a -> X ()
 broadcastMessage a = do
     ol <- gets layouts
