@@ -75,7 +75,7 @@
 
 module StackSet (
         StackSet(..), Workspace(..), Screen(..), Stack(..), RationalRect(..),
-        new, view, lookupWorkspace, peek, index, integrate, focusUp, focusDown,
+        new, view, lookupWorkspace, peek, index, integrate, differentiate, focusUp, focusDown,
         focusWindow, member, findIndex, insertUp, delete, shift, filter,
         swapMaster, swapUp, swapDown, modify, float, sink -- needed by users
     ) where
@@ -261,6 +261,13 @@ peek = with Nothing (return . focus)
 integrate :: Stack a -> [a]
 integrate Empty        = []
 integrate (Node x l r) = reverse l ++ x : r
+
+-- |
+-- /O(n)/. Texture a list.
+--
+differentiate :: [a] -> Stack a
+differentiate [] = Empty
+differentiate (x:xs) = Node x [] xs
 
 -- |
 -- /O(n)/. 'filter p s' returns the elements of 's' such that 'p' evaluates to
