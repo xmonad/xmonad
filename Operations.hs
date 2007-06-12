@@ -143,7 +143,7 @@ windows f = do
     visible <- fmap concat $ forM (W.current ws : W.visible ws) $ \w -> do
         let n      = W.tag (W.workspace w)
             this   = W.view n ws
-            Just (l,ls) = M.lookup n fls
+            Just l = fmap fst $ M.lookup n fls
             flt = filter (flip M.member (W.floating ws)) (W.index this)
             tiled = W.filter (not . flip M.member (W.floating ws)) . W.stack . W.workspace . W.current $ this
             (Rectangle sx sy sw sh) = genericIndex xinesc (W.screen w)
