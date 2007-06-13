@@ -79,13 +79,13 @@ runX c st (X a) = runStateT (runReaderT a c) st >> return ()
 -- | Run in the X monad, and in case of exception, and catch it and log it
 -- to stderr, and run the error case.
 catchX :: X a -> X a -> X a
-catchX (X job) (X errcase) =
-    do st <- get
-       c <- ask
-       (a,s') <- io ((runStateT (runReaderT job c) st) `catch`
-                     \e -> (do hPutStrLn stderr (show e); runStateT (runReaderT errcase c) st))
-       put s'
-       return a
+catchX (X job) (X errcase) = do
+    st <- get
+    c <- ask
+    (a,s') <- io ((runStateT (runReaderT job c) st) `catch`
+                  \e -> (do hPutStrLn stderr (show e); runStateT (runReaderT errcase c) st))
+    put s'
+    return a
 
 -- ---------------------------------------------------------------------
 -- Convenient wrappers to state
