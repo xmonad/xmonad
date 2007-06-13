@@ -113,9 +113,9 @@ atom_WM_DELETE_WINDOW   = getAtom "WM_DELETE_WINDOW"
 atom_WM_STATE           = getAtom "WM_STATE"
 
 ------------------------------------------------------------------------
--- Layout handling
+-- | Layout handling
 
--- | The different layout modes
+-- The different layout modes
 -- 'doLayout', a pure function to layout a Window set 'modifyLayout', 
 -- 'modifyLayout' can be considered a branch of an exception handler.
 --
@@ -125,19 +125,19 @@ data Layout = Layout { doLayout     :: Rectangle -> Stack Window -> X [(Window, 
 runLayout :: Layout -> Rectangle -> StackOrNot Window -> X [(Window, Rectangle)]
 runLayout l r = maybe (return []) (doLayout l r)
 
--- Based on ideas in /An Extensible Dynamically-Typed Hierarchy of Exceptions/,
+-- | Based on ideas in /An Extensible Dynamically-Typed Hierarchy of Exceptions/,
 -- Simon Marlow, 2006. Use extensible messages to the modifyLayout handler.
 -- 
--- User-extensible messages must be a member of this class:
+-- User-extensible messages must be a member of this class.
 --
 class Typeable a => Message a
 
---
+-- |
 -- A wrapped value of some type in the Message class.
 --
 data SomeMessage = forall a. Message a => SomeMessage a
 
---
+-- |
 -- And now, unwrap a given, unknown Message type, performing a (dynamic)
 -- type check on the result.
 --
@@ -145,9 +145,9 @@ fromMessage :: Message m => SomeMessage -> Maybe m
 fromMessage (SomeMessage m) = cast m
 
 -- ---------------------------------------------------------------------
--- General utilities
-
--- | Lift an IO action into the X monad
+-- | General utilities
+--
+-- Lift an IO action into the X monad
 io :: IO a -> X a
 io = liftIO
 
@@ -187,7 +187,7 @@ whenJust mg f = maybe (return ()) f mg
 whenX :: X Bool -> X () -> X ()
 whenX a f = a >>= \b -> when b f
 
--- | Grab the X server (lock it) from the X monad
+-- Grab the X server (lock it) from the X monad
 -- withServerX :: X () -> X ()
 -- withServerX f = withDisplay $ \dpy -> do
 --     io $ grabServer dpy
