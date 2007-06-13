@@ -42,12 +42,11 @@ main :: IO ()
 main = do
     dpy   <- openDisplay ""
     let dflt = defaultScreen dpy
-        initcolor c = fst `liftM` allocNamedColor dpy (defaultColormap dpy dflt) c
 
     rootw  <- rootWindow dpy dflt
     xinesc <- getScreenInfo dpy
-    nbc    <- initcolor normalBorderColor
-    fbc    <- initcolor focusedBorderColor
+    nbc    <- initColor dpy normalBorderColor
+    fbc    <- initColor dpy focusedBorderColor
     hSetBuffering stdout NoBuffering
     args <- getArgs
 

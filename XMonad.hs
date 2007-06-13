@@ -48,8 +48,8 @@ data XState = XState
 data XConf = XConf
     { display       :: Display      -- ^ the X11 display
     , theRoot       :: !Window      -- ^ the root window
-    , normalBorder  :: !Color       -- ^ border color of unfocused windows
-    , focusedBorder :: !Color     } -- ^ border color of the focused window
+    , normalBorder  :: !Pixel       -- ^ border color of unfocused windows
+    , focusedBorder :: !Pixel     } -- ^ border color of the focused window
 
 type WindowSet = StackSet WorkspaceId Window ScreenId
 

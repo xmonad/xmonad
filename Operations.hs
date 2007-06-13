@@ -320,13 +320,13 @@ setFocusX w = withWindowSet $ \ws -> do
     forM_ (W.current ws : W.visible ws) $ \wk -> do
         forM_ (W.index (W.view (W.tag (W.workspace wk)) ws)) $ \otherw -> do
             setButtonGrab True otherw
-            io $ setWindowBorder dpy otherw (color_pixel nbc)
+            io $ setWindowBorder dpy otherw nbc
 
     -- If we ungrab buttons on the root window, we lose our mouse bindings.
     whenX (not `liftM` isRoot w) $ setButtonGrab False w
     io $ do setInputFocus dpy w revertToPointerRoot 0
             -- raiseWindow dpy w
-    io $ setWindowBorder dpy w (color_pixel fbc)
+    io $ setWindowBorder dpy w fbc
 
 -- ---------------------------------------------------------------------
 -- Managing layout
@@ -477,6 +477,11 @@ extraModifiers = [0, numlockMask, lockMask, numlockMask .|. lockMask ]
 -- | Strip numlock\/capslock from a mask
 cleanMask :: KeyMask -> KeyMask
 cleanMask = (complement (numlockMask .|. lockMask) .&.)
+
+-- | Get the Pixel value for a named color
+initColor :: Display -> String -> IO Pixel
+initColor dpy c = (color_pixel . fst) `liftM` allocNamedColor dpy colormap c
+    where colormap = defaultColormap dpy (defaultScreen dpy)
 
 ------------------------------------------------------------------------
 -- | Floating layer support
