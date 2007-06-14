@@ -165,30 +165,7 @@ windows f = do
                 (sx + floor (toRational sw*rx)) (sy + floor (toRational sh*ry))
                 (floor (toRational sw*rw)) (floor (toRational sh*rh))
 
-        -- TODO temporary work around!
-        --
-        -- fullscreen mode requires that the focused window in 
-        -- the tiled layer is raised to the top, just under the floating
-        -- layer. now we don't get 'real unmap' events, unfortunately we
-        -- get a focus enter event if we delete a window. in fullscreen
-        -- mode, this will move focus to the next window down in the
-        -- stack order
-        --
-        -- the 'true' solution is to hide windows not visible on the
-        -- screen, so they don't get enter events.
-        -- to do that, doLayout needs to return a list of windows to
-        -- raise, and a list to hide.
-        --
-        -- and the only way to remember where focus is on the tiled
-        -- layer appears to be to track the floating and tiled layers as
-        -- separate stacks.
-        --
         whenJust (W.peek this) $ io . raiseWindow d
-        io $ mapM_ (raiseWindow d) (reverse flt)
-        -- 
-        -- this code will cause a delete on the raiseWindow to 
-        -- pass to the last tiled window that had focus. 
-        -- urgh : not our delete policy, but close.
 
         -- return the visible windows for this workspace:
         return (map fst rs ++ flt)
