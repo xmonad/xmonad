@@ -8,7 +8,39 @@
 -- Stability   :  experimental
 -- Portability :  portable, Haskell 98
 --
--- Introduction
+
+module StackSet (
+        -- * Introduction
+        -- $intro
+        StackSet(..), Workspace(..), Screen(..), StackOrNot, Stack(..), RationalRect(..),
+        -- *  Construction
+        -- $construction
+        new, view, 
+        -- * Xinerama operations
+        -- $xinerama
+        lookupWorkspace,
+        -- *  Operations on the current stack
+        -- $stackOperations
+        peek, index, integrate, integrate', differentiate,
+        focusUp, focusDown,
+        focusWindow, member, findIndex,
+        -- * Modifying the stackset
+        -- $modifyStackset
+        insertUp, delete, filter,
+        -- * Setting the master window
+        -- $settingMW
+        swapMaster, swapUp, swapDown, modify, modify', float, sink, -- needed by users
+        -- * Composite operations
+        -- $composite
+        shift
+    ) where
+
+import Prelude hiding (filter)
+import Data.Maybe   (listToMaybe)
+import qualified Data.List as L (delete,find,genericSplitAt,filter)
+import qualified Data.Map  as M (Map,insert,delete,empty)
+
+-- $intro
 --
 -- The 'StackSet' data type encodes a window manager abstraction. The
 -- window manager is a set of virtual workspaces. On each workspace is a
@@ -72,23 +104,8 @@
 -- needs to be well defined. Particular in relation to 'insert' and
 -- 'delete'.
 --
-
-module StackSet (
-        StackSet(..), Workspace(..), Screen(..), StackOrNot, Stack(..), RationalRect(..),
-        new, view, lookupWorkspace, peek, index, integrate, integrate', differentiate,
-        focusUp, focusDown,
-        focusWindow, member, findIndex, insertUp, delete, shift, filter,
-        swapMaster, swapUp, swapDown, modify, modify', float, sink -- needed by users
-    ) where
-
-import Prelude hiding (filter)
-import Data.Maybe   (listToMaybe)
-import qualified Data.List as L (delete,find,genericSplitAt,filter)
-import qualified Data.Map  as M (Map,insert,delete,empty)
-
--- | 
 -- API changes from xmonad 0.1:
---  StackSet constructor arguments changed. StackSet workspace window screen
+-- StackSet constructor arguments changed. StackSet workspace window screen
 --
 -- * new,                    -- was: empty
 --
@@ -179,7 +196,7 @@ abort :: String -> a
 abort x = error $ "xmonad: StackSet: " ++ x
 
 -- ---------------------------------------------------------------------
--- | Construction
+-- $construction
 
 -- | /O(n)/. Create a new stackset, of empty stacks, of size 'n', with
 -- 'm' physical screens. 'm' should be less than or equal to 'n'.
@@ -222,7 +239,7 @@ view i s
     -- workspace tags defined in 'new'
 
 -- ---------------------------------------------------------------------
--- | Xinerama operations
+-- $xinerama
 
 -- | Find the tag of the workspace visible on Xinerama screen 'sc'.
 -- Nothing if screen is out of bounds.
@@ -230,7 +247,7 @@ lookupWorkspace :: Eq s => s -> StackSet i a s -> Maybe i
 lookupWorkspace sc w = listToMaybe [ tag i | Screen i s <- current w : visible w, s == sc ]
 
 -- ---------------------------------------------------------------------
--- Operations on the current stack
+-- $stackOperations
 
 -- |
 -- The 'with' function takes a default value, a function, and a
@@ -358,8 +375,8 @@ findIndex a s = listToMaybe
           has x (Just (Stack t l r)) = x `elem` (t : l ++ r)
 
 -- ---------------------------------------------------------------------
--- | Modifying the stackset
-
+-- $modifyStackset
+ 
 -- |
 -- /O(n)/. (Complexity due to duplicate check). Insert a new element into
 -- the stack, above the currently focused element.
@@ -425,9 +442,9 @@ sink :: Ord a => a -> StackSet i a s -> StackSet i a s
 sink w s = s { floating = M.delete w (floating s) }
 
 ------------------------------------------------------------------------
--- | Setting the master window
--- 
--- /O(s)/. Set the master window to the focused window.
+-- $settingMW
+ 
+-- | /O(s)/. Set the master window to the focused window.
 -- The old master window is swapped in the tiling order with the focused window.
 -- Focus stays with the item moved.
 swapMaster :: StackSet i a s -> StackSet i a s
@@ -438,9 +455,9 @@ swapMaster = modify' $ \c -> case c of
 -- natural! keep focus, move current to the top, move top to current.
 -- 
 -- ---------------------------------------------------------------------
--- | Composite operations
---
--- /O(w)/. shift. Move the focused element of the current stack to stack
+-- $composite
+
+-- | /O(w)/. shift. Move the focused element of the current stack to stack
 -- 'n', leaving it as the focused element on that stack. The item is
 -- inserted above the currently focused element on that workspace.  --
 -- The actual focused workspace doesn't change. If there is -- no
