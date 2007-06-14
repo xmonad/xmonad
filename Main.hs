@@ -52,7 +52,7 @@ main = do
 
     let winset | ("--resume" : s : _) <- args
                , [(x, "")]            <- reads s = x
-               | otherwise = new (fromIntegral workspaces) (fromIntegral $ length xinesc)
+               | otherwise = new [0..fromIntegral workspaces-1] (fromIntegral $ length xinesc)
 
         safeLayouts = case defaultLayouts of [] -> (full, []); (x:xs) -> (x,xs)
         cf = XConf

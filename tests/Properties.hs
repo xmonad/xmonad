@@ -71,7 +71,7 @@ fromList (o,m,fs,xs) =
     let s = view o $
                 foldr (\(i,ys) s ->
                     foldr insertUp (view i s) ys)
-                        (new (genericLength xs) m) (zip [0..] xs)
+                        (new [0..genericLength xs-1] m) (zip [0..] xs)
     in foldr (\f t -> case f of
                             Nothing -> t
                             Just i  -> foldr (const focusUp) t [0..i] ) s fs
@@ -81,7 +81,7 @@ fromList (o,m,fs,xs) =
 --
 -- Just generate StackSets with Char elements.
 --
-type T = StackSet Int Char Int
+type T = StackSet (NonNegative Int) Char Int
 
 -- Useful operation, the non-local workspaces
 hidden_spaces x = map workspace (visible x) ++ hidden x
@@ -103,7 +103,6 @@ hidden_spaces x = map workspace (visible x) ++ hidden x
 invariant (s :: T) = and
     -- no duplicates
     [ noDuplicates
-    , accurateSize
 
     -- all this xinerama stuff says we don't have the right structure
 --  , validScreens
@@ -116,8 +115,6 @@ invariant (s :: T) = and
                   | w <- workspace (current s) : map workspace (visible s) ++ hidden s
                   , t <- maybeToList (stack w)] :: [Char]
     noDuplicates = nub ws == ws
-    calculatedSize = length (visible s) + length (hidden s) + 1   -- +1 is for current
-    accurateSize = calculatedSize == size s
 
 --  validScreens = monotonic . sort . M. . (W.current s : W.visible : W$ s
 
@@ -135,10 +132,10 @@ prop_invariant = invariant
 
 -- and check other ops preserve invariants
 prop_empty_I  (n :: Positive Int) = forAll (choose (1,fromIntegral n)) $ \m ->
-        invariant $ new (fromIntegral n) m
+        invariant $ new [0..fromIntegral n-1] m
 
 prop_view_I (n :: NonNegative Int) (x :: T) =
-    fromIntegral n < size x ==> invariant $ view (fromIntegral n) x
+    n `tagMember` x ==> invariant $ view (fromIntegral n) x
 
 prop_focusUp_I (n :: NonNegative Int) (x :: T) =
     invariant $ foldr (const focusUp) x [1..n]
@@ -166,41 +163,39 @@ prop_swap_right_I (n :: NonNegative Int) (x :: T) =
     invariant $ foldr (const swapDown) x [1..n]
 
 prop_shift_I (n :: NonNegative Int) (x :: T) =
-    fromIntegral n < size x ==> invariant $ shift (fromIntegral n) x
+    n `tagMember` x ==> invariant $ shift (fromIntegral n) x
 
 
 -- ---------------------------------------------------------------------
 -- 'new'
 
 -- empty StackSets have no windows in them
-prop_empty (n :: Positive Int)
-           (m :: Positive Int) =
+prop_empty (NonEmptyNubList ns) (m :: Positive Int) =
        all (== Nothing) [ stack w | w <- workspace (current x)
                                         : map workspace (visible x) ++ hidden x ]
 
-    where x = new (fromIntegral n) (fromIntegral m) :: T
+    where x = new ns (fromIntegral m) :: T
 
--- empty StackSets always have focus on workspace 0
-prop_empty_current (n :: Positive Int)
-                   (m :: Positive Int) = tag (workspace $ current x) == 0
-    where x = new (fromIntegral n) (fromIntegral m) :: T
+-- empty StackSets always have focus on first workspace
+prop_empty_current (NonEmptyNubList ns) (m :: Positive Int) = tag (workspace $ current x) == head ns
+    where x = new ns (fromIntegral m) :: T
 
 -- no windows will be a member of an empty workspace
-prop_member_empty i (n :: Positive Int) (m :: Positive Int)
-    = member i (new (fromIntegral n) (fromIntegral m) :: T) == False
+prop_member_empty i (NonEmptyNubList ns) (m :: Positive Int)
+    = member i (new ns (fromIntegral m) :: T) == False
 
 -- ---------------------------------------------------------------------
 -- viewing workspaces
 
 -- view sets the current workspace to 'n'
-prop_view_current (x :: T) (n :: NonNegative Int) = i < size x ==>
+prop_view_current (x :: T) (n :: NonNegative Int) = i `tagMember` x ==>
     tag (workspace $ current (view i x)) == i
   where
     i = fromIntegral n
 
 -- view *only* sets the current workspace, and touches Xinerama. 
 -- no workspace contents will be changed.
-prop_view_local  (x :: T) (n :: NonNegative Int) = i < size x ==>
+prop_view_local  (x :: T) (n :: NonNegative Int) = i `tagMember` x ==>
     workspaces x == workspaces (view i x)
   where
     workspaces a = sortBy (\s t -> tag s `compare` tag t) $
@@ -209,22 +204,18 @@ prop_view_local  (x :: T) (n :: NonNegative Int) = i < size x ==>
     i = fromIntegral n
 
 -- view should result in a visible xinerama screen
--- prop_view_xinerama (x :: T) (n :: NonNegative Int) = i < size x ==>
+-- prop_view_xinerama (x :: T) (n :: NonNegative Int) = i `tagMember` x ==>
 --     M.member i (screens (view i x))
 --   where
 --     i = fromIntegral n
 
 -- view is idempotent
-prop_view_idem (x :: T) r =
-    let i = fromIntegral $ r `mod` sz
-        sz = size x
-    in view i (view i x) == (view i x)
+prop_view_idem (x :: T) (i :: NonNegative Int) = i `tagMember` x ==> view i (view i x) == (view i x)
 
 -- view is reversible, though shuffles the order of hidden/visible
-prop_view_reversible r (x :: T) = normal (view n (view i x)) == normal x
+prop_view_reversible (i :: NonNegative Int) (x :: T) =
+    i `tagMember` x ==> normal (view n (view i x)) == normal x
     where n  = tag (workspace $ current x)
-          sz = size x
-          i  = fromIntegral $ r `mod` sz
 
 -- normalise workspace list
 normal s = s { hidden = sortBy g (hidden s), visible = sortBy f (visible s) }
@@ -329,8 +320,8 @@ prop_findIndex (x :: T) =
 -- 'insert'
 
 -- inserting a item into an empty stackset means that item is now a member
-prop_insert_empty i (n :: Positive Int) (m :: Positive Int) = member i (insertUp i x)
-    where x = new (fromIntegral n) (fromIntegral m) :: T
+prop_insert_empty i (NonEmptyNubList ns) (m :: Positive Int) = member i (insertUp i x)
+    where x = new ns (fromIntegral m) :: T
 
 -- insert should be idempotent
 prop_insert_idem i (x :: T) = insertUp i x == insertUp i (insertUp i x)
@@ -343,10 +334,9 @@ prop_insert_local (x :: T) i = not (member i x) ==> hidden_spaces x == hidden_sp
 
 -- Inserting a (unique) list of items into an empty stackset should
 -- result in the last inserted element having focus.
-prop_insert_peek (n :: Positive Int) (m :: Positive Int) (NonEmptyNubList is) =
+prop_insert_peek (NonEmptyNubList ns) (m :: Positive Int) (NonEmptyNubList is) =
     peek (foldr insertUp x is) == Just (head is)
-    where
-        x = new (fromIntegral n) (fromIntegral m) :: T
+    where x = new ns (fromIntegral m) :: T
 
 -- insert >> delete is the identity, when i `notElem` .
 -- Except for the 'master', which is reset on insert and delete.
@@ -357,11 +347,11 @@ prop_insert_delete n x = not (member n x) ==> delete n (insertUp n y) == (y :: T
                          -- otherwise, we don't have a rule for where master goes.
 
 -- inserting n elements increases current stack size by n
-prop_size_insert is (n :: Positive Int) (m :: Positive Int) =
+prop_size_insert is (NonEmptyNubList ns) (m :: Positive Int) =
         size (foldr insertUp x ws ) ==  (length ws)
   where
     ws   = nub is
-    x    = new (fromIntegral n) (fromIntegral m) :: T
+    x    = new ns (fromIntegral m) :: T
     size = length . index
 
 
@@ -438,15 +428,13 @@ prop_swap_master_idempotent (x :: T) = swapMaster (swapMaster x) == swapMaster x
 
 -- shift is fully reversible on current window, when focus and master
 -- are the same. otherwise, master may move.
-prop_shift_reversible (r :: Int) (x :: T) =
-    let i  = fromIntegral $ r `mod` sz
-        sz = size y
-        n  = tag (workspace $ current y)
-    in case peek y of
-        Nothing -> True
-        Just _  -> normal ((view n . shift n . view i . shift i) y) == normal y
+prop_shift_reversible i (x :: T) =
+    i `tagMember` x ==> case peek y of
+                          Nothing -> True
+                          Just _  -> normal ((view n . shift n . view i . shift i) y) == normal y
     where
         y = swapMaster x
+        n = tag (workspace $ current y)
 
 ------------------------------------------------------------------------
 -- some properties for layouts:
@@ -699,7 +687,6 @@ newtype NonEmptyNubList a = NonEmptyNubList [a]
 instance (Eq a, Arbitrary a) => Arbitrary (NonEmptyNubList a) where
   arbitrary   = NonEmptyNubList `fmap` ((liftM nub arbitrary) `suchThat` (not . null))
   coarbitrary = undefined
-
 
 type Positive a = NonZero (NonNegative a)
 

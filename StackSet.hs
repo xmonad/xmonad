@@ -23,7 +23,7 @@ module StackSet (
         -- $stackOperations
         peek, index, integrate, integrate', differentiate,
         focusUp, focusDown,
-        focusWindow, member, findIndex,
+        focusWindow, tagMember, member, findIndex,
         -- * Modifying the stackset
         -- $modifyStackset
         insertUp, delete, filter,
@@ -104,6 +104,13 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 -- needs to be well defined. Particular in relation to 'insert' and
 -- 'delete'.
 --
+
+import Prelude hiding (filter)
+import Data.Maybe   (listToMaybe)
+import qualified Data.List as L (delete,find,genericSplitAt,filter)
+import qualified Data.Map  as M (Map,insert,delete,empty)
+
+-- | 
 -- API changes from xmonad 0.1:
 -- StackSet constructor arguments changed. StackSet workspace window screen
 --
@@ -145,8 +152,7 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 -- Xinerama screens, and those workspaces not visible anywhere.
 
 data StackSet i a sid =
-    StackSet { size     :: !i                   -- ^ number of workspaces
-             , current  :: !(Screen i a sid)    -- ^ currently focused workspace
+    StackSet { current  :: !(Screen i a sid)    -- ^ currently focused workspace
              , visible  :: [Screen i a sid]     -- ^ non-focused workspaces, visible in xinerama
              , hidden   :: [Workspace i a]      -- ^ workspaces not visible anywhere
              , floating :: M.Map a RationalRect -- ^ floating windows
@@ -198,19 +204,20 @@ abort x = error $ "xmonad: StackSet: " ++ x
 -- ---------------------------------------------------------------------
 -- $construction
 
--- | /O(n)/. Create a new stackset, of empty stacks, of size 'n', with
--- 'm' physical screens. 'm' should be less than or equal to 'n'.
--- The workspace with index '0' will be current.
+-- | /O(n)/. Create a new stackset, of empty stacks, with given tags, with
+-- 'm' physical screens. 'm' should be less than or equal to the number of
+-- workspace tags.  The first workspace in the list will be current.
 --
 -- Xinerama: Virtual workspaces are assigned to physical screens, starting at 0.
 --
-new :: (Integral i, Integral s) => i -> s -> StackSet i a s
-new n m | n > 0 && m > 0 = StackSet n cur visi unseen M.empty
-        | otherwise      = abort "non-positive arguments to StackSet.new"
-
-  where (seen,unseen) = L.genericSplitAt m $ Workspace 0 Nothing : [ Workspace i Nothing | i <- [1 ..n-1]]
+new :: Integral s => [i] -> s -> StackSet i a s
+new (wid:wids) m | m > 0 = StackSet cur visi unseen M.empty
+  where (seen,unseen) = L.genericSplitAt m $ Workspace wid Nothing : [ Workspace i Nothing | i <- wids]
         (cur:visi)    = [ Screen i s |  (i,s) <- zip seen [0..] ]
                 -- now zip up visibles with their screen id
+new _ _ = abort "non-positive argument to StackSet.new"
+
+
 
 -- |
 -- /O(w)/. Set focus to the workspace with index \'i\'. 
@@ -220,9 +227,10 @@ new n m | n > 0 && m > 0 = StackSet n cur visi unseen M.empty
 -- becomes the current screen. If it is in the visible list, it becomes
 -- current.
 
-view :: (Eq a, Eq s, Integral i) => i -> StackSet i a s -> StackSet i a s
+view :: (Eq a, Eq s, Eq i) => i -> StackSet i a s -> StackSet i a s
 view i s
-    | i < 0 && i >= size s || i == tag (workspace (current s)) = s  -- out of bounds or current
+    | not (elem i $ map tag $ workspaces s)
+      || i == tag (workspace (current s)) = s  -- out of bounds or current
 
     | Just x <- L.find ((i==).tag.workspace) (visible s)
     -- if it is visible, it is just raised
@@ -356,6 +364,16 @@ focusWindow w s | Just w == peek s = s
                     n <- findIndex w s
                     return $ until ((Just w ==) . peek) focusUp (view n s)
 
+
+
+-- | Get a list of all workspaces in the StackSet.
+workspaces :: StackSet i a s -> [Workspace i a]
+workspaces s = workspace (current s) : map workspace (visible s) ++ hidden s
+
+-- | Is the given tag present in the StackSet?
+tagMember :: Eq i => i -> StackSet i a s -> Bool
+tagMember t = elem t . map tag . workspaces
+
 -- |
 -- Finding if a window is in the stackset is a little tedious. We could
 -- keep a cache :: Map a i, but with more bookkeeping.
@@ -370,7 +388,7 @@ member a s = maybe False (const True) (findIndex a s)
 -- if the window is not in the StackSet.
 findIndex :: Eq a => a -> StackSet i a s -> Maybe i
 findIndex a s = listToMaybe
-    [ tag w | w <- workspace (current s) : map workspace (visible s) ++ hidden s, has a (stack w) ]
+    [ tag w | w <- workspaces s, has a (stack w) ]
     where has _ Nothing         = False
           has x (Just (Stack t l r)) = x `elem` (t : l ++ r)
 
@@ -464,7 +482,7 @@ swapMaster = modify' $ \c -> case c of
 -- element on the current stack, the original stackSet is returned.
 --
 shift :: (Ord a, Eq s, Integral i) => i -> StackSet i a s -> StackSet i a s
-shift n s = if and [n >= 0,n < size s,n /= tag (workspace (current s))]
+shift n s = if and [n >= 0,n `tagMember` s, n /= tag (workspace (current s))]
             then maybe s go (peek s) else s
     where go w = foldr ($) s [view (tag (workspace (current s))),insertUp w,view n,delete w]
                            --  ^^ poor man's state monad :-)
