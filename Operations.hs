@@ -21,7 +21,7 @@ import qualified StackSet as W
 import {-# SOURCE #-} Config (borderWidth,logHook,numlockMask)
 
 import Data.Maybe
-import Data.List            (genericIndex, nub, (\\))
+import Data.List            (delete, genericIndex, nub, (\\))
 import Data.Bits            ((.|.), (.&.), complement)
 import Data.Ratio
 import qualified Data.Map as M
@@ -165,7 +165,8 @@ windows f = do
                 (sx + floor (toRational sw*rx)) (sy + floor (toRational sh*ry))
                 (floor (toRational sw*rw)) (floor (toRational sh*rh))
 
-        whenJust (W.peek this) $ io . raiseWindow d
+        io $ restackWindows d (flt ++
+            maybe [] (\s@(W.Stack f _ _) -> f : delete f (W.integrate s)) tiled)
 
         -- return the visible windows for this workspace:
         return (map fst rs ++ flt)
