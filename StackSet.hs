@@ -15,7 +15,7 @@ module StackSet (
         StackSet(..), Workspace(..), Screen(..), StackOrNot, Stack(..), RationalRect(..),
         -- *  Construction
         -- $construction
-        new, view, 
+        new, view,
         -- * Xinerama operations
         -- $xinerama
         lookupWorkspace,
@@ -104,11 +104,6 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 -- needs to be well defined. Particular in relation to 'insert' and
 -- 'delete'.
 --
-
-import Prelude hiding (filter)
-import Data.Maybe   (listToMaybe)
-import qualified Data.List as L (delete,find,genericSplitAt,filter)
-import qualified Data.Map  as M (Map,insert,delete,empty)
 
 -- | 
 -- API changes from xmonad 0.1:

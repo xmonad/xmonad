@@ -1,4 +1,4 @@
-{-# OPTIONS -fglasgow-exts #-}
+{-# OPTIONS -fno-warn-orphans -fglasgow-exts #-}
 -- \^^ deriving Typeable
 -- --------------------------------------------------------------------------
 -- |
@@ -166,7 +166,7 @@ windows f = do
                 (floor (toRational sw*rw)) (floor (toRational sh*rh))
 
         io $ restackWindows d (flt ++
-            maybe [] (\s@(W.Stack f _ _) -> f : delete f (W.integrate s)) tiled)
+            maybe [] (\s@(W.Stack foc _ _) -> foc : delete foc (W.integrate s)) tiled)
 
         -- return the visible windows for this workspace:
         return (map fst rs ++ flt)
