@@ -77,7 +77,7 @@ Running xmonad:
 
     Add:
 
-         exec /home/dons/bin/xmonad
+         /home/dons/bin/xmonad
 
     to the last line of your .xsession or .xinitrc file.
 
