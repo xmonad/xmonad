@@ -84,7 +84,7 @@ borderWidth = 1
 -- |
 -- The default set of tiling algorithms
 --
-defaultLayouts :: [Layout]
+defaultLayouts :: [Layout Window]
 defaultLayouts = [ tiled , mirror tiled , full ]
   where
      -- default tiling algorithm partitions the screen into two panes

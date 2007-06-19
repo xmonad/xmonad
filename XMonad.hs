@@ -43,7 +43,7 @@ data XState = XState
     , statusGaps   :: ![(Int,Int,Int,Int)] -- ^ width of status bar on each screen
     , mapped       :: !(S.Set Window)      -- ^ the Set of mapped windows
     , waitingUnmap :: !(M.Map Window Int)  -- ^ the number of expected UnmapEvents
-    , layouts      :: !(M.Map WorkspaceId (Layout, [Layout])) }
+    , layouts      :: !(M.Map WorkspaceId (Layout Window, [Layout Window])) }
                        -- ^ mapping of workspaces to descriptions of their layouts
 data XConf = XConf
     { display       :: Display      -- ^ the X11 display
@@ -119,10 +119,10 @@ atom_WM_STATE           = getAtom "WM_STATE"
 -- 'doLayout', a pure function to layout a Window set 'modifyLayout', 
 -- 'modifyLayout' can be considered a branch of an exception handler.
 --
-data Layout = Layout { doLayout     :: Rectangle -> Stack Window -> X [(Window, Rectangle)]
-                     , modifyLayout :: SomeMessage -> X (Maybe Layout) }
+data Layout a = Layout { doLayout     :: Rectangle -> Stack a -> X [(a, Rectangle)]
+                       , modifyLayout :: SomeMessage -> X (Maybe (Layout a)) }
 
-runLayout :: Layout -> Rectangle -> StackOrNot Window -> X [(Window, Rectangle)]
+runLayout :: Layout a -> Rectangle -> StackOrNot a -> X [(a, Rectangle)]
 runLayout l r = maybe (return []) (doLayout l r)
 
 -- | Based on ideas in /An Extensible Dynamically-Typed Hierarchy of Exceptions/,

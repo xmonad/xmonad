@@ -368,14 +368,14 @@ instance Message IncMasterN
 
 -- simple fullscreen mode, just render all windows fullscreen.
 -- a plea for tuple sections: map . (,sc)
-full :: Layout
+full :: Layout a
 full = Layout { doLayout     = \sc (W.Stack f _ _) -> return [(f, sc)]
               , modifyLayout = const (return Nothing) } -- no changes
 
 --
 -- The tiling mode of xmonad, and its operations.
 --
-tall :: Int -> Rational -> Rational -> Layout
+tall :: Int -> Rational -> Rational -> Layout a
 tall nmaster delta frac =
     Layout { doLayout     = \r -> return . ap zip (tile frac r nmaster . length) . W.integrate
            , modifyLayout = \m -> return $ msum [fmap resize     (fromMessage m)
@@ -390,7 +390,7 @@ mirrorRect :: Rectangle -> Rectangle
 mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 
 -- | Mirror a layout, compute its 90 degree rotated form.
-mirror :: Layout -> Layout
+mirror :: Layout a -> Layout a
 mirror (Layout { doLayout = dl, modifyLayout = ml }) =
     Layout { doLayout     = \sc w -> map (second mirrorRect) `fmap` dl (mirrorRect sc) w
            , modifyLayout = fmap (fmap mirror) . ml }
