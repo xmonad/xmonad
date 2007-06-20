@@ -44,14 +44,8 @@ Get the dependencies
     whether you've got a package run 'ghc-pkg list some_package_name'
 
     mtl             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/mtl-1.0
-        (Included with GHC)
-
     unix            http://hackage.haskell.org/cgi-bin/hackage-scripts/package/unix-2.0 
-        (Included with GHC)
-
     X11             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-1.2.2
-        (Included with GHC)
-
     X11-extras:     http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-extras-0.2
 
 And then build with Cabal:
