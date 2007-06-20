@@ -21,7 +21,7 @@ import qualified StackSet as W
 import {-# SOURCE #-} Config (borderWidth,logHook,numlockMask)
 
 import Data.Maybe
-import Data.List            (delete, genericIndex, nub, (\\))
+import Data.List            (genericIndex, nub, (\\))
 import Data.Bits            ((.|.), (.&.), complement)
 import Data.Ratio
 import qualified Data.Map as M
