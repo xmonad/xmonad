@@ -167,11 +167,10 @@ windows f = do
                 (sx + floor (toRational sw*rx)) (sy + floor (toRational sh*ry))
                 (floor (toRational sw*rw)) (floor (toRational sh*rh))
 
-        io $ restackWindows d (flt ++
-            maybe [] (\s@(W.Stack foc _ _) -> foc : delete foc (W.integrate s)) tiled)
-
+        let vs = flt ++ map fst rs
+        io $ restackWindows d vs
         -- return the visible windows for this workspace:
-        return (map fst rs ++ flt)
+        return vs
 
     setTopFocus
     logHook
