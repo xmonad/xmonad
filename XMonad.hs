@@ -116,8 +116,15 @@ atom_WM_STATE           = getAtom "WM_STATE"
 -- | Layout handling
 
 -- The different layout modes
--- 'doLayout', a pure function to layout a Window set 'modifyLayout', 
--- 'modifyLayout' can be considered a branch of an exception handler.
+-- 'doLayout': given a Rectangle and a Stack, layout the stack elements
+-- inside the given Rectangle.  If an element is not given a Rectangle
+-- by 'doLayout', then it is not shown on screen.  Windows are restacked
+-- according to the order they are returned by 'doLayout'.
+--
+-- 'modifyLayout' performs message handling for that layout.  If
+-- 'modifyLayout' returns Nothing, then the layout did not respond to
+-- that message and the screen is not refreshed.  Otherwise, 'modifyLayout'
+-- returns an updated 'Layout' and the screen is refreshed.
 --
 data Layout a = Layout { doLayout     :: Rectangle -> Stack a -> X [(a, Rectangle)]
                        , modifyLayout :: SomeMessage -> X (Maybe (Layout a)) }
