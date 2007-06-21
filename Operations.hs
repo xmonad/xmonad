@@ -499,7 +499,7 @@ mouseDrag f = do
     io $ ungrabPointer d currentTime
 
 mouseMoveWindow :: Window -> X ()
-mouseMoveWindow w = withDisplay $ \d -> do
+mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     io $ raiseWindow d w
     wa <- io $ getWindowAttributes d w
     (_, _, _, ox, oy, _, _, _) <- io $ queryPointer d w
@@ -509,7 +509,7 @@ mouseMoveWindow w = withDisplay $ \d -> do
     float w
 
 mouseResizeWindow :: Window -> X ()
-mouseResizeWindow w = withDisplay $ \d -> do
+mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     io $ raiseWindow d w
     wa <- io $ getWindowAttributes d w
     sh <- io $ getWMNormalHints d w
