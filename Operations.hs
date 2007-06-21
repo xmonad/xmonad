@@ -99,7 +99,7 @@ view = windows . W.view
 modifyGap :: (Int -> (Int,Int,Int,Int) -> (Int,Int,Int,Int)) -> X ()
 modifyGap f = do
     XState { windowset = ws, statusGaps = gaps } <- get
-    let n       = fromIntegral $ W.screen (W.current ws)
+    let n       = fromIntegral . W.screen $ W.current ws
         (a,i:b) = splitAt n gaps
     modify $ \s -> s { statusGaps = a ++ f n i : b }
     refresh

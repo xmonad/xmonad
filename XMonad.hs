@@ -182,7 +182,7 @@ spawn x = io $ do
 -- current window state.
 restart :: Maybe String -> Bool -> X ()
 restart mprog resume = do
-    prog <- maybe (io $ getProgName) return mprog
+    prog <- maybe (io getProgName) return mprog
     args <- if resume then gets (("--resume":) . return . show . windowset) else return []
     catchIO (executeFile prog True args Nothing)
 
