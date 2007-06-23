@@ -226,4 +226,4 @@ handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
 -- the root may have configured
 handle (ConfigureEvent {ev_window = w}) = whenX (isRoot w) rescreen
 
-handle e = sendMessage e -- trace (eventName e) -- ignoring
+handle e = broadcastMessage e -- trace (eventName e) -- ignoring
