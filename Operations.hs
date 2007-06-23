@@ -29,7 +29,7 @@ import qualified Data.Set as S
 
 import Control.Monad.State
 import Control.Monad.Reader
-import Control.Arrow ((***), second)
+import Control.Arrow ((***), first, second)
 
 import System.IO
 import Graphics.X11.Xlib
@@ -156,8 +156,10 @@ windows f = do
 
         -- just the tiled windows:
         -- now tile the windows on this workspace, modified by the gap
-        rs <- runLayout l viewrect tiled `catchX` runLayout full viewrect tiled
+        (rs, ml') <- runLayout l viewrect tiled `catchX` runLayout full viewrect tiled
         mapM_ (uncurry tileWindow) rs
+        whenJust ml' $ \l' -> modify $ \ss ->
+                              ss { layouts = M.adjust (first (const l')) n (layouts ss) }
 
         -- now the floating windows:
         -- move/resize the floating windows, if there are any
@@ -368,7 +370,7 @@ instance Message IncMasterN
 -- simple fullscreen mode, just render all windows fullscreen.
 -- a plea for tuple sections: map . (,sc)
 full :: Layout a
-full = Layout { doLayout     = \sc (W.Stack f _ _) -> return [(f, sc)]
+full = Layout { doLayout     = \sc (W.Stack f _ _) -> return ([(f, sc)],Nothing)
               , modifyLayout = const (return Nothing) } -- no changes
 
 --
@@ -376,7 +378,8 @@ full = Layout { doLayout     = \sc (W.Stack f _ _) -> return [(f, sc)]
 --
 tall :: Int -> Rational -> Rational -> Layout a
 tall nmaster delta frac =
-    Layout { doLayout     = \r -> return . ap zip (tile frac r nmaster . length) . W.integrate
+    Layout { doLayout     = \r -> return . (\x->(x,Nothing)) .
+                                  ap zip (tile frac r nmaster . length) . W.integrate
            , modifyLayout = \m -> return $ msum [fmap resize     (fromMessage m)
                                                 ,fmap incmastern (fromMessage m)] }
 
@@ -391,7 +394,8 @@ mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 -- | Mirror a layout, compute its 90 degree rotated form.
 mirror :: Layout a -> Layout a
 mirror (Layout { doLayout = dl, modifyLayout = ml }) =
-    Layout { doLayout     = \sc w -> map (second mirrorRect) `fmap` dl (mirrorRect sc) w
+    Layout { doLayout     = \sc w -> do (wrs, ml') <- dl (mirrorRect sc) w
+                                        return (map (second mirrorRect) wrs, mirror `fmap` ml')
            , modifyLayout = fmap (fmap mirror) . ml }
 
 -- | tile.  Compute the positions for windows using the default 2 pane tiling algorithm.

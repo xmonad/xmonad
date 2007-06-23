@@ -126,11 +126,11 @@ atom_WM_STATE           = getAtom "WM_STATE"
 -- that message and the screen is not refreshed.  Otherwise, 'modifyLayout'
 -- returns an updated 'Layout' and the screen is refreshed.
 --
-data Layout a = Layout { doLayout     :: Rectangle -> Stack a -> X [(a, Rectangle)]
+data Layout a = Layout { doLayout     :: Rectangle -> Stack a -> X ([(a, Rectangle)], Maybe (Layout a))
                        , modifyLayout :: SomeMessage -> X (Maybe (Layout a)) }
 
-runLayout :: Layout a -> Rectangle -> StackOrNot a -> X [(a, Rectangle)]
-runLayout l r = maybe (return []) (doLayout l r)
+runLayout :: Layout a -> Rectangle -> StackOrNot a -> X ([(a, Rectangle)], Maybe (Layout a))
+runLayout l r = maybe (return ([], Nothing)) (doLayout l r)
 
 -- | Based on ideas in /An Extensible Dynamically-Typed Hierarchy of Exceptions/,
 -- Simon Marlow, 2006. Use extensible messages to the modifyLayout handler.
