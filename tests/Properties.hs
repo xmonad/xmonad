@@ -376,13 +376,34 @@ prop_delete_insert (x :: T) =
         y = swapMaster x
 
 -- delete should be local
-prop_delete_local (x :: T) = 
+prop_delete_local (x :: T) =
     case peek x of
         Nothing -> True
         Just i  -> hidden_spaces x == hidden_spaces (delete i x)
 
 -- delete should not affect focus unless the focused element is what is being deleted
 prop_delete_focus n (x :: T) = member n x && Just n /= peek x ==> peek (delete n x) == peek x
+
+-- focus movement in the presence of delete:
+-- when the last window in the stack set is focused, focus moves `up'.
+-- usual case is that it moves 'down'.
+prop_delete_focus_end (x :: T) =
+    length (index x) > 1
+   ==>
+    peek (delete n y) == peek (focusUp y)
+  where
+    n = last (index x)
+    y = focusWindow n x -- focus last window in stack
+
+-- focus movement in the presence of delete:
+-- when not in the last item in the stack, focus moves down
+prop_delete_focus_not_end (x :: T) =
+    length (index x) > 1 &&
+    n /= last (index x)
+   ==>
+    peek (delete n x) == peek (focusDown x)
+  where
+    Just n = peek x
 
 -- ---------------------------------------------------------------------
 -- swapUp, swapDown, swapMaster: reordiring windows
@@ -528,6 +549,8 @@ main = do
         ,("delete is reversible", mytest prop_delete_insert)
         ,("delete is local"     , mytest prop_delete_local)
         ,("delete/focus"        , mytest prop_delete_focus)
+        ,("delete  last/focus up", mytest prop_delete_focus_end)
+        ,("delete ~last/focus down", mytest prop_delete_focus_not_end)
 
         ,("swapMaster: invariant", mytest prop_swap_master_I)
         ,("swapUp: invariant" , mytest prop_swap_left_I)
