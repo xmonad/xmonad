@@ -302,11 +302,16 @@ differentiate (x:xs) = Just $ Stack x [] xs
 -- /O(n)/. 'filter p s' returns the elements of 's' such that 'p' evaluates to
 -- True.  Order is preserved, and focus moves to the next node to the right (if
 -- necessary).
+--
+-- Note, this isn't the same as the 'remove' semantics, as focus
+-- won't move 'left' on the end of list.
+--
 filter :: (a -> Bool) -> Stack a -> StackOrNot a
-filter p (Stack f ls rs) = Just $ case L.filter p (f:rs) of
-    (f':rs') -> Stack f' (L.filter p ls) rs'
-    _        -> Stack f' []              rs'
-                    where (f':rs') = reverse (L.filter p ls)
+filter p (Stack f ls rs) = case L.filter p (f:rs) of
+    f':rs' -> Just $ Stack f' (L.filter p ls) rs'    -- maybe move focus down
+    []     -> case L.filter p (reverse ls) of        -- filter back up
+                    f':rs' -> Just $ Stack f' [] rs' -- else up
+                    []     -> Nothing
 
 -- |
 -- /O(s)/. Extract the stack on the current workspace, as a list.
