@@ -288,6 +288,8 @@ peek = with Nothing (return . focus)
 integrate :: Stack a -> [a]
 integrate (Stack x l r) = reverse l ++ x : r
 
+-- |
+-- /O(n)/ Flatten a possibly empty stack into a list.
 integrate' :: StackOrNot a -> [a]
 integrate' = maybe [] integrate
 
