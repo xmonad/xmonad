@@ -303,10 +303,10 @@ differentiate (x:xs) = Just $ Stack x [] xs
 -- True.  Order is preserved, and focus moves to the next node to the right (if
 -- necessary).
 filter :: (a -> Bool) -> Stack a -> StackOrNot a
-filter p (Stack f ls rs) = case L.filter p (f:rs) of
-                            (f':rs') -> Just $ Stack f' (L.filter p ls) rs'
-                            []       -> do f':rs' <- return $ reverse $ L.filter p ls
-                                           Just $ Stack f' [] rs'
+filter p (Stack f ls rs) = Just $ case L.filter p (f:rs) of
+    (f':rs') -> Stack f' (L.filter p ls) rs'
+    _        -> Stack f' []              rs'
+                    where (f':rs') = reverse (L.filter p ls)
 
 -- |
 -- /O(s)/. Extract the stack on the current workspace, as a list.
