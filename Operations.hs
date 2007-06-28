@@ -21,7 +21,7 @@ import qualified StackSet as W
 import {-# SOURCE #-} Config (borderWidth,logHook,numlockMask)
 
 import Data.Maybe
-import Data.List            (genericIndex, nub, (\\))
+import Data.List            (genericIndex, nub, (\\), findIndex)
 import Data.Bits            ((.|.), (.&.), complement)
 import Data.Ratio
 import qualified Data.Map as M
@@ -476,16 +476,26 @@ sink = windows . W.sink
 -- | Make a tiled window floating, using its suggested rectangle
 float :: Window -> X ()
 float w = withDisplay $ \d -> do
-    xinesc <- gets xineScreens
-    sc     <- (genericIndex xinesc . W.screen . W.current) `liftM` gets windowset
-    wa     <- io $ getWindowAttributes d w
-    let bw = fi . wa_border_width $ wa
-    windows $ W.float w
+    XState { xineScreens = xinesc, windowset = ws } <- get
+    wa <- io $ getWindowAttributes d w
+
+    let sid = fromMaybe (W.screen . W.current $ ws) (fmap fi $ findIndex (pointWithin (fi (wa_x wa)) (fi (wa_y wa))) xinesc)
+        sc = genericIndex xinesc sid
+        bw = fi . wa_border_width $ wa
+
+    wid <- screenWorkspace sid
+
+    windows $ W.shift wid . W.focusWindow w . W.float w
         (W.RationalRect ((fi (wa_x wa) - fi (rect_x sc)) % fi (rect_width sc))
                         ((fi (wa_y wa) - fi (rect_y sc)) % fi (rect_height sc))
                         (fi (wa_width  wa + bw*2) % fi (rect_width sc))
                         (fi (wa_height wa + bw*2) % fi (rect_height sc)))
   where fi x = fromIntegral x
+        pointWithin :: Integer -> Integer -> Rectangle -> Bool
+        pointWithin x y r = x >= fi (rect_x r) &&
+                            x <  fi (rect_x r) + fi (rect_width r) &&
+                            y >= fi (rect_y r) &&
+                            y <  fi (rect_y r) + fi (rect_height r)
 
 -- ---------------------------------------------------------------------
 -- Mouse handling
