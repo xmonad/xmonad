@@ -52,7 +52,8 @@ main = do
 
     let winset | ("--resume" : s : _) <- args
                , [(x, "")]            <- reads s = x
-               | otherwise = new [0..fromIntegral workspaces-1] (fromIntegral $ length xinesc)
+               | otherwise = new [0..fromIntegral workspaces-1] $ zipWith SD xinesc gaps
+        gaps = take (length xinesc) $ defaultGaps ++ repeat (0,0,0,0)
 
         safeLayouts = case defaultLayouts of [] -> (full, []); (x:xs) -> (x,xs)
         cf = XConf
@@ -63,8 +64,6 @@ main = do
         st = XState
             { windowset     = winset
             , layouts       = M.fromList [(w, safeLayouts) | w <- [0 .. W workspaces - 1]]
-            , statusGaps    = take (length xinesc) $ defaultGaps ++ repeat (0,0,0,0)
-            , xineScreens   = xinesc
             , mapped        = S.empty
             , waitingUnmap  = M.empty }
 

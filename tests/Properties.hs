@@ -33,11 +33,13 @@ import qualified Data.Map as M
 --
 -- The all important Arbitrary instance for StackSet.
 --
-instance (Integral i, Integral s, Eq a, Arbitrary a) => Arbitrary (StackSet i a s) where
+instance (Integral i, Integral s, Eq a, Arbitrary a, Arbitrary sd)
+        => Arbitrary (StackSet i a s sd) where
     arbitrary = do
         sz <- choose (1,10)     -- number of workspaces
         n  <- choose (0,sz-1)   -- pick one to be in focus
-        sc <- choose (1,sz)     -- a number of physical screens
+        sc  <- choose (1,sz)     -- a number of physical screens
+        sds <- replicateM sc arbitrary
         ls <- vector sz         -- a vector of sz workspaces
 
         -- pick a random item in each stack to focus
@@ -45,7 +47,7 @@ instance (Integral i, Integral s, Eq a, Arbitrary a) => Arbitrary (StackSet i a 
                             else liftM Just (choose ((-1),length s-1))
                        | s <- ls ]
 
-        return $ fromList (fromIntegral n, fromIntegral sc,fs,ls)
+        return $ fromList (fromIntegral n, sds,fs,ls)
     coarbitrary = error "no coarbitrary for StackSet"
 
 
@@ -59,13 +61,8 @@ instance (Integral i, Integral s, Eq a, Arbitrary a) => Arbitrary (StackSet i a 
 -- 'fs' random focused window on each workspace
 -- 'xs' list of list of windows
 --
-fromList :: (Integral i, Integral s, Eq a) => (i, s, [Maybe Int], [[a]]) -> StackSet i a s
+fromList :: (Integral i, Integral s, Eq a) => (i, [sd], [Maybe Int], [[a]]) -> StackSet i a s sd
 fromList (_,_,_,[]) = error "Cannot build a StackSet from an empty list"
-
-fromList (n,m,fs,xs) | n < 0 || n >= genericLength xs
-                = error $ "Cursor index is out of range: " ++ show (n, length xs)
-                  | m < 1 || m >  genericLength xs
-                = error $ "Can't have more screens than workspaces: " ++ show (m, length xs)
 
 fromList (o,m,fs,xs) =
     let s = view o $
@@ -81,7 +78,7 @@ fromList (o,m,fs,xs) =
 --
 -- Just generate StackSets with Char elements.
 --
-type T = StackSet (NonNegative Int) Char Int
+type T = StackSet (NonNegative Int) Char Int Int
 
 -- Useful operation, the non-local workspaces
 hidden_spaces x = map workspace (visible x) ++ hidden x
@@ -131,8 +128,9 @@ monotonic (x:y:zs) | x == y-1  = monotonic (y:zs)
 prop_invariant = invariant
 
 -- and check other ops preserve invariants
-prop_empty_I  (n :: Positive Int) = forAll (choose (1,fromIntegral n)) $ \m ->
-        invariant $ new [0..fromIntegral n-1] m
+prop_empty_I  (n :: Positive Int) = forAll (choose (1,fromIntegral n)) $  \m ->
+                                    forAll (vector m) $ \ms ->
+        invariant $ new [0..fromIntegral n-1] ms
 
 prop_view_I (n :: NonNegative Int) (x :: T) =
     n `tagMember` x ==> invariant $ view (fromIntegral n) x
@@ -170,19 +168,20 @@ prop_shift_I (n :: NonNegative Int) (x :: T) =
 -- 'new'
 
 -- empty StackSets have no windows in them
-prop_empty (NonEmptyNubList ns) (m :: Positive Int) =
-       all (== Nothing) [ stack w | w <- workspace (current x)
+prop_empty (EmptyStackSet x) = 
+        all (== Nothing) [ stack w | w <- workspace (current x)
                                         : map workspace (visible x) ++ hidden x ]
 
-    where x = new ns (fromIntegral m) :: T
-
 -- empty StackSets always have focus on first workspace
-prop_empty_current (NonEmptyNubList ns) (m :: Positive Int) = tag (workspace $ current x) == head ns
-    where x = new ns (fromIntegral m) :: T
+prop_empty_current (NonEmptyNubList ns) (NonEmptyNubList sds) =
+    -- TODO, this is ugly
+    length sds <= length ns ==>
+    tag (workspace $ current x) == head ns
+    where x = new ns sds :: T
 
 -- no windows will be a member of an empty workspace
-prop_member_empty i (NonEmptyNubList ns) (m :: Positive Int)
-    = member i (new ns (fromIntegral m) :: T) == False
+prop_member_empty i (EmptyStackSet x)
+    = member i x == False
 
 -- ---------------------------------------------------------------------
 -- viewing workspaces
@@ -320,8 +319,7 @@ prop_findIndex (x :: T) =
 -- 'insert'
 
 -- inserting a item into an empty stackset means that item is now a member
-prop_insert_empty i (NonEmptyNubList ns) (m :: Positive Int) = member i (insertUp i x)
-    where x = new ns (fromIntegral m) :: T
+prop_insert_empty i (EmptyStackSet x)= member i (insertUp i x)
 
 -- insert should be idempotent
 prop_insert_idem i (x :: T) = insertUp i x == insertUp i (insertUp i x)
@@ -334,9 +332,8 @@ prop_insert_local (x :: T) i = not (member i x) ==> hidden_spaces x == hidden_sp
 
 -- Inserting a (unique) list of items into an empty stackset should
 -- result in the last inserted element having focus.
-prop_insert_peek (NonEmptyNubList ns) (m :: Positive Int) (NonEmptyNubList is) =
+prop_insert_peek (EmptyStackSet x) (NonEmptyNubList is) =
     peek (foldr insertUp x is) == Just (head is)
-    where x = new ns (fromIntegral m) :: T
 
 -- insert >> delete is the identity, when i `notElem` .
 -- Except for the 'master', which is reset on insert and delete.
@@ -347,11 +344,10 @@ prop_insert_delete n x = not (member n x) ==> delete n (insertUp n y) == (y :: T
                          -- otherwise, we don't have a rule for where master goes.
 
 -- inserting n elements increases current stack size by n
-prop_size_insert is (NonEmptyNubList ns) (m :: Positive Int) =
+prop_size_insert is (EmptyStackSet x) =
         size (foldr insertUp x ws ) ==  (length ws)
   where
     ws   = nub is
-    x    = new ns (fromIntegral m) :: T
     size = length . index
 
 
@@ -730,6 +726,15 @@ instance (Num a, Ord a, Arbitrary a) => Arbitrary (NonNegative a) where
       , (1, return 0)
       ]
   coarbitrary = undefined
+
+newtype EmptyStackSet = EmptyStackSet T deriving Show
+
+instance Arbitrary EmptyStackSet where
+    arbitrary = do
+        (NonEmptyNubList ns)  <- arbitrary
+        (NonEmptyNubList sds) <- arbitrary
+        -- there cannot be more screens than workspaces:
+        return . EmptyStackSet . new ns $ take (min (length ns) (length sds)) sds
 
 -- | Generates a value that satisfies a predicate.
 suchThat :: Gen a -> (a -> Bool) -> Gen a

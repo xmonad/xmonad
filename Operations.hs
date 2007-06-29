@@ -21,7 +21,7 @@ import qualified StackSet as W
 import {-# SOURCE #-} Config (borderWidth,logHook,numlockMask)
 
 import Data.Maybe
-import Data.List            (genericIndex, nub, (\\), findIndex)
+import Data.List            (nub, (\\), find)
 import Data.Bits            ((.|.), (.&.), complement)
 import Data.Ratio
 import qualified Data.Map as M
@@ -98,11 +98,10 @@ view = windows . W.view
 -- Taking a function giving the current screen, and current geometry.
 modifyGap :: (Int -> (Int,Int,Int,Int) -> (Int,Int,Int,Int)) -> X ()
 modifyGap f = do
-    XState { windowset = ws, statusGaps = gaps } <- get
-    let n       = fromIntegral . W.screen $ W.current ws
-        (a,i:b) = splitAt n gaps
-    modify $ \s -> s { statusGaps = a ++ f n i : b }
-    refresh
+    windows $ \ws@(W.StackSet { W.current = c@(W.Screen { W.screenDetail = sd }) }) ->
+        let n = fromIntegral . W.screen $ c
+            g = f n . statusGap $ sd
+        in ws { W.current = c { W.screenDetail = sd { statusGap = g } } }
 
 -- | Kill the currently focused client. If we do kill it, we'll get a
 -- delete notify back from X.
@@ -135,7 +134,7 @@ windows f = do
     -- We cannot use sendMessage because this must not call refresh ever,
     -- and must be called on all visible workspaces.
     broadcastMessage UnDoLayout
-    XState { windowset = old, layouts = fls, xineScreens = xinesc, statusGaps = gaps } <- get
+    XState { windowset = old, layouts = fls } <- get
     let oldvisible = concatMap (W.integrate' . W.stack . W.workspace) $ W.current old : W.visible old
         ws = f old
     modify (\s -> s { windowset = ws })
@@ -149,8 +148,8 @@ windows f = do
             flt = filter (flip M.member (W.floating ws)) (W.index this)
             tiled = (W.stack . W.workspace . W.current $ this)
                     >>= W.filter (not . flip M.member (W.floating ws))
-            (Rectangle sx sy sw sh) = genericIndex xinesc (W.screen w)
-            (gt,gb,gl,gr)           = genericIndex gaps   (W.screen w)
+            (SD (Rectangle sx sy sw sh)
+                (gt,gb,gl,gr))          = W.screenDetail w
             viewrect = Rectangle (sx + fromIntegral gl)        (sy + fromIntegral gt)
                                  (sw - fromIntegral (gl + gr)) (sh - fromIntegral (gt + gb))
 
@@ -257,13 +256,13 @@ rescreen :: X ()
 rescreen = do
     xinesc <- withDisplay (io . getScreenInfo)
 
-    modify (\s -> s { xineScreens = xinesc
-                    , statusGaps  = take (length xinesc) $ (statusGaps s) ++ repeat (0,0,0,0) })
-
     windows $ \ws@(W.StackSet { W.current = v, W.visible = vs, W.hidden = hs }) ->
-        let (x:xs, ys) = splitAt (length xinesc) $ map W.workspace (v:vs) ++ hs
-        in  ws { W.current = W.Screen x 0
-               , W.visible = zipWith W.Screen xs [1 ..]
+        let (xs, ys) = splitAt (length xinesc) $ map W.workspace (v:vs) ++ hs
+            (a:as)   = zipWith3 W.Screen xs [1..] $ zipWith SD xinesc gs
+            sgs      = map (statusGap . W.screenDetail) (v:vs)
+            gs       = take (length xinesc) (sgs ++ repeat (0,0,0,0))
+        in  ws { W.current = a
+               , W.visible = as
                , W.hidden  = ys }
 
 -- ---------------------------------------------------------------------
@@ -476,20 +475,19 @@ sink = windows . W.sink
 -- | Make a tiled window floating, using its suggested rectangle
 float :: Window -> X ()
 float w = withDisplay $ \d -> do
-    XState { xineScreens = xinesc, windowset = ws } <- get
+    ws <- gets windowset
     wa <- io $ getWindowAttributes d w
 
-    let sid = fromMaybe (W.screen . W.current $ ws) (fmap fi $ findIndex (pointWithin (fi (wa_x wa)) (fi (wa_y wa))) xinesc)
-        sc = genericIndex xinesc sid
+    let sc = fromMaybe (W.current ws) $ find (pointWithin (fi $ wa_x wa) (fi $ wa_y wa) . screenRect . W.screenDetail) $ W.current ws : W.visible ws
+        sr = screenRect . W.screenDetail $ sc
+        sw = W.tag . W.workspace $ sc
         bw = fi . wa_border_width $ wa
 
-    wid <- screenWorkspace sid
-
-    windows $ W.shift wid . W.focusWindow w . W.float w
-        (W.RationalRect ((fi (wa_x wa) - fi (rect_x sc)) % fi (rect_width sc))
-                        ((fi (wa_y wa) - fi (rect_y sc)) % fi (rect_height sc))
-                        (fi (wa_width  wa + bw*2) % fi (rect_width sc))
-                        (fi (wa_height wa + bw*2) % fi (rect_height sc)))
+    windows $ W.shift sw . W.focusWindow w . W.float w
+        (W.RationalRect ((fi (wa_x wa) - fi (rect_x sr)) % fi (rect_width sr))
+                        ((fi (wa_y wa) - fi (rect_y sr)) % fi (rect_height sr))
+                        (fi (wa_width  wa + bw*2) % fi (rect_width sr))
+                        (fi (wa_height wa + bw*2) % fi (rect_height sr)))
   where fi x = fromIntegral x
         pointWithin :: Integer -> Integer -> Rectangle -> Bool
         pointWithin x y r = x >= fi (rect_x r) &&

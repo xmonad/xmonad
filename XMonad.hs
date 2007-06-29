@@ -15,7 +15,7 @@
 -----------------------------------------------------------------------------
 
 module XMonad (
-    X, WindowSet, WorkspaceId(..), ScreenId(..), XState(..), XConf(..), Layout(..),
+    X, WindowSet, WorkspaceId(..), ScreenId(..), ScreenDetail(..), XState(..), XConf(..), Layout(..),
     Typeable, Message, SomeMessage(..), fromMessage, runLayout,
     runX, catchX, io, catchIO, withDisplay, withWindowSet, isRoot, spawn, restart, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
@@ -30,6 +30,8 @@ import System.Posix.Process (executeFile, forkProcess, getProcessStatus, createS
 import System.Exit
 import System.Environment
 import Graphics.X11.Xlib
+-- for Read instance
+import Graphics.X11.Xlib.Extras ()
 import Data.Typeable
 
 import qualified Data.Map as M
@@ -39,8 +41,6 @@ import qualified Data.Set as S
 -- Just the display, width, height and a window list
 data XState = XState
     { windowset    :: !WindowSet           -- ^ workspace list
-    , xineScreens  :: ![Rectangle]         -- ^ dimensions of each screen
-    , statusGaps   :: ![(Int,Int,Int,Int)] -- ^ width of status bar on each screen
     , mapped       :: !(S.Set Window)      -- ^ the Set of mapped windows
     , waitingUnmap :: !(M.Map Window Int)  -- ^ the number of expected UnmapEvents
     , layouts      :: !(M.Map WorkspaceId (Layout Window, [Layout Window])) }
@@ -51,13 +51,17 @@ data XConf = XConf
     , normalBorder  :: !Pixel       -- ^ border color of unfocused windows
     , focusedBorder :: !Pixel     } -- ^ border color of the focused window
 
-type WindowSet = StackSet WorkspaceId Window ScreenId
+type WindowSet = StackSet WorkspaceId Window ScreenId ScreenDetail
 
 -- | Virtual workspace indicies
 newtype WorkspaceId = W Int deriving (Eq,Ord,Show,Read,Enum,Num,Integral,Real)
 
 -- | Physical screen indicies
 newtype ScreenId    = S Int deriving (Eq,Ord,Show,Read,Enum,Num,Integral,Real)
+
+data ScreenDetail   = SD { screenRect :: !Rectangle
+                         , statusGap  :: !(Int,Int,Int,Int) -- ^ width of status bar on the screen
+                         } deriving (Eq,Show, Read)
 
 ------------------------------------------------------------------------
 
