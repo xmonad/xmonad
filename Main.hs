@@ -93,7 +93,7 @@ main = do
                       , w  <- W.integrate' (W.stack wk) ]
 
             mapM_ manage ws -- find new windows
-            logHook
+            refresh
 
             -- main loop, for all you HOF/recursion fans out there.
             forever $ handle =<< io (nextEvent dpy e >> getEvent e)
