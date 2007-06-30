@@ -48,7 +48,7 @@ import qualified Data.Traversable as T
 -- border set, and its event mask set.
 --
 manage :: Window -> X ()
-manage w = withDisplay $ \d -> do
+manage w = whenX (fmap not $ isClient w) $ withDisplay $ \d -> do
     setInitialProperties w >> reveal w
 
     -- FIXME: This is pretty awkward. We can't can't let "refresh" happen

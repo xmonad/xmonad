@@ -113,8 +113,13 @@ scan dpy rootw = do
   -- TODO: scan for windows that are either 'IsViewable' or where WM_STATE ==
   -- Iconic
   where ok w = do wa <- getWindowAttributes dpy w
+                  a  <- internAtom dpy "WM_STATE" False
+                  p  <- getWindowProperty32 dpy a w
+                  let ic = case p of
+                            Just (3:_) -> True -- 3 for iconified
+                            _          -> False
                   return $ not (wa_override_redirect wa)
-                         && wa_map_state wa == waIsViewable
+                         && (wa_map_state wa == waIsViewable || ic)
 
 -- | Grab the keys back
 grabKeys :: Display -> Window -> IO ()
