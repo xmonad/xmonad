@@ -473,6 +473,10 @@ sink :: Window -> X ()
 sink = windows . W.sink
 
 -- | Make a tiled window floating, using its suggested rectangle
+--
+-- TODO: float changes the set of visible workspaces when we call it for an
+-- invisible window -- this should not happen.  See 'temporary workaround' in
+-- the handler for ConfigureRequestEvent also.
 float :: Window -> X ()
 float w = withDisplay $ \d -> do
     ws <- gets windowset

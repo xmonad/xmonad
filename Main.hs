@@ -29,7 +29,7 @@ import Graphics.X11.Xinerama    (getScreenInfo)
 
 import XMonad
 import Config
-import StackSet (new, floating, member)
+import StackSet (new, floating, member, findIndex, workspace, tag, current, visible)
 import qualified StackSet as W
 import Operations
 
@@ -209,7 +209,11 @@ handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
     ws <- gets windowset
     wa <- io $ getWindowAttributes dpy w
 
-    if M.member w (floating ws) || not (member w ws)
+    -- TODO temporary workaround for some bugs in float.  Don't call 'float' on
+    -- windows that aren't visible, because it changes the focused screen
+    let vis = any ((== findIndex w ws) . Just . tag . workspace) (current ws : visible ws)
+    if (M.member w (floating ws) && vis)
+        || not (member w ws)
         then do io $ configureWindow dpy w (ev_value_mask e) $ WindowChanges
                     { wc_x            = ev_x e
                     , wc_y            = ev_y e
