@@ -439,9 +439,9 @@ splitVerticallyBy f = (mirrorRect *** mirrorRect) . splitHorizontallyBy f . mirr
 ------------------------------------------------------------------------
 -- Utilities
 
--- | Return workspace visible on screen 'sc', or 0.
-screenWorkspace :: ScreenId -> X WorkspaceId
-screenWorkspace sc = withWindowSet $ return . fromMaybe 0 . W.lookupWorkspace sc
+-- | Return workspace visible on screen 'sc', or Nothing.
+screenWorkspace :: ScreenId -> X (Maybe WorkspaceId)
+screenWorkspace sc = withWindowSet $ return . W.lookupWorkspace sc
 
 -- | Apply an X operation to the currently focused window, if there is one.
 withFocused :: (Window -> X ()) -> X ()
