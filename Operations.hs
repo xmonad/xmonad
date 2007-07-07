@@ -258,7 +258,7 @@ rescreen = do
 
     windows $ \ws@(W.StackSet { W.current = v, W.visible = vs, W.hidden = hs }) ->
         let (xs, ys) = splitAt (length xinesc) $ map W.workspace (v:vs) ++ hs
-            (a:as)   = zipWith3 W.Screen xs [1..] $ zipWith SD xinesc gs
+            (a:as)   = zipWith3 W.Screen xs [0..] $ zipWith SD xinesc gs
             sgs      = map (statusGap . W.screenDetail) (v:vs)
             gs       = take (length xinesc) (sgs ++ repeat (0,0,0,0))
         in  ws { W.current = a
