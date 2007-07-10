@@ -487,7 +487,7 @@ float w = withDisplay $ \d -> do
         sw = W.tag . W.workspace $ sc
         bw = fi . wa_border_width $ wa
 
-    windows $ W.shift sw . W.focusWindow w . W.float w
+    windows $ maybe id W.focusWindow (W.peek ws) . W.shift sw . W.focusWindow w . W.float w
         (W.RationalRect ((fi (wa_x wa) - fi (rect_x sr)) % fi (rect_width sr))
                         ((fi (wa_y wa) - fi (rect_y sr)) % fi (rect_height sr))
                         (fi (wa_width  wa + bw*2) % fi (rect_width sr))
