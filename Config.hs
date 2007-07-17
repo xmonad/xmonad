@@ -118,7 +118,7 @@ keys :: M.Map (KeyMask, KeySym) (X ())
 keys = M.fromList $
     -- launching and killing programs
     [ ((modMask .|. shiftMask, xK_Return), spawn "xterm") -- @@ Launch an xterm
-    , ((modMask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && exec $exe") -- @@ Launch dmenu
+    , ((modMask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && eval \"exec $exe\"") -- @@ Launch dmenu
     , ((modMask .|. shiftMask, xK_p     ), spawn "gmrun") -- @@ Launch gmrun
     , ((modMask .|. shiftMask, xK_c     ), kill) -- @@ Close the focused window
 
