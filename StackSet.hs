@@ -359,7 +359,7 @@ reverseStack (Stack t ls rs) = Stack t rs ls
 -- | /O(1) on current window, O(n) in general/. Focus the window 'w', 
 -- and set its workspace as current.
 --
-focusWindow :: (Integral i, Eq s, Eq a) => a -> StackSet i a s sd -> StackSet i a s sd
+focusWindow :: (Eq s, Eq a, Eq i) => a -> StackSet i a s sd -> StackSet i a s sd
 focusWindow w s | Just w == peek s = s
                 | otherwise        = maybe s id $ do
                     n <- findIndex w s
@@ -473,7 +473,7 @@ swapMaster = modify' $ \c -> case c of
 -- The actual focused workspace doesn't change. If there is -- no
 -- element on the current stack, the original stackSet is returned.
 --
-shift :: (Ord a, Eq s, Integral i) => i -> StackSet i a s sd -> StackSet i a s sd
+shift :: (Ord a, Eq s, Eq i) => i -> StackSet i a s sd -> StackSet i a s sd
 shift n s = if n `tagMember` s && n /= curtag
               then maybe s go (peek s) else s
     where go w = view curtag . insertUp w . view n . delete w $ s
