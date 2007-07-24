@@ -305,17 +305,13 @@ differentiate (x:xs) = Just $ Stack x [] xs
 
 -- |
 -- /O(n)/. 'filter p s' returns the elements of 's' such that 'p' evaluates to
--- True.  Order is preserved, and focus moves to the next node to the right (if
--- necessary).
---
--- Note, this isn't the same as the 'remove' semantics, as focus
--- won't move 'left' on the end of list.
+-- True.  Order is preserved, and focus moves as described for 'delete'.
 --
 filter :: (a -> Bool) -> Stack a -> StackOrNot a
 filter p (Stack f ls rs) = case L.filter p (f:rs) of
     f':rs' -> Just $ Stack f' (L.filter p ls) rs'    -- maybe move focus down
-    []     -> case L.filter p (reverse ls) of        -- filter back up
-                    f':rs' -> Just $ Stack f' [] rs' -- else up
+    []     -> case L.filter p ls of                  -- filter back up
+                    f':rs' -> Just $ Stack f' [] (reverse rs') -- else up
                     []     -> Nothing
 
 -- |
@@ -437,21 +433,12 @@ insertUp a s = if member a s then s else insert
 --   * deleting the master window resets it to the newly focused window
 --   * otherwise, delete doesn't affect the master.
 --
-delete :: (Integral i, Ord a, Eq s) => a -> StackSet i a s sd -> StackSet i a s sd
-delete w s | Just w == peek s = remove s -- common case. 
-           | otherwise = maybe s (removeWindow.tag.workspace.current $ s) (findIndex w s)
-  where
-    -- find and remove window script
-    removeWindow o n = foldr ($) s [view o,remove,view n]
-
-    -- actual removal logic, and focus/master logic:
-    remove = modify Nothing $ \c ->
-      if focus c == w
-      then case c of
-        Stack _ ls     (r:rs) -> Just $ Stack r ls rs    -- try down first
-        Stack _ (l:ls) []     -> Just $ Stack l ls []    -- else up
-        Stack _ []     []     -> Nothing
-      else Just $ c { up = w `L.delete` up c, down = w `L.delete` down c }
+delete :: (Ord a, Eq s) => a -> StackSet i a s sd -> StackSet i a s sd
+delete w s = s { current = removeFromScreen (current s)
+               , visible = map removeFromScreen (visible s)
+               , hidden = map removeFromWorkspace (hidden s) }
+    where removeFromWorkspace ws = ws { stack = stack ws >>= filter (/=w) }
+          removeFromScreen scr = scr { workspace = removeFromWorkspace (workspace scr) }
 
 ------------------------------------------------------------------------
 
