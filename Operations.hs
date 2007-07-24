@@ -141,13 +141,17 @@ windows f = do
     d <- asks display
 
     -- for each workspace, layout the currently visible workspaces
-    visible <- fmap concat $ forM (W.current ws : W.visible ws) $ \w -> do
+    let allscreens = W.current ws : W.visible ws
+        each_visible = map (W.integrate' . W.stack . W.workspace) allscreens
+        summed_visible = reverse $ foldl (\ (x:xs) y -> ((x++y):x:xs)) [[]] each_visible
+    visible <- fmap concat $ forM (zip allscreens summed_visible) $ \ (w, vis) -> do
         let n      = W.tag (W.workspace w)
             this   = W.view n ws
             Just l = fmap fst $ M.lookup n fls
             flt = filter (flip M.member (W.floating ws)) (W.index this)
             tiled = (W.stack . W.workspace . W.current $ this)
                     >>= W.filter (not . flip M.member (W.floating ws))
+                    >>= W.filter (not . (`elem` vis))
             (SD (Rectangle sx sy sw sh)
                 (gt,gb,gl,gr))          = W.screenDetail w
             viewrect = Rectangle (sx + fromIntegral gl)        (sy + fromIntegral gt)
