@@ -311,7 +311,7 @@ filter :: (a -> Bool) -> Stack a -> StackOrNot a
 filter p (Stack f ls rs) = case L.filter p (f:rs) of
     f':rs' -> Just $ Stack f' (L.filter p ls) rs'    -- maybe move focus down
     []     -> case L.filter p ls of                  -- filter back up
-                    f':rs' -> Just $ Stack f' [] (reverse rs') -- else up
+                    f':ls' -> Just $ Stack f' ls' [] -- else up
                     []     -> Nothing
 
 -- |
