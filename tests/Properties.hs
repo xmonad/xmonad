@@ -1,6 +1,7 @@
 {-# OPTIONS -fglasgow-exts #-}
 
 import StackSet hiding (filter)
+import qualified StackSet as S (filter)
 import Operations (tile)
 
 import Debug.Trace
@@ -402,6 +403,15 @@ prop_delete_focus_not_end (x :: T) =
     Just n = peek x
 
 -- ---------------------------------------------------------------------
+-- filter
+
+-- preserve order
+prop_filter_order (x :: T) =
+    case stack $ workspace $ current x of
+    	Nothing -> True
+        Just s@(Stack i _ _) -> integrate' (S.filter (/= i) s) == filter (/= i) (integrate' (Just s))
+
+-- ---------------------------------------------------------------------
 -- swapUp, swapDown, swapMaster: reordiring windows
 
 -- swap is trivially reversible
@@ -547,6 +557,8 @@ main = do
         ,("delete/focus"        , mytest prop_delete_focus)
         ,("delete  last/focus up", mytest prop_delete_focus_end)
         ,("delete ~last/focus down", mytest prop_delete_focus_not_end)
+
+        ,("filter preserves order", mytest prop_filter_order)
 
         ,("swapMaster: invariant", mytest prop_swap_master_I)
         ,("swapUp: invariant" , mytest prop_swap_left_I)
