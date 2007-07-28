@@ -5,3 +5,4 @@ import XMonad
 borderWidth :: Dimension
 logHook     :: X ()
 numlockMask :: KeyMask
+workspaces :: Int
