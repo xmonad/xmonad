@@ -395,7 +395,7 @@ findIndex a s = listToMaybe
 
 -- ---------------------------------------------------------------------
 -- $modifyStackset
- 
+
 -- |
 -- /O(n)/. (Complexity due to duplicate check). Insert a new element into
 -- the stack, above the currently focused element.
@@ -453,7 +453,7 @@ sink w s = s { floating = M.delete w (floating s) }
 
 ------------------------------------------------------------------------
 -- $settingMW
- 
+
 -- | /O(s)/. Set the master window to the focused window.
 -- The old master window is swapped in the tiling order with the focused window.
 -- Focus stays with the item moved.
