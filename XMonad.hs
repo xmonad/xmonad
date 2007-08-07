@@ -43,7 +43,8 @@ data XState = XState
     { windowset    :: !WindowSet           -- ^ workspace list
     , mapped       :: !(S.Set Window)      -- ^ the Set of mapped windows
     , waitingUnmap :: !(M.Map Window Int)  -- ^ the number of expected UnmapEvents
-    , layouts      :: !(M.Map WorkspaceId (Layout Window, [Layout Window])) }
+    , layouts      :: !(M.Map WorkspaceId (Layout Window, [Layout Window]))
+    , dragging     :: !(Maybe (Position -> Position -> X (), X ())) }
                        -- ^ mapping of workspaces to descriptions of their layouts
 data XConf = XConf
     { display       :: Display      -- ^ the X11 display

@@ -65,7 +65,8 @@ main = do
             { windowset     = winset
             , layouts       = M.fromList [(w, safeLayouts) | w <- [0 .. W workspaces - 1]]
             , mapped        = S.empty
-            , waitingUnmap  = M.empty }
+            , waitingUnmap  = M.empty
+            , dragging      = Nothing }
 
     xSetErrorHandler -- in C, I'm too lazy to write the binding: dons
 
@@ -182,6 +183,22 @@ handle (UnmapEvent {ev_window = w, ev_send_event = synthetic}) = whenX (isClient
 handle e@(MappingNotifyEvent {ev_window = w}) = do
     io $ refreshKeyboardMapping e
     when (ev_request e == mappingKeyboard) $ withDisplay $ io . flip grabKeys w
+
+-- handle button release, which may finish dragging.
+handle e@(ButtonEvent {ev_event_type = t})
+    | t == buttonRelease = do
+    drag <- gets dragging
+    case drag of
+      Just (_,f) -> modify (\s -> s { dragging = Nothing }) >> f
+          -- we're done dragging and have released the mouse
+      Nothing -> broadcastMessage e
+
+-- handle motionNotify event, which may mean we are dragging.
+handle e@(MotionEvent {ev_event_type = t, ev_x = x, ev_y = y}) = do
+    drag <- gets dragging
+    case drag of
+      Just (d,_) -> d (fromIntegral x) (fromIntegral y) -- we're dragging
+      Nothing -> broadcastMessage e
 
 -- click on an unfocused window, makes it focused on this workspace
 handle e@(ButtonEvent {ev_window = w,ev_event_type = t,ev_button = b })

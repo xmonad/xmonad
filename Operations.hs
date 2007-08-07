@@ -507,26 +507,30 @@ float w = withDisplay $ \d -> do
 -- Mouse handling
 
 -- | Accumulate mouse motion events
-mouseDrag :: (XMotionEvent -> IO ()) -> X ()
-mouseDrag f = do
-    XConf { theRoot = root, display = d } <- ask
-    io $ grabPointer d root False (buttonReleaseMask .|. pointerMotionMask)
-            grabModeAsync grabModeAsync none none currentTime
-    io $ allocaXEvent $ \p -> fix $ \again -> do -- event loop
-        maskEvent d (buttonReleaseMask .|. pointerMotionMask) p
-        et <- get_EventType p
-        when (et == motionNotify) $ get_MotionEvent p >>= f >> again
-    io $ ungrabPointer d currentTime
+mouseDrag :: (Position -> Position -> X ()) -> X () -> X ()
+mouseDrag f done = do
+    drag <- gets dragging
+    case drag of
+      Just _ -> return () -- error case? we're already dragging
+      Nothing -> do XConf { theRoot = root, display = d } <- ask
+                    io $ grabPointer d root False (buttonReleaseMask .|. pointerMotionMask)
+                       grabModeAsync grabModeAsync none none currentTime
+                    let cleanup = do io $ ungrabPointer d currentTime
+                                     modify $ \s -> s { dragging = Nothing }
+                                     done
+                    modify $ \s -> s { dragging = Just (f, cleanup) }
 
 mouseMoveWindow :: Window -> X ()
 mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     io $ raiseWindow d w
     wa <- io $ getWindowAttributes d w
-    (_, _, _, ox, oy, _, _, _) <- io $ queryPointer d w
-    mouseDrag $ \(_, _, _, ex, ey, _, _, _, _, _) ->
-       moveWindow d w (fromIntegral (fromIntegral (wa_x wa) + (ex - ox)))
-                      (fromIntegral (fromIntegral (wa_y wa) + (ey - oy)))
-    float w
+    (_, _, _, ox', oy', _, _, _) <- io $ queryPointer d w
+    let ox = fromIntegral ox'
+        oy = fromIntegral oy'
+    mouseDrag (\ex ey -> do
+                 io $ moveWindow d w (fromIntegral (fromIntegral (wa_x wa) + (ex - ox)))
+                                     (fromIntegral (fromIntegral (wa_y wa) + (ey - oy))))
+              (float w)
 
 mouseResizeWindow :: Window -> X ()
 mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
@@ -534,11 +538,11 @@ mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     wa <- io $ getWindowAttributes d w
     sh <- io $ getWMNormalHints d w
     io $ warpPointer d none w 0 0 0 0 (fromIntegral (wa_width wa)) (fromIntegral (wa_height wa))
-    mouseDrag $ \(_, _, _, ex, ey, _, _, _, _, _) ->
-        resizeWindow d w `uncurry`
-             applySizeHints sh ((fromIntegral (max 1 (ex - fromIntegral (wa_x wa)))),
-                                (fromIntegral (max 1 (ey - fromIntegral (wa_y wa)))))
-    float w
+    mouseDrag (\ex ey -> do
+                 io $ resizeWindow d w `uncurry`
+                    applySizeHints sh ((fromIntegral (max 1 (ex - fromIntegral (wa_x wa)))),
+                                      (fromIntegral (max 1 (ey - fromIntegral (wa_y wa))))))
+              (float w)
 
 -- ---------------------------------------------------------------------
 -- | Support for window size hints
