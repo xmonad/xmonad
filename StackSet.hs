@@ -320,7 +320,7 @@ filter p (Stack f ls rs) = case L.filter p (f:rs) of
 -- the head of the list. The implementation is given by the natural
 -- integration of a one-hole list cursor, back to a list.
 --
-index :: Eq a => StackSet i a s sd -> [a]
+index :: StackSet i a s sd -> [a]
 index = with [] integrate
 
 --  let is = t : r ++ reverse l in take (length is) (dropWhile (/= m) (cycle is))
