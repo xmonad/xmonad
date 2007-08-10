@@ -511,14 +511,17 @@ mouseDrag :: (Position -> Position -> X ()) -> X () -> X ()
 mouseDrag f done = do
     drag <- gets dragging
     case drag of
-      Just _ -> return () -- error case? we're already dragging
-      Nothing -> do XConf { theRoot = root, display = d } <- ask
-                    io $ grabPointer d root False (buttonReleaseMask .|. pointerMotionMask)
-                       grabModeAsync grabModeAsync none none currentTime
-                    let cleanup = do io $ ungrabPointer d currentTime
-                                     modify $ \s -> s { dragging = Nothing }
-                                     done
-                    modify $ \s -> s { dragging = Just (f, cleanup) }
+        Just _ -> return () -- error case? we're already dragging
+        Nothing -> do
+            XConf { theRoot = root, display = d } <- ask
+            io $ grabPointer d root False (buttonReleaseMask .|. pointerMotionMask)
+                    grabModeAsync grabModeAsync none none currentTime
+            modify $ \s -> s { dragging = Just (f, cleanup) }
+ where
+    cleanup = do
+        withDisplay $ io . flip ungrabPointer currentTime
+        modify $ \s -> s { dragging = Nothing }
+        done
 
 mouseMoveWindow :: Window -> X ()
 mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
