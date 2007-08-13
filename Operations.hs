@@ -431,7 +431,7 @@ splitVertically n (Rectangle sx sy sw sh) = Rectangle sx sy sw smallh :
 splitHorizontally n = map mirrorRect . splitVertically n . mirrorRect
 
 -- Divide the screen into two rectangles, using a rational to specify the ratio
-splitHorizontallyBy, splitVerticallyBy :: Rational -> Rectangle -> (Rectangle, Rectangle)
+splitHorizontallyBy, splitVerticallyBy :: RealFrac r => r -> Rectangle -> (Rectangle, Rectangle)
 splitHorizontallyBy f (Rectangle sx sy sw sh) =
     ( Rectangle sx sy leftw sh
     , Rectangle (sx + fromIntegral leftw) sy (sw-fromIntegral leftw) sh)
