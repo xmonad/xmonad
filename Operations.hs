@@ -529,9 +529,8 @@ mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     (_, _, _, ox', oy', _, _, _) <- io $ queryPointer d w
     let ox = fromIntegral ox'
         oy = fromIntegral oy'
-    mouseDrag (\ex ey -> do
-                 io $ moveWindow d w (fromIntegral (fromIntegral (wa_x wa) + (ex - ox)))
-                                     (fromIntegral (fromIntegral (wa_y wa) + (ey - oy))))
+    mouseDrag (\ex ey -> io $ moveWindow d w (fromIntegral (fromIntegral (wa_x wa) + (ex - ox)))
+                                             (fromIntegral (fromIntegral (wa_y wa) + (ey - oy))))
               (float w)
 
 mouseResizeWindow :: Window -> X ()
