@@ -31,8 +31,8 @@ import Graphics.X11.Xlib
 --
 -- The number of workspaces (virtual screens, or window groups)
 --
-workspaces :: Int
-workspaces = 9
+workspaces :: [WorkspaceId]
+workspaces = [0..8]
 
 -- |
 -- modMask lets you specify which modkey you want to use. The default is
@@ -157,7 +157,7 @@ keys = M.fromList $
     -- mod-[1..9] @@ Switch to workspace N
     -- mod-shift-[1..9] @@ Move client to workspace N
     [((m .|. modMask, k), f i)
-        | (i, k) <- zip [0 .. fromIntegral workspaces - 1] [xK_1 ..]
+        | (i, k) <- zip workspaces [xK_1 ..]
         , (f, m) <- [(view, 0), (shift, shiftMask)]]
 
     -- mod-{w,e,r} @@ Switch to physical/Xinerama screens 1, 2, or 3
