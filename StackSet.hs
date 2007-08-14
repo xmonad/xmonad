@@ -226,7 +226,7 @@ new _ _ = abort "non-positive argument to StackSet.new"
 
 view :: (Eq a, Eq s, Eq i) => i -> StackSet i a s sd -> StackSet i a s sd
 view i s
-    | not (elem i $ map tag $ workspaces s)
+    | not (i `tagMember` s)
       || i == tag (workspace (current s)) = s  -- out of bounds or current
 
     | Just x <- L.find ((i==).tag.workspace) (visible s)
