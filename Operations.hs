@@ -92,7 +92,7 @@ shift n = windows (W.shift n)
 
 -- | view. Change the current workspace to workspace at offset n (0 indexed).
 view :: WorkspaceId -> X ()
-view = windows . W.view
+view = windows . W.greedyView
 
 -- | Modify the size of the status gap at the top of the current screen
 -- Taking a function giving the current screen, and current geometry.

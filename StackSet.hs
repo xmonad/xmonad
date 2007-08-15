@@ -15,7 +15,7 @@ module StackSet (
         StackSet(..), Workspace(..), Screen(..), StackOrNot, Stack(..), RationalRect(..),
         -- *  Construction
         -- $construction
-        new, view,
+        new, view, greedyView,
         -- * Xinerama operations
         -- $xinerama
         lookupWorkspace,
@@ -243,6 +243,25 @@ view i s
 
     -- 'Catch'ing this might be hard. Relies on monotonically increasing
     -- workspace tags defined in 'new'
+
+-- |
+-- Set focus to the given workspace.  If that workspace does not exist
+-- in the stackset, the original workspace is returned.  If that workspace is
+-- 'hidden', then display that workspace on the current screen, and move the
+-- current workspace to 'hidden'.  If that workspace is 'visible' on another
+-- screen, the workspaces of the current screen and the other screen are
+-- swapped.
+
+greedyView :: (Eq a, Eq s, Eq i) => i -> StackSet i a s sd -> StackSet i a s sd
+greedyView w ws
+ | any wTag (hidden ws) = view w ws
+ | (Just s) <- L.find (wTag . workspace) (visible ws)
+                        = ws { current = (current ws) { workspace = workspace s }
+                             , visible = s { workspace = workspace (current ws) }
+                                       : L.filter (not . wTag . workspace) (visible ws) }
+ | otherwise            = ws
+ where
+    wTag = (w == ) . tag
 
 -- ---------------------------------------------------------------------
 -- $xinerama

@@ -136,6 +136,9 @@ prop_empty_I  (n :: Positive Int) = forAll (choose (1,fromIntegral n)) $  \m ->
 prop_view_I (n :: NonNegative Int) (x :: T) =
     n `tagMember` x ==> invariant $ view (fromIntegral n) x
 
+prop_greedyView_I (n :: NonNegative Int) (x :: T) =
+    n `tagMember` x ==> invariant $ view (fromIntegral n) x
+
 prop_focusUp_I (n :: NonNegative Int) (x :: T) =
     invariant $ foldr (const focusUp) x [1..n]
 prop_focusDown_I (n :: NonNegative Int) (x :: T) =
@@ -215,6 +218,33 @@ prop_view_idem (x :: T) (i :: NonNegative Int) = i `tagMember` x ==> view i (vie
 -- view is reversible, though shuffles the order of hidden/visible
 prop_view_reversible (i :: NonNegative Int) (x :: T) =
     i `tagMember` x ==> normal (view n (view i x)) == normal x
+    where n  = tag (workspace $ current x)
+
+-- ---------------------------------------------------------------------
+-- greedyViewing workspaces
+
+-- greedyView sets the current workspace to 'n'
+prop_greedyView_current (x :: T) (n :: NonNegative Int) = i `tagMember` x ==>
+    tag (workspace $ current (greedyView i x)) == i
+  where
+    i = fromIntegral n
+
+-- greedyView *only* sets the current workspace, and touches Xinerama. 
+-- no workspace contents will be changed.
+prop_greedyView_local  (x :: T) (n :: NonNegative Int) = i `tagMember` x ==>
+    workspaces x == workspaces (greedyView i x)
+  where
+    workspaces a = sortBy (\s t -> tag s `compare` tag t) $
+                                    workspace (current a)
+                                    : map workspace (visible a) ++ hidden a
+    i = fromIntegral n
+
+-- greedyView is idempotent
+prop_greedyView_idem (x :: T) (i :: NonNegative Int) = i `tagMember` x ==> greedyView i (greedyView i x) == (greedyView i x)
+
+-- greedyView is reversible, though shuffles the order of hidden/visible
+prop_greedyView_reversible (i :: NonNegative Int) (x :: T) =
+    i `tagMember` x ==> normal (greedyView n (greedyView i x)) == normal x
     where n  = tag (workspace $ current x)
 
 -- normalise workspace list
@@ -518,6 +548,12 @@ main = do
 --      ,("view / xinerama"     , mytest prop_view_xinerama)
         ,("view is local"       , mytest prop_view_local)
 
+        ,("greedyView : invariant"    , mytest prop_greedyView_I)
+        ,("greedyView sets current"   , mytest prop_greedyView_current)
+        ,("greedyView idempotent"     , mytest prop_greedyView_idem)
+        ,("greedyView reversible"     , mytest prop_greedyView_reversible)
+        ,("greedyView is local"       , mytest prop_greedyView_local)
+--
 --      ,("valid workspace xinerama", mytest prop_lookupWorkspace)
 
         ,("peek/member "        , mytest prop_member_peek)
