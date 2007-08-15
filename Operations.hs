@@ -141,9 +141,8 @@ windows f = do
     d <- asks display
 
     -- for each workspace, layout the currently visible workspaces
-    let allscreens = W.current ws : W.visible ws
-        each_visible = map (W.integrate' . W.stack . W.workspace) allscreens
-        summed_visible = reverse $ foldl (\ (x:xs) y -> ((x++y):x:xs)) [[]] each_visible
+    let allscreens     = W.current ws : W.visible ws
+        summed_visible = scanl (++) [] $ map (W.integrate' . W.stack . W.workspace) allscreens
     visible <- fmap concat $ forM (zip allscreens summed_visible) $ \ (w, vis) -> do
         let n      = W.tag (W.workspace w)
             this   = W.view n ws
