@@ -22,6 +22,7 @@ module Config where
 --
 import XMonad
 import Operations
+import qualified StackSet as W
 import Data.Ratio
 import Data.Bits ((.|.))
 import qualified Data.Map as M
@@ -165,7 +166,7 @@ keys = M.fromList $
     ++
     [((m .|. modMask, key), screenWorkspace sc >>= flip whenJust f)
         | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
-        , (f, m) <- [(view, 0), (shift, shiftMask)]]
+        , (f, m) <- [(windows . W.view, 0), (shift, shiftMask)]]
 
 -- |
 -- default actions bound to mouse events
