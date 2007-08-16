@@ -194,7 +194,7 @@ handle e@(ButtonEvent {ev_event_type = t})
         Nothing    -> broadcastMessage e
 
 -- handle motionNotify event, which may mean we are dragging.
-handle e@(MotionEvent {ev_event_type = t, ev_x = x, ev_y = y}) = do
+handle e@(MotionEvent {ev_event_type = _t, ev_x = x, ev_y = y}) = do
     drag <- gets dragging
     case drag of
         Just (d,_) -> d (fromIntegral x) (fromIntegral y) -- we're dragging
