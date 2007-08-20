@@ -184,7 +184,7 @@ windows f = do
     -- given a position by a layout now.
     mapM_ hide (nub oldvisible \\ visible)
 
-    clearEnterEvents
+    clearEvents enterWindowMask
 
 -- | setWMState.  set the WM_STATE property
 setWMState :: Window -> Int -> X ()
@@ -231,12 +231,12 @@ setInitialProperties w = withDisplay $ \d -> io $ do
 refresh :: X ()
 refresh = windows id
 
--- | clearEnterEvents.  Remove all window entry events from the event queue.
-clearEnterEvents :: X ()
-clearEnterEvents = withDisplay $ \d -> io $ do
+-- | clearEvents.  Remove all events of a given type from the event queue.
+clearEvents :: EventMask -> X ()
+clearEvents mask = withDisplay $ \d -> io $ do
     sync d False
     allocaXEvent $ \p -> fix $ \again -> do
-        more <- checkMaskEvent d enterWindowMask p
+        more <- checkMaskEvent d mask p
         when more again -- beautiful
 
 -- | tileWindow. Moves and resizes w such that it fits inside the given
@@ -515,12 +515,15 @@ mouseDrag f done = do
             XConf { theRoot = root, display = d } <- ask
             io $ grabPointer d root False (buttonReleaseMask .|. pointerMotionMask)
                     grabModeAsync grabModeAsync none none currentTime
-            modify $ \s -> s { dragging = Just (f, cleanup) }
+            modify $ \s -> s { dragging = Just (motion, cleanup) }
  where
     cleanup = do
         withDisplay $ io . flip ungrabPointer currentTime
         modify $ \s -> s { dragging = Nothing }
         done
+    motion x y = do z <- f x y
+                    clearEvents pointerMotionMask
+                    return z
 
 mouseMoveWindow :: Window -> X ()
 mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
