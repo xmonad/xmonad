@@ -15,7 +15,7 @@
 -----------------------------------------------------------------------------
 
 module XMonad (
-    X, WindowSet, WorkspaceId(..), ScreenId(..), ScreenDetail(..), XState(..), XConf(..), Layout(..),
+    X, WindowSet, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), Layout(..),
     Typeable, Message, SomeMessage(..), fromMessage, runLayout,
     runX, catchX, io, catchIO, withDisplay, withWindowSet, isRoot, spawn, restart, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
@@ -55,7 +55,7 @@ data XConf = XConf
 type WindowSet = StackSet WorkspaceId Window ScreenId ScreenDetail
 
 -- | Virtual workspace indicies
-newtype WorkspaceId = W Int deriving (Eq,Ord,Show,Read,Enum,Num,Integral,Real)
+type WorkspaceId = String
 
 -- | Physical screen indicies
 newtype ScreenId    = S Int deriving (Eq,Ord,Show,Read,Enum,Num,Integral,Real)
