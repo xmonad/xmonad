@@ -178,6 +178,9 @@ keys = M.fromList $
 --
 mouseBindings :: M.Map (KeyMask, Button) (Window -> X ())
 mouseBindings = M.fromList $
+    -- mod-button1 @@ Set the window to floating mode and move by dragging
     [ ((modMask, button1), (\w -> focus w >> mouseMoveWindow w))
+    -- mod-button2 @@ Raise the window to the top of the stack
     , ((modMask, button2), (\w -> focus w >> swapMaster))
+    -- mod-button3 @@ Set the window to floating mode and resize by dragging
     , ((modMask, button3), (\w -> focus w >> mouseResizeWindow w)) ]
