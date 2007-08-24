@@ -62,6 +62,8 @@ Notes for using the darcs version
     use the darcs version of X11-extras, which is developed concurrently
     with xmonad.
 
+        darcs get http://darcs.haskell.org/~sjanssen/X11-extras
+
     Not using X11-extras from darcs, is the most common reason for the
     darcs version of xmonad to fail to build.
 
