@@ -17,7 +17,7 @@
 module XMonad (
     X, WindowSet, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), Layout(..),
     Typeable, Message, SomeMessage(..), fromMessage, runLayout,
-    runX, catchX, io, catchIO, withDisplay, withWindowSet, isRoot, spawn, restart, trace, whenJust, whenX,
+    runX, catchX, io, catchIO, withDisplay, withWindowSet, isRoot, getAtom, spawn, restart, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
   ) where
 
