@@ -82,7 +82,7 @@ Running xmonad:
 XMonadContrib
 
     There are various contributed modules that can be used with xmonad.
-    Examples include a ion3-like tabbed layout, a prompt/program launcher,
+    Examples include an ion3-like tabbed layout, a prompt/program launcher,
     and various other useful modules.  XMonadContrib is available at:
 
     0.3 release:   http://www.xmonad.org/XMonadContrib-0.3.tar.gz
