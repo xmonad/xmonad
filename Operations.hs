@@ -544,8 +544,8 @@ mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     io $ warpPointer d none w 0 0 0 0 (fromIntegral (wa_width wa)) (fromIntegral (wa_height wa))
     mouseDrag (\ex ey -> do
                  io $ resizeWindow d w `uncurry`
-                    applySizeHints sh ((fromIntegral (max 1 (ex - fromIntegral (wa_x wa)))),
-                                      (fromIntegral (max 1 (ey - fromIntegral (wa_y wa))))))
+                    applySizeHints sh (ex - fromIntegral (wa_x wa),
+                                       ey - fromIntegral (wa_y wa)))
               (float w)
 
 -- ---------------------------------------------------------------------
@@ -554,8 +554,12 @@ mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
 type D = (Dimension, Dimension)
 
 -- | Reduce the dimensions if needed to comply to the given SizeHints.
-applySizeHints :: SizeHints -> D -> D
-applySizeHints sh =
+applySizeHints :: Integral a => SizeHints -> (a,a) -> D 
+applySizeHints sh (w,h) = applySizeHints' sh (fromIntegral $ max 1 w,
+                                              fromIntegral $ max 1 h)
+
+applySizeHints' :: SizeHints -> D -> D
+applySizeHints' sh =
       maybe id applyMaxSizeHint                   (sh_max_size   sh)
     . maybe id (\(bw, bh) (w, h) -> (w+bw, h+bh)) (sh_base_size  sh)
     . maybe id applyResizeIncHint                 (sh_resize_inc sh)
