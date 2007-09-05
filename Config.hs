@@ -91,7 +91,12 @@ borderWidth = 1
 -- The default set of tiling algorithms
 --
 defaultLayouts :: [Layout Window]
-defaultLayouts = [ tiled , mirror tiled , full ]
+defaultLayouts = [ tiled
+                 , mirror tiled
+                 , full
+
+                 -- Extension-provided layouts
+                 ]
   where
      -- default tiling algorithm partitions the screen into two panes
      tiled   = tall nmaster delta ratio
@@ -158,6 +163,7 @@ keys = M.fromList $
     -- quit, or restart
     , ((modMask .|. shiftMask, xK_q     ), io (exitWith ExitSuccess)) -- @@ Quit xmonad
     , ((modMask              , xK_q     ), restart Nothing True) -- @@ Restart xmonad
+    -- Extension-provided key bindings
 
     ] ++
     -- mod-[1..9] @@ Switch to workspace N
@@ -183,4 +189,6 @@ mouseBindings = M.fromList $
     -- mod-button2 @@ Raise the window to the top of the stack
     , ((modMask, button2), (\w -> focus w >> swapMaster))
     -- mod-button3 @@ Set the window to floating mode and resize by dragging
-    , ((modMask, button3), (\w -> focus w >> mouseResizeWindow w)) ]
+    , ((modMask, button3), (\w -> focus w >> mouseResizeWindow w))
+    -- Extension-provided mouse bindings
+    ]
