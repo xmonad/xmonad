@@ -1,13 +1,6 @@
-0.3 release:
-    * stable contrib repo tarball
-    * haddocks for core and contribs on xmonad.org
-    * tag xmonad
-    * tag X11-extras
-    * tag X11
-    * more QC tests
-
 
 - possibles:
+    * more QC tests
     - use more constrained type in StackSet to avoid pattern match warnings
     - audit for events handled in dwm.
 
