@@ -33,7 +33,7 @@ import Graphics.X11.Xlib
 -- The number of workspaces (virtual screens, or window groups)
 --
 workspaces :: [WorkspaceId]
-workspaces = map (:"") ['1'..'9']
+workspaces = map show [1 .. 9 :: Int]
 
 -- |
 -- modMask lets you specify which modkey you want to use. The default is
