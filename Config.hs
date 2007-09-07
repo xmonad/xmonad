@@ -29,6 +29,8 @@ import qualified Data.Map as M
 import System.Exit
 import Graphics.X11.Xlib
 
+-- Extension-provided imports
+
 --
 -- The number of workspaces (virtual screens, or window groups)
 --
@@ -163,21 +165,22 @@ keys = M.fromList $
     -- quit, or restart
     , ((modMask .|. shiftMask, xK_q     ), io (exitWith ExitSuccess)) -- @@ Quit xmonad
     , ((modMask              , xK_q     ), restart Nothing True) -- @@ Restart xmonad
-    -- Extension-provided key bindings
 
-    ] ++
+    -- Extension-provided key bindings
+    ]
+    ++
     -- mod-[1..9] @@ Switch to workspace N
     -- mod-shift-[1..9] @@ Move client to workspace N
     [((m .|. modMask, k), f i)
         | (i, k) <- zip workspaces [xK_1 ..]
         , (f, m) <- [(view, 0), (shift, shiftMask)]]
-
+    ++
     -- mod-{w,e,r} @@ Switch to physical/Xinerama screens 1, 2, or 3
     -- mod-shift-{w,e,r} @@ Move client to screen 1, 2, or 3
-    ++
     [((m .|. modMask, key), screenWorkspace sc >>= flip whenJust f)
         | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
         , (f, m) <- [(windows . W.view, 0), (shift, shiftMask)]]
+    -- Extension-provided key bindings lists
 
 -- |
 -- default actions bound to mouse events
@@ -192,3 +195,5 @@ mouseBindings = M.fromList $
     , ((modMask, button3), (\w -> focus w >> mouseResizeWindow w))
     -- Extension-provided mouse bindings
     ]
+
+-- Extension-provided definitions
