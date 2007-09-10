@@ -472,10 +472,6 @@ sink :: Window -> X ()
 sink = windows . W.sink
 
 -- | Make a tiled window floating, using its suggested rectangle
---
--- TODO: float changes the set of visible workspaces when we call it for an
--- invisible window -- this should not happen.  See 'temporary workaround' in
--- the handler for ConfigureRequestEvent also.
 float :: Window -> X ()
 float w = withDisplay $ \d -> do
     ws <- gets windowset
@@ -485,12 +481,14 @@ float w = withDisplay $ \d -> do
         sr = screenRect . W.screenDetail $ sc
         sw = W.tag . W.workspace $ sc
         bw = fi . wa_border_width $ wa
+        rr = (W.RationalRect ((fi (wa_x wa) - fi (rect_x sr)) % fi (rect_width sr))
+                             ((fi (wa_y wa) - fi (rect_y sr)) % fi (rect_height sr))
+                             (fi (wa_width  wa + bw*2) % fi (rect_width sr))
+                             (fi (wa_height wa + bw*2) % fi (rect_height sr)))
 
-    windows $ maybe id W.focusWindow (W.peek ws) . W.shift sw . W.focusWindow w . W.float w
-        (W.RationalRect ((fi (wa_x wa) - fi (rect_x sr)) % fi (rect_width sr))
-                        ((fi (wa_y wa) - fi (rect_y sr)) % fi (rect_height sr))
-                        (fi (wa_width  wa + bw*2) % fi (rect_width sr))
-                        (fi (wa_height wa + bw*2) % fi (rect_height sr)))
+    if maybe False (`elem` (map W.tag . W.hidden $ ws)) (W.findIndex w ws)
+        then windows $ W.float w rr
+        else windows $ maybe id W.focusWindow (W.peek ws) . W.shiftWin sw w . W.float w rr
   where fi x = fromIntegral x
         pointWithin :: Integer -> Integer -> Rectangle -> Bool
         pointWithin x y r = x >= fi (rect_x r) &&

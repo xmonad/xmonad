@@ -167,6 +167,9 @@ prop_swap_right_I (n :: NonNegative Int) (x :: T) =
 prop_shift_I (n :: NonNegative Int) (x :: T) =
     n `tagMember` x ==> invariant $ shift (fromIntegral n) x
 
+prop_shift_win_I (n :: NonNegative Int) (w :: Char) (x :: T) =
+    n `tagMember` x && w `member` x ==> invariant $ shiftWin (fromIntegral n) w x
+
 
 -- ---------------------------------------------------------------------
 -- 'new'
@@ -493,6 +496,23 @@ prop_shift_reversible i (x :: T) =
         y = swapMaster x
         n = tag (workspace $ current y)
 
+-- ---------------------------------------------------------------------
+-- shiftWin
+
+-- shiftWin on current window is the same as shift
+prop_shift_win_focus i (x :: T) =
+    i `tagMember` x ==> case peek x of
+                          Nothing -> True
+                          Just w  -> shiftWin i w x == shift i x
+
+-- shiftWin leaves the current screen as it is, if neither i is the tag
+-- of the current workspace nor w on the current workspace
+prop_shift_win_fix_current i w (x :: T) =
+    i `tagMember` x && w `member` x && i /= n && findIndex w x /= Just n 
+        ==> (current $ x) == (current $ shiftWin i w x)
+    where
+        n = tag (workspace $ current x)
+
 ------------------------------------------------------------------------
 -- some properties for layouts:
 
@@ -611,6 +631,9 @@ main = do
 
         ,("shift: invariant"    , mytest prop_shift_I)
         ,("shift is reversible" , mytest prop_shift_reversible)
+        ,("shiftWin: invariant" , mytest prop_shift_win_I)
+        ,("shiftWin is shift on focus" , mytest prop_shift_win_focus)
+        ,("shiftWin fix current" , mytest prop_shift_win_fix_current)
 
 {-
         ,("tile 1 window fullsize", mytest prop_tile_fullscreen)

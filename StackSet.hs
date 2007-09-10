@@ -32,11 +32,11 @@ module StackSet (
         swapMaster, swapUp, swapDown, modify, modify', float, sink, -- needed by users
         -- * Composite operations
         -- $composite
-        shift
+        shift, shiftWin
     ) where
 
 import Prelude hiding (filter)
-import Data.Maybe   (listToMaybe)
+import Data.Maybe   (listToMaybe,fromJust)
 import qualified Data.List as L (delete,deleteBy,find,splitAt,filter)
 import qualified Data.Map  as M (Map,insert,delete,empty)
 
@@ -502,3 +502,12 @@ shift n s | n `tagMember` s && n /= curtag = maybe s go (peek s)
           | otherwise                      = s
     where go w = view curtag . insertUp w . view n . delete' w $ s
           curtag = tag (workspace (current s))
+
+shiftWin :: (Ord a, Eq a, Eq s, Eq i) => i -> a -> StackSet i a s sd -> StackSet i a s sd
+shiftWin n w s | from == Nothing                     = s
+               | n `tagMember` s && (Just n) /= from = go
+               | otherwise                           = s
+    where go = on n (insertUp w) . on (fromJust from) (delete' w) $ s
+          curtag = tag (workspace (current s))
+          from = findIndex w s
+          on i f = view curtag . f . view i
