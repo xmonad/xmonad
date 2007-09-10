@@ -26,7 +26,7 @@ module StackSet (
         focusWindow, tagMember, member, findIndex,
         -- * Modifying the stackset
         -- $modifyStackset
-        insertUp, delete, filter,
+        insertUp, delete, delete', filter,
         -- * Setting the master window
         -- $settingMW
         swapMaster, swapUp, swapDown, modify, modify', float, sink, -- needed by users
@@ -453,9 +453,14 @@ insertUp a s = if member a s then s else insert
 --   * otherwise, delete doesn't affect the master.
 --
 delete :: (Ord a, Eq s) => a -> StackSet i a s sd -> StackSet i a s sd
-delete w s = s { current = removeFromScreen (current s)
-               , visible = map removeFromScreen (visible s)
-               , hidden = map removeFromWorkspace (hidden s) }
+delete w = sink w . delete' w
+
+-- only temporarily remove the window from the stack, thereby not destroying special
+-- information saved in the Stackset
+delete' :: (Ord a, Eq s) => a -> StackSet i a s sd -> StackSet i a s sd
+delete' w s = s { current = removeFromScreen (current s)
+                , visible = map removeFromScreen (visible s)
+                , hidden = map removeFromWorkspace (hidden s) }
     where removeFromWorkspace ws = ws { stack = stack ws >>= filter (/=w) }
           removeFromScreen scr = scr { workspace = removeFromWorkspace (workspace scr) }
 
@@ -495,5 +500,5 @@ swapMaster = modify' $ \c -> case c of
 shift :: (Ord a, Eq s, Eq i) => i -> StackSet i a s sd -> StackSet i a s sd
 shift n s | n `tagMember` s && n /= curtag = maybe s go (peek s)
           | otherwise                      = s
-    where go w = view curtag . insertUp w . view n . delete w $ s
+    where go w = view curtag . insertUp w . view n . delete' w $ s
           curtag = tag (workspace (current s))

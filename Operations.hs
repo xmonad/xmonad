@@ -66,15 +66,11 @@ manage w = whenX (fmap not $ isClient w) $ withDisplay $ \d -> do
 -- | unmanage. A window no longer exists, remove it from the window
 -- list, on whatever workspace it is.
 --
--- FIXME: clearFloating should be taken care of in W.delete, but if we do it
--- there, floating status is lost when moving windows between workspaces,
--- because W.shift calls W.delete.
---
 -- should also unmap?
 --
 unmanage :: Window -> X ()
 unmanage w = do
-    windows (W.sink w . W.delete w)
+    windows (W.delete w)
     setWMState w 0 {-withdrawn-}
     modify (\s -> s {mapped = S.delete w (mapped s), waitingUnmap = M.delete w (waitingUnmap s)})
 
