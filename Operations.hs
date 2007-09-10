@@ -49,7 +49,7 @@ import qualified Data.Traversable as T
 --
 manage :: Window -> X ()
 manage w = whenX (fmap not $ isClient w) $ withDisplay $ \d -> do
-    setInitialProperties w >> reveal w
+    setInitialProperties w
 
     -- FIXME: This is pretty awkward. We can't can't let "refresh" happen
     -- before the call to float, because that will resize the window and
