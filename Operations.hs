@@ -88,7 +88,7 @@ swapMaster = windows W.swapMaster
 
 -- | shift. Move a window to a new workspace, 0 indexed.
 shift :: WorkspaceId -> X ()
-shift n = windows (W.shift n)
+shift = windows . W.shift
 
 -- | view. Change the current workspace to workspace at offset n (0 indexed).
 view :: WorkspaceId -> X ()
