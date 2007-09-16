@@ -3,16 +3,15 @@ version:            0.3
 homepage:           http://xmonad.org
 synopsis:           A lightweight X11 window manager.
 description:
-    Xmonad is a minimalist tiling window manager for X, written in
-    Haskell. Windows are managed using automatic layout algorithms,
-    which can be dynamically reconfigured. At any time windows are
-    arranged so as to maximise the use of screen real estate. All
-    features of the window manager are accessible purely from the
-    keyboard: a mouse is entirely optional.  Xmonad is configured in
-    Haskell, and custom layout algorithms may be implemented by the user
-    in config files. A principle of Xmonad is predictability: the user
-    should know in advance precisely the window arrangement that will
-    result from any action.
+    xmonad is a tiling window manager for X. Windows are arranged
+    automatically to tile the screen without gaps or overlap, maximising
+    screen use. All features of the window manager are accessible from
+    the keyboard: a mouse is strictly optional. xmonad is written and
+    extensible in Haskell. Custom layout algorithms, and other
+    extensions, may be written by the user in config files. Layouts are
+    applied dynamically, and different layouts may be used on each
+    workspace. Xinerama is fully supported, allowing windows to be tiled
+    on several screens.
 category:           System
 license:            BSD3
 license-file:       LICENSE
