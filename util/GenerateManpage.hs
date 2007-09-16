@@ -4,14 +4,14 @@
 --
 -- Format for the docstrings in Config.hs takes the following form:
 --
--- -- mod-x @@ Frob the whatsit
+-- -- mod-x %! Frob the whatsit
 -- 
 -- "Frob the whatsit" will be used as the description for keybinding "mod-x"
 --
 -- If the keybinding name is omitted, it will try to guess from the rest of the
 -- line. For example:
 --
--- [ ((modMask .|. shiftMask, xK_Return), spawn "xterm") -- @@ Launch an xterm
+-- [ ((modMask .|. shiftMask, xK_Return), spawn "xterm") -- %! Launch an xterm
 --
 -- Here, mod-shift-return will be used as the keybinding name.
 --
@@ -32,7 +32,7 @@ binding [ _, bindingLine, "", desc ] = (guessKeys bindingLine, desc)
 binding [ _, _, keyCombo, desc ] = (keyCombo, desc)
 
 allBindings :: String -> [(String, String)]
-allBindings xs = map (binding . map trim) (xs =~ "(.*)--(.*)@@(.*)")
+allBindings xs = map (binding . map trim) (xs =~ "(.*)--(.*)%!(.*)")
 
 -- FIXME: What escaping should we be doing on these strings?
 troff :: (String, String) -> String
