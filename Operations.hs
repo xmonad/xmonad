@@ -451,10 +451,6 @@ initColor dpy c = (color_pixel . fst) `liftM` allocNamedColor dpy colormap c
 ------------------------------------------------------------------------
 -- | Floating layer support
 
--- | Make a floating window tiled
-sink :: Window -> X ()
-sink = windows . W.sink
-
 -- | Make a tiled window floating, using its suggested rectangle
 float :: Window -> X ()
 float w = withDisplay $ \d -> do

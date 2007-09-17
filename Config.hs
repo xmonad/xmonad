@@ -153,7 +153,7 @@ keys = M.fromList $
     , ((modMask,               xK_h     ), sendMessage Shrink) -- %! Shrink the master area
     , ((modMask,               xK_l     ), sendMessage Expand) -- %! Expand the master area
 
-    , ((modMask,               xK_t     ), withFocused sink) -- %! Push window back into tiling
+    , ((modMask,               xK_t     ), withFocused $ windows . W.sink) -- %! Push window back into tiling
 
     -- increase or decrease number of windows in the master area
     , ((modMask              , xK_comma ), sendMessage (IncMasterN 1)) -- %! Increment the number of windows in the master area
