@@ -455,7 +455,7 @@ insertUp a s = if member a s then s else insert
 delete :: (Ord a, Eq s) => a -> StackSet i a s sd -> StackSet i a s sd
 delete w = sink w . delete' w
 
--- only temporarily remove the window from the stack, thereby not destroying special
+-- | Only temporarily remove the window from the stack, thereby not destroying special
 -- information saved in the Stackset
 delete' :: (Ord a, Eq s) => a -> StackSet i a s sd -> StackSet i a s sd
 delete' w s = s { current = removeFromScreen (current s)
