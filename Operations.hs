@@ -74,22 +74,6 @@ unmanage w = do
     setWMState w 0 {-withdrawn-}
     modify (\s -> s {mapped = S.delete w (mapped s), waitingUnmap = M.delete w (waitingUnmap s)})
 
--- | focus. focus window up or down. or swap various windows.
-focusUp, focusDown, swapUp, swapDown, swapMaster :: X ()
-focusUp    = windows W.focusUp
-focusDown  = windows W.focusDown
-swapUp     = windows W.swapUp
-swapDown   = windows W.swapDown
-swapMaster = windows W.swapMaster
-
--- | shift. Move a window to a new workspace, 0 indexed.
-shift :: WorkspaceId -> X ()
-shift = windows . W.shift
-
--- | view. Change the current workspace to workspace at offset n (0 indexed).
-view :: WorkspaceId -> X ()
-view = windows . W.greedyView
-
 -- | Modify the size of the status gap at the top of the current screen
 -- Taking a function giving the current screen, and current geometry.
 modifyGap :: (Int -> (Int,Int,Int,Int) -> (Int,Int,Int,Int)) -> X ()

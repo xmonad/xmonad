@@ -140,14 +140,14 @@ keys = M.fromList $
     , ((modMask,               xK_n     ), refresh) -- %! Resize viewed windows to the correct size
 
     -- move focus up or down the window stack
-    , ((modMask,               xK_Tab   ), focusDown) -- %! Move focus to the next window
-    , ((modMask,               xK_j     ), focusDown) -- %! Move focus to the next window
-    , ((modMask,               xK_k     ), focusUp  ) -- %! Move focus to the previous window
+    , ((modMask,               xK_Tab   ), windows W.focusDown) -- %! Move focus to the next window
+    , ((modMask,               xK_j     ), windows W.focusDown) -- %! Move focus to the next window
+    , ((modMask,               xK_k     ), windows W.focusUp  ) -- %! Move focus to the previous window
 
     -- modifying the window order
-    , ((modMask,               xK_Return), swapMaster) -- %! Swap the focused window and the master window
-    , ((modMask .|. shiftMask, xK_j     ), swapDown  ) -- %! Swap the focused window with the next window
-    , ((modMask .|. shiftMask, xK_k     ), swapUp    ) -- %! Swap the focused window with the previous window
+    , ((modMask,               xK_Return), windows W.swapMaster) -- %! Swap the focused window and the master window
+    , ((modMask .|. shiftMask, xK_j     ), windows W.swapDown  ) -- %! Swap the focused window with the next window
+    , ((modMask .|. shiftMask, xK_k     ), windows W.swapUp    ) -- %! Swap the focused window with the previous window
 
     -- resizing the master/slave ratio
     , ((modMask,               xK_h     ), sendMessage Shrink) -- %! Shrink the master area
@@ -171,15 +171,15 @@ keys = M.fromList $
     ++
     -- mod-[1..9] %! Switch to workspace N
     -- mod-shift-[1..9] %! Move client to workspace N
-    [((m .|. modMask, k), f i)
+    [((m .|. modMask, k), windows $ f i)
         | (i, k) <- zip workspaces [xK_1 ..]
-        , (f, m) <- [(view, 0), (shift, shiftMask)]]
+        , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
     ++
     -- mod-{w,e,r} %! Switch to physical/Xinerama screens 1, 2, or 3
     -- mod-shift-{w,e,r} %! Move client to screen 1, 2, or 3
-    [((m .|. modMask, key), screenWorkspace sc >>= flip whenJust f)
+    [((m .|. modMask, key), screenWorkspace sc >>= flip whenJust (windows . f))
         | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
-        , (f, m) <- [(windows . W.view, 0), (shift, shiftMask)]]
+        , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
     -- Extension-provided key bindings lists
 
 -- |
@@ -190,7 +190,7 @@ mouseBindings = M.fromList $
     -- mod-button1 %! Set the window to floating mode and move by dragging
     [ ((modMask, button1), (\w -> focus w >> mouseMoveWindow w))
     -- mod-button2 %! Raise the window to the top of the stack
-    , ((modMask, button2), (\w -> focus w >> swapMaster))
+    , ((modMask, button2), (\w -> focus w >> windows W.swapMaster))
     -- mod-button3 %! Set the window to floating mode and resize by dragging
     , ((modMask, button3), (\w -> focus w >> mouseResizeWindow w))
     -- Extension-provided mouse bindings
