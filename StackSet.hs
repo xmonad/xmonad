@@ -503,11 +503,12 @@ shift n s | n `tagMember` s && n /= curtag = maybe s go (peek s)
     where go w = view curtag . insertUp w . view n . delete' w $ s
           curtag = tag (workspace (current s))
 
+-- TODO how does this duplicate 'shift's behaviour?
 shiftWin :: (Ord a, Eq a, Eq s, Eq i) => i -> a -> StackSet i a s sd -> StackSet i a s sd
 shiftWin n w s | from == Nothing                     = s
                | n `tagMember` s && (Just n) /= from = go
                | otherwise                           = s
-    where go = on n (insertUp w) . on (fromJust from) (delete' w) $ s
+    where go     = on n (insertUp w) . on (fromJust from) (delete' w) $ s
           curtag = tag (workspace (current s))
-          from = findIndex w s
+          from   = findIndex w s
           on i f = view curtag . f . view i
