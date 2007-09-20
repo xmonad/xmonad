@@ -15,7 +15,7 @@
 -----------------------------------------------------------------------------
 
 module XMonad (
-    X, WindowSet, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), Layout(..), OldLayout(..), SomeLayout(..),
+    X, WindowSet, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), Layout(..), SomeLayout(..),
     Typeable, Message, SomeMessage(..), fromMessage, runLayout,
     runX, catchX, io, catchIO, withDisplay, withWindowSet, isRoot, getAtom, spawn, restart, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
@@ -131,19 +131,11 @@ atom_WM_STATE           = getAtom "WM_STATE"
 -- that message and the screen is not refreshed.  Otherwise, 'modifyLayout'
 -- returns an updated 'Layout' and the screen is refreshed.
 --
-data OldLayout a =
-    OldLayout { doLayout'     :: Rectangle -> Stack a -> X ([(a, Rectangle)], Maybe (OldLayout a))
-              , modifyLayout' :: SomeMessage -> X (Maybe (OldLayout a)) }
-
 data SomeLayout a = forall l. Layout l a => SomeLayout (l a)
 
 class Layout layout a where
     doLayout :: layout a -> Rectangle -> Stack a -> X ([(a, Rectangle)], Maybe (layout a))
     modifyLayout :: layout a -> SomeMessage -> X (Maybe (layout a))
-
-instance Layout OldLayout a where
-    doLayout = doLayout'
-    modifyLayout = modifyLayout'
 
 instance Layout SomeLayout a where
     doLayout (SomeLayout l) r s = do (ars, ml') <- doLayout l r s

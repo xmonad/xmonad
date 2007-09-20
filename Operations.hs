@@ -138,7 +138,7 @@ windows f = do
 
         -- just the tiled windows:
         -- now tile the windows on this workspace, modified by the gap
-        (rs, ml') <- runLayout l viewrect tiled `catchX` runLayout (SomeLayout full) viewrect tiled
+        (rs, ml') <- runLayout l viewrect tiled `catchX` runLayout (SomeLayout Full) viewrect tiled
         mapM_ (uncurry tileWindow) rs
         whenJust ml' $ \l' -> modify $ \ss ->
                               ss { layouts = M.adjust (first (const l')) n (layouts ss) }
@@ -351,34 +351,35 @@ instance Message IncMasterN
 
 -- simple fullscreen mode, just render all windows fullscreen.
 -- a plea for tuple sections: map . (,sc)
-full :: OldLayout a
-full = OldLayout { doLayout'     = \sc (W.Stack f _ _) -> return ([(f, sc)],Nothing)
-                 , modifyLayout' = const (return Nothing) } -- no changes
-
+data Full a = Full
+instance Layout Full a where
+    doLayout Full sc (W.Stack f _ _) = return ([(f, sc)], Nothing)
+    modifyLayout Full _ = return Nothing -- no changes
 --
 -- The tiling mode of xmonad, and its operations.
 --
-tall :: Int -> Rational -> Rational -> OldLayout a
-tall nmaster delta frac =
-    OldLayout { doLayout' = \r -> return . (\x->(x,Nothing)) .
-                                  ap zip (tile frac r nmaster . length) . W.integrate
-              , modifyLayout' = \m -> return $ msum [fmap resize     (fromMessage m)
-                                                    ,fmap incmastern (fromMessage m)] }
-
-    where resize Shrink = tall nmaster delta (max 0 $ frac-delta)
-          resize Expand = tall nmaster delta (min 1 $ frac+delta)
-          incmastern (IncMasterN d) = tall (max 0 (nmaster+d)) delta frac
+data Tall a = Tall Int Rational Rational
+instance Layout Tall a where
+    doLayout (Tall nmaster _ frac) r =
+        return . (\x->(x,Nothing)) .
+        ap zip (tile frac r nmaster . length) . W.integrate
+    modifyLayout (Tall nmaster delta frac) m =
+        return $ msum [fmap resize (fromMessage m)
+                      ,fmap incmastern (fromMessage m)]
+        where resize Shrink = Tall nmaster delta (max 0 $ frac-delta)
+              resize Expand = Tall nmaster delta (min 1 $ frac+delta)
+              incmastern (IncMasterN d) = Tall (max 0 (nmaster+d)) delta frac
 
 -- | Mirror a rectangle
 mirrorRect :: Rectangle -> Rectangle
 mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 
 -- | Mirror a layout, compute its 90 degree rotated form.
-mirror :: Layout l a => l a -> OldLayout a
-mirror l =
-    OldLayout { doLayout' = \sc w -> do (wrs, ml') <- doLayout l (mirrorRect sc) w
-                                        return (map (second mirrorRect) wrs, mirror `fmap` ml')
-              , modifyLayout' = fmap (fmap mirror) . modifyLayout l }
+data Mirror a = forall l. Layout l a => Mirror (l a)
+instance Layout Mirror a where
+    doLayout (Mirror l) r s = do (wrs, ml') <- doLayout l (mirrorRect r) s
+                                 return (map (second mirrorRect) wrs, Mirror `fmap` ml')
+    modifyLayout (Mirror l) = fmap (fmap Mirror) . modifyLayout l
 
 -- | tile.  Compute the positions for windows using the default 2 pane tiling algorithm.
 --

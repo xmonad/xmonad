@@ -94,14 +94,14 @@ borderWidth = 1
 --
 defaultLayouts :: [SomeLayout Window]
 defaultLayouts = [ SomeLayout tiled
-                 , SomeLayout $ mirror tiled
-                 , SomeLayout full
+                 , SomeLayout $ Mirror tiled
+                 , SomeLayout Full
 
                  -- Extension-provided layouts
                  ]
   where
      -- default tiling algorithm partitions the screen into two panes
-     tiled   = tall nmaster delta ratio
+     tiled   = Tall nmaster delta ratio
 
      -- The default number of windows in the master pane
      nmaster = 1
