@@ -63,7 +63,6 @@ main = do
             , focusedBorder = fbc }
         st = XState
             { windowset     = winset
-            , layouts       = M.fromList [(w, safeLayouts) | w <- workspaces]
             , mapped        = S.empty
             , waitingUnmap  = M.empty
             , dragging      = Nothing }

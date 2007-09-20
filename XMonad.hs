@@ -15,7 +15,7 @@
 -----------------------------------------------------------------------------
 
 module XMonad (
-    X, WindowSet, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), Layout(..), SomeLayout(..), readLayout,
+    X, WindowSet, WindowSpace, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), Layout(..), SomeLayout(..), readLayout,
     Typeable, Message, SomeMessage(..), fromMessage, runLayout,
     runX, catchX, io, catchIO, withDisplay, withWindowSet, isRoot, getAtom, spawn, restart, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
@@ -43,8 +43,6 @@ data XState = XState
     { windowset    :: !WindowSet           -- ^ workspace list
     , mapped       :: !(S.Set Window)      -- ^ the Set of mapped windows
     , waitingUnmap :: !(M.Map Window Int)  -- ^ the number of expected UnmapEvents
-    , layouts      :: !(M.Map WorkspaceId (SomeLayout Window, [SomeLayout Window]))
-                       -- ^ mapping of workspaces to descriptions of their layouts
     , dragging     :: !(Maybe (Position -> Position -> X (), X ())) }
 data XConf = XConf
     { display       :: Display      -- ^ the X11 display
@@ -53,6 +51,7 @@ data XConf = XConf
     , focusedBorder :: !Pixel     } -- ^ border color of the focused window
 
 type WindowSet = StackSet WorkspaceId (SomeLayout Window) Window ScreenId ScreenDetail
+type WindowSpace = Workspace WorkspaceId (SomeLayout Window) Window
 
 -- | Virtual workspace indicies
 type WorkspaceId = String

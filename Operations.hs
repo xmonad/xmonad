@@ -29,14 +29,12 @@ import qualified Data.Set as S
 
 import Control.Monad.State
 import Control.Monad.Reader
-import Control.Arrow ((***), first, second)
+import Control.Arrow ((***), second)
 
 import System.IO
 import Graphics.X11.Xlib
 import Graphics.X11.Xinerama (getScreenInfo)
 import Graphics.X11.Xlib.Extras
-
-import qualified Data.Traversable as T
 
 -- ---------------------------------------------------------------------
 -- |
@@ -114,7 +112,7 @@ windows f = do
     -- We cannot use sendMessage because this must not call refresh ever,
     -- and must be called on all visible workspaces.
     broadcastMessage UnDoLayout
-    XState { windowset = old, layouts = fls } <- get
+    XState { windowset = old } <- get
     let oldvisible = concatMap (W.integrate' . W.stack . W.workspace) $ W.current old : W.visible old
         ws = f old
     modify (\s -> s { windowset = ws })
@@ -126,7 +124,7 @@ windows f = do
     visible <- fmap concat $ forM (zip allscreens summed_visible) $ \ (w, vis) -> do
         let n      = W.tag (W.workspace w)
             this   = W.view n ws
-            Just l = fmap fst $ M.lookup n fls
+            l = W.layout (W.workspace w)
             flt = filter (flip M.member (W.floating ws)) (W.index this)
             tiled = (W.stack . W.workspace . W.current $ this)
                     >>= W.filter (not . flip M.member (W.floating ws))
@@ -140,8 +138,9 @@ windows f = do
         -- now tile the windows on this workspace, modified by the gap
         (rs, ml') <- runLayout l viewrect tiled `catchX` runLayout (SomeLayout Full) viewrect tiled
         mapM_ (uncurry tileWindow) rs
-        whenJust ml' $ \l' -> modify $ \ss ->
-                              ss { layouts = M.adjust (first (const l')) n (layouts ss) }
+        whenJust ml' $ \l' -> runOnWorkspaces (\ww -> if W.tag ww == n
+                                                      then return $ ww { W.layout = l'}
+                                                      else return ww)
 
         -- now the floating windows:
         -- move/resize the floating windows, if there are any
@@ -304,31 +303,32 @@ setFocusX w = withWindowSet $ \ws -> do
 -- Note that the new layout's deconstructor will be called, so it should be
 -- idempotent.
 switchLayout :: X ()
-switchLayout = do
-    broadcastMessage UnDoLayout  -- calling refresh now would defeat the point of deconstruction
-    n <- gets (W.tag . W.workspace . W.current . windowset)
-    modify $ \s -> s { layouts = M.adjust switch n (layouts s) }
-    refresh
- where switch (x, xs) = let xs' =  xs ++ [x] in (head xs', tail xs')
+switchLayout = return ()
 
 -- | Throw a message to the current Layout possibly modifying how we
 -- layout the windows, then refresh.
 --
 sendMessage :: Message a => a -> X ()
-sendMessage a = do n <- (W.tag . W.workspace . W.current) `fmap` gets windowset
-                   Just (l,ls) <- M.lookup n `fmap` gets layouts
-                   ml' <- modifyLayout l (SomeMessage a) `catchX` return (Just l)
-                   whenJust ml' $ \l' -> do modify $ \s -> s { layouts = M.insert n (l',ls) (layouts s) }
-                                            refresh
+sendMessage a = do w <- (W.workspace . W.current) `fmap` gets windowset
+                   ml' <- modifyLayout (W.layout w) (SomeMessage a) `catchX` return Nothing
+                   whenJust ml' $ \l' ->
+                       do windows $ \ws -> ws { W.current = (W.current ws)
+                                                { W.workspace = (W.workspace $ W.current ws)
+                                                  { W.layout = l' }}}
 
 -- | Send a message to all visible layouts, without necessarily refreshing.
 -- This is how we implement the hooks, such as UnDoLayout.
 broadcastMessage :: Message a => a -> X ()
-broadcastMessage a = do
-    ol <- gets layouts
-    nl <- T.forM ol $ \ (l,ls) -> maybe (l,ls) (flip (,) ls) `fmap`
-          (modifyLayout l (SomeMessage a) `catchX` return (Just l))
-    modify $ \s -> s { layouts = nl }
+broadcastMessage a = runOnWorkspaces modw
+    where modw w = do ml' <- modifyLayout (W.layout w) (SomeMessage a) `catchX` return Nothing
+                      return $ w { W.layout = maybe (W.layout w) id ml' }
+
+runOnWorkspaces :: (WindowSpace -> X WindowSpace) -> X ()
+runOnWorkspaces job = do ws <- gets windowset
+                         h <- mapM job $ W.hidden ws
+                         c:v <- mapM (\s -> fmap (\w -> s { W.workspace = w}) $ job (W.workspace s))
+                                 $ W.current ws : W.visible ws
+                         modify $ \s -> s { windowset = ws { W.current = c, W.visible = v, W.hidden = h } }
 
 instance Message Event
 
