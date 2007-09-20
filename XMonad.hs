@@ -15,7 +15,7 @@
 -----------------------------------------------------------------------------
 
 module XMonad (
-    X, WindowSet, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), Layout(..), SomeLayout(..),
+    X, WindowSet, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), Layout(..), SomeLayout(..), readLayout,
     Typeable, Message, SomeMessage(..), fromMessage, runLayout,
     runX, catchX, io, catchIO, withDisplay, withWindowSet, isRoot, getAtom, spawn, restart, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
@@ -136,6 +136,12 @@ instance Show (SomeLayout a) where
     show (SomeLayout l) = show l
 instance Read (SomeLayout a) where
     readsPrec _ _ = [] -- We can't read an existential type!!!
+
+readLayout :: [SomeLayout a] -> String -> [(SomeLayout a, String)]
+readLayout ls s = concatMap rl ls
+    where rl (SomeLayout x) = map (\(l,s') -> (SomeLayout l,s')) $ rl' x
+          rl' :: Layout l a => l a -> [(l a,String)]
+          rl' _ = reads s
 
 class (Show (layout a), Read (layout a)) => Layout layout a where
     doLayout :: layout a -> Rectangle -> Stack a -> X ([(a, Rectangle)], Maybe (layout a))
