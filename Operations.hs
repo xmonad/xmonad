@@ -351,14 +351,14 @@ instance Message IncMasterN
 
 -- simple fullscreen mode, just render all windows fullscreen.
 -- a plea for tuple sections: map . (,sc)
-data Full a = Full deriving Show
+data Full a = Full deriving ( Show, Read )
 instance Layout Full a where
     doLayout Full sc (W.Stack f _ _) = return ([(f, sc)], Nothing)
     modifyLayout Full _ = return Nothing -- no changes
 --
 -- The tiling mode of xmonad, and its operations.
 --
-data Tall a = Tall Int Rational Rational deriving Show
+data Tall a = Tall Int Rational Rational deriving ( Show, Read )
 instance Layout Tall a where
     doLayout (Tall nmaster _ frac) r =
         return . (\x->(x,Nothing)) .
@@ -375,10 +375,15 @@ mirrorRect :: Rectangle -> Rectangle
 mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 
 -- | Mirror a layout, compute its 90 degree rotated form.
-data Mirror a = forall l. Layout l a => Mirror (l a)
-instance Show (Mirror a) where
+data Mirror l a = Layout l a => Mirror (l a)
+instance Layout l a => Show (Mirror l a) where
     show (Mirror l) = "Mirror "++show l
-instance Layout Mirror a where
+instance Layout l a => Read (Mirror l a) where
+    readsPrec _ s = case take (length "Mirror ") s of
+                      "Mirror " -> map (\ (l,s') -> (Mirror l,s')) $ reads $ drop (length "Mirror ") s
+                      _ -> []
+
+instance Layout l a => Layout (Mirror l) a where
     doLayout (Mirror l) r s = do (wrs, ml') <- doLayout l (mirrorRect r) s
                                  return (map (second mirrorRect) wrs, Mirror `fmap` ml')
     modifyLayout (Mirror l) = fmap (fmap Mirror) . modifyLayout l

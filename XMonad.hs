@@ -134,8 +134,10 @@ atom_WM_STATE           = getAtom "WM_STATE"
 data SomeLayout a = forall l. Layout l a => SomeLayout (l a)
 instance Show (SomeLayout a) where
     show (SomeLayout l) = show l
+instance Read (SomeLayout a) where
+    readsPrec _ _ = [] -- We can't read an existential type!!!
 
-class Show (layout a) => Layout layout a where
+class (Show (layout a), Read (layout a)) => Layout layout a where
     doLayout :: layout a -> Rectangle -> Stack a -> X ([(a, Rectangle)], Maybe (layout a))
     modifyLayout :: layout a -> SomeMessage -> X (Maybe (layout a))
 
