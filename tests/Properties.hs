@@ -34,12 +34,13 @@ import qualified Data.Map as M
 --
 -- The all important Arbitrary instance for StackSet.
 --
-instance (Integral i, Integral s, Eq a, Arbitrary a, Arbitrary sd)
-        => Arbitrary (StackSet i a s sd) where
+instance (Integral i, Integral s, Eq a, Arbitrary a, Arbitrary l, Arbitrary sd)
+        => Arbitrary (StackSet i l a s sd) where
     arbitrary = do
         sz <- choose (1,10)     -- number of workspaces
         n  <- choose (0,sz-1)   -- pick one to be in focus
         sc  <- choose (1,sz)     -- a number of physical screens
+        lay <- arbitrary           -- pick any layout
         sds <- replicateM sc arbitrary
         ls <- vector sz         -- a vector of sz workspaces
 
@@ -48,7 +49,7 @@ instance (Integral i, Integral s, Eq a, Arbitrary a, Arbitrary sd)
                             else liftM Just (choose ((-1),length s-1))
                        | s <- ls ]
 
-        return $ fromList (fromIntegral n, sds,fs,ls)
+        return $ fromList (fromIntegral n, sds,fs,ls,lay)
     coarbitrary = error "no coarbitrary for StackSet"
 
 
@@ -62,14 +63,14 @@ instance (Integral i, Integral s, Eq a, Arbitrary a, Arbitrary sd)
 -- 'fs' random focused window on each workspace
 -- 'xs' list of list of windows
 --
-fromList :: (Integral i, Integral s, Eq a) => (i, [sd], [Maybe Int], [[a]]) -> StackSet i a s sd
-fromList (_,_,_,[]) = error "Cannot build a StackSet from an empty list"
+fromList :: (Integral i, Integral s, Eq a) => (i, [sd], [Maybe Int], [[a]], l) -> StackSet i l a s sd
+fromList (_,_,_,[],_) = error "Cannot build a StackSet from an empty list"
 
-fromList (o,m,fs,xs) =
+fromList (o,m,fs,xs,l) =
     let s = view o $
                 foldr (\(i,ys) s ->
                     foldr insertUp (view i s) ys)
-                        (new [0..genericLength xs-1] m) (zip [0..] xs)
+                        (new l [0..genericLength xs-1] m) (zip [0..] xs)
     in foldr (\f t -> case f of
                             Nothing -> t
                             Just i  -> foldr (const focusUp) t [0..i] ) s fs
@@ -79,7 +80,7 @@ fromList (o,m,fs,xs) =
 --
 -- Just generate StackSets with Char elements.
 --
-type T = StackSet (NonNegative Int) Char Int Int
+type T = StackSet (NonNegative Int) Int Char Int Int
 
 -- Useful operation, the non-local workspaces
 hidden_spaces x = map workspace (visible x) ++ hidden x
@@ -129,9 +130,9 @@ monotonic (x:y:zs) | x == y-1  = monotonic (y:zs)
 prop_invariant = invariant
 
 -- and check other ops preserve invariants
-prop_empty_I  (n :: Positive Int) = forAll (choose (1,fromIntegral n)) $  \m ->
-                                    forAll (vector m) $ \ms ->
-        invariant $ new [0..fromIntegral n-1] ms
+prop_empty_I  (n :: Positive Int) l = forAll (choose (1,fromIntegral n)) $  \m ->
+                                      forAll (vector m) $ \ms ->
+        invariant $ new l [0..fromIntegral n-1] ms
 
 prop_view_I (n :: NonNegative Int) (x :: T) =
     n `tagMember` x ==> invariant $ view (fromIntegral n) x
@@ -182,11 +183,11 @@ prop_empty (EmptyStackSet x) =
                                         : map workspace (visible x) ++ hidden x ]
 
 -- empty StackSets always have focus on first workspace
-prop_empty_current (NonEmptyNubList ns) (NonEmptyNubList sds) =
+prop_empty_current (NonEmptyNubList ns) (NonEmptyNubList sds) l =
     -- TODO, this is ugly
     length sds <= length ns ==>
     tag (workspace $ current x) == head ns
-    where x = new ns sds :: T
+    where x = new l ns sds :: T
 
 -- no windows will be a member of an empty workspace
 prop_member_empty i (EmptyStackSet x)
@@ -844,8 +845,9 @@ instance Arbitrary EmptyStackSet where
     arbitrary = do
         (NonEmptyNubList ns)  <- arbitrary
         (NonEmptyNubList sds) <- arbitrary
+        l <- arbitrary
         -- there cannot be more screens than workspaces:
-        return . EmptyStackSet . new ns $ take (min (length ns) (length sds)) sds
+        return . EmptyStackSet . new l ns $ take (min (length ns) (length sds)) sds
 
 -- | Generates a value that satisfies a predicate.
 suchThat :: Gen a -> (a -> Bool) -> Gen a

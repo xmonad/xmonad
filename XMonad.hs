@@ -52,7 +52,7 @@ data XConf = XConf
     , normalBorder  :: !Pixel       -- ^ border color of unfocused windows
     , focusedBorder :: !Pixel     } -- ^ border color of the focused window
 
-type WindowSet = StackSet WorkspaceId Window ScreenId ScreenDetail
+type WindowSet = StackSet WorkspaceId (SomeLayout Window) Window ScreenId ScreenDetail
 
 -- | Virtual workspace indicies
 type WorkspaceId = String

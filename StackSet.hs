@@ -147,23 +147,23 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 -- that are produced are used to track those workspaces visible as
 -- Xinerama screens, and those workspaces not visible anywhere.
 
-data StackSet i a sid sd =
-    StackSet { current  :: !(Screen i a sid sd)    -- ^ currently focused workspace
-             , visible  :: [Screen i a sid sd]     -- ^ non-focused workspaces, visible in xinerama
-             , hidden   :: [Workspace i a]      -- ^ workspaces not visible anywhere
+data StackSet i l a sid sd =
+    StackSet { current  :: !(Screen i l a sid sd)    -- ^ currently focused workspace
+             , visible  :: [Screen i l a sid sd]     -- ^ non-focused workspaces, visible in xinerama
+             , hidden   :: [Workspace i l a]      -- ^ workspaces not visible anywhere
              , floating :: M.Map a RationalRect -- ^ floating windows
              } deriving (Show, Read, Eq)
 
 -- | Visible workspaces, and their Xinerama screens.
-data Screen i a sid sd = Screen { workspace :: !(Workspace i a)
-                                , screen :: !sid
-                                , screenDetail :: !sd }
+data Screen i l a sid sd = Screen { workspace :: !(Workspace i l a)
+                                  , screen :: !sid
+                                  , screenDetail :: !sd }
     deriving (Show, Read, Eq)
 
 -- |
 -- A workspace is just a tag - its index - and a stack
 --
-data Workspace i a = Workspace  { tag :: !i, stack :: StackOrNot a }
+data Workspace i l a = Workspace  { tag :: !i, layout :: l, stack :: StackOrNot a }
     deriving (Show, Read, Eq)
 
 data RationalRect = RationalRect Rational Rational Rational Rational
@@ -208,12 +208,12 @@ abort x = error $ "xmonad: StackSet: " ++ x
 --
 -- Xinerama: Virtual workspaces are assigned to physical screens, starting at 0.
 --
-new :: (Integral s) => [i] -> [sd] -> StackSet i a s sd
-new wids m | not (null wids) && length m <= length wids = StackSet cur visi unseen M.empty
-  where (seen,unseen) = L.splitAt (length m) $ map (flip Workspace Nothing) wids
+new :: (Integral s) => l -> [i] -> [sd] -> StackSet i l a s sd
+new l wids m | not (null wids) && length m <= length wids = StackSet cur visi unseen M.empty
+  where (seen,unseen) = L.splitAt (length m) $ map (\i -> Workspace i l Nothing) wids
         (cur:visi)    = [ Screen i s sd |  (i, s, sd) <- zip3 seen [0..] m ]
                 -- now zip up visibles with their screen id
-new _ _ = abort "non-positive argument to StackSet.new"
+new _ _ _ = abort "non-positive argument to StackSet.new"
 
 
 
@@ -225,7 +225,7 @@ new _ _ = abort "non-positive argument to StackSet.new"
 -- becomes the current screen. If it is in the visible list, it becomes
 -- current.
 
-view :: (Eq s, Eq i) => i -> StackSet i a s sd -> StackSet i a s sd
+view :: (Eq s, Eq i) => i -> StackSet i l a s sd -> StackSet i l a s sd
 view i s
     | not (i `tagMember` s)
       || i == tag (workspace (current s)) = s  -- out of bounds or current
@@ -254,7 +254,7 @@ view i s
 -- screen, the workspaces of the current screen and the other screen are
 -- swapped.
 
-greedyView :: (Eq s, Eq i) => i -> StackSet i a s sd -> StackSet i a s sd
+greedyView :: (Eq s, Eq i) => i -> StackSet i l a s sd -> StackSet i l a s sd
 greedyView w ws
  | any wTag (hidden ws) = view w ws
  | (Just s) <- L.find (wTag . workspace) (visible ws)
@@ -270,7 +270,7 @@ greedyView w ws
 
 -- | Find the tag of the workspace visible on Xinerama screen 'sc'.
 -- Nothing if screen is out of bounds.
-lookupWorkspace :: Eq s => s -> StackSet i a s sd -> Maybe i
+lookupWorkspace :: Eq s => s -> StackSet i l a s sd -> Maybe i
 lookupWorkspace sc w = listToMaybe [ tag i | Screen i s _ <- current w : visible w, s == sc ]
 
 -- ---------------------------------------------------------------------
@@ -282,13 +282,13 @@ lookupWorkspace sc w = listToMaybe [ tag i | Screen i s _ <- current w : visible
 -- default value. Otherwise, it applies the function to the stack,
 -- returning the result. It is like 'maybe' for the focused workspace.
 --
-with :: b -> (Stack a -> b) -> StackSet i a s sd -> b
+with :: b -> (Stack a -> b) -> StackSet i l a s sd -> b
 with dflt f = maybe dflt f . stack . workspace . current
 
 -- |
 -- Apply a function, and a default value for Nothing, to modify the current stack.
 --
-modify :: StackOrNot a -> (Stack a -> StackOrNot a) -> StackSet i a s sd -> StackSet i a s sd
+modify :: StackOrNot a -> (Stack a -> StackOrNot a) -> StackSet i l a s sd -> StackSet i l a s sd
 modify d f s = s { current = (current s)
                         { workspace = (workspace (current s)) { stack = with d f s }}}
 
@@ -296,14 +296,14 @@ modify d f s = s { current = (current s)
 -- Apply a function to modify the current stack if it isn't empty, and we don't
 --  want to empty it.
 --
-modify' :: (Stack a -> Stack a) -> StackSet i a s sd -> StackSet i a s sd
+modify' :: (Stack a -> Stack a) -> StackSet i l a s sd -> StackSet i l a s sd
 modify' f = modify Nothing (Just . f)
 
 -- |
 -- /O(1)/. Extract the focused element of the current stack. 
 -- Return Just that element, or Nothing for an empty stack.
 --
-peek :: StackSet i a s sd -> Maybe a
+peek :: StackSet i l a s sd -> Maybe a
 peek = with Nothing (return . focus)
 
 -- |
@@ -341,7 +341,7 @@ filter p (Stack f ls rs) = case L.filter p (f:rs) of
 -- the head of the list. The implementation is given by the natural
 -- integration of a one-hole list cursor, back to a list.
 --
-index :: StackSet i a s sd -> [a]
+index :: StackSet i l a s sd -> [a]
 index = with [] integrate
 
 --  let is = t : r ++ reverse l in take (length is) (dropWhile (/= m) (cycle is))
@@ -358,7 +358,7 @@ index = with [] integrate
 -- if we reach the end. Again the wrapping model should 'cycle' on
 -- the current stack.
 -- 
-focusUp, focusDown, swapUp, swapDown :: StackSet i a s sd -> StackSet i a s sd
+focusUp, focusDown, swapUp, swapDown :: StackSet i l a s sd -> StackSet i l a s sd
 focusUp   = modify' focusUp'
 focusDown = modify' (reverseStack . focusUp' . reverseStack)
 
@@ -380,7 +380,7 @@ reverseStack (Stack t ls rs) = Stack t rs ls
 -- | /O(1) on current window, O(n) in general/. Focus the window 'w', 
 -- and set its workspace as current.
 --
-focusWindow :: (Eq s, Eq a, Eq i) => a -> StackSet i a s sd -> StackSet i a s sd
+focusWindow :: (Eq s, Eq a, Eq i) => a -> StackSet i l a s sd -> StackSet i l a s sd
 focusWindow w s | Just w == peek s = s
                 | otherwise        = maybe s id $ do
                     n <- findIndex w s
@@ -393,11 +393,11 @@ screens :: StackSet i a s sd -> [Screen i a s sd]
 screens s = current s : visible s
 
 -- | Get a list of all workspaces in the StackSet.
-workspaces :: StackSet i a s sd -> [Workspace i a]
+workspaces :: StackSet i l a s sd -> [Workspace i l a]
 workspaces s = workspace (current s) : map workspace (visible s) ++ hidden s
 
 -- | Is the given tag present in the StackSet?
-tagMember :: Eq i => i -> StackSet i a s sd -> Bool
+tagMember :: Eq i => i -> StackSet i l a s sd -> Bool
 tagMember t = elem t . map tag . workspaces
 
 -- |
@@ -406,13 +406,13 @@ tagMember t = elem t . map tag . workspaces
 --
 
 -- | /O(n)/. Is a window in the StackSet.
-member :: Eq a => a -> StackSet i a s sd -> Bool
+member :: Eq a => a -> StackSet i l a s sd -> Bool
 member a s = maybe False (const True) (findIndex a s)
 
 -- | /O(1) on current window, O(n) in general/.
 -- Return Just the workspace index of the given window, or Nothing
 -- if the window is not in the StackSet.
-findIndex :: Eq a => a -> StackSet i a s sd -> Maybe i
+findIndex :: Eq a => a -> StackSet i l a s sd -> Maybe i
 findIndex a s = listToMaybe
     [ tag w | w <- workspaces s, has a (stack w) ]
     where has _ Nothing         = False
@@ -435,11 +435,11 @@ findIndex a s = listToMaybe
 -- Semantics in Huet's paper is that insert doesn't move the cursor.
 -- However, we choose to insert above, and move the focus.
 --
-insertUp :: Eq a => a -> StackSet i a s sd -> StackSet i a s sd
+insertUp :: Eq a => a -> StackSet i l a s sd -> StackSet i l a s sd
 insertUp a s = if member a s then s else insert
   where insert = modify (Just $ Stack a [] []) (\(Stack t l r) -> Just $ Stack a l (t:r)) s
 
--- insertDown :: a -> StackSet i a s sd -> StackSet i a s sd
+-- insertDown :: a -> StackSet i l a s sd -> StackSet i l a s sd
 -- insertDown a = modify (Stack a [] []) $ \(Stack t l r) -> Stack a (t:l) r
 -- Old semantics, from Huet.
 -- >    w { down = a : down w }
@@ -458,12 +458,12 @@ insertUp a s = if member a s then s else insert
 --   * deleting the master window resets it to the newly focused window
 --   * otherwise, delete doesn't affect the master.
 --
-delete :: (Ord a, Eq s) => a -> StackSet i a s sd -> StackSet i a s sd
+delete :: (Ord a, Eq s) => a -> StackSet i l a s sd -> StackSet i l a s sd
 delete w = sink w . delete' w
 
 -- | Only temporarily remove the window from the stack, thereby not destroying special
 -- information saved in the Stackset
-delete' :: (Eq a, Eq s) => a -> StackSet i a s sd -> StackSet i a s sd
+delete' :: (Eq a, Eq s) => a -> StackSet i l a s sd -> StackSet i l a s sd
 delete' w s = s { current = removeFromScreen        (current s)
                 , visible = map removeFromScreen    (visible s)
                 , hidden  = map removeFromWorkspace (hidden  s) }
@@ -474,11 +474,11 @@ delete' w s = s { current = removeFromScreen        (current s)
 
 -- | Given a window, and its preferred rectangle, set it as floating
 -- A floating window should already be managed by the StackSet.
-float :: Ord a => a -> RationalRect -> StackSet i a s sd -> StackSet i a s sd
+float :: Ord a => a -> RationalRect -> StackSet i l a s sd -> StackSet i l a s sd
 float w r s = s { floating = M.insert w r (floating s) }
 
 -- | Clear the floating status of a window
-sink :: Ord a => a -> StackSet i a s sd -> StackSet i a s sd
+sink :: Ord a => a -> StackSet i l a s sd -> StackSet i l a s sd
 sink w s = s { floating = M.delete w (floating s) }
 
 ------------------------------------------------------------------------
@@ -487,7 +487,7 @@ sink w s = s { floating = M.delete w (floating s) }
 -- | /O(s)/. Set the master window to the focused window.
 -- The old master window is swapped in the tiling order with the focused window.
 -- Focus stays with the item moved.
-swapMaster :: StackSet i a s sd -> StackSet i a s sd
+swapMaster :: StackSet i l a s sd -> StackSet i l a s sd
 swapMaster = modify' $ \c -> case c of
     Stack _ [] _  -> c    -- already master.
     Stack t ls rs -> Stack t [] (xs ++ x : rs) where (x:xs) = reverse ls
@@ -510,7 +510,7 @@ focusMaster = modify' $ \c -> case c of
 -- The actual focused workspace doesn't change. If there is -- no
 -- element on the current stack, the original stackSet is returned.
 --
-shift :: (Ord a, Eq s, Eq i) => i -> StackSet i a s sd -> StackSet i a s sd
+shift :: (Ord a, Eq s, Eq i) => i -> StackSet i l a s sd -> StackSet i l a s sd
 shift n s | n `tagMember` s && n /= curtag = maybe s go (peek s)
           | otherwise                      = s
     where go w = view curtag . insertUp w . view n . delete' w $ s
@@ -523,7 +523,7 @@ shift n s | n `tagMember` s && n /= curtag = maybe s go (peek s)
 -- The actual focused workspace doesn't change. If the window is not
 -- found in the stackSet, the original stackSet is returned.
 -- TODO how does this duplicate 'shift's behaviour?
-shiftWin :: (Ord a, Eq a, Eq s, Eq i) => i -> a -> StackSet i a s sd -> StackSet i a s sd
+shiftWin :: (Ord a, Eq a, Eq s, Eq i) => i -> a -> StackSet i l a s sd -> StackSet i l a s sd
 shiftWin n w s | from == Nothing                     = s
                | n `tagMember` s && (Just n) /= from = go
                | otherwise                           = s

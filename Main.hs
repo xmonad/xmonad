@@ -52,7 +52,7 @@ main = do
 
     let winset | ("--resume" : s : _) <- args
                , [(x, "")]            <- reads s = x
-               | otherwise = new workspaces $ zipWith SD xinesc gaps
+               | otherwise = new (fst safeLayouts) workspaces $ zipWith SD xinesc gaps
         gaps = take (length xinesc) $ defaultGaps ++ repeat (0,0,0,0)
 
         safeLayouts = case defaultLayouts of [] -> (SomeLayout Full, []); (x:xs) -> (x,xs)
