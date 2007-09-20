@@ -148,10 +148,8 @@ class (Show (layout a), Read (layout a)) => Layout layout a where
     modifyLayout :: layout a -> SomeMessage -> X (Maybe (layout a))
 
 instance Layout SomeLayout a where
-    doLayout (SomeLayout l) r s = do (ars, ml') <- doLayout l r s
-                                     return (ars, SomeLayout `fmap` ml' )
-    modifyLayout (SomeLayout l) m = do ml' <- modifyLayout l m
-                                       return (SomeLayout `fmap` ml')
+    doLayout (SomeLayout l) r s = fmap (fmap $ fmap SomeLayout) $ doLayout l r s
+    modifyLayout (SomeLayout l) = fmap (fmap SomeLayout) . modifyLayout l
 
 runLayout :: Layout l a => l a -> Rectangle -> StackOrNot a -> X ([(a, Rectangle)], Maybe (l a))
 runLayout l r = maybe (return ([], Nothing)) (doLayout l r)

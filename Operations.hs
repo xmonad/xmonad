@@ -378,8 +378,8 @@ mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 data Mirror l a = Mirror (l a) deriving (Show, Read)
 
 instance Layout l a => Layout (Mirror l) a where
-    doLayout (Mirror l) r s = do (wrs, ml') <- doLayout l (mirrorRect r) s
-                                 return (map (second mirrorRect) wrs, Mirror `fmap` ml')
+    doLayout (Mirror l) r s = (map (second mirrorRect) *** fmap Mirror)
+                                `fmap` doLayout l (mirrorRect r) s
     modifyLayout (Mirror l) = fmap (fmap Mirror) . modifyLayout l
 
 -- | tile.  Compute the positions for windows using the default 2 pane tiling algorithm.
