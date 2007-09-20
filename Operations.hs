@@ -375,13 +375,7 @@ mirrorRect :: Rectangle -> Rectangle
 mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 
 -- | Mirror a layout, compute its 90 degree rotated form.
-data Mirror l a = Layout l a => Mirror (l a)
-instance Layout l a => Show (Mirror l a) where
-    show (Mirror l) = "Mirror "++show l
-instance Layout l a => Read (Mirror l a) where
-    readsPrec _ s = case take (length "Mirror ") s of
-                      "Mirror " -> map (\ (l,s') -> (Mirror l,s')) $ reads $ drop (length "Mirror ") s
-                      _ -> []
+data Mirror l a = Mirror (l a) deriving (Show, Read)
 
 instance Layout l a => Layout (Mirror l) a where
     doLayout (Mirror l) r s = do (wrs, ml') <- doLayout l (mirrorRect r) s
