@@ -38,7 +38,7 @@ module StackSet (
 
 import Prelude hiding (filter)
 import Data.Maybe   (listToMaybe,fromJust)
-import qualified Data.List as L (delete,deleteBy,find,splitAt,filter)
+import qualified Data.List as L (deleteBy,find,splitAt,filter)
 import qualified Data.Map  as M (Map,insert,delete,empty)
 
 -- $intro
@@ -225,7 +225,7 @@ new _ _ = abort "non-positive argument to StackSet.new"
 -- becomes the current screen. If it is in the visible list, it becomes
 -- current.
 
-view :: (Eq a, Eq s, Eq i) => i -> StackSet i a s sd -> StackSet i a s sd
+view :: (Eq s, Eq i) => i -> StackSet i a s sd -> StackSet i a s sd
 view i s
     | not (i `tagMember` s)
       || i == tag (workspace (current s)) = s  -- out of bounds or current
@@ -237,10 +237,11 @@ view i s
     | Just x <- L.find ((i==).tag)           (hidden  s)
     -- if it was hidden, it is raised on the xine screen currently used
     = s { current = (current s) { workspace = x }
-        , hidden = workspace (current s) : L.delete x (hidden s) }
+        , hidden = workspace (current s) : L.deleteBy tagEq x (hidden s) }
 
     | otherwise = s
  where screenEq x y = screen x == screen y
+       tagEq x y = tag x == tag y
 
     -- 'Catch'ing this might be hard. Relies on monotonically increasing
     -- workspace tags defined in 'new'
@@ -253,7 +254,7 @@ view i s
 -- screen, the workspaces of the current screen and the other screen are
 -- swapped.
 
-greedyView :: (Eq a, Eq s, Eq i) => i -> StackSet i a s sd -> StackSet i a s sd
+greedyView :: (Eq s, Eq i) => i -> StackSet i a s sd -> StackSet i a s sd
 greedyView w ws
  | any wTag (hidden ws) = view w ws
  | (Just s) <- L.find (wTag . workspace) (visible ws)
