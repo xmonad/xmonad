@@ -463,7 +463,7 @@ delete w = sink w . delete' w
 
 -- | Only temporarily remove the window from the stack, thereby not destroying special
 -- information saved in the Stackset
-delete' :: (Ord a, Eq s) => a -> StackSet i a s sd -> StackSet i a s sd
+delete' :: (Eq a, Eq s) => a -> StackSet i a s sd -> StackSet i a s sd
 delete' w s = s { current = removeFromScreen        (current s)
                 , visible = map removeFromScreen    (visible s)
                 , hidden  = map removeFromWorkspace (hidden  s) }
