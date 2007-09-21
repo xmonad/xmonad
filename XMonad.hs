@@ -15,7 +15,7 @@
 -----------------------------------------------------------------------------
 
 module XMonad (
-    X, WindowSet, WindowSpace, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), Layout(..), SomeLayout(..), readLayout,
+    X, WindowSet, WindowSpace, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), Layout(..), SomeLayout(..), ReadableSomeLayout(..),
     Typeable, Message, SomeMessage(..), fromMessage, runLayout,
     runX, catchX, io, catchIO, withDisplay, withWindowSet, isRoot, getAtom, spawn, restart, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
@@ -131,6 +131,14 @@ atom_WM_STATE           = getAtom "WM_STATE"
 -- returns an updated 'Layout' and the screen is refreshed.
 --
 data SomeLayout a = forall l. Layout l a => SomeLayout (l a)
+
+class ReadableSomeLayout a where
+    defaults :: [SomeLayout a]
+instance ReadableSomeLayout a => Read (SomeLayout a) where
+    readsPrec _ = readLayout defaults
+instance ReadableSomeLayout a => Layout SomeLayout a where
+    doLayout (SomeLayout l) r s = fmap (fmap $ fmap SomeLayout) $ doLayout l r s
+    modifyLayout (SomeLayout l) = fmap (fmap SomeLayout) . modifyLayout l
 
 instance Show (SomeLayout a) where
     show (SomeLayout l) = show l

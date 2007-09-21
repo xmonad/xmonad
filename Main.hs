@@ -52,10 +52,11 @@ main = do
 
     let winset | ("--resume" : s : _) <- args
                , [(x, "")]            <- reads s = x
-               | otherwise = new (fst safeLayouts) workspaces $ zipWith SD xinesc gaps
+               | otherwise = new (SomeLayout $ LayoutSelection safeLayouts)
+                             workspaces $ zipWith SD xinesc gaps
         gaps = take (length xinesc) $ defaultGaps ++ repeat (0,0,0,0)
 
-        safeLayouts = case defaultLayouts of [] -> (SomeLayout Full, []); (x:xs) -> (x,xs)
+        safeLayouts = if null defaultLayouts then [("full",SomeLayout Full)] else defaultLayouts
         cf = XConf
             { display       = dpy
             , theRoot       = rootw

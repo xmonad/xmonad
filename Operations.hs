@@ -21,7 +21,7 @@ import qualified StackSet as W
 import {-# SOURCE #-} Config (borderWidth,logHook,numlockMask,defaultLayouts)
 
 import Data.Maybe
-import Data.List            (nub, (\\), find)
+import Data.List            (nub, (\\), find, partition)
 import Data.Bits            ((.|.), (.&.), complement)
 import Data.Ratio
 import qualified Data.Map as M
@@ -105,11 +105,6 @@ kill = withDisplay $ \d -> withFocused $ \w -> do
 data UnDoLayout = UnDoLayout deriving ( Typeable, Eq )
 instance Message UnDoLayout
 
-instance Read (SomeLayout Window) where
-    readsPrec _ = readLayout defaultLayouts
-instance Layout SomeLayout Window where
-    doLayout (SomeLayout l) r s = fmap (fmap $ fmap SomeLayout) $ doLayout l r s
-    modifyLayout (SomeLayout l) = fmap (fmap SomeLayout) . modifyLayout l
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WindowSet -> WindowSet) -> X ()
@@ -296,21 +291,6 @@ setFocusX w = withWindowSet $ \ws -> do
             -- raiseWindow dpy w
     io $ setWindowBorder dpy w fbc
 
--- ---------------------------------------------------------------------
--- Managing layout
-
--- | switchLayout.  Switch to another layout scheme.  Switches the
--- layout of the current workspace. By convention, a window set as
--- master in Tall mode remains as master in Wide mode. When switching
--- from full screen to a tiling mode, the currently focused window
--- becomes a master. When switching back , the focused window is
--- uppermost.
---
--- Note that the new layout's deconstructor will be called, so it should be
--- idempotent.
-switchLayout :: X ()
-switchLayout = return ()
-
 -- | Throw a message to the current Layout possibly modifying how we
 -- layout the windows, then refresh.
 --
@@ -338,6 +318,47 @@ runOnWorkspaces job = do ws <- gets windowset
 
 instance Message Event
 
+-- Layout selection manager
+
+-- This is a layout that allows users to switch between various layout
+-- options.  This layout accepts three Messages, NextLayout, PrevLayout and
+-- JumpToLayout.
+
+data ChangeLayout = NextLayout | PrevLayout | JumpToLayout String
+                 deriving ( Eq, Show, Typeable )
+instance Message ChangeLayout
+
+instance ReadableSomeLayout Window where
+    defaults = map snd defaultLayouts
+
+data LayoutSelection a = LayoutSelection [(String, SomeLayout a)]
+                         deriving ( Show, Read )
+
+instance ReadableSomeLayout a => Layout LayoutSelection a where
+    doLayout (LayoutSelection ((n,l):ls)) r s =
+        do (x,ml') <- doLayout l r s
+           return (x, (\l' -> LayoutSelection ((n,l'):ls)) `fmap` ml')
+    doLayout (LayoutSelection []) r s = do (x,_) <- doLayout Full r s
+                                           return (x,Nothing)
+    -- respond to messages only when there's an actual choice:
+    modifyLayout (LayoutSelection ((n,l):ls@(_:_))) m
+        | Just NextLayout <- fromMessage m = switchl rls
+        | Just PrevLayout <- fromMessage m = switchl rls'
+        | Just (JumpToLayout x) <- fromMessage m = switchl (j x)
+        where rls (x:xs) = xs ++ [x]
+              rls [] = []
+              rls' = reverse . rls . reverse
+              j s zs = case partition (\z -> s == fst z) zs of
+                         (xs,ys) -> xs++ys
+              switchl f = do ml' <- modifyLayout l (SomeMessage UnDoLayout)
+                             return $ Just (LayoutSelection $ f $ (n,fromMaybe l ml'):ls)
+    -- otherwise, or if we don't understand the message, pass it along to the real
+    -- layout:
+    modifyLayout (LayoutSelection ((n,l):ls)) m
+        =  do ml' <- modifyLayout l m
+              return $ (\l' -> LayoutSelection ((n,l'):ls)) `fmap` ml'
+    -- Unless there is no layout...
+    modifyLayout (LayoutSelection []) _ = return Nothing
 --
 -- Builtin layout algorithms:
 --

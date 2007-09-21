@@ -92,10 +92,10 @@ borderWidth = 1
 -- |
 -- The default set of tiling algorithms
 --
-defaultLayouts :: [SomeLayout Window]
-defaultLayouts = [ SomeLayout tiled
-                 , SomeLayout $ Mirror tiled
-                 , SomeLayout Full
+defaultLayouts :: [(String, SomeLayout Window)]
+defaultLayouts = [("tall", SomeLayout tiled)
+                 ,("wide", SomeLayout $ Mirror tiled)
+                 ,("full", SomeLayout Full)
 
                  -- Extension-provided layouts
                  ]
@@ -135,7 +135,7 @@ keys = M.fromList $
     , ((modMask .|. shiftMask, xK_p     ), spawn "gmrun") -- %! Launch gmrun
     , ((modMask .|. shiftMask, xK_c     ), kill) -- %! Close the focused window
 
-    , ((modMask,               xK_space ), switchLayout) -- %! Rotate through the available layout algorithms
+    , ((modMask,               xK_space ), sendMessage NextLayout) -- %! Rotate through the available layout algorithms
 
     , ((modMask,               xK_n     ), refresh) -- %! Resize viewed windows to the correct size
 
