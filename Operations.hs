@@ -18,7 +18,7 @@ module Operations where
 
 import XMonad
 import qualified StackSet as W
-import {-# SOURCE #-} Config (borderWidth,logHook,numlockMask)
+import {-# SOURCE #-} Config (borderWidth,logHook,numlockMask,defaultLayouts)
 
 import Data.Maybe
 import Data.List            (nub, (\\), find)
@@ -104,6 +104,12 @@ kill = withDisplay $ \d -> withFocused $ \w -> do
 
 data UnDoLayout = UnDoLayout deriving ( Typeable, Eq )
 instance Message UnDoLayout
+
+instance Read (SomeLayout Window) where
+    readsPrec _ = readLayout defaultLayouts
+instance Layout SomeLayout Window where
+    doLayout (SomeLayout l) r s = fmap (fmap $ fmap SomeLayout) $ doLayout l r s
+    modifyLayout (SomeLayout l) = fmap (fmap SomeLayout) . modifyLayout l
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WindowSet -> WindowSet) -> X ()

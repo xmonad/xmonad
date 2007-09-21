@@ -131,10 +131,9 @@ atom_WM_STATE           = getAtom "WM_STATE"
 -- returns an updated 'Layout' and the screen is refreshed.
 --
 data SomeLayout a = forall l. Layout l a => SomeLayout (l a)
+
 instance Show (SomeLayout a) where
     show (SomeLayout l) = show l
-instance Read (SomeLayout a) where
-    readsPrec _ _ = [] -- We can't read an existential type!!!
 
 readLayout :: [SomeLayout a] -> String -> [(SomeLayout a, String)]
 readLayout ls s = concatMap rl ls
@@ -145,10 +144,6 @@ readLayout ls s = concatMap rl ls
 class (Show (layout a), Read (layout a)) => Layout layout a where
     doLayout :: layout a -> Rectangle -> Stack a -> X ([(a, Rectangle)], Maybe (layout a))
     modifyLayout :: layout a -> SomeMessage -> X (Maybe (layout a))
-
-instance Layout SomeLayout a where
-    doLayout (SomeLayout l) r s = fmap (fmap $ fmap SomeLayout) $ doLayout l r s
-    modifyLayout (SomeLayout l) = fmap (fmap SomeLayout) . modifyLayout l
 
 runLayout :: Layout l a => l a -> Rectangle -> StackOrNot a -> X ([(a, Rectangle)], Maybe (l a))
 runLayout l r = maybe (return ([], Nothing)) (doLayout l r)
