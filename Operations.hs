@@ -381,7 +381,6 @@ instance Message IncMasterN
 data Full a = Full deriving ( Show, Read )
 instance Layout Full a where
     doLayout Full sc (W.Stack f _ _) = return ([(f, sc)], Nothing)
-    modifyLayout Full _ = return Nothing -- no changes
 --
 -- The tiling mode of xmonad, and its operations.
 --
