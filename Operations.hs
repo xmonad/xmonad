@@ -102,22 +102,23 @@ kill = withDisplay $ \d -> withFocused $ \w -> do
 -- ---------------------------------------------------------------------
 -- Managing windows
 
-data UnDoLayout = UnDoLayout deriving ( Typeable, Eq )
-instance Message UnDoLayout
+data LayoutMessages = Hide | ReleaseResources deriving ( Typeable, Eq )
+instance Message LayoutMessages
 
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WindowSet -> WindowSet) -> X ()
 windows f = do
-    -- Notify visible layouts to remove decorations etc
-    -- We cannot use sendMessage because this must not call refresh ever,
-    -- and must be called on all visible workspaces.
-    broadcastMessage UnDoLayout
     XState { windowset = old } <- get
     let oldvisible = concatMap (W.integrate' . W.stack . W.workspace) $ W.current old : W.visible old
         ws = f old
     modify (\s -> s { windowset = ws })
     d <- asks display
+
+    -- notify non visibility
+    let oldvistags = map (W.tag . W.workspace) $ W.current old : W.visible old
+        gottenHidden  = filter (\w -> elem w oldvistags) $ map W.tag $ W.hidden ws
+    sendMessageToWorkspaces Hide gottenHidden
 
     -- for each workspace, layout the currently visible workspaces
     let allscreens     = W.screens ws
@@ -302,6 +303,14 @@ sendMessage a = do w <- (W.workspace . W.current) `fmap` gets windowset
                                                 { W.workspace = (W.workspace $ W.current ws)
                                                   { W.layout = l' }}}
 
+-- | Send a message to a list of workspaces' layouts, without necessarily refreshing.
+sendMessageToWorkspaces :: Message a => a -> [WorkspaceId] -> X ()
+sendMessageToWorkspaces a l = runOnWorkspaces modw
+    where modw w = if W.tag w `elem` l
+                      then do ml' <- modifyLayout (W.layout w) (SomeMessage a) `catchX` return Nothing
+                              return $ w { W.layout = maybe (W.layout w) id ml' }
+                      else return w
+
 -- | Send a message to all visible layouts, without necessarily refreshing.
 -- This is how we implement the hooks, such as UnDoLayout.
 broadcastMessage :: Message a => a -> X ()
@@ -350,7 +359,7 @@ instance ReadableSomeLayout a => Layout LayoutSelection a where
               rls' = reverse . rls . reverse
               j s zs = case partition (\z -> s == fst z) zs of
                          (xs,ys) -> xs++ys
-              switchl f = do ml' <- modifyLayout l (SomeMessage UnDoLayout)
+              switchl f = do ml' <- modifyLayout l (SomeMessage Hide)
                              return $ Just (LayoutSelection $ f $ (n,fromMaybe l ml'):ls)
     -- otherwise, or if we don't understand the message, pass it along to the real
     -- layout:
