@@ -451,30 +451,39 @@ initColor dpy c = (color_pixel . fst) `liftM` allocNamedColor dpy colormap c
 ------------------------------------------------------------------------
 -- | Floating layer support
 
--- | Make a tiled window floating, using its suggested rectangle
-float :: Window -> X ()
-float w = withDisplay $ \d -> do
+-- | Given a window, find the screen it is located on, and compute
+-- the geometry of that window wrt. that screen.
+floatLocation :: Window -> X (ScreenId, W.RationalRect)
+floatLocation w = withDisplay $ \d -> do
     ws <- gets windowset
     wa <- io $ getWindowAttributes d w
 
-    let sc = fromMaybe (W.current ws) $ find (pointWithin (fi $ wa_x wa) (fi $ wa_y wa) . screenRect . W.screenDetail) $ W.current ws : W.visible ws
+    let sc = fromMaybe (W.current ws) $ find (pointWithin (fi $ wa_x wa) (fi $ wa_y wa) . screenRect . W.screenDetail) $ W.screens ws
         sr = screenRect . W.screenDetail $ sc
-        sw = W.tag . W.workspace $ sc
         bw = fi . wa_border_width $ wa
         rr = (W.RationalRect ((fi (wa_x wa) - fi (rect_x sr)) % fi (rect_width sr))
                              ((fi (wa_y wa) - fi (rect_y sr)) % fi (rect_height sr))
                              (fi (wa_width  wa + bw*2) % fi (rect_width sr))
                              (fi (wa_height wa + bw*2) % fi (rect_height sr)))
 
-    if maybe False (`elem` (map W.tag . W.hidden $ ws)) (W.findIndex w ws)
-        then windows $ W.float w rr
-        else windows $ maybe id W.focusWindow (W.peek ws) . W.shiftWin sw w . W.float w rr
+    return (W.screen $ sc, rr)
   where fi x = fromIntegral x
         pointWithin :: Integer -> Integer -> Rectangle -> Bool
         pointWithin x y r = x >= fi (rect_x r) &&
                             x <  fi (rect_x r) + fi (rect_width r) &&
                             y >= fi (rect_y r) &&
                             y <  fi (rect_y r) + fi (rect_height r)
+
+-- | Make a tiled window floating, using its suggested rectangle
+float :: Window -> X ()
+float w = do
+    (sc, rr) <- floatLocation w
+    windows $ \ws -> W.float w rr . fromMaybe ws $ do
+        i <- W.findIndex w ws
+        guard $ i `elem` map (W.tag . W.workspace) (W.screens ws)
+        f <- W.peek ws
+        sw <- W.lookupWorkspace sc ws
+        return (W.focusWindow f . W.shiftWin sw w $ ws)
 
 -- ---------------------------------------------------------------------
 -- Mouse handling
