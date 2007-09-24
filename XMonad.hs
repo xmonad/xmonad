@@ -153,6 +153,8 @@ class (Show (layout a), Read (layout a)) => Layout layout a where
     doLayout :: layout a -> Rectangle -> Stack a -> X ([(a, Rectangle)], Maybe (layout a))
     modifyLayout :: layout a -> SomeMessage -> X (Maybe (layout a))
     modifyLayout _ _ = return Nothing
+    description :: layout a -> String
+    description = show
 
 runLayout :: Layout l a => l a -> Rectangle -> StackOrNot a -> X ([(a, Rectangle)], Maybe (l a))
 runLayout l r = maybe (return ([], Nothing)) (doLayout l r)

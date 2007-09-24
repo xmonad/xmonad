@@ -56,7 +56,7 @@ main = do
                              workspaces $ zipWith SD xinesc gaps
         gaps = take (length xinesc) $ defaultGaps ++ repeat (0,0,0,0)
 
-        safeLayouts = if null defaultLayouts then [("full",SomeLayout Full)] else defaultLayouts
+        safeLayouts = if null defaultLayouts then [SomeLayout Full] else defaultLayouts
         cf = XConf
             { display       = dpy
             , theRoot       = rootw

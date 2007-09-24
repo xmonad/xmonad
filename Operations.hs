@@ -338,34 +338,36 @@ data ChangeLayout = NextLayout | PrevLayout | JumpToLayout String
 instance Message ChangeLayout
 
 instance ReadableSomeLayout Window where
-    defaults = map snd defaultLayouts
+    defaults = SomeLayout (LayoutSelection defaultLayouts) :
+               SomeLayout Full : SomeLayout (Tall 1 0.1 0.5) :
+               SomeLayout (Mirror $ Tall 1 0.1 0.5) : defaultLayouts
 
-data LayoutSelection a = LayoutSelection [(String, SomeLayout a)]
+data LayoutSelection a = LayoutSelection [SomeLayout a]
                          deriving ( Show, Read )
 
 instance ReadableSomeLayout a => Layout LayoutSelection a where
-    doLayout (LayoutSelection ((n,l):ls)) r s =
+    doLayout (LayoutSelection (l:ls)) r s =
         do (x,ml') <- doLayout l r s
-           return (x, (\l' -> LayoutSelection ((n,l'):ls)) `fmap` ml')
+           return (x, (\l' -> LayoutSelection (l':ls)) `fmap` ml')
     doLayout (LayoutSelection []) r s = do (x,_) <- doLayout Full r s
                                            return (x,Nothing)
     -- respond to messages only when there's an actual choice:
-    modifyLayout (LayoutSelection ((n,l):ls@(_:_))) m
+    modifyLayout (LayoutSelection (l:ls@(_:_))) m
         | Just NextLayout <- fromMessage m = switchl rls
         | Just PrevLayout <- fromMessage m = switchl rls'
         | Just (JumpToLayout x) <- fromMessage m = switchl (j x)
         where rls (x:xs) = xs ++ [x]
               rls [] = []
               rls' = reverse . rls . reverse
-              j s zs = case partition (\z -> s == fst z) zs of
+              j s zs = case partition (\z -> s == description z) zs of
                          (xs,ys) -> xs++ys
               switchl f = do ml' <- modifyLayout l (SomeMessage Hide)
-                             return $ Just (LayoutSelection $ f $ (n,fromMaybe l ml'):ls)
+                             return $ Just (LayoutSelection $ f $ fromMaybe l ml':ls)
     -- otherwise, or if we don't understand the message, pass it along to the real
     -- layout:
-    modifyLayout (LayoutSelection ((n,l):ls)) m
+    modifyLayout (LayoutSelection (l:ls)) m
         =  do ml' <- modifyLayout l m
-              return $ (\l' -> LayoutSelection ((n,l'):ls)) `fmap` ml'
+              return $ (\l' -> LayoutSelection (l':ls)) `fmap` ml'
     -- Unless there is no layout...
     modifyLayout (LayoutSelection []) _ = return Nothing
 --
@@ -404,6 +406,7 @@ instance Layout Tall a where
         where resize Shrink = Tall nmaster delta (max 0 $ frac-delta)
               resize Expand = Tall nmaster delta (min 1 $ frac+delta)
               incmastern (IncMasterN d) = Tall (max 0 (nmaster+d)) delta frac
+    description _ = "Tall"
 
 -- | Mirror a rectangle
 mirrorRect :: Rectangle -> Rectangle
@@ -416,6 +419,7 @@ instance Layout l a => Layout (Mirror l) a where
     doLayout (Mirror l) r s = (map (second mirrorRect) *** fmap Mirror)
                                 `fmap` doLayout l (mirrorRect r) s
     modifyLayout (Mirror l) = fmap (fmap Mirror) . modifyLayout l
+    description (Mirror l) = "Mirror "++ description l
 
 -- | tile.  Compute the positions for windows using the default 2 pane tiling algorithm.
 --
