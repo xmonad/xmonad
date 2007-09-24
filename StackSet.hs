@@ -19,6 +19,7 @@ module StackSet (
         -- * Xinerama operations
         -- $xinerama
         lookupWorkspace,
+        screens, workspaces,
         -- *  Operations on the current stack
         -- $stackOperations
         peek, index, integrate, integrate', differentiate,
@@ -385,6 +386,10 @@ focusWindow w s | Just w == peek s = s
                     return $ until ((Just w ==) . peek) focusUp (view n s)
 
 
+
+-- | Get a list of all screens in the StackSet.
+screens :: StackSet i a s sd -> [Screen i a s sd]
+screens s = current s : visible s
 
 -- | Get a list of all workspaces in the StackSet.
 workspaces :: StackSet i a s sd -> [Workspace i a]
