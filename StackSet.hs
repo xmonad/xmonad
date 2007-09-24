@@ -389,7 +389,7 @@ focusWindow w s | Just w == peek s = s
 
 
 -- | Get a list of all screens in the StackSet.
-screens :: StackSet i a s sd -> [Screen i a s sd]
+screens :: StackSet i l a s sd -> [Screen i l a s sd]
 screens s = current s : visible s
 
 -- | Get a list of all workspaces in the StackSet.
