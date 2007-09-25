@@ -125,9 +125,9 @@ atom_WM_STATE           = getAtom "WM_STATE"
 -- by 'doLayout', then it is not shown on screen.  Windows are restacked
 -- according to the order they are returned by 'doLayout'.
 --
--- 'modifyLayout' performs message handling for that layout.  If
--- 'modifyLayout' returns Nothing, then the layout did not respond to
--- that message and the screen is not refreshed.  Otherwise, 'modifyLayout'
+-- 'handleMessage' performs message handling for that layout.  If
+-- 'handleMessage' returns Nothing, then the layout did not respond to
+-- that message and the screen is not refreshed.  Otherwise, 'handleMessage'
 -- returns an updated 'Layout' and the screen is refreshed.
 --
 data SomeLayout a = forall l. Layout l a => SomeLayout (l a)
@@ -138,7 +138,7 @@ instance ReadableSomeLayout a => Read (SomeLayout a) where
     readsPrec _ = readLayout defaults
 instance ReadableSomeLayout a => Layout SomeLayout a where
     doLayout (SomeLayout l) r s = fmap (fmap $ fmap SomeLayout) $ doLayout l r s
-    modifyLayout (SomeLayout l) = fmap (fmap SomeLayout) . modifyLayout l
+    handleMessage (SomeLayout l) = fmap (fmap SomeLayout) . handleMessage l
 
 instance Show (SomeLayout a) where
     show (SomeLayout l) = show l
@@ -155,8 +155,8 @@ class (Show (layout a), Read (layout a)) => Layout layout a where
     pureLayout :: layout a -> Rectangle -> Stack a -> [(a, Rectangle)]
     pureLayout _ r s = [(focus s, r)]
 
-    modifyLayout :: layout a -> SomeMessage -> X (Maybe (layout a))
-    modifyLayout _ _ = return Nothing
+    handleMessage :: layout a -> SomeMessage -> X (Maybe (layout a))
+    handleMessage _ _ = return Nothing
     description :: layout a -> String
     description = show
 
@@ -164,7 +164,7 @@ runLayout :: Layout l a => l a -> Rectangle -> StackOrNot a -> X ([(a, Rectangle
 runLayout l r = maybe (return ([], Nothing)) (doLayout l r)
 
 -- | Based on ideas in /An Extensible Dynamically-Typed Hierarchy of Exceptions/,
--- Simon Marlow, 2006. Use extensible messages to the modifyLayout handler.
+-- Simon Marlow, 2006. Use extensible messages to the handleMessage handler.
 -- 
 -- User-extensible messages must be a member of this class.
 --

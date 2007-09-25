@@ -297,7 +297,7 @@ setFocusX w = withWindowSet $ \ws -> do
 --
 sendMessage :: Message a => a -> X ()
 sendMessage a = do w <- (W.workspace . W.current) `fmap` gets windowset
-                   ml' <- modifyLayout (W.layout w) (SomeMessage a) `catchX` return Nothing
+                   ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
                    whenJust ml' $ \l' ->
                        do windows $ \ws -> ws { W.current = (W.current ws)
                                                 { W.workspace = (W.workspace $ W.current ws)
@@ -307,7 +307,7 @@ sendMessage a = do w <- (W.workspace . W.current) `fmap` gets windowset
 sendMessageToWorkspaces :: Message a => a -> [WorkspaceId] -> X ()
 sendMessageToWorkspaces a l = runOnWorkspaces modw
     where modw w = if W.tag w `elem` l
-                      then do ml' <- modifyLayout (W.layout w) (SomeMessage a) `catchX` return Nothing
+                      then do ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
                               return $ w { W.layout = maybe (W.layout w) id ml' }
                       else return w
 
@@ -315,7 +315,7 @@ sendMessageToWorkspaces a l = runOnWorkspaces modw
 -- This is how we implement the hooks, such as UnDoLayout.
 broadcastMessage :: Message a => a -> X ()
 broadcastMessage a = runOnWorkspaces modw
-    where modw w = do ml' <- modifyLayout (W.layout w) (SomeMessage a) `catchX` return Nothing
+    where modw w = do ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
                       return $ w { W.layout = maybe (W.layout w) id ml' }
 
 runOnWorkspaces :: (WindowSpace -> X WindowSpace) -> X ()
@@ -352,7 +352,7 @@ instance ReadableSomeLayout a => Layout LayoutSelection a where
     doLayout (LayoutSelection []) r s = do (x,_) <- doLayout Full r s
                                            return (x,Nothing)
     -- respond to messages only when there's an actual choice:
-    modifyLayout (LayoutSelection (l:ls@(_:_))) m
+    handleMessage (LayoutSelection (l:ls@(_:_))) m
         | Just NextLayout <- fromMessage m = switchl rls
         | Just PrevLayout <- fromMessage m = switchl rls'
         | Just (JumpToLayout x) <- fromMessage m = switchl (j x)
@@ -361,15 +361,15 @@ instance ReadableSomeLayout a => Layout LayoutSelection a where
               rls' = reverse . rls . reverse
               j s zs = case partition (\z -> s == description z) zs of
                          (xs,ys) -> xs++ys
-              switchl f = do ml' <- modifyLayout l (SomeMessage Hide)
+              switchl f = do ml' <- handleMessage l (SomeMessage Hide)
                              return $ Just (LayoutSelection $ f $ fromMaybe l ml':ls)
     -- otherwise, or if we don't understand the message, pass it along to the real
     -- layout:
-    modifyLayout (LayoutSelection (l:ls)) m
-        =  do ml' <- modifyLayout l m
+    handleMessage (LayoutSelection (l:ls)) m
+        =  do ml' <- handleMessage l m
               return $ (\l' -> LayoutSelection (l':ls)) `fmap` ml'
     -- Unless there is no layout...
-    modifyLayout (LayoutSelection []) _ = return Nothing
+    handleMessage (LayoutSelection []) _ = return Nothing
 --
 -- Builtin layout algorithms:
 --
@@ -399,7 +399,7 @@ instance Layout Tall a where
     doLayout (Tall nmaster _ frac) r =
         return . (\x->(x,Nothing)) .
         ap zip (tile frac r nmaster . length) . W.integrate
-    modifyLayout (Tall nmaster delta frac) m =
+    handleMessage (Tall nmaster delta frac) m =
         return $ msum [fmap resize (fromMessage m)
                       ,fmap incmastern (fromMessage m)]
         where resize Shrink = Tall nmaster delta (max 0 $ frac-delta)
@@ -417,7 +417,7 @@ data Mirror l a = Mirror (l a) deriving (Show, Read)
 instance Layout l a => Layout (Mirror l) a where
     doLayout (Mirror l) r s = (map (second mirrorRect) *** fmap Mirror)
                                 `fmap` doLayout l (mirrorRect r) s
-    modifyLayout (Mirror l) = fmap (fmap Mirror) . modifyLayout l
+    handleMessage (Mirror l) = fmap (fmap Mirror) . handleMessage l
     description (Mirror l) = "Mirror "++ description l
 
 -- | tile.  Compute the positions for windows using the default 2 pane tiling algorithm.
