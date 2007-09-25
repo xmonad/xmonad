@@ -151,6 +151,10 @@ readLayout ls s = concatMap rl ls
 
 class (Show (layout a), Read (layout a)) => Layout layout a where
     doLayout :: layout a -> Rectangle -> Stack a -> X ([(a, Rectangle)], Maybe (layout a))
+    doLayout l r s = return (pureLayout l r s, Nothing)
+    pureLayout :: layout a -> Rectangle -> Stack a -> [(a, Rectangle)]
+    pureLayout _ r s = [(focus s, r)]
+
     modifyLayout :: layout a -> SomeMessage -> X (Maybe (layout a))
     modifyLayout _ _ = return Nothing
     description :: layout a -> String

@@ -390,8 +390,7 @@ instance Message IncMasterN
 -- simple fullscreen mode, just render all windows fullscreen.
 -- a plea for tuple sections: map . (,sc)
 data Full a = Full deriving ( Show, Read )
-instance Layout Full a where
-    doLayout Full sc (W.Stack f _ _) = return ([(f, sc)], Nothing)
+instance Layout Full a
 --
 -- The tiling mode of xmonad, and its operations.
 --
