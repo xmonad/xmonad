@@ -18,7 +18,7 @@ module Operations where
 
 import XMonad
 import qualified StackSet as W
-import {-# SOURCE #-} Config (borderWidth,logHook,numlockMask,defaultLayouts)
+import {-# SOURCE #-} Config (borderWidth,logHook,numlockMask,defaultLayouts,otherPossibleLayouts)
 
 import Data.Maybe
 import Data.List            (nub, (\\), find, partition)
@@ -340,7 +340,8 @@ instance Message ChangeLayout
 instance ReadableSomeLayout Window where
     defaults = SomeLayout (LayoutSelection defaultLayouts) :
                SomeLayout Full : SomeLayout (Tall 1 0.1 0.5) :
-               SomeLayout (Mirror $ Tall 1 0.1 0.5) : defaultLayouts
+               SomeLayout (Mirror $ Tall 1 0.1 0.5) :
+               defaultLayouts ++ otherPossibleLayouts
 
 data LayoutSelection a = LayoutSelection [SomeLayout a]
                          deriving ( Show, Read )
