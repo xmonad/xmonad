@@ -144,7 +144,9 @@ instance Show (SomeLayout a) where
     show (SomeLayout l) = show l
 
 readLayout :: [SomeLayout a] -> String -> [(SomeLayout a, String)]
-readLayout ls s = concatMap rl ls
+readLayout ls s = case concatMap rl ls of
+                  (x:_) -> [x]
+                  [] -> []
     where rl (SomeLayout x) = map (\(l,s') -> (SomeLayout l,s')) $ rl' x
           rl' :: Layout l a => l a -> [(l a,String)]
           rl' _ = reads s
