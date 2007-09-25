@@ -357,6 +357,10 @@ instance ReadableSomeLayout a => Layout LayoutSelection a where
         | Just NextLayout <- fromMessage m = switchl rls
         | Just PrevLayout <- fromMessage m = switchl rls'
         | Just (JumpToLayout x) <- fromMessage m = switchl (j x)
+        | Just ReleaseResources <- fromMessage m =
+              do mlls' <- mapM (\ll -> handleMessage ll m) (l:ls)
+                 let lls' = zipWith (\x mx -> maybe x id mx) (l:ls) mlls'
+                 return $ Just $ LayoutSelection lls'
         where rls (x:xs) = xs ++ [x]
               rls [] = []
               rls' = reverse . rls . reverse
