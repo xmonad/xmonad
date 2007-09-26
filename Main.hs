@@ -51,9 +51,9 @@ main = do
     args <- getArgs
 
     let winset | ("--resume" : s : _) <- args
-               , [(x, "")]            <- reads s = x
-               | otherwise = new (SomeLayout $ LayoutSelection safeLayouts)
-                             workspaces $ zipWith SD xinesc gaps
+               , [(x, "")]            <- reads s = W.ensureTags defaultLayout workspaces x
+               | otherwise = new defaultLayout workspaces $ zipWith SD xinesc gaps
+        defaultLayout = SomeLayout $ LayoutSelection safeLayouts
         gaps = take (length xinesc) $ defaultGaps ++ repeat (0,0,0,0)
 
         safeLayouts = if null defaultLayouts then [SomeLayout Full] else defaultLayouts

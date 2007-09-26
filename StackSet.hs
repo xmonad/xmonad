@@ -24,7 +24,7 @@ module StackSet (
         -- $stackOperations
         peek, index, integrate, integrate', differentiate,
         focusUp, focusDown, focusMaster,
-        focusWindow, tagMember, member, findIndex,
+        focusWindow, tagMember, renameTag, ensureTags, member, findIndex,
         -- * Modifying the stackset
         -- $modifyStackset
         insertUp, delete, delete', filter,
@@ -39,6 +39,7 @@ module StackSet (
 import Prelude hiding (filter)
 import Data.Maybe   (listToMaybe,fromJust)
 import qualified Data.List as L (deleteBy,find,splitAt,filter)
+import Data.List ( (\\) )
 import qualified Data.Map  as M (Map,insert,delete,empty)
 
 -- $intro
@@ -399,6 +400,22 @@ workspaces s = workspace (current s) : map workspace (visible s) ++ hidden s
 -- | Is the given tag present in the StackSet?
 tagMember :: Eq i => i -> StackSet i l a s sd -> Bool
 tagMember t = elem t . map tag . workspaces
+
+-- | Rename a given tag if present in the StackSet.
+renameTag :: Eq i => i -> i -> StackSet i l a s sd -> StackSet i l a s sd
+renameTag o n s = s { current = rs $ current s
+                    , visible = map rs $ visible s
+                    , hidden = map rw $ hidden s }
+    where rs scr = scr { workspace = rw $ workspace scr }
+          rw w = if tag w == o then w { tag = n } else w
+
+-- | Ensure that a given set of tags is present.
+ensureTags :: Eq i => l -> [i] -> StackSet i l a s sd -> StackSet i l a s sd
+ensureTags l allt st = et allt (map tag (workspaces st) \\ allt) st
+    where et [] _ s = s
+          et (i:is) rn s | i `tagMember` s = et is rn s
+          et (i:is) [] s = et is [] (s { hidden = Workspace i l Nothing : hidden s })
+          et (i:is) (r:rs) s = et is rs $ renameTag r i s
 
 -- |
 -- Finding if a window is in the stackset is a little tedious. We could
