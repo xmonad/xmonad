@@ -538,6 +538,10 @@ prop_screens (x :: T) = n `elem` screens x
  where
     n = current x
 
+prop_differentiate xs =
+        if null xs then differentiate xs == Nothing
+                   else focus (fromJust (differentiate xs)) == head xs
+    where _ = xs :: [Int]
 
 ------------------------------------------------------------------------
 -- some properties for layouts:
@@ -669,6 +673,7 @@ main = do
 
         ,("floating is reversible" , mytest prop_float_reversible)
         ,("screens includes current", mytest prop_screens)
+        ,("differentiate works", mytest prop_differentiate)
 
 {-
         ,("tile 1 window fullsize", mytest prop_tile_fullscreen)
