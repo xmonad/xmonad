@@ -92,13 +92,6 @@ borderWidth = 1
 -- |
 -- The default set of tiling algorithms
 --
-otherPossibleLayouts :: [SomeLayout Window]
-otherPossibleLayouts = [SomeLayout $ Tall 1 1 1
-                       ,SomeLayout $ Mirror $ Tall 1 1 1
-                       ,SomeLayout Full
-                       -- Extension-provided layouts
-                       ]
-
 defaultLayouts :: [SomeLayout Window]
 defaultLayouts = [SomeLayout tiled
                  ,SomeLayout $ Mirror tiled
@@ -118,6 +111,9 @@ defaultLayouts = [SomeLayout tiled
 
      -- Percent of screen to increment by when resizing panes
      delta   = 3%100
+
+otherPossibleLayouts :: [SomeLayout Window]
+otherPossibleLayouts = []
 
 -- |
 -- Perform an arbitrary action on each state change.
