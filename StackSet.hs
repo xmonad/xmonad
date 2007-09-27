@@ -515,6 +515,12 @@ shift n s | n `tagMember` s && n /= curtag = maybe s go (peek s)
     where go w = view curtag . insertUp w . view n . delete' w $ s
           curtag = tag (workspace (current s))
 
+-- | /O(n)/. shiftWin. Searches for the specified window 'w' on all workspaces
+-- of the stackSet and moves it to stack 'n', leaving it as the focused
+-- element on that stack. The item is inserted above the currently
+-- focused element on that workspace.
+-- The actual focused workspace doesn't change. If the window is not
+-- found in the stackSet, the original stackSet is returned.
 -- TODO how does this duplicate 'shift's behaviour?
 shiftWin :: (Ord a, Eq a, Eq s, Eq i) => i -> a -> StackSet i a s sd -> StackSet i a s sd
 shiftWin n w s | from == Nothing                     = s
