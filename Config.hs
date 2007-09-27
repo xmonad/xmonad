@@ -143,6 +143,8 @@ keys = M.fromList $
     , ((modMask,               xK_Tab   ), windows W.focusDown) -- %! Move focus to the next window
     , ((modMask,               xK_j     ), windows W.focusDown) -- %! Move focus to the next window
     , ((modMask,               xK_k     ), windows W.focusUp  ) -- %! Move focus to the previous window
+    , ((modMask,               xK_m     ), windows W.focusMaster  ) -- %! Move focus to the master window
+
 
     -- modifying the window order
     , ((modMask,               xK_Return), windows W.swapMaster) -- %! Swap the focused window and the master window

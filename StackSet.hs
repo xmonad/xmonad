@@ -23,14 +23,14 @@ module StackSet (
         -- *  Operations on the current stack
         -- $stackOperations
         peek, index, integrate, integrate', differentiate,
-        focusUp, focusDown,
+        focusUp, focusDown, focusMaster,
         focusWindow, tagMember, member, findIndex,
         -- * Modifying the stackset
         -- $modifyStackset
         insertUp, delete, delete', filter,
         -- * Setting the master window
         -- $settingMW
-        swapMaster, swapUp, swapDown, modify, modify', float, sink, -- needed by users
+        swapUp, swapDown, swapMaster, modify, modify', float, sink, -- needed by users
         -- * Composite operations
         -- $composite
         shift, shiftWin
@@ -463,11 +463,11 @@ delete w = sink w . delete' w
 -- | Only temporarily remove the window from the stack, thereby not destroying special
 -- information saved in the Stackset
 delete' :: (Ord a, Eq s) => a -> StackSet i a s sd -> StackSet i a s sd
-delete' w s = s { current = removeFromScreen (current s)
-                , visible = map removeFromScreen (visible s)
-                , hidden = map removeFromWorkspace (hidden s) }
+delete' w s = s { current = removeFromScreen        (current s)
+                , visible = map removeFromScreen    (visible s)
+                , hidden  = map removeFromWorkspace (hidden  s) }
     where removeFromWorkspace ws = ws { stack = stack ws >>= filter (/=w) }
-          removeFromScreen scr = scr { workspace = removeFromWorkspace (workspace scr) }
+          removeFromScreen scr   = scr { workspace = removeFromWorkspace (workspace scr) }
 
 ------------------------------------------------------------------------
 
@@ -489,9 +489,16 @@ sink w s = s { floating = M.delete w (floating s) }
 swapMaster :: StackSet i a s sd -> StackSet i a s sd
 swapMaster = modify' $ \c -> case c of
     Stack _ [] _  -> c    -- already master.
-    Stack t ls rs -> Stack t [] (ys ++ x : rs) where (x:ys) = reverse ls
+    Stack t ls rs -> Stack t [] (xs ++ x : rs) where (x:xs) = reverse ls
 
 -- natural! keep focus, move current to the top, move top to current.
+
+-- | /O(s)/. Set focus to the master window.
+focusMaster :: StackSet i a s sd -> StackSet i a s sd
+focusMaster = modify' $ \c -> case c of
+    Stack _ [] _  -> c
+    Stack t ls rs -> Stack x [] (xs ++ t : rs) where (x:xs) = reverse ls
+
 -- 
 -- ---------------------------------------------------------------------
 -- $composite
