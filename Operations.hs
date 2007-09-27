@@ -55,7 +55,12 @@ manage w = whenX (fmap not $ isClient w) $ withDisplay $ \d -> do
     isTransient <- isJust `liftM` io (getTransientForHint d w)
 
     (sc, rr) <- floatLocation w
-    let f ws | isFixedSize || isTransient = W.float w rr . W.insertUp w . W.view i $ ws
+    -- ensure that float windows don't go over the edge of the screen
+    let adjust (W.RationalRect x y wid h) | x + wid >= 1 || y + wid >= 1 || x <= 0 || y <= 0
+                                              = W.RationalRect (0.5 - wid/2) (0.5 - h/2) wid h
+        adjust r = r
+
+    let f ws | isFixedSize || isTransient = W.float w (adjust rr) . W.insertUp w . W.view i $ ws
              | otherwise                  = W.insertUp w ws
             where i = fromMaybe (W.tag . W.workspace . W.current $ ws) $ W.lookupWorkspace sc ws
     windows f
@@ -512,10 +517,10 @@ floatLocation w = withDisplay $ \d -> do
     let sc = fromMaybe (W.current ws) $ find (pointWithin (fi $ wa_x wa) (fi $ wa_y wa) . screenRect . W.screenDetail) $ W.screens ws
         sr = screenRect . W.screenDetail $ sc
         bw = fi . wa_border_width $ wa
-        rr = (W.RationalRect ((fi (wa_x wa) - fi (rect_x sr)) % fi (rect_width sr))
-                             ((fi (wa_y wa) - fi (rect_y sr)) % fi (rect_height sr))
-                             (fi (wa_width  wa + bw*2) % fi (rect_width sr))
-                             (fi (wa_height wa + bw*2) % fi (rect_height sr)))
+        rr = W.RationalRect ((fi (wa_x wa) - fi (rect_x sr)) % fi (rect_width sr))
+                            ((fi (wa_y wa) - fi (rect_y sr)) % fi (rect_height sr))
+                            (fi (wa_width  wa + bw*2) % fi (rect_width sr))
+                            (fi (wa_height wa + bw*2) % fi (rect_height sr))
 
     return (W.screen $ sc, rr)
   where fi x = fromIntegral x
