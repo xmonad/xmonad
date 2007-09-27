@@ -141,6 +141,8 @@ prop_greedyView_I (n :: NonNegative Int) (x :: T) =
 
 prop_focusUp_I (n :: NonNegative Int) (x :: T) =
     invariant $ foldr (const focusUp) x [1..n]
+prop_focusMaster_I (n :: NonNegative Int) (x :: T) =
+    invariant $ foldr (const focusMaster) x [1..n]
 prop_focusDown_I (n :: NonNegative Int) (x :: T) =
     invariant $ foldr (const focusDown) x [1..n]
 
@@ -297,6 +299,9 @@ prop_focus_left_master (n :: NonNegative Int) (x::T) =
     index (foldr (const focusUp) x [1..n]) == index x
 prop_focus_right_master (n :: NonNegative Int) (x::T) =
     index (foldr (const focusDown) x [1..n]) == index x
+prop_focus_master_master (n :: NonNegative Int) (x::T) =
+    index (foldr (const focusMaster) x [1..n]) == index x
+
 prop_focusWindow_master (n :: NonNegative Int) (x :: T) =
     case peek x of
         Nothing -> True
@@ -307,6 +312,9 @@ prop_focusWindow_master (n :: NonNegative Int) (x :: T) =
 -- shifting focus is trivially reversible
 prop_focus_left  (x :: T) = (focusUp  (focusDown x)) == x
 prop_focus_right (x :: T) = (focusDown (focusUp  x)) ==  x
+
+-- focus master is idempotent
+prop_focusMaster_idem (x :: T) = focusMaster x == focusMaster (focusMaster x)
 
 -- focusWindow actually leaves the window focused...
 prop_focusWindow_works (n :: NonNegative Int) (x :: T) =
@@ -326,7 +334,10 @@ prop_focus_all_r (x :: T) = (foldr (const focusDown) x [1..n]) == x
 --     f x' = foldr (\_ y -> rotate GT y) x' [1..n]
 
 -- focus is local to the current workspace
-prop_focus_local (x :: T) = hidden_spaces (focusDown x) == hidden_spaces x
+prop_focus_down_local (x :: T) = hidden_spaces (focusDown x) == hidden_spaces x
+prop_focus_up_local (x :: T) = hidden_spaces (focusUp x) == hidden_spaces x
+
+prop_focus_master_local (x :: T) = hidden_spaces (focusMaster x) == hidden_spaces x
 
 prop_focusWindow_local (n :: NonNegative Int) (x::T ) =
     case peek x of
@@ -581,16 +592,22 @@ main = do
         ,("index/length"        , mytest prop_index_length)
 
         ,("focus left : invariant", mytest prop_focusUp_I)
+        ,("focus master : invariant", mytest prop_focusMaster_I)
         ,("focus right: invariant", mytest prop_focusDown_I)
         ,("focusWindow: invariant", mytest prop_focus_I)
         ,("focus left/master"   , mytest prop_focus_left_master)
         ,("focus right/master"  , mytest prop_focus_right_master)
+        ,("focus master/master"  , mytest prop_focus_master_master)
         ,("focusWindow master"  , mytest prop_focusWindow_master)
         ,("focus left/right"    , mytest prop_focus_left)
         ,("focus right/left"    , mytest prop_focus_right)
         ,("focus all left  "    , mytest prop_focus_all_l)
         ,("focus all right "    , mytest prop_focus_all_r)
-        ,("focus is local"      , mytest prop_focus_local)
+        ,("focus down is local"      , mytest prop_focus_down_local)
+        ,("focus up is local"      , mytest prop_focus_up_local)
+        ,("focus master is local"      , mytest prop_focus_master_local)
+        ,("focus master idemp"  , mytest prop_focusMaster_idem)
+         
         ,("focusWindow is local", mytest prop_focusWindow_local)
         ,("focusWindow works"   , mytest prop_focusWindow_works)
 
