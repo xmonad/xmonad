@@ -495,7 +495,7 @@ swapMaster = modify' $ \c -> case c of
 -- natural! keep focus, move current to the top, move top to current.
 
 -- | /O(s)/. Set focus to the master window.
-focusMaster :: StackSet i a s sd -> StackSet i a s sd
+focusMaster :: StackSet i l a s sd -> StackSet i l a s sd
 focusMaster = modify' $ \c -> case c of
     Stack _ [] _  -> c
     Stack t ls rs -> Stack x [] (xs ++ t : rs) where (x:xs) = reverse ls
