@@ -49,17 +49,16 @@ manage :: Window -> X ()
 manage w = whenX (fmap not $ isClient w) $ withDisplay $ \d -> do
     setInitialProperties w
 
-    -- FIXME: This is pretty awkward. We can't can't let "refresh" happen
-    -- before the call to float, because that will resize the window and
-    -- lose the default sizing.
-
     sh <- io $ getWMNormalHints d w
+
     let isFixedSize = sh_min_size sh /= Nothing && sh_min_size sh == sh_max_size sh
     isTransient <- isJust `liftM` io (getTransientForHint d w)
-    if isFixedSize || isTransient
-        then do modify $ \s -> s { windowset = W.insertUp w (windowset s) }
-                float w -- \^^ now go the refresh.
-        else windows $ W.insertUp w
+
+    (sc, rr) <- floatLocation w
+    let f ws | isFixedSize || isTransient = W.float w rr . W.insertUp w . W.view i $ ws
+             | otherwise                  = W.insertUp w ws
+            where i = fromMaybe (W.tag . W.workspace . W.current $ ws) $ W.lookupWorkspace sc ws
+    windows f
 
 -- | unmanage. A window no longer exists, remove it from the window
 -- list, on whatever workspace it is.
