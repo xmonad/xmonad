@@ -525,6 +525,21 @@ prop_shift_win_fix_current i w (x :: T) =
         n = tag (workspace $ current x)
 
 ------------------------------------------------------------------------
+-- properties for the floating layer:
+
+prop_float_reversible n (x :: T) =
+    n `member` x ==> sink n (float n geom x) == x
+        where
+            geom = RationalRect 100 100 100 100
+
+------------------------------------------------------------------------
+
+prop_screens (x :: T) = n `elem` screens x
+ where
+    n = current x
+
+
+------------------------------------------------------------------------
 -- some properties for layouts:
 
 -- 1 window should always be tiled fullscreen
@@ -651,6 +666,9 @@ main = do
         ,("shiftWin: invariant" , mytest prop_shift_win_I)
         ,("shiftWin is shift on focus" , mytest prop_shift_win_focus)
         ,("shiftWin fix current" , mytest prop_shift_win_fix_current)
+
+        ,("floating is reversible" , mytest prop_float_reversible)
+        ,("screens includes current", mytest prop_screens)
 
 {-
         ,("tile 1 window fullsize", mytest prop_tile_fullscreen)
