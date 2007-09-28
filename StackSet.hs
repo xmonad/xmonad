@@ -167,6 +167,7 @@ data Screen i l a sid sd = Screen { workspace :: !(Workspace i l a)
 data Workspace i l a = Workspace  { tag :: !i, layout :: l, stack :: StackOrNot a }
     deriving (Show, Read, Eq)
 
+-- | A structure for window geometries
 data RationalRect = RationalRect Rational Rational Rational Rational
     deriving (Show, Read, Eq)
 
@@ -216,8 +217,6 @@ new l wids m | not (null wids) && length m <= length wids = StackSet cur visi un
                 -- now zip up visibles with their screen id
 new _ _ _ = abort "non-positive argument to StackSet.new"
 
-
-
 -- |
 -- /O(w)/. Set focus to the workspace with index \'i\'. 
 -- If the index is out of range, return the original StackSet.
@@ -241,8 +240,8 @@ view i s
         , hidden = workspace (current s) : L.deleteBy tagEq x (hidden s) }
 
     | otherwise = s
- where screenEq x y = screen x == screen y
-       tagEq x y = tag x == tag y
+  where screenEq x y = screen x == screen y
+        tagEq x y = tag x == tag y
 
     -- 'Catch'ing this might be hard. Relies on monotonically increasing
     -- workspace tags defined in 'new'
@@ -257,14 +256,13 @@ view i s
 
 greedyView :: (Eq s, Eq i) => i -> StackSet i l a s sd -> StackSet i l a s sd
 greedyView w ws
- | any wTag (hidden ws) = view w ws
- | (Just s) <- L.find (wTag . workspace) (visible ws)
-                        = ws { current = (current ws) { workspace = workspace s }
-                             , visible = s { workspace = workspace (current ws) }
-                                       : L.filter (not . wTag . workspace) (visible ws) }
- | otherwise            = ws
- where
-    wTag = (w == ) . tag
+     | any wTag (hidden ws) = view w ws
+     | (Just s) <- L.find (wTag . workspace) (visible ws)
+                            = ws { current = (current ws) { workspace = workspace s }
+                                 , visible = s { workspace = workspace (current ws) }
+                                           : L.filter (not . wTag . workspace) (visible ws) }
+     | otherwise = ws
+   where wTag = (w == ) . tag
 
 -- ---------------------------------------------------------------------
 -- $xinerama
@@ -322,7 +320,7 @@ integrate' = maybe [] integrate
 -- /O(n)/. Texture a list.
 --
 differentiate :: [a] -> StackOrNot a
-differentiate [] = Nothing
+differentiate []     = Nothing
 differentiate (x:xs) = Just $ Stack x [] xs
 
 -- |
@@ -387,8 +385,6 @@ focusWindow w s | Just w == peek s = s
                     n <- findIndex w s
                     return $ until ((Just w ==) . peek) focusUp (view n s)
 
-
-
 -- | Get a list of all screens in the StackSet.
 screens :: StackSet i l a s sd -> [Screen i l a s sd]
 screens s = current s : visible s
@@ -400,22 +396,6 @@ workspaces s = workspace (current s) : map workspace (visible s) ++ hidden s
 -- | Is the given tag present in the StackSet?
 tagMember :: Eq i => i -> StackSet i l a s sd -> Bool
 tagMember t = elem t . map tag . workspaces
-
--- | Rename a given tag if present in the StackSet.
-renameTag :: Eq i => i -> i -> StackSet i l a s sd -> StackSet i l a s sd
-renameTag o n s = s { current = rs $ current s
-                    , visible = map rs $ visible s
-                    , hidden = map rw $ hidden s }
-    where rs scr = scr { workspace = rw $ workspace scr }
-          rw w = if tag w == o then w { tag = n } else w
-
--- | Ensure that a given set of tags is present.
-ensureTags :: Eq i => l -> [i] -> StackSet i l a s sd -> StackSet i l a s sd
-ensureTags l allt st = et allt (map tag (workspaces st) \\ allt) st
-    where et [] _ s = s
-          et (i:is) rn s | i `tagMember` s = et is rn s
-          et (i:is) [] s = et is [] (s { hidden = Workspace i l Nothing : hidden s })
-          et (i:is) (r:rs) s = et is rs $ renameTag r i s
 
 -- |
 -- Finding if a window is in the stackset is a little tedious. We could
