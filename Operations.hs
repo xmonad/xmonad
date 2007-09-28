@@ -1,4 +1,6 @@
-{-# OPTIONS -fno-warn-orphans -fglasgow-exts #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 -- \^^ deriving Typeable
 -- --------------------------------------------------------------------------
 -- |
