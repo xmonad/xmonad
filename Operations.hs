@@ -118,8 +118,9 @@ windows f = do
     XState { windowset = old } <- get
     let oldvisible = concatMap (W.integrate' . W.stack . W.workspace) $ W.current old : W.visible old
         ws = f old
+    XConf { display = d , normalBorder = nbc, focusedBorder = fbc } <- ask
+    whenJust (W.peek old) $ \otherw -> io $ setWindowBorder d otherw nbc
     modify (\s -> s { windowset = ws })
-    d <- asks display
 
     -- notify non visibility
     let tags_oldvisible = map (W.tag . W.workspace) $ W.current old : W.visible old
@@ -163,6 +164,7 @@ windows f = do
         -- return the visible windows for this workspace:
         return vs
 
+    whenJust (W.peek ws) $ \w -> io $ setWindowBorder d w fbc
     setTopFocus
     logHook
     -- io performGC -- really helps, but seems to trigger GC bugs?
@@ -284,19 +286,17 @@ focus w = withWindowSet $ \s -> do
 -- | Call X to set the keyboard focus details.
 setFocusX :: Window -> X ()
 setFocusX w = withWindowSet $ \ws -> do
-    XConf { display = dpy , normalBorder = nbc, focusedBorder = fbc } <- ask
+    dpy <- asks display
 
     -- clear mouse button grab and border on other windows
     forM_ (W.current ws : W.visible ws) $ \wk -> do
         forM_ (W.index (W.view (W.tag (W.workspace wk)) ws)) $ \otherw -> do
             setButtonGrab True otherw
-            io $ setWindowBorder dpy otherw nbc
 
     -- If we ungrab buttons on the root window, we lose our mouse bindings.
     whenX (not `liftM` isRoot w) $ setButtonGrab False w
     io $ do setInputFocus dpy w revertToPointerRoot 0
             -- raiseWindow dpy w
-    io $ setWindowBorder dpy w fbc
 
 -- | Throw a message to the current Layout possibly modifying how we
 -- layout the windows, then refresh.
