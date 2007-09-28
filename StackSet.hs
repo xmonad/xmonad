@@ -33,7 +33,10 @@ module StackSet (
         swapUp, swapDown, swapMaster, modify, modify', float, sink, -- needed by users
         -- * Composite operations
         -- $composite
-        shift, shiftWin
+        shift, shiftWin,
+
+        -- for testing
+        abort
     ) where
 
 import Prelude hiding (filter)
@@ -232,19 +235,20 @@ view i s
 
     | Just x <- L.find ((i==).tag.workspace) (visible s)
     -- if it is visible, it is just raised
-    = s { current = x, visible = current s : L.deleteBy screenEq x (visible s) }
+    = s { current = x, visible = current s : L.deleteBy (equating screen) x (visible s) }
 
     | Just x <- L.find ((i==).tag)           (hidden  s)
     -- if it was hidden, it is raised on the xine screen currently used
     = s { current = (current s) { workspace = x }
-        , hidden = workspace (current s) : L.deleteBy tagEq x (hidden s) }
+        , hidden = workspace (current s) : L.deleteBy (equating tag) x (hidden s) }
 
-    | otherwise = s
-  where screenEq x y = screen x == screen y
-        tagEq x y = tag x == tag y
+    | otherwise = s -- can't happen?
+  where equating f = \x y -> f x == f y
 
     -- 'Catch'ing this might be hard. Relies on monotonically increasing
     -- workspace tags defined in 'new'
+    --
+    -- and now tags are not monotonic, what happens here?
 
 -- |
 -- Set focus to the given workspace.  If that workspace does not exist
