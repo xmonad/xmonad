@@ -11,8 +11,10 @@ import Data.Ratio
 import Data.Maybe
 import System.Environment
 import Control.Exception    (assert)
+import qualified Control.Exception as C
 import Control.Monad
 import Test.QuickCheck hiding (promote)
+import System.IO.Unsafe
 import System.IO
 import System.Random hiding (next)
 import Text.Printf
@@ -544,6 +546,28 @@ prop_differentiate xs =
                    else focus (fromJust (differentiate xs)) == head xs
     where _ = xs :: [Int]
 
+-- looking up the tag of the current workspace should always produce a tag.
+prop_lookup_current (x :: T) = lookupWorkspace scr x == Just tg
+    where
+        (Screen (Workspace tg  _ _) scr _) = current x
+
+-- ---------------------------------------------------------------------
+-- testing for failure
+
+-- and help out hpc
+prop_abort x = unsafePerformIO $ C.catch (abort "fail")
+                                         (\e -> return $  show e == "xmonad: StackSet: fail" )
+   where
+     _ = x :: Int
+
+-- new should fail with an abort
+prop_new_abort x = unsafePerformIO $ C.catch f
+                                         (\e -> return $ show e == "xmonad: StackSet: non-positive argument to StackSet.new" )
+   where
+     f = new undefined{-layout-} [] [] `seq` return False
+
+     _ = x :: Int
+
 ------------------------------------------------------------------------
 -- some properties for layouts:
 
@@ -675,6 +699,11 @@ main = do
         ,("floating is reversible" , mytest prop_float_reversible)
         ,("screens includes current", mytest prop_screens)
         ,("differentiate works", mytest prop_differentiate)
+        ,("lookupTagOnScreen", mytest prop_lookup_current)
+
+        -- testing for failure:
+        ,("abort fails", mytest prop_abort)
+        ,("new fails with abort", mytest prop_new_abort)
 
 {-
         ,("tile 1 window fullsize", mytest prop_tile_fullscreen)
