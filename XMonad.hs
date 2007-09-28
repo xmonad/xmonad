@@ -139,6 +139,7 @@ instance ReadableSomeLayout a => Read (SomeLayout a) where
 instance ReadableSomeLayout a => Layout SomeLayout a where
     doLayout (SomeLayout l) r s = fmap (fmap $ fmap SomeLayout) $ doLayout l r s
     handleMessage (SomeLayout l) = fmap (fmap SomeLayout) . handleMessage l
+    description (SomeLayout l) = description l
 
 instance Show (SomeLayout a) where
     show (SomeLayout l) = show l
