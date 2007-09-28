@@ -122,9 +122,9 @@ windows f = do
     d <- asks display
 
     -- notify non visibility
-    let oldvistags = map (W.tag . W.workspace) $ W.current old : W.visible old
-        gottenHidden  = filter (\w -> elem w oldvistags) $ map W.tag $ W.hidden ws
-    sendMessageToWorkspaces Hide gottenHidden
+    let tags_oldvisible = map (W.tag . W.workspace) $ W.current old : W.visible old
+        gottenhidden    = filter (`elem` tags_oldvisible) $ map W.tag $ W.hidden ws
+    sendMessageToWorkspaces Hide gottenhidden
 
     -- for each workspace, layout the currently visible workspaces
     let allscreens     = W.screens ws
