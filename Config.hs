@@ -142,6 +142,7 @@ keys = M.fromList $
     , ((modMask .|. shiftMask, xK_c     ), kill) -- %! Close the focused window
 
     , ((modMask,               xK_space ), sendMessage NextLayout) -- %! Rotate through the available layout algorithms
+    , ((modMask .|. shiftMask, xK_space ), setLayout $ SomeLayout $ LayoutSelection defaultLayouts) -- %! Reset the layouts on the current workspace to default
 
     , ((modMask,               xK_n     ), refresh) -- %! Resize viewed windows to the correct size
 

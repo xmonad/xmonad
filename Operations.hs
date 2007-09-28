@@ -326,6 +326,13 @@ runOnWorkspaces job = do ws <- gets windowset
 
 instance Message Event
 
+-- | Set the layout of the currently viewed workspace
+setLayout :: SomeLayout Window -> X ()
+setLayout l = do
+    sendMessage ReleaseResources
+    windows $ \ss@(W.StackSet { W.current = c@(W.Screen { W.workspace = ws })})
+              -> ss {W.current = c { W.workspace = ws { W.layout = l } } }
+
 -- Layout selection manager
 
 -- This is a layout that allows users to switch between various layout
