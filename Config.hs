@@ -93,9 +93,9 @@ borderWidth = 1
 -- The default set of tiling algorithms
 --
 defaultLayouts :: [SomeLayout Window]
-defaultLayouts = [SomeLayout tiled
-                 ,SomeLayout $ Mirror tiled
-                 ,SomeLayout Full
+defaultLayouts = [ SomeLayout tiled
+                 , SomeLayout $ Mirror tiled
+                 , SomeLayout Full
 
                  -- Extension-provided layouts
                  ]
