@@ -386,6 +386,9 @@ instance ReadableSomeLayout a => Layout LayoutSelection a where
               return $ (\l' -> LayoutSelection (l':ls)) `fmap` ml'
     -- Unless there is no layout...
     handleMessage (LayoutSelection []) _ = return Nothing
+
+    description (LayoutSelection (x:_)) = description x
+    description _                       = "default"
 --
 -- Builtin layout algorithms:
 --
