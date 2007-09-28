@@ -20,7 +20,7 @@ module Operations where
 
 import XMonad
 import qualified StackSet as W
-import {-# SOURCE #-} Config (borderWidth,logHook,numlockMask,defaultLayouts,otherPossibleLayouts)
+import {-# SOURCE #-} Config (borderWidth,logHook,numlockMask,possibleLayouts)
 
 import Data.Maybe
 import Data.List            (nub, (\\), find, partition)
@@ -351,10 +351,10 @@ data ChangeLayout = NextLayout | PrevLayout | JumpToLayout String
 instance Message ChangeLayout
 
 instance ReadableSomeLayout Window where
-    defaults = SomeLayout (LayoutSelection defaultLayouts) :
+    defaults = SomeLayout (LayoutSelection []) :
                SomeLayout Full : SomeLayout (Tall 1 0.1 0.5) :
                SomeLayout (Mirror $ Tall 1 0.1 0.5) :
-               defaultLayouts ++ otherPossibleLayouts
+               possibleLayouts
 
 data LayoutSelection a = LayoutSelection [SomeLayout a]
                          deriving ( Show, Read )

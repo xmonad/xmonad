@@ -53,10 +53,8 @@ main = do
     let winset | ("--resume" : s : _) <- args
                , [(x, "")]            <- reads s = W.ensureTags defaultLayout workspaces x
                | otherwise = new defaultLayout workspaces $ zipWith SD xinesc gaps
-        defaultLayout = SomeLayout $ LayoutSelection safeLayouts
         gaps = take (length xinesc) $ defaultGaps ++ repeat (0,0,0,0)
 
-        safeLayouts = if null defaultLayouts then [SomeLayout Full] else defaultLayouts
         cf = XConf
             { display       = dpy
             , theRoot       = rootw

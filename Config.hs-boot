@@ -6,4 +6,4 @@ borderWidth :: Dimension
 logHook     :: X ()
 numlockMask :: KeyMask
 workspaces :: [WorkspaceId]
-defaultLayouts, otherPossibleLayouts :: [SomeLayout Window]
+possibleLayouts :: [SomeLayout Window]

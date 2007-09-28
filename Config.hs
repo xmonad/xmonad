@@ -90,8 +90,19 @@ borderWidth :: Dimension
 borderWidth = 1
 
 -- |
--- The default set of tiling algorithms
+-- A list of layouts which, in addition to the defaultLayouts, xmonad can
+-- deserialize.
+possibleLayouts :: [SomeLayout Window]
+possibleLayouts = [defaultLayout
+                  -- Extension-provided layouts
+                  ] ++ defaultLayouts
+
+-- |
+-- The default tiling algorithm
 --
+defaultLayout :: SomeLayout Window
+defaultLayout = SomeLayout $ LayoutSelection defaultLayouts
+
 defaultLayouts :: [SomeLayout Window]
 defaultLayouts = [ SomeLayout tiled
                  , SomeLayout $ Mirror tiled
@@ -142,7 +153,7 @@ keys = M.fromList $
     , ((modMask .|. shiftMask, xK_c     ), kill) -- %! Close the focused window
 
     , ((modMask,               xK_space ), sendMessage NextLayout) -- %! Rotate through the available layout algorithms
-    , ((modMask .|. shiftMask, xK_space ), setLayout $ SomeLayout $ LayoutSelection defaultLayouts) -- %! Reset the layouts on the current workspace to default
+    , ((modMask .|. shiftMask, xK_space ), setLayout defaultLayout) -- %!  Reset the layouts on the current workspace to default
 
     , ((modMask,               xK_n     ), refresh) -- %! Resize viewed windows to the correct size
 
