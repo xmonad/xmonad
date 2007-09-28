@@ -112,6 +112,9 @@ defaultLayouts = [ SomeLayout tiled
      -- Percent of screen to increment by when resizing panes
      delta   = 3%100
 
+-- |
+-- A list of layouts which, in addition to the defaultLayouts, xmonad can
+-- deserialize.
 otherPossibleLayouts :: [SomeLayout Window]
 otherPossibleLayouts = []
 
