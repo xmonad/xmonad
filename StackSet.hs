@@ -237,12 +237,13 @@ view i s
     -- if it is visible, it is just raised
     = s { current = x, visible = current s : L.deleteBy (equating screen) x (visible s) }
 
-    | Just x <- L.find ((i==).tag)           (hidden  s)
+    | Just x <- L.find ((i==).tag)           (hidden  s) -- must be hidden then
     -- if it was hidden, it is raised on the xine screen currently used
     = s { current = (current s) { workspace = x }
         , hidden = workspace (current s) : L.deleteBy (equating tag) x (hidden s) }
 
-    | otherwise = s -- can't happen?
+--  | otherwise = s -- can't happen: all workspaces are either invalid, current, visible, or hidden
+
   where equating f = \x y -> f x == f y
 
     -- 'Catch'ing this might be hard. Relies on monotonically increasing
@@ -525,10 +526,12 @@ shift n s | n `tagMember` s && n /= curtag = maybe s go (peek s)
 -- found in the stackSet, the original stackSet is returned.
 -- TODO how does this duplicate 'shift's behaviour?
 shiftWin :: (Ord a, Eq a, Eq s, Eq i) => i -> a -> StackSet i l a s sd -> StackSet i l a s sd
-shiftWin n w s | from == Nothing                     = s
+shiftWin n w s | from == Nothing                     = s -- not found
                | n `tagMember` s && (Just n) /= from = go
                | otherwise                           = s
-    where go     = on n (insertUp w) . on (fromJust from) (delete' w) $ s
+    where from   = findIndex w s
+
+          go     = on n (insertUp w) . on (fromJust from) (delete' w) $ s
           curtag = tag (workspace (current s))
-          from   = findIndex w s
           on i f = view curtag . f . view i
+

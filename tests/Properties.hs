@@ -519,6 +519,10 @@ prop_shift_win_focus i (x :: T) =
                           Nothing -> True
                           Just w  -> shiftWin i w x == shift i x
 
+-- shiftWin on a non-existant window is identity
+prop_shift_win_indentity i w (x :: T) =
+    i `tagMember` x && not (w  `member` x) ==> shiftWin i w x == x
+
 -- shiftWin leaves the current screen as it is, if neither i is the tag
 -- of the current workspace nor w on the current workspace
 prop_shift_win_fix_current i w (x :: T) =
@@ -567,6 +571,8 @@ prop_new_abort x = unsafePerformIO $ C.catch f
      f = new undefined{-layout-} [] [] `seq` return False
 
      _ = x :: Int
+
+-- prop_view_should_fail = view {- with some bogus data -}
 
 ------------------------------------------------------------------------
 -- some properties for layouts:
@@ -702,8 +708,9 @@ main = do
         ,("lookupTagOnScreen", mytest prop_lookup_current)
 
         -- testing for failure:
-        ,("abort fails", mytest prop_abort)
-        ,("new fails with abort", mytest prop_new_abort)
+        ,("abort fails",            mytest prop_abort)
+        ,("new fails with abort",   mytest prop_new_abort)
+        ,("shiftWin identity",      mytest prop_shift_win_indentity)
 
 {-
         ,("tile 1 window fullsize", mytest prop_tile_fullscreen)
