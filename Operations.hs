@@ -148,7 +148,7 @@ windows f = do
 
         -- just the tiled windows:
         -- now tile the windows on this workspace, modified by the gap
-        (rs, ml') <- runLayout l viewrect tiled `catchX` runLayout (SomeLayout Full) viewrect tiled
+        (rs, ml') <- runLayout l viewrect tiled `catchX` runLayout (Layout Full) viewrect tiled
         mapM_ (uncurry tileWindow) rs
         whenJust ml' $ \l' -> runOnWorkspaces (\ww -> if W.tag ww == n
                                                       then return $ ww { W.layout = l'}
@@ -301,7 +301,7 @@ setFocusX w = withWindowSet $ \ws -> do
     io $ do setInputFocus dpy w revertToPointerRoot 0
             -- raiseWindow dpy w
 
--- | Throw a message to the current Layout possibly modifying how we
+-- | Throw a message to the current LayoutClass possibly modifying how we
 -- layout the windows, then refresh.
 --
 sendMessage :: Message a => a -> X ()
@@ -337,13 +337,13 @@ runOnWorkspaces job = do ws <- gets windowset
 instance Message Event
 
 -- | Set the layout of the currently viewed workspace
-setLayout :: SomeLayout Window -> X ()
+setLayout :: Layout Window -> X ()
 setLayout l = do
     ss@(W.StackSet { W.current = c@(W.Screen { W.workspace = ws })}) <- gets windowset
     handleMessage (W.layout ws) (SomeMessage ReleaseResources)
     windows $ const $ ss {W.current = c { W.workspace = ws { W.layout = l } } }
 
--- Layout selection manager
+-- LayoutClass selection manager
 
 -- This is a layout that allows users to switch between various layout
 -- options.  This layout accepts three Messages, NextLayout, PrevLayout and
@@ -353,16 +353,16 @@ data ChangeLayout = NextLayout | PrevLayout | JumpToLayout String
                  deriving ( Eq, Show, Typeable )
 instance Message ChangeLayout
 
-instance ReadableSomeLayout Window where
-    defaults = SomeLayout (LayoutSelection []) :
-               SomeLayout Full : SomeLayout (Tall 1 0.1 0.5) :
-               SomeLayout (Mirror $ Tall 1 0.1 0.5) :
+instance ReadableLayout Window where
+    defaults = Layout (LayoutSelection []) :
+               Layout Full : Layout (Tall 1 0.1 0.5) :
+               Layout (Mirror $ Tall 1 0.1 0.5) :
                possibleLayouts
 
-data LayoutSelection a = LayoutSelection [SomeLayout a]
+data LayoutSelection a = LayoutSelection [Layout a]
                          deriving ( Show, Read )
 
-instance ReadableSomeLayout a => Layout LayoutSelection a where
+instance ReadableLayout a => LayoutClass LayoutSelection a where
     doLayout (LayoutSelection (l:ls)) r s =
         do (x,ml') <- doLayout l r s
            return (x, (\l' -> LayoutSelection (l':ls)) `fmap` ml')
@@ -414,12 +414,12 @@ instance Message IncMasterN
 -- simple fullscreen mode, just render all windows fullscreen.
 -- a plea for tuple sections: map . (,sc)
 data Full a = Full deriving ( Show, Read )
-instance Layout Full a
+instance LayoutClass Full a
 --
 -- The tiling mode of xmonad, and its operations.
 --
 data Tall a = Tall Int Rational Rational deriving ( Show, Read )
-instance Layout Tall a where
+instance LayoutClass Tall a where
     doLayout (Tall nmaster _ frac) r =
         return . (\x->(x,Nothing)) .
         ap zip (tile frac r nmaster . length) . W.integrate
@@ -438,7 +438,7 @@ mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 -- | Mirror a layout, compute its 90 degree rotated form.
 data Mirror l a = Mirror (l a) deriving (Show, Read)
 
-instance Layout l a => Layout (Mirror l) a where
+instance LayoutClass l a => LayoutClass (Mirror l) a where
     doLayout (Mirror l) r s = (map (second mirrorRect) *** fmap Mirror)
                                 `fmap` doLayout l (mirrorRect r) s
     handleMessage (Mirror l) = fmap (fmap Mirror) . handleMessage l

@@ -16,7 +16,7 @@
 -----------------------------------------------------------------------------
 
 module XMonad (
-    X, WindowSet, WindowSpace, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), Layout(..), SomeLayout(..), ReadableSomeLayout(..),
+    X, WindowSet, WindowSpace, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), LayoutClass(..), Layout(..), ReadableLayout(..),
     Typeable, Message, SomeMessage(..), fromMessage, runLayout,
     runX, catchX, io, catchIO, withDisplay, withWindowSet, isRoot, getAtom, spawn, restart, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
@@ -51,8 +51,8 @@ data XConf = XConf
     , normalBorder  :: !Pixel       -- ^ border color of unfocused windows
     , focusedBorder :: !Pixel     } -- ^ border color of the focused window
 
-type WindowSet = StackSet WorkspaceId (SomeLayout Window) Window ScreenId ScreenDetail
-type WindowSpace = Workspace WorkspaceId (SomeLayout Window) Window
+type WindowSet = StackSet WorkspaceId (Layout Window) Window ScreenId ScreenDetail
+type WindowSpace = Workspace WorkspaceId (Layout Window) Window
 
 -- | Virtual workspace indicies
 type WorkspaceId = String
@@ -118,7 +118,7 @@ atom_WM_DELETE_WINDOW   = getAtom "WM_DELETE_WINDOW"
 atom_WM_STATE           = getAtom "WM_STATE"
 
 ------------------------------------------------------------------------
--- | Layout handling
+-- | LayoutClass handling
 
 -- The different layout modes
 -- 'doLayout': given a Rectangle and a Stack, layout the stack elements
@@ -129,31 +129,31 @@ atom_WM_STATE           = getAtom "WM_STATE"
 -- 'handleMessage' performs message handling for that layout.  If
 -- 'handleMessage' returns Nothing, then the layout did not respond to
 -- that message and the screen is not refreshed.  Otherwise, 'handleMessage'
--- returns an updated 'Layout' and the screen is refreshed.
+-- returns an updated 'LayoutClass' and the screen is refreshed.
 --
-data SomeLayout a = forall l. Layout l a => SomeLayout (l a)
+data Layout a = forall l. LayoutClass l a => Layout (l a)
 
-class ReadableSomeLayout a where
-    defaults :: [SomeLayout a]
-instance ReadableSomeLayout a => Read (SomeLayout a) where
+class ReadableLayout a where
+    defaults :: [Layout a]
+instance ReadableLayout a => Read (Layout a) where
     readsPrec _ = readLayout defaults
-instance ReadableSomeLayout a => Layout SomeLayout a where
-    doLayout (SomeLayout l) r s = fmap (fmap $ fmap SomeLayout) $ doLayout l r s
-    handleMessage (SomeLayout l) = fmap (fmap SomeLayout) . handleMessage l
-    description (SomeLayout l) = description l
+instance ReadableLayout a => LayoutClass Layout a where
+    doLayout (Layout l) r s = fmap (fmap $ fmap Layout) $ doLayout l r s
+    handleMessage (Layout l) = fmap (fmap Layout) . handleMessage l
+    description (Layout l) = description l
 
-instance Show (SomeLayout a) where
-    show (SomeLayout l) = show l
+instance Show (Layout a) where
+    show (Layout l) = show l
 
-readLayout :: [SomeLayout a] -> String -> [(SomeLayout a, String)]
+readLayout :: [Layout a] -> String -> [(Layout a, String)]
 readLayout ls s = take 1 $ concatMap rl ls
                -- We take the first parse only, because multiple matches
                -- indicate a bad parse.
-    where rl (SomeLayout x) = map (\(l,s') -> (SomeLayout l,s')) $ rl' x
-          rl' :: Layout l a => l a -> [(l a,String)]
+    where rl (Layout x) = map (\(l,s') -> (Layout l,s')) $ rl' x
+          rl' :: LayoutClass l a => l a -> [(l a,String)]
           rl' _ = reads s
 
-class (Show (layout a), Read (layout a)) => Layout layout a where
+class (Show (layout a), Read (layout a)) => LayoutClass layout a where
     doLayout :: layout a -> Rectangle -> Stack a -> X ([(a, Rectangle)], Maybe (layout a))
     doLayout l r s = return (pureLayout l r s, Nothing)
     pureLayout :: layout a -> Rectangle -> Stack a -> [(a, Rectangle)]
@@ -164,7 +164,7 @@ class (Show (layout a), Read (layout a)) => Layout layout a where
     description :: layout a -> String
     description = show
 
-runLayout :: Layout l a => l a -> Rectangle -> StackOrNot a -> X ([(a, Rectangle)], Maybe (l a))
+runLayout :: LayoutClass l a => l a -> Rectangle -> StackOrNot a -> X ([(a, Rectangle)], Maybe (l a))
 runLayout l r = maybe (return ([], Nothing)) (doLayout l r)
 
 -- | Based on ideas in /An Extensible Dynamically-Typed Hierarchy of Exceptions/,

@@ -107,7 +107,7 @@ borderWidth = 1
 -- |
 -- A list of layouts which, in addition to the defaultLayouts, xmonad can
 -- deserialize.
-possibleLayouts :: [SomeLayout Window]
+possibleLayouts :: [Layout Window]
 possibleLayouts = [defaultLayout
                   -- Extension-provided layouts
                   ] ++ defaultLayouts
@@ -115,13 +115,13 @@ possibleLayouts = [defaultLayout
 -- |
 -- The default tiling algorithm
 --
-defaultLayout :: SomeLayout Window
-defaultLayout = SomeLayout $ LayoutSelection defaultLayouts
+defaultLayout :: Layout Window
+defaultLayout = Layout $ LayoutSelection defaultLayouts
 
-defaultLayouts :: [SomeLayout Window]
-defaultLayouts = [ SomeLayout tiled
-                 , SomeLayout $ Mirror tiled
-                 , SomeLayout Full
+defaultLayouts :: [Layout Window]
+defaultLayouts = [ Layout tiled
+                 , Layout $ Mirror tiled
+                 , Layout Full
 
                  -- Extension-provided layouts
                  ]
@@ -141,7 +141,7 @@ defaultLayouts = [ SomeLayout tiled
 -- |
 -- A list of layouts which, in addition to the defaultLayouts, xmonad can
 -- deserialize.
-otherPossibleLayouts :: [SomeLayout Window]
+otherPossibleLayouts :: [Layout Window]
 otherPossibleLayouts = []
 
 -- |

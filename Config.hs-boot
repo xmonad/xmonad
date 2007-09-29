@@ -7,5 +7,5 @@ borderWidth :: Dimension
 logHook     :: X ()
 numlockMask :: KeyMask
 workspaces :: [WorkspaceId]
-possibleLayouts :: [SomeLayout Window]
+possibleLayouts :: [Layout Window]
 manageHook :: Window -> (String, String, String) -> X (WindowSet -> WindowSet)
