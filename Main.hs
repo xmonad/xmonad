@@ -178,9 +178,11 @@ handle (UnmapEvent {ev_window = w, ev_send_event = synthetic}) = whenX (isClient
         else modify (\s -> s { waitingUnmap = M.adjust pred w (waitingUnmap s) })
 
 -- set keyboard mapping
-handle e@(MappingNotifyEvent {ev_window = w}) = do
+handle e@(MappingNotifyEvent {}) = do
     io $ refreshKeyboardMapping e
-    when (ev_request e == mappingKeyboard) $ withDisplay $ io . flip grabKeys w
+    when (ev_request e == mappingKeyboard) $ withDisplay $ \dpy -> do
+        rootw <- asks theRoot
+        io $ grabKeys dpy rootw
 
 -- handle button release, which may finish dragging.
 handle e@(ButtonEvent {ev_event_type = t})
