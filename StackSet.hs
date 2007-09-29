@@ -402,10 +402,21 @@ workspaces s = workspace (current s) : map workspace (visible s) ++ hidden s
 tagMember :: Eq i => i -> StackSet i l a s sd -> Bool
 tagMember t = elem t . map tag . workspaces
 
--- |
--- Finding if a window is in the stackset is a little tedious. We could
--- keep a cache :: Map a i, but with more bookkeeping.
---
+-- | Rename a given tag if present in the StackSet.
+renameTag :: Eq i => i -> i -> StackSet i l a s sd -> StackSet i l a s sd
+renameTag o n s = s { current = rs $ current s
+                    , visible = map rs $ visible s
+                    , hidden = map rw $ hidden s }
+    where rs scr = scr { workspace = rw $ workspace scr }
+          rw w = if tag w == o then w { tag = n } else w
+
+-- | Ensure that a given set of tags is present.
+ensureTags :: Eq i => l -> [i] -> StackSet i l a s sd -> StackSet i l a s sd
+ensureTags l allt st = et allt (map tag (workspaces st) \\ allt) st
+    where et [] _ s = s
+          et (i:is) rn s | i `tagMember` s = et is rn s
+          et (i:is) [] s = et is [] (s { hidden = Workspace i l Nothing : hidden s })
+          et (i:is) (r:rs) s = et is rs $ renameTag r i s
 
 -- | /O(n)/. Is a window in the StackSet.
 member :: Eq a => a -> StackSet i l a s sd -> Bool
