@@ -583,6 +583,22 @@ prop_new_abort x = unsafePerformIO $ C.catch f
 
 -- prop_view_should_fail = view {- with some bogus data -}
 
+-- screens makes sense
+prop_screens_works (x :: T) = screens x == current x : visible x
+
+------------------------------------------------------------------------
+-- renaming tags
+
+-- | Rename a given tag if present in the StackSet.
+-- 408 renameTag :: Eq i => i -> i -> StackSet i l a s sd -> StackSet i l a s sd
+
+prop_rename1 (x::T) o n = o `tagMember` x && not (n `tagMember` x) ==>
+    let y = renameTag o n x
+            in n `tagMember` y
+
+prop_ensure (x :: T) l xs = let y = ensureTags l xs x
+                                in and [ n `tagMember` y | n <- xs ]
+
 ------------------------------------------------------------------------
 -- some properties for layouts:
 
@@ -716,11 +732,16 @@ main = do
         ,("differentiate works", mytest prop_differentiate)
         ,("lookupTagOnScreen", mytest prop_lookup_current)
         ,("lookupTagOnVisbleScreen", mytest prop_lookup_visible)
+        ,("screens works",      mytest prop_screens_works)
+        ,("renaming works",     mytest prop_rename1)
+        ,("ensure works",     mytest prop_ensure)
 
         -- testing for failure:
         ,("abort fails",            mytest prop_abort)
         ,("new fails with abort",   mytest prop_new_abort)
         ,("shiftWin identity",      mytest prop_shift_win_indentity)
+
+        -- renaming
 
 {-
         ,("tile 1 window fullsize", mytest prop_tile_fullscreen)
