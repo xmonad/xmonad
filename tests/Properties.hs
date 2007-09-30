@@ -547,7 +547,7 @@ prop_screens (x :: T) = n `elem` screens x
 
 prop_differentiate xs =
         if null xs then differentiate xs == Nothing
-                   else focus (fromJust (differentiate xs)) == head xs
+                   else (differentiate xs) == Just (Stack (head xs) [] (tail xs))
     where _ = xs :: [Int]
 
 -- looking up the tag of the current workspace should always produce a tag.
