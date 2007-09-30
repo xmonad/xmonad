@@ -555,6 +555,15 @@ prop_lookup_current (x :: T) = lookupWorkspace scr x == Just tg
     where
         (Screen (Workspace tg  _ _) scr _) = current x
 
+-- looking at a visible tag
+prop_lookup_visible (x :: T) = 
+        visible x /= [] ==>
+        fromJust (lookupWorkspace scr x) `elem` tags
+    where
+        tags = [ tag (workspace y) | y <- visible x ]
+        scr = last [ screen y | y <- visible x ]
+
+
 -- ---------------------------------------------------------------------
 -- testing for failure
 
@@ -706,6 +715,7 @@ main = do
         ,("screens includes current", mytest prop_screens)
         ,("differentiate works", mytest prop_differentiate)
         ,("lookupTagOnScreen", mytest prop_lookup_current)
+        ,("lookupTagOnVisbleScreen", mytest prop_lookup_visible)
 
         -- testing for failure:
         ,("abort fails",            mytest prop_abort)
