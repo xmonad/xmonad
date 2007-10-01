@@ -7,3 +7,4 @@ logHook     :: X ()
 numlockMask :: KeyMask
 workspaces :: [WorkspaceId]
 possibleLayouts :: [SomeLayout Window]
+manageHook :: Window -> X (WindowSet -> WindowSet)

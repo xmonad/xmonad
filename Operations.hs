@@ -20,7 +20,7 @@ module Operations where
 
 import XMonad
 import qualified StackSet as W
-import {-# SOURCE #-} Config (borderWidth,logHook,numlockMask,possibleLayouts)
+import {-# SOURCE #-} Config (borderWidth,logHook,manageHook,numlockMask,possibleLayouts)
 
 import Data.Maybe
 import Data.List            (nub, (\\), find, partition)
@@ -49,8 +49,6 @@ import Graphics.X11.Xlib.Extras
 --
 manage :: Window -> X ()
 manage w = whenX (fmap not $ isClient w) $ withDisplay $ \d -> do
-    setInitialProperties w
-
     sh <- io $ getWMNormalHints d w
 
     let isFixedSize = sh_min_size sh /= Nothing && sh_min_size sh == sh_max_size sh
@@ -62,10 +60,11 @@ manage w = whenX (fmap not $ isClient w) $ withDisplay $ \d -> do
                                               = W.RationalRect (0.5 - wid/2) (0.5 - h/2) wid h
         adjust r = r
 
-    let f ws | isFixedSize || isTransient = W.float w (adjust rr) . W.insertUp w . W.view i $ ws
+        f ws | isFixedSize || isTransient = W.float w (adjust rr) . W.insertUp w . W.view i $ ws
              | otherwise                  = W.insertUp w ws
             where i = fromMaybe (W.tag . W.workspace . W.current $ ws) $ W.lookupWorkspace sc ws
-    windows f
+    g <- manageHook w
+    windows (g . f)
 
 -- | unmanage. A window no longer exists, remove it from the window
 -- list, on whatever workspace it is.
@@ -119,6 +118,7 @@ windows f = do
     let oldvisible = concatMap (W.integrate' . W.stack . W.workspace) $ W.current old : W.visible old
         ws = f old
     XConf { display = d , normalBorder = nbc, focusedBorder = fbc } <- ask
+    mapM_ setInitialProperties (W.allWindows ws \\ W.allWindows old)
     whenJust (W.peek old) $ \otherw -> io $ setWindowBorder d otherw nbc
     modify (\s -> s { windowset = ws })
 

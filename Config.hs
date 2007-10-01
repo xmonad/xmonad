@@ -62,6 +62,9 @@ modMask = mod1Mask
 defaultGaps :: [(Int,Int,Int,Int)]
 defaultGaps = [(0,0,0,0)] -- 15 for default dzen
 
+manageHook :: Window -> X (WindowSet -> WindowSet)
+manageHook _ = return id
+
 -- |
 -- numlock handling:
 --
