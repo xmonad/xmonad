@@ -50,9 +50,11 @@ main = do
     hSetBuffering stdout NoBuffering
     args <- getArgs
 
-    let winset | ("--resume" : s : _) <- args
+    let initialWinset = new defaultLayout workspaces $ zipWith SD xinesc gaps
+
+        winset | ("--resume" : s : _) <- args
                , [(x, "")]            <- reads s = W.ensureTags defaultLayout workspaces x
-               | otherwise = new defaultLayout workspaces $ zipWith SD xinesc gaps
+               | otherwise                       = initialWinset
         gaps = take (length xinesc) $ defaultGaps ++ repeat (0,0,0,0)
 
         cf = XConf
@@ -61,7 +63,7 @@ main = do
             , normalBorder  = nbc
             , focusedBorder = fbc }
         st = XState
-            { windowset     = winset
+            { windowset     = initialWinset
             , mapped        = S.empty
             , waitingUnmap  = M.empty
             , dragging      = Nothing }
@@ -77,22 +79,18 @@ main = do
 
     sync dpy False
 
-    ws <- scan dpy rootw -- on the resume case, will pick up new windows
     allocaXEvent $ \e ->
         runX cf st $ do
 
-            -- walk workspace, resetting X states/mask for windows
-            -- TODO, general iterators for these lists.
-            sequence_ [ setInitialProperties w >> reveal w
-                      | wk <- map W.workspace (W.current winset : W.visible winset)
-                      , w  <- W.integrate' (W.stack wk) ]
+            -- bootstrap the windowset, Operations.windows will identify all
+            -- the windows in winset as new and set initial properties for
+            -- those windows
+            windows (const winset)
 
-            sequence_ [ setInitialProperties w >> hide w
-                      | wk <- W.hidden winset
-                      , w  <- W.integrate' (W.stack wk) ]
-
-            mapM_ manage ws -- find new windows
-            refresh
+            -- scan for all top-level windows, add the unmanaged ones to the
+            -- windowset
+            ws <- io $ scan dpy rootw
+            mapM_ manage ws
 
             -- main loop, for all you HOF/recursion fans out there.
             forever $ handle =<< io (nextEvent dpy e >> getEvent e)
