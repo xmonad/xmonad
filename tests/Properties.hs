@@ -363,6 +363,8 @@ prop_findIndex (x :: T) =
         , i <- focus t : up t ++ down t
         ]
 
+prop_allWindowsMember w (x :: T) = (w `elem` allWindows x) ==> member w x
+
 -- ---------------------------------------------------------------------
 -- 'insert'
 
@@ -687,6 +689,7 @@ main = do
         ,("focusWindow works"   , mytest prop_focusWindow_works)
 
         ,("findIndex"           , mytest prop_findIndex)
+        ,("allWindows/member"   , mytest prop_allWindowsMember)
 
         ,("insert: invariant"   , mytest prop_insertUp_I)
         ,("insert/new"          , mytest prop_insert_empty)

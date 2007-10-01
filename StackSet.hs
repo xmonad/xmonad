@@ -21,7 +21,7 @@ module StackSet (
         -- * Xinerama operations
         -- $xinerama
         lookupWorkspace,
-        screens, workspaces,
+        screens, workspaces, allWindows,
         -- *  Operations on the current stack
         -- $stackOperations
         peek, index, integrate, integrate', differentiate,
@@ -43,7 +43,7 @@ module StackSet (
 
 import Prelude hiding (filter)
 import Data.Maybe   (listToMaybe,fromJust)
-import qualified Data.List as L (deleteBy,find,splitAt,filter)
+import qualified Data.List as L (deleteBy,find,splitAt,filter,nub)
 import Data.List ( (\\) )
 import qualified Data.Map  as M (Map,insert,delete,empty)
 
@@ -399,6 +399,10 @@ screens s = current s : visible s
 -- | Get a list of all workspaces in the StackSet.
 workspaces :: StackSet i l a s sd -> [Workspace i l a]
 workspaces s = workspace (current s) : map workspace (visible s) ++ hidden s
+
+-- | Get a list of all windows in the StackSet in no particular order
+allWindows :: Eq a => StackSet i l a s sd -> [a]
+allWindows = L.nub . concatMap (integrate' . stack) . workspaces
 
 -- | Is the given tag present in the StackSet?
 tagMember :: Eq i => i -> StackSet i l a s sd -> Bool
