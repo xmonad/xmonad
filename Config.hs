@@ -28,6 +28,7 @@ import Data.Bits ((.|.))
 import qualified Data.Map as M
 import System.Exit
 import Graphics.X11.Xlib
+import Graphics.X11.Xlib.Extras (ClassHint(..))
 
 -- Extension-provided imports
 
@@ -62,8 +63,8 @@ modMask = mod1Mask
 defaultGaps :: [(Int,Int,Int,Int)]
 defaultGaps = [(0,0,0,0)] -- 15 for default dzen
 
-manageHook :: Window -> X (WindowSet -> WindowSet)
-manageHook _ = return id
+manageHook :: Window -> ClassHint -> X (WindowSet -> WindowSet)
+manageHook _ _ = return id
 
 -- |
 -- numlock handling:
