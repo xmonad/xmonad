@@ -69,6 +69,8 @@ manageHook :: Window -> (String, String, String) -> X (WindowSet -> WindowSet)
 -- Don't manage Gnome's panel or KDE's kicker:
 manageHook w (_, "gnome-panel", _) = reveal w >> return (W.delete w)
 manageHook w (_, "kicker", _)      = reveal w >> return (W.delete w)
+-- Float mplayer windows:
+manageHook w (_, _, "MPlayer")     = do (_, rr) <- floatLocation w; return (W.float w rr)
 -- The default rule, do not edit this line.
 manageHook _ _ = return id
 
