@@ -66,11 +66,14 @@ defaultGaps = [(0,0,0,0)] -- 15 for default dzen
 -- | manageHook.  Execute arbitrary actions and WindowSet manipulations when
 -- managing a new window.
 manageHook :: Window -> (String, String, String) -> X (WindowSet -> WindowSet)
--- Don't manage Gnome's panel or KDE's kicker:
-manageHook w (_, "gnome-panel", _) = reveal w >> return (W.delete w)
-manageHook w (_, "kicker", _)      = reveal w >> return (W.delete w)
+
 -- Float mplayer windows:
 manageHook w (_, _, "MPlayer")     = do (_, rr) <- floatLocation w; return (W.float w rr)
+
+-- Don't manage various panels and desktop windows:
+manageHook w (_, c, _) | c `elem` ignore = reveal w >> return (W.delete w)
+ where ignore = ["gnome-panel", "kicker", "desktop_window"]
+
 -- The default rule, do not edit this line.
 manageHook _ _ = return id
 
