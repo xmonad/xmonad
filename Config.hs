@@ -112,11 +112,14 @@ possibleLayouts = [defaultLayout
                   ] ++ defaultLayouts
 
 -- |
--- The default tiling algorithm
+-- The default Layout, a selector between the layouts listed below in
+-- defaultLayouts.
 --
 defaultLayout :: Layout Window
 defaultLayout = Layout $ LayoutSelection defaultLayouts
 
+-- |
+-- The list of selectable layouts
 defaultLayouts :: [Layout Window]
 defaultLayouts = [ Layout tiled
                  , Layout $ Mirror tiled
