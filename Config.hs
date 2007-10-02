@@ -72,7 +72,7 @@ manageHook w (_, _, "MPlayer")     = do (_, rr) <- floatLocation w; return (W.fl
 
 -- Don't manage various panels and desktop windows:
 manageHook w (_, c, _) | c `elem` ignore = reveal w >> return (W.delete w)
- where ignore = ["gnome-panel", "kicker", "desktop_window"]
+ where ignore = ["gnome-panel", "desktop_window", "kicker", "kdesktop"]
 
 -- The default rule, do not edit this line.
 manageHook _ _ = return id
