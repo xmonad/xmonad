@@ -105,13 +105,6 @@ borderWidth :: Dimension
 borderWidth = 1
 
 -- |
--- A list of layouts which xmonad can deserialize.
-possibleLayouts :: [Layout Window]
-possibleLayouts = [defaultLayout
-                  -- Extension-provided layouts
-                  ] ++ defaultLayouts
-
--- |
 -- The default Layout, a selector between the layouts listed below in
 -- defaultLayouts.
 --
@@ -139,6 +132,13 @@ defaultLayouts = [ Layout tiled
 
      -- Percent of screen to increment by when resizing panes
      delta   = 3%100
+
+-- |
+-- A list of layouts which xmonad can deserialize.
+possibleLayouts :: [Layout Window]
+possibleLayouts = [defaultLayout
+                  -- Extension-provided layouts
+                  ] ++ defaultLayouts
 
 -- |
 -- Perform an arbitrary action on each state change.
