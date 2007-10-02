@@ -8,4 +8,4 @@ logHook     :: X ()
 numlockMask :: KeyMask
 workspaces :: [WorkspaceId]
 possibleLayouts :: [SomeLayout Window]
-manageHook :: Window -> ClassHint -> X (WindowSet -> WindowSet)
+manageHook :: Window -> (String, String, String) -> X (WindowSet -> WindowSet)

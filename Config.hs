@@ -63,7 +63,9 @@ modMask = mod1Mask
 defaultGaps :: [(Int,Int,Int,Int)]
 defaultGaps = [(0,0,0,0)] -- 15 for default dzen
 
-manageHook :: Window -> ClassHint -> X (WindowSet -> WindowSet)
+-- | manageHook.  Execute arbitrary actions and WindowSet manipulations when
+-- managing a new window.
+manageHook :: Window -> (String, String, String) -> X (WindowSet -> WindowSet)
 manageHook _ _ = return id
 
 -- |

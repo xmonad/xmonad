@@ -63,7 +63,10 @@ manage w = whenX (fmap not $ isClient w) $ withDisplay $ \d -> do
         f ws | isFixedSize || isTransient = W.float w (adjust rr) . W.insertUp w . W.view i $ ws
              | otherwise                  = W.insertUp w ws
             where i = fromMaybe (W.tag . W.workspace . W.current $ ws) $ W.lookupWorkspace sc ws
-    g <- manageHook w =<< io (getClassHint d w)
+
+    n <- fmap (fromMaybe "") $ io $ fetchName d w
+    (ClassHint rn rc) <- io $ getClassHint d w
+    g <- manageHook w (n, rn, rc)
     windows (g . f)
 
 -- | unmanage. A window no longer exists, remove it from the window
