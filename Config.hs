@@ -28,7 +28,6 @@ import Data.Bits ((.|.))
 import qualified Data.Map as M
 import System.Exit
 import Graphics.X11.Xlib
-import Graphics.X11.Xlib.Extras (ClassHint(..))
 
 -- Extension-provided imports
 
