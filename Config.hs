@@ -62,20 +62,25 @@ modMask = mod1Mask
 defaultGaps :: [(Int,Int,Int,Int)]
 defaultGaps = [(0,0,0,0)] -- 15 for default dzen
 
--- | manageHook.  Execute arbitrary actions and WindowSet manipulations when
+-- |
+-- Execute arbitrary actions and WindowSet manipulations when
 -- managing a new window.
-manageHook :: Window -> (String, String, String) -> X (WindowSet -> WindowSet)
+manageHook :: Window -- ^ the new window to manage
+           -> String -- ^ window title
+           -> String -- ^ window resource name
+           -> String -- ^ window resource class
+           -> X (WindowSet -> WindowSet)
 
 -- Float various windows:
-manageHook w (_, _, c) | c `elem` floats = fmap (W.float w . snd) (floatLocation w)
+manageHook w _ _ c | c `elem` floats = fmap (W.float w . snd) (floatLocation w)
  where floats = ["MPlayer", "Gimp"]
 
 -- Don't manage various panels and desktop windows:
-manageHook w (_, c, _) | c `elem` ignore = reveal w >> return (W.delete w)
+manageHook w _ n _ | n `elem` ignore = reveal w >> return (W.delete w)
  where ignore = ["gnome-panel", "desktop_window", "kicker", "kdesktop"]
 
 -- The default rule, do not edit this line.
-manageHook _ _ = return id
+manageHook _ _ _ _ = return id
 
 -- |
 -- numlock handling:

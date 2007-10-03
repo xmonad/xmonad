@@ -66,7 +66,7 @@ manage w = whenX (fmap not $ isClient w) $ withDisplay $ \d -> do
 
     n <- fmap (fromMaybe "") $ io $ fetchName d w
     (ClassHint rn rc) <- io $ getClassHint d w
-    g <- manageHook w (n, rn, rc)
+    g <- manageHook w n rn rc
     windows (g . f)
 
 -- | unmanage. A window no longer exists, remove it from the window
