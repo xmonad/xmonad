@@ -67,8 +67,9 @@ defaultGaps = [(0,0,0,0)] -- 15 for default dzen
 -- managing a new window.
 manageHook :: Window -> (String, String, String) -> X (WindowSet -> WindowSet)
 
--- Float mplayer windows:
-manageHook w (_, _, "MPlayer")     = do (_, rr) <- floatLocation w; return (W.float w rr)
+-- Float various windows:
+manageHook w (_, _, c) | c `elem` floats =  do (_, rr) <- floatLocation w; return (W.float w rr)
+ where floats = ["MPlayer", "Gimp"]
 
 -- Don't manage various panels and desktop windows:
 manageHook w (_, c, _) | c `elem` ignore = reveal w >> return (W.delete w)
