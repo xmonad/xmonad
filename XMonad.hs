@@ -229,13 +229,6 @@ whenJust mg f = maybe (return ()) f mg
 whenX :: X Bool -> X () -> X ()
 whenX a f = a >>= \b -> when b f
 
--- Grab the X server (lock it) from the X monad
--- withServerX :: X () -> X ()
--- withServerX f = withDisplay $ \dpy -> do
---     io $ grabServer dpy
---     f
---     io $ ungrabServer dpy
-
 -- | A 'trace' for the X monad. Logs a string to stderr. The result may
 -- be found in your .xsession-errors file
 trace :: String -> X ()
