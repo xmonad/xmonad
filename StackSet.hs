@@ -25,8 +25,8 @@ module StackSet (
         -- *  Operations on the current stack
         -- $stackOperations
         peek, index, integrate, integrate', differentiate,
-        focusUp, focusDown, focusMaster,
-        focusWindow, tagMember, renameTag, ensureTags, member, findIndex,
+        focusUp, focusDown, focusMaster, focusWindow,
+        tagMember, renameTag, ensureTags, member, findIndex, mapLayout,
         -- * Modifying the stackset
         -- $modifyStackset
         insertUp, delete, delete', filter,
@@ -423,6 +423,12 @@ ensureTags l allt st = et allt (map tag (workspaces st) \\ allt) st
           et (i:is) rn s | i `tagMember` s = et is rn s
           et (i:is) [] s = et is [] (s { hidden = Workspace i l Nothing : hidden s })
           et (i:is) (r:rs) s = et is rs $ renameTag r i s
+
+mapLayout :: (l -> l') -> StackSet i l a s sd -> StackSet i l' a s sd
+mapLayout f (StackSet v vs hs m) = StackSet (fScreen v) (map fScreen vs) (map fWorkspace hs) m
+ where
+    fScreen (Screen ws s sd) = Screen (fWorkspace ws) s sd
+    fWorkspace (Workspace t l s) = Workspace t (f l) s
 
 -- | /O(n)/. Is a window in the StackSet.
 member :: Eq a => a -> StackSet i l a s sd -> Bool

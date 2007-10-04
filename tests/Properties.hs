@@ -602,6 +602,10 @@ prop_rename1 (x::T) o n = o `tagMember` x && not (n `tagMember` x) ==>
 prop_ensure (x :: T) l xs = let y = ensureTags l xs x
                                 in and [ n `tagMember` y | n <- xs ]
 
+prop_mapLayoutId (x::T) = x == mapLayout id x
+
+prop_mapLayoutInverse (x::T) = x == mapLayout pred (mapLayout succ x)
+
 ------------------------------------------------------------------------
 -- some properties for layouts:
 
@@ -739,6 +743,9 @@ main = do
         ,("screens works",      mytest prop_screens_works)
         ,("renaming works",     mytest prop_rename1)
         ,("ensure works",     mytest prop_ensure)
+
+        ,("mapLayout id", mytest prop_mapLayoutId)
+        ,("mapLayout inverse", mytest prop_mapLayoutInverse)
 
         -- testing for failure:
         ,("abort fails",            mytest prop_abort)
