@@ -251,7 +251,7 @@ handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
                  sendEvent dpy w False 0 ev
     io $ sync dpy False
 
--- the root may have configured
+-- configuration changes in the root may mean display settings have changed
 handle (ConfigureEvent {ev_window = w}) = whenX (isRoot w) rescreen
 
 handle e = broadcastMessage e -- trace (eventName e) -- ignoring
