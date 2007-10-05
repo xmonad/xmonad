@@ -81,13 +81,14 @@ main = do
     sync dpy False
     selectInput dpy rootw $  substructureRedirectMask .|. substructureNotifyMask
                          .|. enterWindowMask .|. leaveWindowMask .|. structureNotifyMask
-    grabKeys dpy rootw
-    grabButtons dpy rootw
-
-    sync dpy False
 
     allocaXEvent $ \e ->
         runX cf st $ do
+
+            grabKeys
+            grabButtons
+
+            io $ sync dpy False
 
             -- bootstrap the windowset, Operations.windows will identify all
             -- the windows in winset as new and set initial properties for
@@ -126,23 +127,25 @@ scan dpy rootw = do
                          && (wa_map_state wa == waIsViewable || ic)
 
 -- | Grab the keys back
-grabKeys :: Display -> Window -> IO ()
-grabKeys dpy rootw = do
-    ungrabKey dpy anyKey anyModifier rootw
+grabKeys :: X ()
+grabKeys = do
+    XConf { display = dpy, theRoot = rootw } <- ask
+    let grab kc m = io $ grabKey dpy kc m rootw True grabModeAsync grabModeAsync
+    io $ ungrabKey dpy anyKey anyModifier rootw
     forM_ (M.keys keys) $ \(mask,sym) -> do
-         kc <- keysymToKeycode dpy sym
+         kc <- io $ keysymToKeycode dpy sym
          -- "If the specified KeySym is not defined for any KeyCode,
          -- XKeysymToKeycode() returns zero."
          when (kc /= '\0') $ mapM_ (grab kc . (mask .|.)) extraModifiers
 
-  where grab kc m = grabKey dpy kc m rootw True grabModeAsync grabModeAsync
 
-grabButtons :: Display -> Window -> IO ()
-grabButtons dpy rootw = do
-    ungrabButton dpy anyButton anyModifier rootw
+grabButtons :: X ()
+grabButtons = do
+    XConf { display = dpy, theRoot = rootw } <- ask
+    let grab button mask = io $ grabButton dpy button mask rootw False buttonPressMask
+                                           grabModeAsync grabModeSync none none
+    io $ ungrabButton dpy anyButton anyModifier rootw
     mapM_ (\(m,b) -> mapM_ (grab b . (m .|.)) extraModifiers) (M.keys mouseBindings)
-  where grab button mask = grabButton dpy button mask rootw False buttonPressMask
-                                      grabModeAsync grabModeSync none none
 
 -- ---------------------------------------------------------------------
 -- | Event handler. Map X events onto calls into Operations.hs, which
@@ -185,9 +188,7 @@ handle (UnmapEvent {ev_window = w, ev_send_event = synthetic}) = whenX (isClient
 -- set keyboard mapping
 handle e@(MappingNotifyEvent {}) = do
     io $ refreshKeyboardMapping e
-    when (ev_request e == mappingKeyboard) $ withDisplay $ \dpy -> do
-        rootw <- asks theRoot
-        io $ grabKeys dpy rootw
+    when (ev_request e == mappingKeyboard) grabKeys
 
 -- handle button release, which may finish dragging.
 handle e@(ButtonEvent {ev_event_type = t})
