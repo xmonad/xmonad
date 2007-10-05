@@ -218,8 +218,9 @@ spawn x = io $ do
 restart :: Maybe String -> Bool -> X ()
 restart mprog resume = do
     prog <- maybe (io getProgName) return mprog
-    args <- if resume then gets (("--resume":) . return . show . windowset) else return []
+    args <- if resume then gets (("--resume":) . return . showWs . windowset) else return []
     catchIO (executeFile prog True args Nothing)
+ where showWs = show . mapLayout show
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
 whenJust :: Maybe a -> (a -> X ()) -> X ()

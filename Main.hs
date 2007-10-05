@@ -52,9 +52,16 @@ main = do
 
     let initialWinset = new defaultLayout workspaces $ zipWith SD xinesc gaps
 
-        winset | ("--resume" : s : _) <- args
-               , [(x, "")]            <- reads s = W.ensureTags defaultLayout workspaces x
-               | otherwise                       = initialWinset
+        maybeRead s = case reads s of
+                            [(x, "")] -> Just x
+                            _         -> Nothing
+
+        winset = fromMaybe initialWinset $ do
+                    ("--resume" : s : _) <- return args
+                    ws                   <- maybeRead s
+                    return . W.ensureTags defaultLayout workspaces
+                           $ W.mapLayout (fromMaybe defaultLayout . maybeRead) ws
+
         gaps = take (length xinesc) $ defaultGaps ++ repeat (0,0,0,0)
 
         cf = XConf
