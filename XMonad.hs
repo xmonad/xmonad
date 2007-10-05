@@ -160,7 +160,9 @@ class (Show (layout a), Read (layout a)) => LayoutClass layout a where
     pureLayout _ r s = [(focus s, r)]
 
     handleMessage :: layout a -> SomeMessage -> X (Maybe (layout a))
-    handleMessage _ _ = return Nothing
+    handleMessage l = return . pureMessage l
+    pureMessage :: layout a -> SomeMessage -> Maybe (layout a)
+    pureMessage _ _ = Nothing
     description :: layout a -> String
     description = show
 

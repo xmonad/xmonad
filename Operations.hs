@@ -423,9 +423,8 @@ instance LayoutClass Tall a where
     doLayout (Tall nmaster _ frac) r =
         return . (\x->(x,Nothing)) .
         ap zip (tile frac r nmaster . length) . W.integrate
-    handleMessage (Tall nmaster delta frac) m =
-        return $ msum [fmap resize (fromMessage m)
-                      ,fmap incmastern (fromMessage m)]
+    pureMessage (Tall nmaster delta frac) m = msum [fmap resize (fromMessage m)
+                                                   ,fmap incmastern (fromMessage m)]
         where resize Shrink = Tall nmaster delta (max 0 $ frac-delta)
               resize Expand = Tall nmaster delta (min 1 $ frac+delta)
               incmastern (IncMasterN d) = Tall (max 0 (nmaster+d)) delta frac
