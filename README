@@ -40,6 +40,12 @@ Building:
 
 Get the dependencies
 
+    Firstly, you'll need the C X11 library headers. On many platforms,
+    these come pre-installed. For others, such as Debian, you can get 
+    them from your package manager:
+
+        apt-get install libx11-dev
+
     It is likely that you already have some of these dependencies.  To check
     whether you've got a package run 'ghc-pkg list some_package_name'
 
