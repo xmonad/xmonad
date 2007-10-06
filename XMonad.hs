@@ -120,7 +120,13 @@ atom_WM_STATE           = getAtom "WM_STATE"
 ------------------------------------------------------------------------
 -- | LayoutClass handling
 
--- The different layout modes
+data Layout a = forall l. LayoutClass l a => Layout (l a)
+
+-- | Comment me.
+class ReadableLayout a where
+    defaults :: [Layout a]
+
+-- | The different layout modes
 -- 'doLayout': given a Rectangle and a Stack, layout the stack elements
 -- inside the given Rectangle.  If an element is not given a Rectangle
 -- by 'doLayout', then it is not shown on screen.  Windows are restacked
@@ -131,16 +137,29 @@ atom_WM_STATE           = getAtom "WM_STATE"
 -- that message and the screen is not refreshed.  Otherwise, 'handleMessage'
 -- returns an updated 'LayoutClass' and the screen is refreshed.
 --
-data Layout a = forall l. LayoutClass l a => Layout (l a)
+class (Show (layout a), Read (layout a)) => LayoutClass layout a where
+    doLayout    :: layout a -> Rectangle -> Stack a -> X ([(a, Rectangle)], Maybe (layout a))
+    doLayout l r s   = return (pureLayout l r s, Nothing)
 
-class ReadableLayout a where
-    defaults :: [Layout a]
+    pureLayout  :: layout a -> Rectangle -> Stack a -> [(a, Rectangle)]
+    pureLayout _ r s = [(focus s, r)]
+
+    handleMessage :: layout a -> SomeMessage -> X (Maybe (layout a))
+    handleMessage l  = return . pureMessage l
+
+    pureMessage :: layout a -> SomeMessage -> Maybe (layout a)
+    pureMessage _ _  = Nothing
+
+    description :: layout a -> String
+    description      = show
+
 instance ReadableLayout a => Read (Layout a) where
     readsPrec _ = readLayout defaults
+
 instance ReadableLayout a => LayoutClass Layout a where
-    doLayout (Layout l) r s = fmap (fmap $ fmap Layout) $ doLayout l r s
+    doLayout (Layout l) r s  = fmap (fmap $ fmap Layout) $ doLayout l r s
     handleMessage (Layout l) = fmap (fmap Layout) . handleMessage l
-    description (Layout l) = description l
+    description (Layout l)   = description l
 
 instance Show (Layout a) where
     show (Layout l) = show l
@@ -152,19 +171,6 @@ readLayout ls s = take 1 $ concatMap rl ls
     where rl (Layout x) = map (\(l,s') -> (Layout l,s')) $ rl' x
           rl' :: LayoutClass l a => l a -> [(l a,String)]
           rl' _ = reads s
-
-class (Show (layout a), Read (layout a)) => LayoutClass layout a where
-    doLayout :: layout a -> Rectangle -> Stack a -> X ([(a, Rectangle)], Maybe (layout a))
-    doLayout l r s = return (pureLayout l r s, Nothing)
-    pureLayout :: layout a -> Rectangle -> Stack a -> [(a, Rectangle)]
-    pureLayout _ r s = [(focus s, r)]
-
-    handleMessage :: layout a -> SomeMessage -> X (Maybe (layout a))
-    handleMessage l = return . pureMessage l
-    pureMessage :: layout a -> SomeMessage -> Maybe (layout a)
-    pureMessage _ _ = Nothing
-    description :: layout a -> String
-    description = show
 
 runLayout :: LayoutClass l a => l a -> Rectangle -> StackOrNot a -> X ([(a, Rectangle)], Maybe (l a))
 runLayout l r = maybe (return ([], Nothing)) (doLayout l r)
