@@ -6,7 +6,7 @@
 -- Copyright   :  (c) Don Stewart 2007
 -- License     :  BSD3-style (see LICENSE)
 --
--- Maintainer  :  dons@cse.unsw.edu.au
+-- Maintainer  :  dons@galois.com
 -- Stability   :  experimental
 -- Portability :  portable, Haskell 98
 --
