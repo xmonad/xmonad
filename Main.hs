@@ -254,4 +254,8 @@ handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
 -- configuration changes in the root may mean display settings have changed
 handle (ConfigureEvent {ev_window = w}) = whenX (isRoot w) rescreen
 
+-- property notify
+handle PropertyEvent { ev_event_type = t, ev_atom = a }
+    | t == propertyNotify && a == wM_NAME = do logHook
+
 handle e = broadcastMessage e -- trace (eventName e) -- ignoring
