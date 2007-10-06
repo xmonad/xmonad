@@ -111,8 +111,8 @@ kill = withDisplay $ \d -> withFocused $ \w -> do
 -- Managing windows
 
 data LayoutMessages = Hide | ReleaseResources deriving ( Typeable, Eq )
-instance Message LayoutMessages
 
+instance Message LayoutMessages
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WindowSet -> WindowSet) -> X ()
@@ -327,6 +327,7 @@ broadcastMessage a = runOnWorkspaces modw
     where modw w = do ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
                       return $ w { W.layout = maybe (W.layout w) id ml' }
 
+-- | XXX comment me
 runOnWorkspaces :: (WindowSpace -> X WindowSpace) -> X ()
 runOnWorkspaces job = do ws <- gets windowset
                          h <- mapM job $ W.hidden ws
@@ -351,6 +352,7 @@ setLayout l = do
 
 data ChangeLayout = NextLayout | PrevLayout | JumpToLayout String
                  deriving ( Eq, Show, Typeable )
+
 instance Message ChangeLayout
 
 instance ReadableLayout Window where
@@ -407,18 +409,22 @@ instance ReadableLayout a => LayoutClass LayoutSelection a where
 --
 
 data Resize     = Shrink | Expand   deriving Typeable
-data IncMasterN = IncMasterN Int   deriving Typeable
+
+data IncMasterN = IncMasterN Int    deriving Typeable
+
 instance Message Resize
 instance Message IncMasterN
 
 -- simple fullscreen mode, just render all windows fullscreen.
 -- a plea for tuple sections: map . (,sc)
 data Full a = Full deriving ( Show, Read )
+
 instance LayoutClass Full a
 --
 -- The tiling mode of xmonad, and its operations.
 --
 data Tall a = Tall Int Rational Rational deriving ( Show, Read )
+
 instance LayoutClass Tall a where
     doLayout (Tall nmaster _ frac) r =
         return . (\x->(x,Nothing)) .
@@ -480,6 +486,7 @@ splitHorizontallyBy f (Rectangle sx sy sw sh) =
     , Rectangle (sx + fromIntegral leftw) sy (sw-fromIntegral leftw) sh)
   where leftw = floor $ fromIntegral sw * f
 
+-- | XXX comment me
 splitVerticallyBy f = (mirrorRect *** mirrorRect) . splitHorizontallyBy f . mirrorRect
 
 ------------------------------------------------------------------------
@@ -521,6 +528,7 @@ floatLocation w = withDisplay $ \d -> do
     ws <- gets windowset
     wa <- io $ getWindowAttributes d w
 
+    -- | XXX horrible
     let sc = fromMaybe (W.current ws) $ find (pointWithin (fi $ wa_x wa) (fi $ wa_y wa) . screenRect . W.screenDetail) $ W.screens ws
         sr = screenRect . W.screenDetail $ sc
         bw = fi . wa_border_width $ wa
@@ -571,6 +579,7 @@ mouseDrag f done = do
                     clearEvents pointerMotionMask
                     return z
 
+-- | XXX comment me
 mouseMoveWindow :: Window -> X ()
 mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     io $ raiseWindow d w
@@ -582,6 +591,7 @@ mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
                                              (fromIntegral (fromIntegral (wa_y wa) + (ey - oy))))
               (float w)
 
+-- | XXX comment me
 mouseResizeWindow :: Window -> X ()
 mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     io $ raiseWindow d w
@@ -604,6 +614,7 @@ applySizeHints :: Integral a => SizeHints -> (a,a) -> D
 applySizeHints sh (w,h) = applySizeHints' sh (fromIntegral $ max 1 w,
                                               fromIntegral $ max 1 h)
 
+-- | XXX comment me
 applySizeHints' :: SizeHints -> D -> D
 applySizeHints' sh =
       maybe id applyMaxSizeHint                   (sh_max_size   sh)
