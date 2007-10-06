@@ -68,7 +68,7 @@ Notes for using the darcs version
     use the darcs version of X11-extras, which is developed concurrently
     with xmonad.
 
-        darcs get http://darcs.haskell.org/~sjanssen/X11-extras
+        darcs get http://code.haskell.org/X11-extras
 
     Not using X11-extras from darcs, is the most common reason for the
     darcs version of xmonad to fail to build.
@@ -93,7 +93,7 @@ XMonadContrib
 
     0.3 release:   http://www.xmonad.org/XMonadContrib-0.3.tar.gz
 
-    darcs version: darcs get http://darcs.haskell.org/~sjanssen/XMonadContrib
+    darcs version: darcs get http://code.haskell.org/XMonadContrib
 
 ------------------------------------------------------------------------
 
