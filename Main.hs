@@ -1,4 +1,4 @@
------------------------------------------------------------------------------
+----------------------------------------------------------------------------
 -- |
 -- Module      :  Main.hs
 -- Copyright   :  (c) Spencer Janssen 2007
@@ -138,7 +138,7 @@ grabKeys = do
          -- XKeysymToKeycode() returns zero."
          when (kc /= '\0') $ mapM_ (grab kc . (mask .|.)) extraModifiers
 
-
+-- | XXX comment me
 grabButtons :: X ()
 grabButtons = do
     XConf { display = dpy, theRoot = rootw } <- ask
