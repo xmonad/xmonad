@@ -26,7 +26,7 @@ module StackSet (
         -- $stackOperations
         peek, index, integrate, integrate', differentiate,
         focusUp, focusDown, focusMaster, focusWindow,
-        tagMember, renameTag, ensureTags, member, findIndex, mapLayout,
+        tagMember, renameTag, ensureTags, member, findIndex, mapWorkspace, mapLayout,
         -- * Modifying the stackset
         -- $modifyStackset
         insertUp, delete, delete', filter,
