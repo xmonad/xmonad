@@ -410,11 +410,8 @@ tagMember t = elem t . map tag . workspaces
 
 -- | Rename a given tag if present in the StackSet.
 renameTag :: Eq i => i -> i -> StackSet i l a s sd -> StackSet i l a s sd
-renameTag o n s = s { current = rs $ current s
-                    , visible = map rs $ visible s
-                    , hidden = map rw $ hidden s }
-    where rs scr = scr { workspace = rw $ workspace scr }
-          rw w = if tag w == o then w { tag = n } else w
+renameTag o n = mapWorkspace rename
+    where rename w = if tag w == o then w { tag = n } else w
 
 -- | Ensure that a given set of tags is present.
 ensureTags :: Eq i => l -> [i] -> StackSet i l a s sd -> StackSet i l a s sd
@@ -424,6 +421,14 @@ ensureTags l allt st = et allt (map tag (workspaces st) \\ allt) st
           et (i:is) [] s = et is [] (s { hidden = Workspace i l Nothing : hidden s })
           et (i:is) (r:rs) s = et is rs $ renameTag r i s
 
+-- | Map a function on all the workspaces in the StackSet.
+mapWorkspace :: (Workspace i l a -> Workspace i l a) -> StackSet i l a s sd -> StackSet i l a s sd
+mapWorkspace f s = s { current = updScr $ current s
+                     , visible = map updScr $ visible s
+                     , hidden  = map f $ hidden s }
+    where updScr scr = scr { workspace = f $ workspace scr }
+
+-- | Map a function on all the layouts in the StackSet.
 mapLayout :: (l -> l') -> StackSet i l a s sd -> StackSet i l' a s sd
 mapLayout f (StackSet v vs hs m) = StackSet (fScreen v) (map fScreen vs) (map fWorkspace hs) m
  where
