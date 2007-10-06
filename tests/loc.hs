@@ -9,7 +9,6 @@ main = do foo <- getContents
           -- uncomment the following to check for mistakes in isntcomment
           -- putStr $ unlines $ actual_loc
 
-isntcomment "" = False
 isntcomment ('-':'-':_) = False
 isntcomment ('{':'-':_) = False -- pragmas
 isntcomment _ = True
