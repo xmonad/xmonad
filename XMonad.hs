@@ -51,7 +51,7 @@ data XConf = XConf
     , normalBorder  :: !Pixel       -- ^ border color of unfocused windows
     , focusedBorder :: !Pixel     } -- ^ border color of the focused window
 
-type WindowSet = StackSet WorkspaceId (Layout Window) Window ScreenId ScreenDetail
+type WindowSet   = StackSet  WorkspaceId (Layout Window) Window ScreenId ScreenDetail
 type WindowSpace = Workspace WorkspaceId (Layout Window) Window
 
 -- | Virtual workspace indicies
@@ -60,6 +60,7 @@ type WorkspaceId = String
 -- | Physical screen indicies
 newtype ScreenId    = S Int deriving (Eq,Ord,Show,Read,Enum,Num,Integral,Real)
 
+-- | TODO Comment me
 data ScreenDetail   = SD { screenRect :: !Rectangle
                          , statusGap  :: !(Int,Int,Int,Int) -- ^ width of status bar on the screen
                          } deriving (Eq,Show, Read)
@@ -120,9 +121,10 @@ atom_WM_STATE           = getAtom "WM_STATE"
 ------------------------------------------------------------------------
 -- | LayoutClass handling
 
+-- | XXX Comment me.
 data Layout a = forall l. LayoutClass l a => Layout (l a)
 
--- | Comment me.
+-- | XXX Comment me.
 class ReadableLayout a where
     defaults :: [Layout a]
 
@@ -132,24 +134,30 @@ class ReadableLayout a where
 -- by 'doLayout', then it is not shown on screen.  Windows are restacked
 -- according to the order they are returned by 'doLayout'.
 --
--- 'handleMessage' performs message handling for that layout.  If
--- 'handleMessage' returns Nothing, then the layout did not respond to
--- that message and the screen is not refreshed.  Otherwise, 'handleMessage'
--- returns an updated 'LayoutClass' and the screen is refreshed.
---
+
 class (Show (layout a), Read (layout a)) => LayoutClass layout a where
+
+    -- | XXX Comment me.
     doLayout    :: layout a -> Rectangle -> Stack a -> X ([(a, Rectangle)], Maybe (layout a))
     doLayout l r s   = return (pureLayout l r s, Nothing)
 
+    -- | XXX Comment me.
     pureLayout  :: layout a -> Rectangle -> Stack a -> [(a, Rectangle)]
     pureLayout _ r s = [(focus s, r)]
 
+    -- | 'handleMessage' performs message handling for that layout.  If
+    -- 'handleMessage' returns Nothing, then the layout did not respond to
+    -- that message and the screen is not refreshed.  Otherwise, 'handleMessage'
+    -- returns an updated 'LayoutClass' and the screen is refreshed.
+    --
     handleMessage :: layout a -> SomeMessage -> X (Maybe (layout a))
     handleMessage l  = return . pureMessage l
 
+    -- | XXX Comment me.
     pureMessage :: layout a -> SomeMessage -> Maybe (layout a)
     pureMessage _ _  = Nothing
 
+    -- | XXX Comment me.
     description :: layout a -> String
     description      = show
 
@@ -164,6 +172,7 @@ instance ReadableLayout a => LayoutClass Layout a where
 instance Show (Layout a) where
     show (Layout l) = show l
 
+-- | XXX Comment me.
 readLayout :: [Layout a] -> String -> [(Layout a, String)]
 readLayout ls s = take 1 $ concatMap rl ls
                -- We take the first parse only, because multiple matches
@@ -172,6 +181,7 @@ readLayout ls s = take 1 $ concatMap rl ls
           rl' :: LayoutClass l a => l a -> [(l a,String)]
           rl' _ = reads s
 
+-- | XXX Comment me.
 runLayout :: LayoutClass l a => l a -> Rectangle -> StackOrNot a -> X ([(a, Rectangle)], Maybe (l a))
 runLayout l r = maybe (return ([], Nothing)) (doLayout l r)
 
