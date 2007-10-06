@@ -610,6 +610,12 @@ prop_rename1 (x::T) o n = o `tagMember` x && not (n `tagMember` x) ==>
 prop_ensure (x :: T) l xs = let y = ensureTags l xs x
                                 in and [ n `tagMember` y | n <- xs ]
 
+prop_mapWorkspaceId (x::T) = x == mapWorkspace id x
+
+prop_mapWorkspaceInverse (x::T) = x == mapWorkspace predTag (mapWorkspace succTag x)
+  where predTag w = w { tag = pred $ tag w }
+        succTag w = w { tag = succ $ tag w }
+
 prop_mapLayoutId (x::T) = x == mapLayout id x
 
 prop_mapLayoutInverse (x::T) = x == mapLayout pred (mapLayout succ x)
@@ -752,6 +758,8 @@ main = do
         ,("renaming works",     mytest prop_rename1)
         ,("ensure works",     mytest prop_ensure)
 
+        ,("mapWorkspace id", mytest prop_mapWorkspaceId)
+        ,("mapWorkspace inverse", mytest prop_mapWorkspaceInverse)
         ,("mapLayout id", mytest prop_mapLayoutId)
         ,("mapLayout inverse", mytest prop_mapLayoutInverse)
 
