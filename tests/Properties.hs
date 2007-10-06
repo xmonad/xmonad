@@ -543,10 +543,12 @@ prop_float_reversible n (x :: T) =
             geom = RationalRect 100 100 100 100
 
 -- check rectanges were set
+{-
 prop_float_sets_geometry n (x :: T) =
     n `member` x ==> let y = float n geom x in M.lookup y (floating x) == Just geom
         where
             geom = RationalRect 100 100 100 100
+-}
 
 ------------------------------------------------------------------------
 
