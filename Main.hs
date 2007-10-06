@@ -101,9 +101,9 @@ main = do
             mapM_ manage ws
 
             -- main loop, for all you HOF/recursion fans out there.
-            forever $ handle =<< io (nextEvent dpy e >> getEvent e)
+            forever_ $ handle =<< io (nextEvent dpy e >> getEvent e)
 
-      where forever a = a >> forever a
+      where forever_ a = a >> forever_ a
 
 -- ---------------------------------------------------------------------
 -- IO stuff. Doesn't require any X state
