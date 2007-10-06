@@ -423,10 +423,10 @@ ensureTags l allt st = et allt (map tag (workspaces st) \\ allt) st
 
 -- | Map a function on all the workspaces in the StackSet.
 mapWorkspace :: (Workspace i l a -> Workspace i l a) -> StackSet i l a s sd -> StackSet i l a s sd
-mapWorkspace f s = s { current = updScr $ current s
-                     , visible = map updScr $ visible s
-                     , hidden  = map f $ hidden s }
-    where updScr scr = scr { workspace = f $ workspace scr }
+mapWorkspace f s = s { current = updScr (current s)
+                     , visible = map updScr (visible s)
+                     , hidden  = map f (hidden s) }
+    where updScr scr = scr { workspace = f (workspace scr) }
 
 -- | Map a function on all the layouts in the StackSet.
 mapLayout :: (l -> l') -> StackSet i l a s sd -> StackSet i l' a s sd
