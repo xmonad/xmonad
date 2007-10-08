@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# OPTIONS_GHC -fglasgow-exts #-} -- For deriving Data/Typeable
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, PatternGuards, TypeSynonymInstances #-}
 
--- \^^ deriving Typeable
 -- --------------------------------------------------------------------------
 -- |
 -- Module      :  Operations.hs
