@@ -56,7 +56,7 @@ manage w = whenX (fmap not $ isClient w) $ withDisplay $ \d -> do
 
     (sc, rr) <- floatLocation w
     -- ensure that float windows don't go over the edge of the screen
-    let adjust (W.RationalRect x y wid h) | x + wid >= 1 || y + wid >= 1 || x <= 0 || y <= 0
+    let adjust (W.RationalRect x y wid h) | x + wid > 1 || y + h > 1 || x < 0 || y < 0
                                               = W.RationalRect (0.5 - wid/2) (0.5 - h/2) wid h
         adjust r = r
 
