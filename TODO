@@ -1,10 +1,2 @@
-
-- possibles:
-    * more QC tests
-    - use more constrained type in StackSet to avoid pattern match warnings
-    - audit for events handled in dwm.
-
-- related:
-    - xcb bindings
-    - randr
-
+ - Write down invariants for the window life cycle, especially:
+    - When are borders set?  Prove that the current handling is sufficient.
