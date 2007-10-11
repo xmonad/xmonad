@@ -210,9 +210,12 @@ clientMask = structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
 
 -- | Set some properties when we initially gain control of a window
 setInitialProperties :: Window -> X ()
-setInitialProperties w = withDisplay $ \d -> io $ do
+setInitialProperties w = asks normalBorder >>= \nb -> withDisplay $ \d -> io $ do
     selectInput d w $ clientMask
     setWindowBorderWidth d w borderWidth
+    -- we must initially set the color of new windows, to maintain invariants
+    -- required by the border setting in 'windows'
+    setWindowBorder d w nb
 
 -- | refresh. Render the currently visible workspaces, as determined by
 -- the StackSet. Also, set focus to the focused window.
