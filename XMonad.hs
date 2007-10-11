@@ -121,10 +121,13 @@ atom_WM_STATE           = getAtom "WM_STATE"
 ------------------------------------------------------------------------
 -- | LayoutClass handling
 
--- | XXX Comment me.
+-- | And existential class that can hold any object that is in
+-- the LayoutClass.
 data Layout a = forall l. LayoutClass l a => Layout (l a)
 
--- | XXX Comment me.
+-- | This class defines a set of layout types (held in Layout
+-- objects) that are used when trying to read an existential
+-- Layout.
 class ReadableLayout a where
     defaults :: [Layout a]
 
@@ -137,11 +140,17 @@ class ReadableLayout a where
 
 class (Show (layout a), Read (layout a)) => LayoutClass layout a where
 
-    -- | XXX Comment me.
+    -- | Given a Rectangle in which to place the windows, and a Stack of
+    -- windows, return a list of windows and their corresponding Rectangles.
+    -- The order of windows in this list should be the desired stacking order.
+    -- Also return a modified layout, if this layout needs to be modified
+    -- (e.g. if we keep track of the windows we have displayed).
     doLayout    :: layout a -> Rectangle -> Stack a -> X ([(a, Rectangle)], Maybe (layout a))
     doLayout l r s   = return (pureLayout l r s, Nothing)
 
-    -- | XXX Comment me.
+    -- | This is a pure version of doLayout, for cases where we don't need
+    -- access to the X monad to determine how to layou out the windows, and
+    -- we don't need to modify our layout itself.
     pureLayout  :: layout a -> Rectangle -> Stack a -> [(a, Rectangle)]
     pureLayout _ r s = [(focus s, r)]
 
@@ -153,16 +162,23 @@ class (Show (layout a), Read (layout a)) => LayoutClass layout a where
     handleMessage :: layout a -> SomeMessage -> X (Maybe (layout a))
     handleMessage l  = return . pureMessage l
 
-    -- | XXX Comment me.
+    -- | Respond to a message by (possibly) changing our layout, but taking
+    -- no other action.  If the layout changes, the screen will be refreshed.
     pureMessage :: layout a -> SomeMessage -> Maybe (layout a)
     pureMessage _ _  = Nothing
 
-    -- | XXX Comment me.
+    -- | This should be a human-readable string that is used when selecting
+    -- layouts by name.
     description :: layout a -> String
     description      = show
 
 instance ReadableLayout a => Read (Layout a) where
-    readsPrec _ = readLayout defaults
+    readsPrec _ s = take 1 $ concatMap rl defaults
+                  -- We take the first parse only, because multiple matches
+                  -- indicate a bad parse.
+        where rl (Layout x) = map (\(l,s') -> (Layout l,s')) $ rl' x
+              rl' :: LayoutClass l a => l a -> [(l a,String)]
+              rl' _ = reads s
 
 instance ReadableLayout a => LayoutClass Layout a where
     doLayout (Layout l) r s  = fmap (fmap $ fmap Layout) $ doLayout l r s
@@ -172,16 +188,7 @@ instance ReadableLayout a => LayoutClass Layout a where
 instance Show (Layout a) where
     show (Layout l) = show l
 
--- | XXX Comment me.
-readLayout :: [Layout a] -> String -> [(Layout a, String)]
-readLayout ls s = take 1 $ concatMap rl ls
-               -- We take the first parse only, because multiple matches
-               -- indicate a bad parse.
-    where rl (Layout x) = map (\(l,s') -> (Layout l,s')) $ rl' x
-          rl' :: LayoutClass l a => l a -> [(l a,String)]
-          rl' _ = reads s
-
--- | XXX Comment me.
+-- | This calls doLayout if there are any windows to be laid out.
 runLayout :: LayoutClass l a => l a -> Rectangle -> StackOrNot a -> X ([(a, Rectangle)], Maybe (l a))
 runLayout l r = maybe (return ([], Nothing)) (doLayout l r)
 
