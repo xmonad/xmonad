@@ -330,7 +330,8 @@ broadcastMessage a = runOnWorkspaces modw
     where modw w = do ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
                       return $ w { W.layout = maybe (W.layout w) id ml' }
 
--- | XXX comment me
+-- | This is basically a map function, running a function in the X monad on
+-- each workspace with the output of that function being the modified workspace.
 runOnWorkspaces :: (WindowSpace -> X WindowSpace) -> X ()
 runOnWorkspaces job = do ws <- gets windowset
                          h <- mapM job $ W.hidden ws
