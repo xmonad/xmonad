@@ -25,7 +25,7 @@ module XMonad (
 import StackSet
 
 import Prelude hiding ( catch )
-import Control.Exception ( catch )
+import Control.Exception (catch, throw, Exception(ExitException))
 import Control.Monad.State
 import Control.Monad.Reader
 import System.IO
@@ -87,11 +87,13 @@ runX c st (X a) = runStateT (runReaderT a c) st
 -- | Run in the X monad, and in case of exception, and catch it and log it
 -- to stderr, and run the error case.
 catchX :: X a -> X a -> X a
-catchX (X job) (X errcase) = do
+catchX job errcase = do
     st <- get
     c <- ask
-    (a,s') <- io ((runStateT (runReaderT job c) st) `catch`
-                  \e -> (do hPutStrLn stderr (show e); runStateT (runReaderT errcase c) st))
+    (a, s') <- io $ runX c st job `catch`
+                    \e -> case e of
+                            ExitException {} -> throw e
+                            _ -> do hPrint stderr e; runX c st errcase
     put s'
     return a
 

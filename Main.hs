@@ -103,6 +103,7 @@ main = do
             -- main loop, for all you HOF/recursion fans out there.
             forever_ $ handle =<< io (nextEvent dpy e >> getEvent e)
 
+    return ()
       where forever_ a = a >> forever_ a
 
 -- ---------------------------------------------------------------------
