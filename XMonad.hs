@@ -81,8 +81,8 @@ newtype X a = X (ReaderT XConf (StateT XState IO) a)
 
 -- | Run the X monad, given a chunk of X monad code, and an initial state
 -- Return the result, and final state
-runX :: XConf -> XState -> X a -> IO ()
-runX c st (X a) = runStateT (runReaderT a c) st >> return ()
+runX :: XConf -> XState -> X a -> IO (a, XState)
+runX c st (X a) = runStateT (runReaderT a c) st
 
 -- | Run in the X monad, and in case of exception, and catch it and log it
 -- to stderr, and run the error case.
