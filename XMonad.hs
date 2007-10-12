@@ -24,6 +24,8 @@ module XMonad (
 
 import StackSet
 
+import Prelude hiding ( catch )
+import Control.Exception ( catch )
 import Control.Monad.State
 import Control.Monad.Reader
 import System.IO
