@@ -98,7 +98,7 @@ catchX (X job) (X errcase) = do
 -- | Execute the argument, catching all exceptions.  Either this function or
 -- catchX should be used at all callsites of user customized code.
 userCode :: X () -> X ()
-userCode a = catchX a (return ())
+userCode a = catchX (a >> return ()) (return ())
 
 -- ---------------------------------------------------------------------
 -- Convenient wrappers to state
