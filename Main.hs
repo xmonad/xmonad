@@ -256,6 +256,6 @@ handle (ConfigureEvent {ev_window = w}) = whenX (isRoot w) rescreen
 
 -- property notify
 handle PropertyEvent { ev_event_type = t, ev_atom = a }
-    | t == propertyNotify && a == wM_NAME = do logHook
+    | t == propertyNotify && a == wM_NAME = logHook `catchX` return ()
 
 handle e = broadcastMessage e -- trace (eventName e) -- ignoring
