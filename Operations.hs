@@ -66,7 +66,7 @@ manage w = whenX (fmap not $ isClient w) $ withDisplay $ \d -> do
 
     n <- fmap (fromMaybe "") $ io $ fetchName d w
     (ClassHint rn rc) <- io $ getClassHint d w
-    g <- manageHook w n rn rc
+    g <- manageHook w n rn rc `catchX` return id
     windows (g . f)
 
 -- | unmanage. A window no longer exists, remove it from the window
@@ -169,7 +169,7 @@ windows f = do
 
     whenJust (W.peek ws) $ \w -> io $ setWindowBorder d w fbc
     setTopFocus
-    logHook
+    logHook `catchX` return ()
     -- io performGC -- really helps, but seems to trigger GC bugs?
 
     -- hide every window that was potentially visible before, but is not

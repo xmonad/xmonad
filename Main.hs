@@ -165,6 +165,7 @@ handle (KeyEvent {ev_event_type = t, ev_state = m, ev_keycode = code})
     | t == keyPress = withDisplay $ \dpy -> do
         s  <- io $ keycodeToKeysym dpy code 0
         whenJust (M.lookup (cleanMask m,s) keys) id
+                     `catchX` return ()
 
 -- manage a new window
 handle (MapRequestEvent    {ev_window = w}) = withDisplay $ \dpy -> do
@@ -213,6 +214,7 @@ handle e@(ButtonEvent {ev_window = w,ev_event_type = t,ev_button = b })
     -- grabbed in grabButtons. Otherwise, it's click-to-focus.
     isr <- isRoot w
     if isr then whenJust (M.lookup (cleanMask (ev_state e), b) mouseBindings) ($ ev_subwindow e)
+                      `catchX` return ()
            else focus w
     sendMessage e -- Always send button events.
 
