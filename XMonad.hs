@@ -18,7 +18,7 @@
 module XMonad (
     X, WindowSet, WindowSpace, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), LayoutClass(..), Layout(..), ReadableLayout(..),
     Typeable, Message, SomeMessage(..), fromMessage, runLayout,
-    runX, catchX, io, catchIO, withDisplay, withWindowSet, isRoot, getAtom, spawn, restart, trace, whenJust, whenX,
+    runX, catchX, userCode, io, catchIO, withDisplay, withWindowSet, isRoot, getAtom, spawn, restart, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
   ) where
 
@@ -94,6 +94,11 @@ catchX (X job) (X errcase) = do
                   \e -> (do hPutStrLn stderr (show e); runStateT (runReaderT errcase c) st))
     put s'
     return a
+
+-- | Execute the argument, catching all exceptions.  Either this function or
+-- catchX should be used at all callsites of user customized code.
+userCode :: X () -> X ()
+userCode a = catchX a (return ())
 
 -- ---------------------------------------------------------------------
 -- Convenient wrappers to state

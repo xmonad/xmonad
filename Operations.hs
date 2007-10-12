@@ -169,7 +169,7 @@ windows f = do
 
     whenJust (W.peek ws) $ \w -> io $ setWindowBorder d w fbc
     setTopFocus
-    logHook `catchX` return ()
+    userCode logHook
     -- io performGC -- really helps, but seems to trigger GC bugs?
 
     -- hide every window that was potentially visible before, but is not

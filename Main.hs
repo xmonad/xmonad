@@ -164,8 +164,7 @@ handle :: Event -> X ()
 handle (KeyEvent {ev_event_type = t, ev_state = m, ev_keycode = code})
     | t == keyPress = withDisplay $ \dpy -> do
         s  <- io $ keycodeToKeysym dpy code 0
-        whenJust (M.lookup (cleanMask m,s) keys) id
-                     `catchX` return ()
+        userCode $ whenJust (M.lookup (cleanMask m,s) keys) id
 
 -- manage a new window
 handle (MapRequestEvent    {ev_window = w}) = withDisplay $ \dpy -> do
@@ -213,8 +212,7 @@ handle e@(ButtonEvent {ev_window = w,ev_event_type = t,ev_button = b })
     -- If it's the root window, then it's something we
     -- grabbed in grabButtons. Otherwise, it's click-to-focus.
     isr <- isRoot w
-    if isr then whenJust (M.lookup (cleanMask (ev_state e), b) mouseBindings) ($ ev_subwindow e)
-                      `catchX` return ()
+    if isr then userCode $ whenJust (M.lookup (cleanMask (ev_state e), b) mouseBindings) ($ ev_subwindow e)
            else focus w
     sendMessage e -- Always send button events.
 
@@ -258,6 +256,6 @@ handle (ConfigureEvent {ev_window = w}) = whenX (isRoot w) rescreen
 
 -- property notify
 handle PropertyEvent { ev_event_type = t, ev_atom = a }
-    | t == propertyNotify && a == wM_NAME = logHook `catchX` return ()
+    | t == propertyNotify && a == wM_NAME = userCode logHook
 
 handle e = broadcastMessage e -- trace (eventName e) -- ignoring
