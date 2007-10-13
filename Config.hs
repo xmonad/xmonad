@@ -37,7 +37,7 @@ import Graphics.X11.Xlib
 --
 -- A tagging example:
 --
--- > workspaces = ["web", "irc", "code" ] ++ map show [5..9]
+-- > workspaces = ["web", "irc", "code" ] ++ map show [4..9]
 --
 workspaces :: [WorkspaceId]
 workspaces = map show [1 .. 9 :: Int]
