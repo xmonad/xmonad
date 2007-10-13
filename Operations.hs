@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# OPTIONS_GHC -fglasgow-exts #-} -- For deriving Data/Typeable
+{-# OPTIONS_GHC -fglasgow-exts    #-} -- For deriving Data/Typeable
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, PatternGuards, TypeSynonymInstances #-}
 
 -- --------------------------------------------------------------------------
@@ -304,42 +304,44 @@ setFocusX w = withWindowSet $ \ws -> do
     io $ do setInputFocus dpy w revertToPointerRoot 0
             -- raiseWindow dpy w
 
+------------------------------------------------------------------------
+-- Message handling
+
 -- | Throw a message to the current LayoutClass possibly modifying how we
 -- layout the windows, then refresh.
---
 sendMessage :: Message a => a -> X ()
-sendMessage a = do w <- (W.workspace . W.current) `fmap` gets windowset
-                   ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
-                   whenJust ml' $ \l' ->
-                       do windows $ \ws -> ws { W.current = (W.current ws)
-                                                { W.workspace = (W.workspace $ W.current ws)
-                                                  { W.layout = l' }}}
+sendMessage a = do
+    w <- (W.workspace . W.current) `fmap` gets windowset
+    ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
+    whenJust ml' $ \l' -> do
+        windows $ \ws -> ws { W.current = (W.current ws)
+                                { W.workspace = (W.workspace $ W.current ws)
+                                  { W.layout = l' }}}
 
 -- | Send a message to a list of workspaces' layouts, without necessarily refreshing.
 sendMessageToWorkspaces :: Message a => a -> [WorkspaceId] -> X ()
-sendMessageToWorkspaces a l = runOnWorkspaces modw
-    where modw w = if W.tag w `elem` l
-                      then do ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
-                              return $ w { W.layout = maybe (W.layout w) id ml' }
-                      else return w
+sendMessageToWorkspaces a l = runOnWorkspaces $ \w ->
+   if W.tag w `elem` l
+      then do ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
+              return $ w { W.layout = maybe (W.layout w) id ml' }
+      else return w
 
 -- | Send a message to all visible layouts, without necessarily refreshing.
 -- This is how we implement the hooks, such as UnDoLayout.
 broadcastMessage :: Message a => a -> X ()
-broadcastMessage a = runOnWorkspaces modw
-    where modw w = do ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
-                      return $ w { W.layout = maybe (W.layout w) id ml' }
+broadcastMessage a = runOnWorkspaces $ \w -> do
+    ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
+    return $ w { W.layout = maybe (W.layout w) id ml' }
 
 -- | This is basically a map function, running a function in the X monad on
 -- each workspace with the output of that function being the modified workspace.
 runOnWorkspaces :: (WindowSpace -> X WindowSpace) -> X ()
-runOnWorkspaces job = do ws <- gets windowset
-                         h <- mapM job $ W.hidden ws
-                         c:v <- mapM (\s -> fmap (\w -> s { W.workspace = w}) $ job (W.workspace s))
-                                 $ W.current ws : W.visible ws
-                         modify $ \s -> s { windowset = ws { W.current = c, W.visible = v, W.hidden = h } }
-
-instance Message Event
+runOnWorkspaces job =do
+    ws <- gets windowset
+    h <- mapM job $ W.hidden ws
+    c:v <- mapM (\s -> fmap (\w -> s { W.workspace = w}) $ job (W.workspace s))
+             $ W.current ws : W.visible ws
+    modify $ \s -> s { windowset = ws { W.current = c, W.visible = v, W.hidden = h } }
 
 -- | Set the layout of the currently viewed workspace
 setLayout :: Layout Window -> X ()
@@ -348,14 +350,21 @@ setLayout l = do
     handleMessage (W.layout ws) (SomeMessage ReleaseResources)
     windows $ const $ ss {W.current = c { W.workspace = ws { W.layout = l } } }
 
+-- | X Events are valid Messages
+instance Message Event
+
+------------------------------------------------------------------------
 -- LayoutClass selection manager
 
--- This is a layout that allows users to switch between various layout
--- options.  This layout accepts three Messages, NextLayout, PrevLayout and
--- JumpToLayout.
-
+-- | A layout that allows users to switch between various layout options.
+-- This layout accepts three Messages:
+--
+-- >    NextLayout
+-- >    PrevLayout
+-- >    JumpToLayout.
+--
 data ChangeLayout = NextLayout | PrevLayout | JumpToLayout String
-                 deriving ( Eq, Show, Typeable )
+                 deriving (Eq, Show, Typeable)
 
 instance Message ChangeLayout
 
@@ -368,74 +377,72 @@ instance ReadableLayout Window where
 data Select a = Select [Layout a] deriving (Show, Read)
 
 instance ReadableLayout a => LayoutClass Select a where
-    doLayout (Select (l:ls)) r s = do
-        (x,ml') <- doLayout l r s
-        return (x, (\l' -> Select (l':ls)) `fmap` ml')
-
-    doLayout (Select []) r s = do
-        (x,_) <- doLayout Full r s
-        return (x,Nothing)
+    doLayout (Select (l:ls)) r s =
+        second (fmap (Select . (:ls))) `fmap` doLayout l r s
+    doLayout (Select []) r s      =
+        second (const Nothing) `fmap` doLayout Full r s
 
     -- respond to messages only when there's an actual choice:
     handleMessage (Select (l:ls@(_:_))) m
-        | Just NextLayout <- fromMessage m = switchl rls
-        | Just PrevLayout <- fromMessage m = switchl rls'
-        | Just (JumpToLayout x) <- fromMessage m = switchl (j x)
-        | Just ReleaseResources <- fromMessage m =
-              do mlls' <- mapM (\ll -> handleMessage ll m) (l:ls)
-                 let lls' = zipWith (\x mx -> maybe x id mx) (l:ls) mlls'
-                 return $ Just $ Select lls'
-        where rls (x:xs) = xs ++ [x]
-              rls [] = []
+         | Just NextLayout       <- fromMessage m = switchl rls
+         | Just PrevLayout       <- fromMessage m = switchl rls'
+         | Just (JumpToLayout x) <- fromMessage m = switchl (j x)
+         | Just ReleaseResources <- fromMessage m = do -- each branch has a different type
+                 mlls' <- mapM (flip handleMessage m) (l:ls)
+                 let lls' = zipWith (flip maybe id) (l:ls) mlls'
+                 return (Just (Select lls'))
+
+        where rls []     = []
+              rls (x:xs) = xs ++ [x]
               rls' = reverse . rls . reverse
+
               j s zs = case partition ((s ==) . description) zs of (xs,ys) -> xs++ys
 
               switchl f = do ml' <- handleMessage l (SomeMessage Hide)
                              return $ Just (Select $ f $ fromMaybe l ml':ls)
 
     -- otherwise, or if we don't understand the message, pass it along to the real layout:
-    handleMessage (Select (l:ls)) m = do
-            ml' <- handleMessage l m
-            return $ (\l' -> Select (l':ls)) `fmap` ml'
+    handleMessage (Select (l:ls)) m =
+       fmap (Select . (:ls)) `fmap` handleMessage l m
 
     -- Unless there is no layout...
     handleMessage (Select []) _ = return Nothing
 
     description (Select (x:_)) = description x
     description _              = "default"
+
 --
--- Builtin layout algorithms:
+-- | Builtin layout algorithms:
 --
---   fullscreen mode
---   tall mode
+-- > fullscreen mode
+-- > tall mode
 -- 
 -- The latter algorithms support the following operations:
 --
---      Shrink
---      Expand
+-- >    Shrink
+-- >    Expand
 --
-
 data Resize     = Shrink | Expand   deriving Typeable
 
+-- | You can also increase the number of clients in the master pane
 data IncMasterN = IncMasterN Int    deriving Typeable
 
 instance Message Resize
 instance Message IncMasterN
 
--- simple fullscreen mode, just render all windows fullscreen.
--- a plea for tuple sections: map . (,sc)
-data Full a = Full deriving ( Show, Read )
+-- | Simple fullscreen mode, just render all windows fullscreen.
+data Full a = Full deriving (Show, Read)
 
 instance LayoutClass Full a
---
--- The tiling mode of xmonad, and its operations.
---
-data Tall a = Tall Int Rational Rational deriving ( Show, Read )
+
+-- | The inbuilt tiling mode of xmonad, and its operations.
+data Tall a = Tall Int Rational Rational deriving (Show, Read)
 
 instance LayoutClass Tall a where
     doLayout (Tall nmaster _ frac) r =
-        return . (\x->(x,Nothing)) .
+        return . (flip (,) Nothing) .
         ap zip (tile frac r nmaster . length) . W.integrate
+
     pureMessage (Tall nmaster delta frac) m = msum [fmap resize (fromMessage m)
                                                    ,fmap incmastern (fromMessage m)]
         where resize Shrink = Tall nmaster delta (max 0 $ frac-delta)
@@ -617,7 +624,7 @@ mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
 type D = (Dimension, Dimension)
 
 -- | Reduce the dimensions if needed to comply to the given SizeHints.
-applySizeHints :: Integral a => SizeHints -> (a,a) -> D 
+applySizeHints :: Integral a => SizeHints -> (a,a) -> D
 applySizeHints sh (w,h) = applySizeHints' sh (fromIntegral $ max 1 w,
                                               fromIntegral $ max 1 h)
 
