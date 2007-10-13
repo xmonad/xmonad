@@ -4,11 +4,10 @@
 -- Copyright   :  (c) Spencer Janssen 2007
 -- License     :  BSD3-style (see LICENSE)
 -- 
--- Maintainer  :  dons@cse.unsw.edu.au
+-- Maintainer  :  dons@galois.com
 -- Stability   :  stable
 -- Portability :  portable
 -- 
---
 -- This module specifies configurable defaults for xmonad. If you change
 -- values here, be sure to recompile and restart (mod-q) xmonad,
 -- for the changes to take effect.
@@ -31,26 +30,53 @@ import Graphics.X11.Xlib
 
 -- Extension-provided imports
 
+-- | The default number of workspaces (virtual screens) and their names.
+-- By default we use numeric strings, but any string may be used as a
+-- workspace name. The number of workspaces is determined by the length
+-- of this list.
 --
--- The number of workspaces (virtual screens, or window groups)
+-- A tagging example:
+--
+-- > workspaces = ["web", "irc", "code" ] ++ map show [5..9]
 --
 workspaces :: [WorkspaceId]
 workspaces = map show [1 .. 9 :: Int]
 
--- |
--- modMask lets you specify which modkey you want to use. The default is
--- mod1Mask ("left alt").  You may also consider using mod3Mask ("right
--- alt"), which does not conflict with emacs keybindings. The "windows
--- key" is usually mod4Mask.
+-- | modMask lets you specify which modkey you want to use. The default
+-- is mod1Mask ("left alt").  You may also consider using mod3Mask
+-- ("right alt"), which does not conflict with emacs keybindings. The
+-- "windows key" is usually mod4Mask.
 --
 modMask :: KeyMask
 modMask = mod1Mask
 
--- |
--- Default offset of drawable screen boundaries from each physical screen.
--- Anything non-zero here will leave a gap of that many pixels on the
--- given edge, on the that screen. A useful gap at top of screen for a
--- menu bar (e.g. 15)
+-- | numlock handling. The mask for the numlock key. You may need to
+-- change this on some systems.
+--
+-- You can find the numlock modifier by running "xmodmap" and looking for a
+-- modifier with Num_Lock bound to it:
+--
+-- > $ xmodmap | grep Num
+-- > mod2        Num_Lock (0x4d)
+--
+numlockMask :: KeyMask
+numlockMask = mod2Mask
+
+-- | Width of the window border in pixels. 
+--
+borderWidth :: Dimension
+borderWidth = 1
+
+-- | Border colors for unfocused and focused windows, respectively.
+--
+normalBorderColor, focusedBorderColor :: String
+normalBorderColor  = "#dddddd"
+focusedBorderColor = "#ff0000"
+
+-- | Default offset of drawable screen boundaries from each physical
+-- screen. Anything non-zero here will leave a gap of that many pixels
+-- on the given edge, on the that screen. A useful gap at top of screen
+-- for a menu bar (e.g. 15)
 -- 
 -- An example, to set a top gap on monitor 1, and a gap on the bottom of
 -- monitor 2, you'd use a list of geometries like so:
@@ -60,22 +86,27 @@ modMask = mod1Mask
 -- Fields are: top, bottom, left, right.
 --
 defaultGaps :: [(Int,Int,Int,Int)]
-defaultGaps = [(0,0,0,0)] -- 15 for default dzen
+defaultGaps = [(0,0,0,0)] -- 15 for default dzen font
 
--- |
--- Execute arbitrary actions and WindowSet manipulations when
--- managing a new window.
+------------------------------------------------------------------------
+-- Window rules
+
+-- | Execute arbitrary actions and WindowSet manipulations when managing
+-- a new window. You can use this to, for example, always float a
+-- particular program, or have a client always appear on a particular
+-- workspace.
+--
 manageHook :: Window -- ^ the new window to manage
            -> String -- ^ window title
            -> String -- ^ window resource name
            -> String -- ^ window resource class
            -> X (WindowSet -> WindowSet)
 
--- Float various windows:
+-- Always float various programs:
 manageHook w _ _ c | c `elem` floats = fmap (W.float w . snd) (floatLocation w)
  where floats = ["MPlayer", "Gimp"]
 
--- Don't manage various panels and desktop windows:
+-- Desktop panels and dock apps should be ignored by xmonad:
 manageHook w _ n _ | n `elem` ignore = reveal w >> return (W.delete w)
  where ignore = ["gnome-panel", "desktop_window", "kicker", "kdesktop"]
 
@@ -84,36 +115,11 @@ manageHook w _ n _ | n `elem` ignore = reveal w >> return (W.delete w)
 -- current workspace.
 manageHook _ _ "Gecko" _ = return $ W.shift "web"
 
--- The default rule: return the WindowSet unmodified.  You typically do not
--- want to modify this line.
+-- The default rule, do not edit this line.
 manageHook _ _ _ _ = return id
 
--- |
--- numlock handling:
---
--- The mask for the numlock key. You may need to change this on some systems.
---
--- You can find the numlock modifier by running "xmodmap" and looking for a
--- modifier with Num_Lock bound to it:
---
--- $ xmodmap | grep Num
--- mod2        Num_Lock (0x4d)
---
-numlockMask :: KeyMask
-numlockMask = mod2Mask
-
--- |
--- Border colors for unfocused and focused windows, respectively.
---
-normalBorderColor, focusedBorderColor :: String
-normalBorderColor  = "#dddddd"
-focusedBorderColor = "#ff0000"
-
--- |
--- Width of the window border in pixels
---
-borderWidth :: Dimension
-borderWidth = 1
+------------------------------------------------------------------------
+-- Extensible layouts
 
 -- | The list of possible layouts. Add your custom layouts to this list.
 layouts :: [Layout Window]
@@ -135,40 +141,40 @@ layouts = [ Layout tiled
      -- Percent of screen to increment by when resizing panes
      delta   = 3%100
 
--- |
--- The top level layout switcher. By default, we simply switch between
--- the layouts listed in `layouts', but you may program your own selection
--- behaviour here. Layout transformers would be hooked in here.
+-- | The top level layout switcher. Most users will not need to modify this binding.
+--   
+-- By default, we simply switch between the layouts listed in `layouts'
+-- above, but you may program your own selection behaviour here. Layout
+-- transformers, for example, would be hooked in here.
 --
 layoutHook :: Layout Window
 layoutHook = Layout $ Select layouts
 
--- |
--- The default Layout, a selector between the layouts listed below in
--- defaultLayouts.
---
--- defaultLayout :: Layout Window
--- defaultLayout = Layout $ LayoutSelection defaultLayouts
-
 -- | Register with xmonad a list of layouts whose state we can preserve over restarts.
 -- There is typically no need to modify this list, the defaults are fine.
+--
 serialisedLayouts :: [Layout Window]
 serialisedLayouts = layoutHook : layouts
 
--- |
--- Perform an arbitrary action on each state change.
+------------------------------------------------------------------------
+-- Logging 
+
+-- | Perform an arbitrary action on each internal state change or X event.
 -- Examples include:
 --      * do nothing
 --      * log the state to stdout
 --
+-- See the 'DynamicLog' extension for examples.
+--
 logHook :: X ()
 logHook = return ()
 
--- |
--- The key bindings list.
+------------------------------------------------------------------------
+-- Key bindings:
+
+-- | The xmonad key bindings. Add, modify or remove key bindings here.
 -- 
--- The unusual comment format is used to generate the documentation
--- automatically.
+-- (The comment formatting character is used when generating the manpage)
 --
 keys :: M.Map (KeyMask, KeySym) (X ())
 keys = M.fromList $
@@ -189,7 +195,6 @@ keys = M.fromList $
     , ((modMask,               xK_k     ), windows W.focusUp  ) -- %! Move focus to the previous window
     , ((modMask,               xK_m     ), windows W.focusMaster  ) -- %! Move focus to the master window
 
-
     -- modifying the window order
     , ((modMask,               xK_Return), windows W.swapMaster) -- %! Swap the focused window and the master window
     , ((modMask .|. shiftMask, xK_j     ), windows W.swapDown  ) -- %! Swap the focused window with the next window
@@ -199,6 +204,7 @@ keys = M.fromList $
     , ((modMask,               xK_h     ), sendMessage Shrink) -- %! Shrink the master area
     , ((modMask,               xK_l     ), sendMessage Expand) -- %! Expand the master area
 
+    -- floating layer support
     , ((modMask,               xK_t     ), withFocused $ windows . W.sink) -- %! Push window back into tiling
 
     -- increase or decrease number of windows in the master area
@@ -228,8 +234,7 @@ keys = M.fromList $
         , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
     -- Extension-provided key bindings lists
 
--- |
--- default actions bound to mouse events
+-- | Mouse bindings: default actions bound to mouse events
 --
 mouseBindings :: M.Map (KeyMask, Button) (Window -> X ())
 mouseBindings = M.fromList $
@@ -239,7 +244,6 @@ mouseBindings = M.fromList $
     , ((modMask, button2), (\w -> focus w >> windows W.swapMaster))
     -- mod-button3 %! Set the window to floating mode and resize by dragging
     , ((modMask, button3), (\w -> focus w >> mouseResizeWindow w))
-    -- Extension-provided mouse bindings
+    -- you may also bind events to the mouse scroll wheel (button4 and button5)
     ]
 
--- Extension-provided definitions
