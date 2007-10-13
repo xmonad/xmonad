@@ -20,7 +20,7 @@ module Operations where
 
 import XMonad
 import qualified StackSet as W
-import {-# SOURCE #-} Config (borderWidth,logHook,manageHook,numlockMask,possibleLayouts)
+import {-# SOURCE #-} Config (borderWidth,logHook,manageHook,numlockMask,serialisedLayouts)
 
 import Data.Maybe
 import Data.List            (nub, (\\), find, partition)
@@ -360,46 +360,49 @@ data ChangeLayout = NextLayout | PrevLayout | JumpToLayout String
 instance Message ChangeLayout
 
 instance ReadableLayout Window where
-    defaults = Layout (LayoutSelection []) :
+    defaults = Layout (Select []) :
                Layout Full : Layout (Tall 1 0.1 0.5) :
                Layout (Mirror $ Tall 1 0.1 0.5) :
-               possibleLayouts
+               serialisedLayouts
 
-data LayoutSelection a = LayoutSelection [Layout a]
-                         deriving ( Show, Read )
+data Select a = Select [Layout a] deriving (Show, Read)
 
-instance ReadableLayout a => LayoutClass LayoutSelection a where
-    doLayout (LayoutSelection (l:ls)) r s =
-        do (x,ml') <- doLayout l r s
-           return (x, (\l' -> LayoutSelection (l':ls)) `fmap` ml')
-    doLayout (LayoutSelection []) r s = do (x,_) <- doLayout Full r s
-                                           return (x,Nothing)
+instance ReadableLayout a => LayoutClass Select a where
+    doLayout (Select (l:ls)) r s = do
+        (x,ml') <- doLayout l r s
+        return (x, (\l' -> Select (l':ls)) `fmap` ml')
+
+    doLayout (Select []) r s = do
+        (x,_) <- doLayout Full r s
+        return (x,Nothing)
+
     -- respond to messages only when there's an actual choice:
-    handleMessage (LayoutSelection (l:ls@(_:_))) m
+    handleMessage (Select (l:ls@(_:_))) m
         | Just NextLayout <- fromMessage m = switchl rls
         | Just PrevLayout <- fromMessage m = switchl rls'
         | Just (JumpToLayout x) <- fromMessage m = switchl (j x)
         | Just ReleaseResources <- fromMessage m =
               do mlls' <- mapM (\ll -> handleMessage ll m) (l:ls)
                  let lls' = zipWith (\x mx -> maybe x id mx) (l:ls) mlls'
-                 return $ Just $ LayoutSelection lls'
+                 return $ Just $ Select lls'
         where rls (x:xs) = xs ++ [x]
               rls [] = []
               rls' = reverse . rls . reverse
-              j s zs = case partition (\z -> s == description z) zs of
-                         (xs,ys) -> xs++ys
-              switchl f = do ml' <- handleMessage l (SomeMessage Hide)
-                             return $ Just (LayoutSelection $ f $ fromMaybe l ml':ls)
-    -- otherwise, or if we don't understand the message, pass it along to the real
-    -- layout:
-    handleMessage (LayoutSelection (l:ls)) m
-        =  do ml' <- handleMessage l m
-              return $ (\l' -> LayoutSelection (l':ls)) `fmap` ml'
-    -- Unless there is no layout...
-    handleMessage (LayoutSelection []) _ = return Nothing
+              j s zs = case partition ((s ==) . description) zs of (xs,ys) -> xs++ys
 
-    description (LayoutSelection (x:_)) = description x
-    description _                       = "default"
+              switchl f = do ml' <- handleMessage l (SomeMessage Hide)
+                             return $ Just (Select $ f $ fromMaybe l ml':ls)
+
+    -- otherwise, or if we don't understand the message, pass it along to the real layout:
+    handleMessage (Select (l:ls)) m = do
+            ml' <- handleMessage l m
+            return $ (\l' -> Select (l':ls)) `fmap` ml'
+
+    -- Unless there is no layout...
+    handleMessage (Select []) _ = return Nothing
+
+    description (Select (x:_)) = description x
+    description _              = "default"
 --
 -- Builtin layout algorithms:
 --

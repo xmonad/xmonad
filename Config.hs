@@ -115,22 +115,13 @@ focusedBorderColor = "#ff0000"
 borderWidth :: Dimension
 borderWidth = 1
 
--- |
--- The default Layout, a selector between the layouts listed below in
--- defaultLayouts.
---
-defaultLayout :: Layout Window
-defaultLayout = Layout $ LayoutSelection defaultLayouts
-
--- |
--- The list of selectable layouts
-defaultLayouts :: [Layout Window]
-defaultLayouts = [ Layout tiled
-                 , Layout $ Mirror tiled
-                 , Layout Full
-
-                 -- Extension-provided layouts
-                 ]
+-- | The list of possible layouts. Add your custom layouts to this list.
+layouts :: [Layout Window]
+layouts = [ Layout tiled
+          , Layout $ Mirror tiled
+          , Layout Full
+          -- Add extra layouts you want to use here:
+          ]
   where
      -- default tiling algorithm partitions the screen into two panes
      tiled   = Tall nmaster delta ratio
@@ -145,11 +136,24 @@ defaultLayouts = [ Layout tiled
      delta   = 3%100
 
 -- |
--- A list of layouts which xmonad can deserialize.
-possibleLayouts :: [Layout Window]
-possibleLayouts = [defaultLayout
-                  -- Extension-provided layouts
-                  ] ++ defaultLayouts
+-- The top level layout switcher. By default, we simply switch between
+-- the layouts listed in `layouts', but you may program your own selection
+-- behaviour here. Layout transformers would be hooked in here.
+--
+layoutHook :: Layout Window
+layoutHook = Layout $ Select layouts
+
+-- |
+-- The default Layout, a selector between the layouts listed below in
+-- defaultLayouts.
+--
+-- defaultLayout :: Layout Window
+-- defaultLayout = Layout $ LayoutSelection defaultLayouts
+
+-- | Register with xmonad a list of layouts whose state we can preserve over restarts.
+-- There is typically no need to modify this list, the defaults are fine.
+serialisedLayouts :: [Layout Window]
+serialisedLayouts = layoutHook : layouts
 
 -- |
 -- Perform an arbitrary action on each state change.
@@ -175,7 +179,7 @@ keys = M.fromList $
     , ((modMask .|. shiftMask, xK_c     ), kill) -- %! Close the focused window
 
     , ((modMask,               xK_space ), sendMessage NextLayout) -- %! Rotate through the available layout algorithms
-    , ((modMask .|. shiftMask, xK_space ), setLayout defaultLayout) -- %!  Reset the layouts on the current workspace to default
+    , ((modMask .|. shiftMask, xK_space ), setLayout layoutHook) -- %!  Reset the layouts on the current workspace to default
 
     , ((modMask,               xK_n     ), refresh) -- %! Resize viewed windows to the correct size
 

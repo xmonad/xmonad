@@ -50,7 +50,7 @@ main = do
     hSetBuffering stdout NoBuffering
     args <- getArgs
 
-    let initialWinset = new defaultLayout workspaces $ zipWith SD xinesc gaps
+    let initialWinset = new layoutHook workspaces $ zipWith SD xinesc gaps
 
         maybeRead s = case reads s of
                             [(x, "")] -> Just x
@@ -59,8 +59,8 @@ main = do
         winset = fromMaybe initialWinset $ do
                     ("--resume" : s : _) <- return args
                     ws                   <- maybeRead s
-                    return . W.ensureTags defaultLayout workspaces
-                           $ W.mapLayout (fromMaybe defaultLayout . maybeRead) ws
+                    return . W.ensureTags layoutHook workspaces
+                           $ W.mapLayout (fromMaybe layoutHook . maybeRead) ws
 
         gaps = take (length xinesc) $ defaultGaps ++ repeat (0,0,0,0)
 
