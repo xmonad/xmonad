@@ -28,7 +28,7 @@ import qualified Data.Map as M
 import System.Exit
 import Graphics.X11.Xlib
 
--- Extension-provided imports
+-- % Extension-provided imports
 
 -- | The default number of workspaces (virtual screens) and their names.
 -- By default we use numeric strings, but any string may be used as a
@@ -128,6 +128,7 @@ layouts = [ Layout tiled
           , Layout $ Mirror tiled
           , Layout Full
           -- Add extra layouts you want to use here:
+          -- % Extension-provided layouts
           ]
   where
      -- default tiling algorithm partitions the screen into two panes
@@ -219,7 +220,7 @@ keys = M.fromList $
     , ((modMask .|. shiftMask, xK_q     ), io (exitWith ExitSuccess)) -- %! Quit xmonad
     , ((modMask              , xK_q     ), broadcastMessage ReleaseResources >> restart Nothing True) -- %! Restart xmonad
 
-    -- Extension-provided key bindings
+    -- % Extension-provided key bindings
     ]
     ++
     -- mod-[1..9] %! Switch to workspace N
@@ -233,7 +234,8 @@ keys = M.fromList $
     [((m .|. modMask, key), screenWorkspace sc >>= flip whenJust (windows . f))
         | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
         , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
-    -- Extension-provided key bindings lists
+
+    -- % Extension-provided key bindings lists
 
 -- | Mouse bindings: default actions bound to mouse events
 --
@@ -246,5 +248,8 @@ mouseBindings = M.fromList $
     -- mod-button3 %! Set the window to floating mode and resize by dragging
     , ((modMask, button3), (\w -> focus w >> mouseResizeWindow w))
     -- you may also bind events to the mouse scroll wheel (button4 and button5)
+
+    -- % Extension-provided mouse bindings
     ]
 
+-- % Extension-provided definitions
