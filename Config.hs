@@ -115,7 +115,8 @@ manageHook w _ n _ | n `elem` ignore = reveal w >> return (W.delete w)
 -- current workspace.
 manageHook _ _ "Gecko" _ = return $ W.shift "web"
 
--- The default rule, do not edit this line.
+-- The default rule: return the WindowSet unmodified.  You typically do not
+-- want to modify this line.
 manageHook _ _ _ _ = return id
 
 ------------------------------------------------------------------------
