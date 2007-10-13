@@ -5,7 +5,7 @@
 
 * build and typecheck all XMC
 * generate haddocks for core and XMC, upload to xmonad.org
-* regenerate man page
+* generate manpage, generate html manpage
 * document, with photos, any new layouts
 * double check README build instructions
 * test core with 6.6 and 6.8
