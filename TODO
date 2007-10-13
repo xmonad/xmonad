@@ -1,2 +1,14 @@
  - Write down invariants for the window life cycle, especially:
     - When are borders set?  Prove that the current handling is sufficient.
+
+= Release management =
+
+* build and typecheck all XMC
+* generate haddocks for core and XMC, upload to xmonad.org
+* regenerate man page
+* document, with photos, any new layouts
+* double check README build instructions
+* test core with 6.6 and 6.8
+* upload X11/X11-extras/xmonad to hacakge
+* check examples/text in use-facing Config.hs
+* check tour.html and intro.html are up to date, and mention all core bindings
