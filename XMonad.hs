@@ -28,6 +28,7 @@ import Prelude hiding ( catch )
 import Control.Exception (catch, throw, Exception(ExitException))
 import Control.Monad.State
 import Control.Monad.Reader
+import Control.Arrow (first)
 import System.IO
 import System.Posix.Process (executeFile, forkProcess, getProcessStatus, createSession)
 import System.Exit
@@ -128,25 +129,23 @@ atom_WM_DELETE_WINDOW   = getAtom "WM_DELETE_WINDOW"
 atom_WM_STATE           = getAtom "WM_STATE"
 
 ------------------------------------------------------------------------
--- | LayoutClass handling
+-- | LayoutClass handling. See particular instances in Operations.hs
 
--- | And existential class that can hold any object that is in
--- the LayoutClass.
+-- | An existential type that can hold any object that is in the LayoutClass.
 data Layout a = forall l. LayoutClass l a => Layout (l a)
 
 -- | This class defines a set of layout types (held in Layout
--- objects) that are used when trying to read an existential
--- Layout.
+--  objects) that are used when trying to read an existentially wrapped Layout.
 class ReadableLayout a where
     defaults :: [Layout a]
 
 -- | The different layout modes
+--
 -- 'doLayout': given a Rectangle and a Stack, layout the stack elements
 -- inside the given Rectangle.  If an element is not given a Rectangle
 -- by 'doLayout', then it is not shown on screen.  Windows are restacked
 -- according to the order they are returned by 'doLayout'.
 --
-
 class (Show (layout a), Read (layout a)) => LayoutClass layout a where
 
     -- | Given a Rectangle in which to place the windows, and a Stack of
@@ -185,12 +184,12 @@ instance ReadableLayout a => Read (Layout a) where
     readsPrec _ s = take 1 $ concatMap rl defaults
                   -- We take the first parse only, because multiple matches
                   -- indicate a bad parse.
-        where rl (Layout x) = map (\(l,s') -> (Layout l,s')) $ rl' x
+        where rl (Layout x) = map (first Layout) $ rl' x
               rl' :: LayoutClass l a => l a -> [(l a,String)]
               rl' _ = reads s
 
 instance ReadableLayout a => LayoutClass Layout a where
-    doLayout (Layout l) r s  = fmap (fmap $ fmap Layout) $ doLayout l r s
+    doLayout (Layout l) r s  = fmap (fmap Layout) `liftM` doLayout l r s
     handleMessage (Layout l) = fmap (fmap Layout) . handleMessage l
     description (Layout l)   = description l
 
