@@ -79,6 +79,11 @@ manageHook w _ _ c | c `elem` floats = fmap (W.float w . snd) (floatLocation w)
 manageHook w _ n _ | n `elem` ignore = reveal w >> return (W.delete w)
  where ignore = ["gnome-panel", "desktop_window", "kicker", "kdesktop"]
 
+-- Automatically send Firefox windows to the "web" workspace:
+-- If a workspace named "web" doesn't exist, the window will appear on the
+-- current workspace.
+manageHook _ _ "Gecko" _ = return $ W.shift "web"
+
 -- The default rule: return the WindowSet unmodified.  You typically do not
 -- want to modify this line.
 manageHook _ _ _ _ = return id
