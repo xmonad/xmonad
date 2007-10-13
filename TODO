@@ -12,3 +12,4 @@
 * upload X11/X11-extras/xmonad to hacakge
 * check examples/text in use-facing Config.hs
 * check tour.html and intro.html are up to date, and mention all core bindings
+* bump xmonad.cabal version
