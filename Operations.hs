@@ -369,10 +369,10 @@ data ChangeLayout = NextLayout | PrevLayout | JumpToLayout String
 instance Message ChangeLayout
 
 instance ReadableLayout Window where
-    defaults = Layout (Select []) :
-               Layout Full : Layout (Tall 1 0.1 0.5) :
-               Layout (Mirror $ Tall 1 0.1 0.5) :
-               serialisedLayouts
+    readTypes = Layout (Select []) :
+                Layout Full : Layout (Tall 1 0.1 0.5) :
+                Layout (Mirror $ Tall 1 0.1 0.5) :
+                serialisedLayouts
 
 data Select a = Select [Layout a] deriving (Show, Read)
 

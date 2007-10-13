@@ -134,10 +134,11 @@ atom_WM_STATE           = getAtom "WM_STATE"
 -- | An existential type that can hold any object that is in the LayoutClass.
 data Layout a = forall l. LayoutClass l a => Layout (l a)
 
+
 -- | This class defines a set of layout types (held in Layout
 --  objects) that are used when trying to read an existentially wrapped Layout.
 class ReadableLayout a where
-    defaults :: [Layout a]
+    readTypes :: [Layout a]
 
 -- | The different layout modes
 --
@@ -180,21 +181,27 @@ class (Show (layout a), Read (layout a)) => LayoutClass layout a where
     description :: layout a -> String
     description      = show
 
+-- Here's the magic for parsing serialised state of existentially
+-- wrapped layouts: attempt to parse using the Read instance from each
+-- type in our list of types, if any suceed, take the first one.
 instance ReadableLayout a => Read (Layout a) where
-    readsPrec _ s = take 1 $ concatMap rl defaults
-                  -- We take the first parse only, because multiple matches
-                  -- indicate a bad parse.
-        where rl (Layout x) = map (first Layout) $ rl' x
-              rl' :: LayoutClass l a => l a -> [(l a,String)]
-              rl' _ = reads s
+
+    -- We take the first parse only, because multiple matches indicate a bad parse.
+    readsPrec _ s = take 1 $ concatMap readLayout readTypes
+        where
+            readLayout (Layout x) = map (first Layout) $ readAsType x
+
+            -- the type indicates which Read instance to dispatch to.
+            -- That is, read asTypeOf the argument from the readTypes.
+            readAsType :: LayoutClass l a => l a -> [(l a, String)]
+            readAsType _ = reads s
 
 instance ReadableLayout a => LayoutClass Layout a where
     doLayout (Layout l) r s  = fmap (fmap Layout) `liftM` doLayout l r s
     handleMessage (Layout l) = fmap (fmap Layout) . handleMessage l
     description (Layout l)   = description l
 
-instance Show (Layout a) where
-    show (Layout l) = show l
+instance Show (Layout a) where show (Layout l) = show l
 
 -- | This calls doLayout if there are any windows to be laid out.
 runLayout :: LayoutClass l a => l a -> Rectangle -> StackOrNot a -> X ([(a, Rectangle)], Maybe (l a))
