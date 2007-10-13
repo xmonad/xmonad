@@ -244,7 +244,7 @@ view i s
     = s { current = (current s) { workspace = x }
         , hidden = workspace (current s) : L.deleteBy (equating tag) x (hidden s) }
 
---  | otherwise = s -- can't happen: all workspaces are either invalid, current, visible, or hidden
+    | otherwise = s -- can't happen: all workspaces are either invalid, current, visible, or hidden
 
   where equating f = \x y -> f x == f y
 
