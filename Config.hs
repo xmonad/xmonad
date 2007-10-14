@@ -50,14 +50,18 @@ workspaces = map show [1 .. 9 :: Int]
 modMask :: KeyMask
 modMask = mod1Mask
 
--- | numlock handling. The mask for the numlock key. You may need to
--- change this on some systems.
+-- | The mask for the numlock key. Numlock status is "masked" from the
+-- current modifier status, so the keybindings will work with numlock on or
+-- off. You may need to change this on some systems.
 --
 -- You can find the numlock modifier by running "xmodmap" and looking for a
 -- modifier with Num_Lock bound to it:
 --
 -- > $ xmodmap | grep Num
 -- > mod2        Num_Lock (0x4d)
+--
+-- Set numlockMask = 0 if you don't have a numlock key, or want to treat
+-- numlock status separately.
 --
 numlockMask :: KeyMask
 numlockMask = mod2Mask
