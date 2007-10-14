@@ -3,20 +3,20 @@
 -- Module      :  Config.hs
 -- Copyright   :  (c) Spencer Janssen 2007
 -- License     :  BSD3-style (see LICENSE)
--- 
+--
 -- Maintainer  :  dons@galois.com
 -- Stability   :  stable
 -- Portability :  portable
--- 
+--
 -- This module specifies configurable defaults for xmonad. If you change
 -- values here, be sure to recompile and restart (mod-q) xmonad,
 -- for the changes to take effect.
--- 
+--
 ------------------------------------------------------------------------
 
 module Config where
 
--- 
+--
 -- Useful imports
 --
 import XMonad
@@ -144,7 +144,7 @@ layouts = [ Layout tiled
      delta   = 3%100
 
 -- | The top level layout switcher. Most users will not need to modify this binding.
---   
+--
 -- By default, we simply switch between the layouts listed in `layouts'
 -- above, but you may program your own selection behaviour here. Layout
 -- transformers, for example, would be hooked in here.
@@ -159,7 +159,7 @@ serialisedLayouts :: [Layout Window]
 serialisedLayouts = layoutHook : layouts
 
 ------------------------------------------------------------------------
--- Logging 
+-- Logging
 
 -- | Perform an arbitrary action on each internal state change or X event.
 -- Examples include:
@@ -175,7 +175,7 @@ logHook = return ()
 -- Key bindings:
 
 -- | The xmonad key bindings. Add, modify or remove key bindings here.
--- 
+--
 -- (The comment formatting character is used when generating the manpage)
 --
 keys :: M.Map (KeyMask, KeySym) (X ())
