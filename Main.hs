@@ -9,7 +9,7 @@
 -- Portability :  not portable, uses mtl, X11, posix
 --
 -- xmonad, a minimalist, tiling window manager for X11
--- 
+--
 -----------------------------------------------------------------------------
 
 module Main where

@@ -7,7 +7,7 @@
 -- Module      :  Operations.hs
 -- Copyright   :  (c) Spencer Janssen 2007
 -- License     :  BSD3-style (see LICENSE)
--- 
+--
 -- Maintainer  :  dons@cse.unsw.edu.au
 -- Stability   :  unstable
 -- Portability :  not portable, Typeable deriving, mtl, posix
@@ -416,7 +416,7 @@ instance ReadableLayout a => LayoutClass Select a where
 --
 -- > fullscreen mode
 -- > tall mode
--- 
+--
 -- The latter algorithms support the following operations:
 --
 -- >    Shrink
@@ -467,15 +467,15 @@ instance LayoutClass l a => LayoutClass (Mirror l) a where
 --
 -- The screen is divided (currently) into two panes. all clients are
 -- then partioned between these two panes. one pane, the `master', by
--- convention has the least number of windows in it (by default, 1). 
+-- convention has the least number of windows in it (by default, 1).
 -- the variable `nmaster' controls how many windows are rendered in the
--- master pane. 
+-- master pane.
 --
 -- `delta' specifies the ratio of the screen to resize by.
 --
 -- 'frac' specifies what proportion of the screen to devote to the
 -- master area.
--- 
+--
 tile :: Rational -> Rectangle -> Int -> Int -> [Rectangle]
 tile f r nmaster n = if n <= nmaster || nmaster == 0
     then splitVertically n r

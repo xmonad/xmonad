@@ -66,7 +66,7 @@ modMask = mod1Mask
 numlockMask :: KeyMask
 numlockMask = mod2Mask
 
--- | Width of the window border in pixels. 
+-- | Width of the window border in pixels.
 --
 borderWidth :: Dimension
 borderWidth = 1
@@ -81,7 +81,7 @@ focusedBorderColor = "#ff0000"
 -- screen. Anything non-zero here will leave a gap of that many pixels
 -- on the given edge, on the that screen. A useful gap at top of screen
 -- for a menu bar (e.g. 15)
--- 
+--
 -- An example, to set a top gap on monitor 1, and a gap on the bottom of
 -- monitor 2, you'd use a list of geometries like so:
 --

@@ -55,18 +55,18 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 -- window on each workspace has focus. The focused window on the current
 -- workspace is the one which will take user input. It can be visualised
 -- as follows:
--- 
+--
 -- > Workspace  { 0*}   { 1 }   { 2 }   { 3 }   { 4 }
--- > 
+-- >
 -- > Windows    [1      []      [3*     [6*]    []
 -- >            ,2*]            ,4
 -- >                            ,5]
--- 
+--
 -- Note that workspaces are indexed from 0, windows are numbered
 -- uniquely. A '*' indicates the window on each workspace that has
 -- focus, and which workspace is current.
 --
--- Zipper 
+-- Zipper
 --
 -- We encode all the focus tracking directly in the data structure, with a 'zipper':
 --
@@ -77,7 +77,7 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 --    The Zipper lets us replace an item deep in a complex data
 --    structure, e.g., a tree or a term, without an  mutation.  The
 --    resulting data structure will share as much of its components with
---    the old structure as possible. 
+--    the old structure as possible.
 --
 --      Oleg Kiselyov, 27 Apr 2005, haskell\@, "Zipper as a delimited continuation"
 --
@@ -94,7 +94,7 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 -- Another good reference is:
 --
 --      The Zipper, Haskell wikibook
--- 
+--
 -- Xinerama support:
 --
 -- Xinerama in X11 lets us view multiple virtual workspaces
@@ -112,7 +112,7 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 -- 'delete'.
 --
 
--- | 
+-- |
 -- API changes from xmonad 0.1:
 -- StackSet constructor arguments changed. StackSet workspace window screen
 --
@@ -136,7 +136,7 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 --
 -- * swapMaster,             -- was: promote\/swap
 --
--- * member, 
+-- * member,
 --
 -- * shift,
 --
@@ -146,8 +146,8 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 --
 ------------------------------------------------------------------------
 -- |
--- A cursor into a non-empty list of workspaces. 
--- 
+-- A cursor into a non-empty list of workspaces.
+--
 -- We puncture the workspace list, producing a hole in the structure
 -- used to track the currently focused workspace. The two other lists
 -- that are produced are used to track those workspaces visible as
@@ -223,7 +223,7 @@ new l wids m | not (null wids) && length m <= length wids = StackSet cur visi un
 new _ _ _ = abort "non-positive argument to StackSet.new"
 
 -- |
--- /O(w)/. Set focus to the workspace with index \'i\'. 
+-- /O(w)/. Set focus to the workspace with index \'i\'.
 -- If the index is out of range, return the original StackSet.
 --
 -- Xinerama: If the workspace is not visible on any Xinerama screen, it
@@ -306,7 +306,7 @@ modify' :: (Stack a -> Stack a) -> StackSet i l a s sd -> StackSet i l a s sd
 modify' f = modify Nothing (Just . f)
 
 -- |
--- /O(1)/. Extract the focused element of the current stack. 
+-- /O(1)/. Extract the focused element of the current stack.
 -- Return Just that element, or Nothing for an empty stack.
 --
 peek :: StackSet i l a s sd -> Maybe a
@@ -353,7 +353,7 @@ index = with [] integrate
 --  let is = t : r ++ reverse l in take (length is) (dropWhile (/= m) (cycle is))
 
 -- |
--- /O(1), O(w) on the wrapping case/. 
+-- /O(1), O(w) on the wrapping case/.
 --
 -- focusUp, focusDown. Move the window focus up or down the stack,
 -- wrapping if we reach the end. The wrapping should model a -- 'cycle'
@@ -363,7 +363,7 @@ index = with [] integrate
 -- swapUp, swapDown, swap the neighbour in the stack ordering, wrapping
 -- if we reach the end. Again the wrapping model should 'cycle' on
 -- the current stack.
--- 
+--
 focusUp, focusDown, swapUp, swapDown :: StackSet i l a s sd -> StackSet i l a s sd
 focusUp   = modify' focusUp'
 focusDown = modify' (reverseStack . focusUp' . reverseStack)
@@ -383,7 +383,7 @@ reverseStack :: Stack a -> Stack a
 reverseStack (Stack t ls rs) = Stack t rs ls
 
 --
--- | /O(1) on current window, O(n) in general/. Focus the window 'w', 
+-- | /O(1) on current window, O(n) in general/. Focus the window 'w',
 -- and set its workspace as current.
 --
 focusWindow :: (Eq s, Eq a, Eq i) => a -> StackSet i l a s sd -> StackSet i l a s sd
@@ -530,7 +530,7 @@ focusMaster = modify' $ \c -> case c of
     Stack _ [] _  -> c
     Stack t ls rs -> Stack x [] (xs ++ t : rs) where (x:xs) = reverse ls
 
--- 
+--
 -- ---------------------------------------------------------------------
 -- $composite
 

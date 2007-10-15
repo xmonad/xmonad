@@ -209,7 +209,7 @@ runLayout l r = maybe (return ([], Nothing)) (doLayout l r)
 
 -- | Based on ideas in /An Extensible Dynamically-Typed Hierarchy of Exceptions/,
 -- Simon Marlow, 2006. Use extensible messages to the handleMessage handler.
--- 
+--
 -- User-extensible messages must be a member of this class.
 --
 class Typeable a => Message a
