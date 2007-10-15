@@ -31,7 +31,7 @@ import qualified Data.Map as M
 -- Some general hints for creating StackSet properties:
 --
 -- *  ops that mutate the StackSet are usually local
--- *  most ops on StackSet should either be trivially reversible, or 
+-- *  most ops on StackSet should either be trivially reversible, or
 --    idempotent, or both.
 
 --
@@ -91,7 +91,7 @@ hidden_spaces x = map workspace (visible x) ++ hidden x
 -- Basic data invariants of the StackSet
 --
 -- With the new zipper-based StackSet, tracking focus is no longer an
--- issue: the data structure enforces focus by construction. 
+-- issue: the data structure enforces focus by construction.
 --
 -- But we still need to ensure there are no duplicates, and master/and
 -- the xinerama mapping aren't checked by the data structure at all.
@@ -181,7 +181,7 @@ prop_shift_win_I (n :: NonNegative Int) (w :: Char) (x :: T) =
 -- 'new'
 
 -- empty StackSets have no windows in them
-prop_empty (EmptyStackSet x) = 
+prop_empty (EmptyStackSet x) =
         all (== Nothing) [ stack w | w <- workspace (current x)
                                         : map workspace (visible x) ++ hidden x ]
 
@@ -205,7 +205,7 @@ prop_view_current (x :: T) (n :: NonNegative Int) = i `tagMember` x ==>
   where
     i = fromIntegral n
 
--- view *only* sets the current workspace, and touches Xinerama. 
+-- view *only* sets the current workspace, and touches Xinerama.
 -- no workspace contents will be changed.
 prop_view_local  (x :: T) (n :: NonNegative Int) = i `tagMember` x ==>
     workspaces x == workspaces (view i x)
@@ -238,7 +238,7 @@ prop_greedyView_current (x :: T) (n :: NonNegative Int) = i `tagMember` x ==>
   where
     i = fromIntegral n
 
--- greedyView *only* sets the current workspace, and touches Xinerama. 
+-- greedyView *only* sets the current workspace, and touches Xinerama.
 -- no workspace contents will be changed.
 prop_greedyView_local  (x :: T) (n :: NonNegative Int) = i `tagMember` x ==>
     workspaces x == workspaces (greedyView i x)
@@ -296,7 +296,7 @@ prop_index_length (x :: T) =
 --
 
 -- master/focus
--- 
+--
 -- The tiling order, and master window, of a stack is unaffected by focus changes.
 --
 prop_focus_left_master (n :: NonNegative Int) (x::T) =
@@ -458,7 +458,7 @@ prop_delete_focus_not_end (x :: T) =
 -- preserve order
 prop_filter_order (x :: T) =
     case stack $ workspace $ current x of
-    	Nothing -> True
+        Nothing -> True
         Just s@(Stack i _ _) -> integrate' (S.filter (/= i) s) == filter (/= i) (integrate' (Just s))
 
 -- ---------------------------------------------------------------------
@@ -529,7 +529,7 @@ prop_shift_win_indentity i w (x :: T) =
 -- shiftWin leaves the current screen as it is, if neither i is the tag
 -- of the current workspace nor w on the current workspace
 prop_shift_win_fix_current i w (x :: T) =
-    i `tagMember` x && w `member` x && i /= n && findIndex w x /= Just n 
+    i `tagMember` x && w `member` x && i /= n && findIndex w x /= Just n
         ==> (current $ x) == (current $ shiftWin i w x)
     where
         n = tag (workspace $ current x)
@@ -567,7 +567,7 @@ prop_lookup_current (x :: T) = lookupWorkspace scr x == Just tg
         (Screen (Workspace tg  _ _) scr _) = current x
 
 -- looking at a visible tag
-prop_lookup_visible (x :: T) = 
+prop_lookup_visible (x :: T) =
         visible x /= [] ==>
         fromJust (lookupWorkspace scr x) `elem` tags
     where
@@ -627,7 +627,7 @@ prop_mapLayoutInverse (x::T) = x == mapLayout pred (mapLayout succ x)
 {-
 prop_tile_fullscreen rect = tile pct rect 1 1 == [rect]
 
--- multiple windows 
+-- multiple windows
 prop_tile_non_overlap rect windows nmaster = noOverlaps (tile pct rect nmaster windows)
   where _ = rect :: Rectangle
 
@@ -703,7 +703,7 @@ main = do
         ,("focus up is local"      , mytest prop_focus_up_local)
         ,("focus master is local"      , mytest prop_focus_master_local)
         ,("focus master idemp"  , mytest prop_focusMaster_idem)
-         
+
         ,("focusWindow is local", mytest prop_focusWindow_local)
         ,("focusWindow works"   , mytest prop_focusWindow_works)
 
