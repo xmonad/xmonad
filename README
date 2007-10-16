@@ -51,8 +51,8 @@ Get the dependencies
 
     mtl             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/mtl-1.0
     unix            http://hackage.haskell.org/cgi-bin/hackage-scripts/package/unix-2.0 
-    X11             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-1.2.2
-    X11-extras:     http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-extras-0.3
+    X11             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-1.2.3
+    X11-extras:     http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-extras-0.4
 
 And then build with Cabal:
 
