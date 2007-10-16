@@ -356,7 +356,7 @@ index = with [] integrate
 -- /O(1), O(w) on the wrapping case/.
 --
 -- focusUp, focusDown. Move the window focus up or down the stack,
--- wrapping if we reach the end. The wrapping should model a -- 'cycle'
+-- wrapping if we reach the end. The wrapping should model a 'cycle'
 -- on the current stack. The 'master' window, and window order,
 -- are unaffected by movement of focus.
 --
@@ -536,8 +536,8 @@ focusMaster = modify' $ \c -> case c of
 
 -- | /O(w)/. shift. Move the focused element of the current stack to stack
 -- 'n', leaving it as the focused element on that stack. The item is
--- inserted above the currently focused element on that workspace.  --
--- The actual focused workspace doesn't change. If there is -- no
+-- inserted above the currently focused element on that workspace.
+-- The actual focused workspace doesn't change. If there is no
 -- element on the current stack, the original stackSet is returned.
 --
 shift :: (Ord a, Eq s, Eq i) => i -> StackSet i l a s sd -> StackSet i l a s sd
