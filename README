@@ -91,7 +91,7 @@ XMonadContrib
     Examples include an ion3-like tabbed layout, a prompt/program launcher,
     and various other useful modules.  XMonadContrib is available at:
 
-    0.3 release:   http://www.xmonad.org/XMonadContrib-0.3.tar.gz
+    0.4 release:   http://www.xmonad.org/XMonadContrib-0.4.tar.gz
 
     darcs version: darcs get http://code.haskell.org/XMonadContrib
 
