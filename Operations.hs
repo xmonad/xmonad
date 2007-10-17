@@ -139,8 +139,8 @@ windows f = do
             l = W.layout (W.workspace w)
             flt = filter (flip M.member (W.floating ws)) (W.index this)
             tiled = (W.stack . W.workspace . W.current $ this)
-                    >>= W.filter (not . flip M.member (W.floating ws))
-                    >>= W.filter (not . (`elem` vis))
+                    >>= W.filter (`M.notMember` W.floating ws)
+                    >>= W.filter (`notElem` vis)
             (SD (Rectangle sx sy sw sh)
                 (gt,gb,gl,gr))          = W.screenDetail w
             viewrect = Rectangle (sx + fromIntegral gl)        (sy + fromIntegral gt)
