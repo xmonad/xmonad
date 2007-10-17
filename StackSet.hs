@@ -14,7 +14,7 @@
 module StackSet (
         -- * Introduction
         -- $intro
-        StackSet(..), Workspace(..), Screen(..), StackOrNot, Stack(..), RationalRect(..),
+        StackSet(..), Workspace(..), Screen(..), Stack(..), RationalRect(..),
         -- *  Construction
         -- $construction
         new, view, greedyView,
@@ -169,7 +169,7 @@ data Screen i l a sid sd = Screen { workspace :: !(Workspace i l a)
 -- |
 -- A workspace is just a tag - its index - and a stack
 --
-data Workspace i l a = Workspace  { tag :: !i, layout :: l, stack :: StackOrNot a }
+data Workspace i l a = Workspace  { tag :: !i, layout :: l, stack :: Maybe (Stack a) }
     deriving (Show, Read, Eq)
 
 -- | A structure for window geometries
@@ -194,8 +194,6 @@ data RationalRect = RationalRect Rational Rational Rational Rational
 -- structures, it is the differentiation of a [a], and integrating it
 -- back has a natural implementation used in 'index'.
 --
-type StackOrNot a = Maybe (Stack a)
-
 data Stack a = Stack { focus  :: !a        -- focused thing in this set
                      , up     :: [a]       -- clowns to the left
                      , down   :: [a] }     -- jokers to the right
@@ -294,7 +292,7 @@ with dflt f = maybe dflt f . stack . workspace . current
 -- |
 -- Apply a function, and a default value for Nothing, to modify the current stack.
 --
-modify :: StackOrNot a -> (Stack a -> StackOrNot a) -> StackSet i l a s sd -> StackSet i l a s sd
+modify :: Maybe (Stack a) -> (Stack a -> Maybe (Stack a)) -> StackSet i l a s sd -> StackSet i l a s sd
 modify d f s = s { current = (current s)
                         { workspace = (workspace (current s)) { stack = with d f s }}}
 
@@ -320,13 +318,13 @@ integrate (Stack x l r) = reverse l ++ x : r
 
 -- |
 -- /O(n)/ Flatten a possibly empty stack into a list.
-integrate' :: StackOrNot a -> [a]
+integrate' :: Maybe (Stack a) -> [a]
 integrate' = maybe [] integrate
 
 -- |
 -- /O(n)/. Texture a list.
 --
-differentiate :: [a] -> StackOrNot a
+differentiate :: [a] -> Maybe (Stack a)
 differentiate []     = Nothing
 differentiate (x:xs) = Just $ Stack x [] xs
 
@@ -334,7 +332,7 @@ differentiate (x:xs) = Just $ Stack x [] xs
 -- /O(n)/. 'filter p s' returns the elements of 's' such that 'p' evaluates to
 -- True.  Order is preserved, and focus moves as described for 'delete'.
 --
-filter :: (a -> Bool) -> Stack a -> StackOrNot a
+filter :: (a -> Bool) -> Stack a -> Maybe (Stack a)
 filter p (Stack f ls rs) = case L.filter p (f:rs) of
     f':rs' -> Just $ Stack f' (L.filter p ls) rs'    -- maybe move focus down
     []     -> case L.filter p ls of                  -- filter back up

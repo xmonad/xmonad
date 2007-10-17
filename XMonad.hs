@@ -204,7 +204,7 @@ instance ReadableLayout a => LayoutClass Layout a where
 instance Show (Layout a) where show (Layout l) = show l
 
 -- | This calls doLayout if there are any windows to be laid out.
-runLayout :: LayoutClass l a => l a -> Rectangle -> StackOrNot a -> X ([(a, Rectangle)], Maybe (l a))
+runLayout :: LayoutClass l a => l a -> Rectangle -> Maybe (Stack a) -> X ([(a, Rectangle)], Maybe (l a))
 runLayout l r = maybe (return ([], Nothing)) (doLayout l r)
 
 -- | Based on ideas in /An Extensible Dynamically-Typed Hierarchy of Exceptions/,
