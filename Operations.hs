@@ -389,7 +389,7 @@ instance ReadableLayout a => LayoutClass Select a where
          | Just (JumpToLayout x) <- fromMessage m = switchl (j x)
          | Just ReleaseResources <- fromMessage m = do -- each branch has a different type
                  mlls' <- mapM (flip handleMessage m) (l:ls)
-                 let lls' = zipWith (flip maybe id) (l:ls) mlls'
+                 let lls' = zipWith fromMaybe (l:ls) mlls'
                  return (Just (Select lls'))
 
         where rls []     = []
