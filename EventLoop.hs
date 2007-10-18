@@ -39,7 +39,7 @@ import System.IO
 --
 makeMain :: String -> String -> Layout Window -> [String] -> [(Int,Int,Int,Int)]
          -> M.Map (ButtonMask,KeySym) (X ()) -> M.Map (ButtonMask, Button) (Window -> X ())
-         -> Int -> X () -> IO ()
+         -> Dimension -> X () -> IO ()
 makeMain normalBorderColor focusedBorderColor layoutHook workspaces
          defaultGaps keys mouseBindings borderWidth logHook = do
     dpy   <- openDisplay ""

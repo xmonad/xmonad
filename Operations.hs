@@ -20,7 +20,6 @@ module Operations where
 
 import XMonad
 import qualified StackSet as W
-import {-# SOURCE #-} Config (borderWidth,logHook,manageHook,numlockMask,serialisedLayouts)
 
 import Data.Maybe
 import Data.List            (nub, (\\), find, partition)
@@ -37,6 +36,8 @@ import System.IO
 import Graphics.X11.Xlib
 import Graphics.X11.Xinerama (getScreenInfo)
 import Graphics.X11.Xlib.Extras
+
+import {-# SOURCE #-} Main (borderWidth,logHook,manageHook,numlockMask,serialisedLayouts)
 
 -- ---------------------------------------------------------------------
 -- |

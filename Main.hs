@@ -14,7 +14,7 @@
 --
 ------------------------------------------------------------------------
 
-module Main ( main ) where
+module Main where
 
 --
 -- Useful imports
@@ -277,5 +277,6 @@ mouseBindings = M.fromList $
 
 -- % The main function
 
+main :: IO ()
 main = makeMain normalBorderColor focusedBorderColor layoutHook workspaces
                 defaultGaps keys mouseBindings borderWidth logHook
