@@ -22,8 +22,8 @@ extra-source-files: README TODO tests/loc.hs tests/Properties.hs man/xmonad.1.in
                     Config.hs-boot util/GenerateManpage.hs man/xmonad.1 man/xmonad.html
 
 executable:         xmonad
-main-is:            Main.hs
-other-modules:      Config Operations StackSet XMonad
+main-is:            config.hs
+other-modules:      EventLoop Operations StackSet XMonad
 ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
 ghc-prof-options:   -prof -auto-all
 extensions:         GeneralizedNewtypeDeriving

@@ -14,7 +14,7 @@
 --
 ------------------------------------------------------------------------
 
-module Config where
+module Main ( main ) where
 
 --
 -- Useful imports
@@ -27,6 +27,7 @@ import Data.Bits ((.|.))
 import qualified Data.Map as M
 import System.Exit
 import Graphics.X11.Xlib
+import EventLoop
 
 -- % Extension-provided imports
 
@@ -272,3 +273,9 @@ mouseBindings = M.fromList $
     ]
 
 -- % Extension-provided definitions
+
+
+-- % The main function
+
+main = makeMain normalBorderColor focusedBorderColor layoutHook workspaces
+                defaultGaps keys mouseBindings borderWidth logHook
