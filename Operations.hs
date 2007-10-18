@@ -77,7 +77,7 @@ manage w = whenX (fmap not $ isClient w) $ withDisplay $ \d -> do
 unmanage :: Window -> X ()
 unmanage w = do
     windows (W.delete w)
-    setWMState w 0 {-withdrawn-}
+    setWMState w withdrawnState
     modify (\s -> s {mapped = S.delete w (mapped s), waitingUnmap = M.delete w (waitingUnmap s)})
 
 -- | Modify the size of the status gap at the top of the current screen
@@ -190,7 +190,7 @@ hide w = whenX (gets (S.member w . mapped)) $ withDisplay $ \d -> do
     io $ do selectInput d w (clientMask .&. complement structureNotifyMask)
             unmapWindow d w
             selectInput d w clientMask
-    setWMState w 3 --iconic
+    setWMState w iconicState
     -- this part is key: we increment the waitingUnmap counter to distinguish
     -- between client and xmonad initiated unmaps.
     modify (\s -> s { waitingUnmap = M.insertWith (+) w 1 (waitingUnmap s)
@@ -200,7 +200,7 @@ hide w = whenX (gets (S.member w . mapped)) $ withDisplay $ \d -> do
 -- this is harmless if the window was already visible
 reveal :: Window -> X ()
 reveal w = withDisplay $ \d -> do
-    setWMState w 1 --normal
+    setWMState w normalState
     io $ mapWindow d w
     modify (\s -> s { mapped = S.insert w (mapped s) })
 
