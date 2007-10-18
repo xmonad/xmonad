@@ -439,9 +439,9 @@ instance LayoutClass Full a
 data Tall a = Tall Int Rational Rational deriving (Show, Read)
 
 instance LayoutClass Tall a where
-    doLayout (Tall nmaster _ frac) r =
-        return . (flip (,) Nothing) .
-        ap zip (tile frac r nmaster . length) . W.integrate
+    pureLayout (Tall nmaster _ frac) r s = zip ws rs
+      where ws = W.integrate s
+            rs = tile frac r nmaster (length ws)
 
     pureMessage (Tall nmaster delta frac) m = msum [fmap resize (fromMessage m)
                                                    ,fmap incmastern (fromMessage m)]
