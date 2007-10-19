@@ -141,7 +141,7 @@ windows f = do
             tiled = (W.stack . W.workspace . W.current $ this)
                     >>= W.filter (`M.notMember` W.floating ws)
                     >>= W.filter (`notElem` vis)
-            (SD (Rectangle sx sy sw sh)
+            (SD sr@(Rectangle sx sy sw sh)
                 (gt,gb,gl,gr))          = W.screenDetail w
             viewrect = Rectangle (sx + fromIntegral gl)        (sy + fromIntegral gt)
                                  (sw - fromIntegral (gl + gr)) (sh - fromIntegral (gt + gb))
@@ -156,11 +156,7 @@ windows f = do
 
         -- now the floating windows:
         -- move/resize the floating windows, if there are any
-        forM_ flt $ \fw -> whenJust (M.lookup fw (W.floating ws)) $
-          \(W.RationalRect rx ry rw rh) -> do
-            tileWindow fw $ Rectangle
-                (sx + floor (toRational sw*rx)) (sy + floor (toRational sh*ry))
-                (floor (toRational sw*rw)) (floor (toRational sh*rh))
+        forM_ flt $ \fw -> whenJust (M.lookup fw (W.floating ws)) $ floatWindow sr fw
 
         let vs = flt ++ map fst rs
         io $ restackWindows d vs
@@ -245,6 +241,20 @@ tileWindow w r = withDisplay $ \d -> do
     io $ moveResizeWindow d w (rect_x r) (rect_y r)
                               (least $ rect_width r) (least $ rect_height r)
     reveal w
+
+-- | tileWindow. Moves and resizes w such that it fits inside the given
+-- RationalRect with respect to the reference Rectangle
+floatWindow :: Rectangle -> Window -> W.RationalRect -> X ()
+floatWindow (Rectangle sx sy sw sh) w (W.RationalRect rx ry rw rh) = do
+    d  <- asks display
+    bw <- fmap wa_border_width $ io (getWindowAttributes d w)
+    -- Position and Dimension are incompatible types, so we must fromIntegral
+    -- twice
+    let bwp = fromIntegral bw :: Position
+        bwd = fromIntegral bw :: Dimension
+    tileWindow w $ Rectangle
+                (sx + floor (toRational sw*rx) - bwp) (sy + floor (toRational sh*ry) - bwp)
+                (floor (toRational sw*rw) + 2*bwd) (floor (toRational sh*rh) + 2*bwd)
 
 -- ---------------------------------------------------------------------
 
@@ -548,8 +558,8 @@ floatLocation w = withDisplay $ \d -> do
         bw = fi . wa_border_width $ wa
         rr = W.RationalRect ((fi (wa_x wa) - fi (rect_x sr)) % fi (rect_width sr))
                             ((fi (wa_y wa) - fi (rect_y sr)) % fi (rect_height sr))
-                            (fi (wa_width  wa + bw*2) % fi (rect_width sr))
-                            (fi (wa_height wa + bw*2) % fi (rect_height sr))
+                            (fi (wa_width  wa - bw*2) % fi (rect_width sr))
+                            (fi (wa_height wa - bw*2) % fi (rect_height sr))
 
     return (W.screen $ sc, rr)
   where fi x = fromIntegral x
