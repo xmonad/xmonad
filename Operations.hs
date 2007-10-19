@@ -121,6 +121,7 @@ windows f = do
     let oldvisible = concatMap (W.integrate' . W.stack . W.workspace) $ W.current old : W.visible old
         ws = f old
     XConf { display = d , normalBorder = nbc, focusedBorder = fbc } <- ask
+    mapM_ setInitialProperties (W.allWindows ws \\ W.allWindows old)
     whenJust (W.peek old) $ \otherw -> io $ setWindowBorder d otherw nbc
     modify (\s -> s { windowset = ws })
 
@@ -165,8 +166,6 @@ windows f = do
         io $ restackWindows d vs
         -- return the visible windows for this workspace:
         return vs
-
-    mapM_ setInitialProperties (W.allWindows ws \\ W.allWindows old)
 
     whenJust (W.peek ws) $ \w -> io $ setWindowBorder d w fbc
     setTopFocus
