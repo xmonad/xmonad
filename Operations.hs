@@ -238,7 +238,7 @@ clearEvents mask = withDisplay $ \d -> io $ do
 -- rectangle, including its border.
 tileWindow :: Window -> Rectangle -> X ()
 tileWindow w r = withDisplay $ \d -> do
-    bw <- (fromIntegral . wa_border_width) `liftM` io (getWindowAttributes d w)
+    bw <- (fromIntegral . wa_border_width) `fmap` io (getWindowAttributes d w)
     -- give all windows at least 1x1 pixels
     let least x | x <= bw*2  = 1
                 | otherwise  = x - bw*2
