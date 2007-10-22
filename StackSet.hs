@@ -413,7 +413,9 @@ renameTag :: Eq i => i -> i -> StackSet i l a s sd -> StackSet i l a s sd
 renameTag o n = mapWorkspace rename
     where rename w = if tag w == o then w { tag = n } else w
 
--- | Ensure that a given set of tags is present.
+-- | Ensure that a given set of workspace tags is present by renaming
+-- existing workspaces and/or creating new hidden workspaces as
+-- necessary.
 ensureTags :: Eq i => l -> [i] -> StackSet i l a s sd -> StackSet i l a s sd
 ensureTags l allt st = et allt (map tag (workspaces st) \\ allt) st
     where et [] _ s = s
