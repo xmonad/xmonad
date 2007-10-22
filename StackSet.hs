@@ -454,12 +454,10 @@ findTag a s = listToMaybe
 -- $modifyStackset
 
 -- |
--- /O(n)/. (Complexity due to duplicate check). Insert a new element into
--- the stack, above the currently focused element.
---
--- The new element is given focus, and is set as the master window.
--- The previously focused element is moved down.  The previously
--- 'master' element is forgotten. (Thus, 'insert' will cause a retiling).
+-- /O(n)/. (Complexity due to duplicate check). Insert a new element
+-- into the stack, above the currently focused element. The new
+-- element is given focus; the previously focused element is moved
+-- down.
 --
 -- If the element is already in the stackset, the original stackset is
 -- returned unmodified.
