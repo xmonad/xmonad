@@ -324,9 +324,10 @@ integrate (Stack x l r) = reverse l ++ x : r
 integrate' :: Maybe (Stack a) -> [a]
 integrate' = maybe [] integrate
 
--- |
--- /O(n)/. Texture a list.
---
+-- | 
+-- /O(n)/. Turn a list into a possibly empty stack (i.e., a zipper):
+-- the first element of the list is current, and the rest of the list
+-- is down.
 differentiate :: [a] -> Maybe (Stack a)
 differentiate []     = Nothing
 differentiate (x:xs) = Just $ Stack x [] xs
