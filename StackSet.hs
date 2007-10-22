@@ -352,8 +352,6 @@ filter p (Stack f ls rs) = case L.filter p (f:rs) of
 index :: StackSet i l a s sd -> [a]
 index = with [] integrate
 
---  let is = t : r ++ reverse l in take (length is) (dropWhile (/= m) (cycle is))
-
 -- |
 -- /O(1), O(w) on the wrapping case/.
 --
