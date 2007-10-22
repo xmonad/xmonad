@@ -26,7 +26,7 @@ module StackSet (
         -- $stackOperations
         peek, index, integrate, integrate', differentiate,
         focusUp, focusDown, focusMaster, focusWindow,
-        tagMember, renameTag, ensureTags, member, findIndex, mapWorkspace, mapLayout,
+        tagMember, renameTag, ensureTags, member, findTag, mapWorkspace, mapLayout,
         -- * Modifying the stackset
         -- $modifyStackset
         insertUp, delete, delete', filter,
@@ -389,7 +389,7 @@ reverseStack (Stack t ls rs) = Stack t rs ls
 focusWindow :: (Eq s, Eq a, Eq i) => a -> StackSet i l a s sd -> StackSet i l a s sd
 focusWindow w s | Just w == peek s = s
                 | otherwise        = maybe s id $ do
-                    n <- findIndex w s
+                    n <- findTag w s
                     return $ until ((Just w ==) . peek) focusUp (view n s)
 
 -- | Get a list of all screens in the StackSet.
@@ -439,13 +439,13 @@ mapLayout f (StackSet v vs hs m) = StackSet (fScreen v) (map fScreen vs) (map fW
 
 -- | /O(n)/. Is a window in the StackSet.
 member :: Eq a => a -> StackSet i l a s sd -> Bool
-member a s = maybe False (const True) (findIndex a s)
+member a s = maybe False (const True) (findTag a s)
 
 -- | /O(1) on current window, O(n) in general/.
--- Return Just the workspace index of the given window, or Nothing
+-- Return Just the workspace tag of the given window, or Nothing
 -- if the window is not in the StackSet.
-findIndex :: Eq a => a -> StackSet i l a s sd -> Maybe i
-findIndex a s = listToMaybe
+findTag :: Eq a => a -> StackSet i l a s sd -> Maybe i
+findTag a s = listToMaybe
     [ tag w | w <- workspaces s, has a (stack w) ]
     where has _ Nothing         = False
           has x (Just (Stack t l r)) = x `elem` (t : l ++ r)
@@ -559,7 +559,7 @@ shiftWin :: (Ord a, Eq a, Eq s, Eq i) => i -> a -> StackSet i l a s sd -> StackS
 shiftWin n w s | from == Nothing                     = s -- not found
                | n `tagMember` s && (Just n) /= from = go
                | otherwise                           = s
-    where from   = findIndex w s
+    where from   = findTag w s
 
           go     = on n (insertUp w) . on (fromJust from) (delete' w) $ s
           curtag = tag (workspace (current s))

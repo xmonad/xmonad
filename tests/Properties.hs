@@ -351,14 +351,14 @@ prop_focusWindow_local (n :: NonNegative Int) (x::T ) =
                    in hidden_spaces (focusWindow (s !! i) x) == hidden_spaces x
 
 -- ---------------------------------------------------------------------
--- member/findIndex
+-- member/findTag
 
 --
--- For all windows in the stackSet, findIndex should identify the
+-- For all windows in the stackSet, findTag should identify the
 -- correct workspace
 --
 prop_findIndex (x :: T) =
-    and [ tag w == fromJust (findIndex i x)
+    and [ tag w == fromJust (findTag i x)
         | w <- workspace (current x) : map workspace (visible x)  ++ hidden x
         , t <- maybeToList (stack w)
         , i <- focus t : up t ++ down t
@@ -529,7 +529,7 @@ prop_shift_win_indentity i w (x :: T) =
 -- shiftWin leaves the current screen as it is, if neither i is the tag
 -- of the current workspace nor w on the current workspace
 prop_shift_win_fix_current i w (x :: T) =
-    i `tagMember` x && w `member` x && i /= n && findIndex w x /= Just n
+    i `tagMember` x && w `member` x && i /= n && findTag w x /= Just n
         ==> (current $ x) == (current $ shiftWin i w x)
     where
         n = tag (workspace $ current x)
@@ -707,7 +707,7 @@ main = do
         ,("focusWindow is local", mytest prop_focusWindow_local)
         ,("focusWindow works"   , mytest prop_focusWindow_works)
 
-        ,("findIndex"           , mytest prop_findIndex)
+        ,("findTag"           , mytest prop_findIndex)
         ,("allWindows/member"   , mytest prop_allWindowsMember)
 
         ,("insert: invariant"   , mytest prop_insertUp_I)

@@ -564,7 +564,7 @@ float :: Window -> X ()
 float w = do
     (sc, rr) <- floatLocation w
     windows $ \ws -> W.float w rr . fromMaybe ws $ do
-        i <- W.findIndex w ws
+        i <- W.findTag w ws
         guard $ i `elem` map (W.tag . W.workspace) (W.screens ws)
         f <- W.peek ws
         sw <- W.lookupWorkspace sc ws
