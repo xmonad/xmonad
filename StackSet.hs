@@ -208,9 +208,11 @@ abort x = error $ "xmonad: StackSet: " ++ x
 -- ---------------------------------------------------------------------
 -- $construction
 
--- | /O(n)/. Create a new stackset, of empty stacks, with given tags, with
--- 'm' physical screens. 'm' should be less than or equal to the number of
--- workspace tags.  The first workspace in the list will be current.
+-- | /O(n)/. Create a new stackset, of empty stacks, with given tags,
+-- with physical screens whose descriptions are given by 'm'. The
+-- number of physical screens (@length 'm'@) should be less than or
+-- equal to the number of workspace tags.  The first workspace in the
+-- list will be current.
 --
 -- Xinerama: Virtual workspaces are assigned to physical screens, starting at 0.
 --
