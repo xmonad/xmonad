@@ -109,7 +109,7 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 --
 -- Each stack tracks a focused item, and for tiling purposes also tracks
 -- a 'master' position. The connection between 'master' and 'focus'
--- needs to be well defined. Particular in relation to 'insert' and
+-- needs to be well defined, particularly in relation to 'insert' and
 -- 'delete'.
 --
 
