@@ -125,13 +125,13 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 --
 -- * peek,                   -- was: peek\/peekStack
 --
--- * focusUp, focusDown,  -- was: rotate
+-- * focusUp, focusDown,     -- was: rotate
 --
 -- * swapUp, swapDown
 --
 -- * focus                   -- was: raiseFocus
 --
--- * insertUp,             -- was: insert\/push
+-- * insertUp,               -- was: insert\/push
 --
 -- * delete,
 --
@@ -157,8 +157,8 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 data StackSet i l a sid sd =
     StackSet { current  :: !(Screen i l a sid sd)    -- ^ currently focused workspace
              , visible  :: [Screen i l a sid sd]     -- ^ non-focused workspaces, visible in xinerama
-             , hidden   :: [Workspace i l a]      -- ^ workspaces not visible anywhere
-             , floating :: M.Map a RationalRect -- ^ floating windows
+             , hidden   :: [Workspace i l a]         -- ^ workspaces not visible anywhere
+             , floating :: M.Map a RationalRect      -- ^ floating windows
              } deriving (Show, Read, Eq)
 
 -- | Visible workspaces, and their Xinerama screens.
