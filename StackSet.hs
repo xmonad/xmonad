@@ -99,10 +99,11 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 --
 -- Xinerama in X11 lets us view multiple virtual workspaces
 -- simultaneously. While only one will ever be in focus (i.e. will
--- receive keyboard events), other workspaces may be passively viewable.
--- We thus need to track which virtual workspaces are associated
--- (viewed) on which physical screens. We use a simple Map Workspace
--- Screen for this.
+-- receive keyboard events), other workspaces may be passively
+-- viewable.  We thus need to track which virtual workspaces are
+-- associated (viewed) on which physical screens.  To keep track of
+-- this, StackSet keeps separate lists of visible but non-focused
+-- workspaces, and non-visible workspaces.  
 --
 -- Master and Focus
 --
