@@ -1,6 +1,6 @@
 
 == Coding guidelines for contributing to
-== XMonad and the XMonad contributed extensions
+== xmonad and the xmonad contributed extensions
 
 * Comment every top level function (particularly exported funtions), and 
   provide a type signature; use Haddock syntax in the comments.
@@ -18,4 +18,4 @@
   precisely defining its behaviour.
 
 * New modules should identify the author, and be submitted under
-  the same license as XMonad (BSD3 license or freer).
+  the same license as xmonad (BSD3 license or freer).
