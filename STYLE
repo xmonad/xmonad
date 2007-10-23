@@ -1,21 +1,21 @@
 
 == Coding guidelines for contributing to
-== xmonad and the xmonad contributed extensions
+== XMonad and the XMonad contributed extensions
 
-* Comment every top level function, and provide a type signature, using
-  haddock syntax.
+* Comment every top level function (particularly exported funtions), and 
+  provide a type signature; use Haddock syntax in the comments.
 
-* Follow the coding style of already existing modules
+* Follow the coding style of the other modules.
 
-* Code should be compiled with -Wall and emit no errors
+* Code should be compilable with -Wall -Werror. There should be no warnings.
 
 * Partial functions should be avoided: the window manager should not
   crash, so do not call `error` or `undefined`
 
-* Tabs are illegal. Use 4 spaces for indenting
+* Tabs are illegal. Use 4 spaces for indenting.
 
-* Any pure function added to the core should have a QuickCheck property
-  defining its behaviour
+* Any pure function added to the core should have QuickCheck properties
+  precisely defining its behaviour.
 
-* New modules should identify the author, and have are submitted under
-  the xmonad BSD3 license.
+* New modules should identify the author, and be submitted under
+  the same license as XMonad (BSD3 license or freer).
