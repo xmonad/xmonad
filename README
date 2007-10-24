@@ -40,21 +40,35 @@ Building:
 
 Get the dependencies
 
-    Firstly, you'll need the C X11 library headers. On many platforms,
-    these come pre-installed. For others, such as Debian, you can get 
-    them from your package manager:
+    You first need a Haskell compiler. Your distribution's package
+    system will have binaries of GHC (the Glasgow Haskell Compiler), the
+    system we use, so install that. If your distro doesn't provide a
+    binary, you can find them here:
+
+        http://haskell.org/ghc
+
+    For example, in Debian you would install GHC with:
+
+        apt-get install ghc6
+
+    Since you're building an X application, you'll need the C X11
+    library headers. On many platforms, these come pre-installed. For
+    others, such as Debian, you can get them from your package manager:
 
         apt-get install libx11-dev
 
-    It is likely that you already have some of these dependencies.  To check
-    whether you've got a package run 'ghc-pkg list some_package_name'
+    Finally, you need the Haskell libraries xmonad depends on. Since
+    you've a working GHC installation now, most of these will be
+    provided. To check whether you've got a package run 'ghc-pkg list
+    some_package_name'. You will need the following packages:
 
     mtl             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/mtl-1.0
     unix            http://hackage.haskell.org/cgi-bin/hackage-scripts/package/unix-2.0 
     X11             http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-1.2.3
     X11-extras:     http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-extras-0.4
 
-And then build with Cabal:
+And then build xmonad with Cabal as follows (the same goes for the other
+Haskell libraries):
 
     runhaskell Setup.lhs configure --prefix=$HOME
     runhaskell Setup.lhs build
