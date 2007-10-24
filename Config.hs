@@ -178,6 +178,11 @@ logHook = return ()
 ------------------------------------------------------------------------
 -- Key bindings:
 
+-- | The preferred terminal program, which is used in a binding below and by
+-- certain contrib modules.
+terminal :: String
+terminal = "xterm"
+
 -- | The xmonad key bindings. Add, modify or remove key bindings here.
 --
 -- (The comment formatting character is used when generating the manpage)
@@ -185,7 +190,7 @@ logHook = return ()
 keys :: M.Map (KeyMask, KeySym) (X ())
 keys = M.fromList $
     -- launching and killing programs
-    [ ((modMask .|. shiftMask, xK_Return), spawn "xterm") -- %! Launch an xterm
+    [ ((modMask .|. shiftMask, xK_Return), spawn terminal) -- %! Launch terminal
     , ((modMask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && eval \"exec $exe\"") -- %! Launch dmenu
     , ((modMask .|. shiftMask, xK_p     ), spawn "gmrun") -- %! Launch gmrun
     , ((modMask .|. shiftMask, xK_c     ), kill) -- %! Close the focused window

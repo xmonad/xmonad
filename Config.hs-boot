@@ -8,3 +8,4 @@ workspaces :: [WorkspaceId]
 logHook     :: X ()
 manageHook :: Window -> String -> String -> String -> X (WindowSet -> WindowSet)
 serialisedLayouts :: [Layout Window]
+terminal :: String
