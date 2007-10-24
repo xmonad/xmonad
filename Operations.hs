@@ -346,11 +346,11 @@ runOnWorkspaces job =do
     modify $ \s -> s { windowset = ws { W.current = c, W.visible = v, W.hidden = h } }
 
 -- | Set the layout of the currently viewed workspace
-setLayout :: Layout Window -> X ()
+setLayout :: LayoutClass l Window => l Window -> X ()
 setLayout l = do
     ss@(W.StackSet { W.current = c@(W.Screen { W.workspace = ws })}) <- gets windowset
     handleMessage (W.layout ws) (SomeMessage ReleaseResources)
-    windows $ const $ ss {W.current = c { W.workspace = ws { W.layout = l } } }
+    windows $ const $ ss {W.current = c { W.workspace = ws { W.layout = Layout l } } }
 
 -- | X Events are valid Messages
 instance Message Event
