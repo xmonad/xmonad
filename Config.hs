@@ -125,6 +125,12 @@ manageHook _ _ _ _ = return id
 
 ------------------------------------------------------------------------
 -- Extensible layouts
+--
+-- You can specify and transform your layouts by modifying these values.
+-- If you change layout bindings be sure to use 'mod-shift-space' after
+-- restarting (with 'mod-q') to reset your layout state to the new
+-- defaults, as xmonad preserves your old layout settings by default.
+--
 
 -- | The list of possible layouts. Add your custom layouts to this list.
 layouts :: [Layout Window]
