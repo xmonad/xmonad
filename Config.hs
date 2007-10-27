@@ -100,6 +100,10 @@ defaultGaps = [(0,0,0,0)] -- 15 for default dzen font
 -- particular program, or have a client always appear on a particular
 -- workspace.
 --
+-- To find the property name associated with a program, use
+--  xprop | grep WM_CLASS
+-- and click on the client you're interested in.
+--
 manageHook :: Window -- ^ the new window to manage
            -> String -- ^ window title
            -> String -- ^ window resource name
