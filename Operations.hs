@@ -210,12 +210,13 @@ clientMask = structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
 
 -- | Set some properties when we initially gain control of a window
 setInitialProperties :: Window -> X ()
-setInitialProperties w = asks normalBorder >>= \nb -> withDisplay $ \d -> io $ do
-    selectInput d w $ clientMask
-    setWindowBorderWidth d w borderWidth
+setInitialProperties w = asks normalBorder >>= \nb -> withDisplay $ \d -> do
+    setWMState w iconicState
+    io $ selectInput d w $ clientMask
+    io $ setWindowBorderWidth d w borderWidth
     -- we must initially set the color of new windows, to maintain invariants
     -- required by the border setting in 'windows'
-    setWindowBorder d w nb
+    io $ setWindowBorder d w nb
 
 -- | refresh. Render the currently visible workspaces, as determined by
 -- the StackSet. Also, set focus to the focused window.
@@ -545,7 +546,7 @@ floatLocation w = withDisplay $ \d -> do
     -- XXX horrible
     let sc = fromMaybe (W.current ws) $ find (pointWithin (fi $ wa_x wa) (fi $ wa_y wa) . screenRect . W.screenDetail) $ W.screens ws
         sr = screenRect . W.screenDetail $ sc
-        bw = fi . wa_border_width $ wa
+        bw = fi borderWidth
         rr = W.RationalRect ((fi (wa_x wa) - fi (rect_x sr)) % fi (rect_width sr))
                             ((fi (wa_y wa) - fi (rect_y sr)) % fi (rect_height sr))
                             (fi (wa_width  wa + bw*2) % fi (rect_width sr))
