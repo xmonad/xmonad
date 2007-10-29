@@ -19,7 +19,8 @@ module Main where
 --
 -- Useful imports
 --
-import XMonad
+import Control.Monad.Reader ( asks )
+import XMonad hiding ( logHook, borderWidth )
 import Operations
 import qualified StackSet as W
 import Data.Ratio
@@ -27,7 +28,8 @@ import Data.Bits ((.|.))
 import qualified Data.Map as M
 import System.Exit
 import Graphics.X11.Xlib
-import EventLoop
+import EventLoop hiding ( workspaces )
+import qualified EventLoop ( workspaces )
 
 -- % Extension-provided imports
 
@@ -67,17 +69,6 @@ modMask = mod1Mask
 numlockMask :: KeyMask
 numlockMask = mod2Mask
 
--- | Width of the window border in pixels.
---
-borderWidth :: Dimension
-borderWidth = 1
-
--- | Border colors for unfocused and focused windows, respectively.
---
-normalBorderColor, focusedBorderColor :: String
-normalBorderColor  = "#dddddd"
-focusedBorderColor = "#ff0000"
-
 -- | Default offset of drawable screen boundaries from each physical
 -- screen. Anything non-zero here will leave a gap of that many pixels
 -- on the given edge, on the that screen. A useful gap at top of screen
@@ -90,8 +81,8 @@ focusedBorderColor = "#ff0000"
 --
 -- Fields are: top, bottom, left, right.
 --
-defaultGaps :: [(Int,Int,Int,Int)]
-defaultGaps = [(0,0,0,0)] -- 15 for default dzen font
+--defaultGaps :: [(Int,Int,Int,Int)]
+
 
 ------------------------------------------------------------------------
 -- Window rules
@@ -158,41 +149,14 @@ layouts = [ Layout tiled
      -- Percent of screen to increment by when resizing panes
      delta   = 3%100
 
--- | The top level layout switcher. Most users will not need to modify this binding.
---
--- By default, we simply switch between the layouts listed in `layouts'
--- above, but you may program your own selection behaviour here. Layout
--- transformers, for example, would be hooked in here.
---
-layoutHook :: Layout Window
-layoutHook = Layout $ Select layouts
-
 -- | Register with xmonad a list of layouts whose state we can preserve over restarts.
 -- There is typically no need to modify this list, the defaults are fine.
 --
 serialisedLayouts :: [Layout Window]
-serialisedLayouts = layoutHook : layouts
-
-------------------------------------------------------------------------
--- Logging
-
--- | Perform an arbitrary action on each internal state change or X event.
--- Examples include:
---      * do nothing
---      * log the state to stdout
---
--- See the 'DynamicLog' extension for examples.
---
-logHook :: X ()
-logHook = return ()
+serialisedLayouts = Layout (layoutHook defaultConfig) : layouts
 
 ------------------------------------------------------------------------
 -- Key bindings:
-
--- | The preferred terminal program, which is used in a binding below and by
--- certain contrib modules.
-terminal :: String
-terminal = "xterm"
 
 -- | The xmonad key bindings. Add, modify or remove key bindings here.
 --
@@ -201,13 +165,13 @@ terminal = "xterm"
 keys :: M.Map (KeyMask, KeySym) (X ())
 keys = M.fromList $
     -- launching and killing programs
-    [ ((modMask .|. shiftMask, xK_Return), spawn terminal) -- %! Launch terminal
+    [ ((modMask .|. shiftMask, xK_Return), asks terminal >>= spawn) -- %! Launch terminal
     , ((modMask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && eval \"exec $exe\"") -- %! Launch dmenu
     , ((modMask .|. shiftMask, xK_p     ), spawn "gmrun") -- %! Launch gmrun
     , ((modMask .|. shiftMask, xK_c     ), kill) -- %! Close the focused window
 
     , ((modMask,               xK_space ), sendMessage NextLayout) -- %! Rotate through the available layout algorithms
-    , ((modMask .|. shiftMask, xK_space ), setLayout layoutHook) -- %!  Reset the layouts on the current workspace to default
+    , ((modMask .|. shiftMask, xK_space ), setLayout $ layoutHook defaultConfig) -- %!  Reset the layouts on the current workspace to default
 
     , ((modMask,               xK_n     ), refresh) -- %! Resize viewed windows to the correct size
 
@@ -234,7 +198,7 @@ keys = M.fromList $
     , ((modMask              , xK_period), sendMessage (IncMasterN (-1))) -- %! Deincrement the number of windows in the master area
 
     -- toggle the status bar gap
-    , ((modMask              , xK_b     ), modifyGap (\i n -> let x = (defaultGaps ++ repeat (0,0,0,0)) !! i in if n == x then (0,0,0,0) else x)) -- %! Toggle the status bar gap
+    , ((modMask              , xK_b     ), modifyGap (\i n -> let x = (defaultGaps defaultConfig ++ repeat (0,0,0,0)) !! i in if n == x then (0,0,0,0) else x)) -- %! Toggle the status bar gap
 
     -- quit, or restart
     , ((modMask .|. shiftMask, xK_q     ), io (exitWith ExitSuccess)) -- %! Quit xmonad
@@ -274,9 +238,32 @@ mouseBindings = M.fromList $
 
 -- % Extension-provided definitions
 
+defaultConfig :: XMonadConfig Select
+defaultConfig = XMonadConfig { borderWidth = 1 -- Width of the window border in pixels.
+                             , EventLoop.workspaces = workspaces
+                             , defaultGaps = [(0,0,0,0)] -- 15 for default dzen font
+                             -- | The top level layout switcher. Most users will not need to modify this binding.
+                             --
+                             -- By default, we simply switch between the layouts listed in `layouts'
+                             -- above, but you may program your own selection behaviour here. Layout
+                             -- transformers, for example, would be hooked in here.
+                             --       
+                             , layoutHook = Select layouts
+                             , defaultTerminal = "xterm" -- The preferred terminal program.
+                             , normalBorderColor = "#dddddd" -- Border color for unfocused windows.
+                             , focusedBorderColor = "#ff0000" -- Border color for focused windows.
+                             , EventLoop.keys = Main.keys
+                             , EventLoop.mouseBindings = Main.mouseBindings
+                             -- | Perform an arbitrary action on each internal state change or X event.
+                             -- Examples include:
+                             --      * do nothing
+                             --      * log the state to stdout
+                             --
+                             -- See the 'DynamicLog' extension for examples.
+                             , logHook = return ()
+                             }
 
 -- % The main function
 
 main :: IO ()
-main = makeMain normalBorderColor focusedBorderColor layoutHook workspaces
-                defaultGaps keys mouseBindings borderWidth logHook
+main = makeMain defaultConfig

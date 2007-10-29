@@ -12,7 +12,7 @@
 --
 -----------------------------------------------------------------------------
 
-module EventLoop ( makeMain ) where
+module EventLoop ( makeMain, XMonadConfig(..) ) where
 
 import Data.Bits
 import qualified Data.Map as M
@@ -27,32 +27,42 @@ import Graphics.X11.Xlib hiding (refreshKeyboardMapping)
 import Graphics.X11.Xlib.Extras
 import Graphics.X11.Xinerama    (getScreenInfo)
 
-import XMonad
+import XMonad hiding ( logHook, borderWidth )
+import qualified XMonad ( logHook, borderWidth )
 import StackSet (new, floating, member)
 import qualified StackSet as W
 import Operations
 
 import System.IO
 
+data XMonadConfig l = XMonadConfig { normalBorderColor :: !String
+                                   , focusedBorderColor :: !String
+                                   , defaultTerminal :: !String
+                                   , layoutHook :: !(l Window)
+                                   , workspaces :: ![String]
+                                   , defaultGaps :: ![(Int,Int,Int,Int)]
+                                   , keys :: !(M.Map (ButtonMask,KeySym) (X ()))
+                                   , mouseBindings :: !(M.Map (ButtonMask, Button) (Window -> X ()))
+                                   , borderWidth :: !Dimension
+                                   , logHook :: !(X ())
+                                   }
+
 -- |
 -- The main entry point
 --
-makeMain :: String -> String -> Layout Window -> [String] -> [(Int,Int,Int,Int)]
-         -> M.Map (ButtonMask,KeySym) (X ()) -> M.Map (ButtonMask, Button) (Window -> X ())
-         -> Dimension -> X () -> IO ()
-makeMain normalBorderColor focusedBorderColor layoutHook workspaces
-         defaultGaps keys mouseBindings borderWidth logHook = do
+makeMain :: LayoutClass l Window => XMonadConfig l -> IO ()
+makeMain xmc = do
     dpy   <- openDisplay ""
     let dflt = defaultScreen dpy
 
     rootw  <- rootWindow dpy dflt
     xinesc <- getScreenInfo dpy
-    nbc    <- initColor dpy normalBorderColor
-    fbc    <- initColor dpy focusedBorderColor
+    nbc    <- initColor dpy $ normalBorderColor xmc
+    fbc    <- initColor dpy $ focusedBorderColor xmc
     hSetBuffering stdout NoBuffering
     args <- getArgs
 
-    let initialWinset = new layoutHook workspaces $ zipWith SD xinesc gaps
+    let initialWinset = new (Layout $ layoutHook xmc) (workspaces xmc) $ zipWith SD xinesc gaps
 
         maybeRead s = case reads s of
                             [(x, "")] -> Just x
@@ -61,13 +71,16 @@ makeMain normalBorderColor focusedBorderColor layoutHook workspaces
         winset = fromMaybe initialWinset $ do
                     ("--resume" : s : _) <- return args
                     ws                   <- maybeRead s
-                    return . W.ensureTags layoutHook workspaces
-                           $ W.mapLayout (fromMaybe layoutHook . maybeRead) ws
+                    return . W.ensureTags (Layout $ layoutHook xmc) (workspaces xmc)
+                           $ W.mapLayout (fromMaybe (Layout $ layoutHook xmc) . maybeRead) ws
 
-        gaps = take (length xinesc) $ defaultGaps ++ repeat (0,0,0,0)
+        gaps = take (length xinesc) $ defaultGaps xmc ++ repeat (0,0,0,0)
 
         cf = XConf
             { display       = dpy
+            , XMonad.logHook = logHook xmc
+            , XMonad.borderWidth = borderWidth xmc
+            , terminal      = defaultTerminal xmc
             , theRoot       = rootw
             , normalBorder  = nbc
             , focusedBorder = fbc }
@@ -87,8 +100,8 @@ makeMain normalBorderColor focusedBorderColor layoutHook workspaces
     allocaXEvent $ \e ->
         runX cf st $ do
 
-            grabKeys keys
-            grabButtons mouseBindings
+            grabKeys xmc
+            grabButtons xmc
 
             io $ sync dpy False
 
@@ -124,7 +137,7 @@ makeMain normalBorderColor focusedBorderColor layoutHook workspaces
             handle (KeyEvent {ev_event_type = t, ev_state = m, ev_keycode = code})
                 | t == keyPress = withDisplay $ \dpy -> do
                     s  <- io $ keycodeToKeysym dpy code 0
-                    userCode $ whenJust (M.lookup (cleanMask m,s) keys) id
+                    userCode $ whenJust (M.lookup (cleanMask m,s) (keys xmc)) id
 
             -- manage a new window
             handle (MapRequestEvent    {ev_window = w}) = withDisplay $ \dpy -> do
@@ -148,7 +161,7 @@ makeMain normalBorderColor focusedBorderColor layoutHook workspaces
             -- set keyboard mapping
             handle e@(MappingNotifyEvent {}) = do
                 io $ refreshKeyboardMapping e
-                when (ev_request e == mappingKeyboard) (grabKeys keys)
+                when (ev_request e == mappingKeyboard) (grabKeys xmc)
 
             -- handle button release, which may finish dragging.
             handle e@(ButtonEvent {ev_event_type = t})
@@ -172,7 +185,7 @@ makeMain normalBorderColor focusedBorderColor layoutHook workspaces
                 -- If it's the root window, then it's something we
                 -- grabbed in grabButtons. Otherwise, it's click-to-focus.
                 isr <- isRoot w
-                if isr then userCode $ whenJust (M.lookup (cleanMask (ev_state e), b) mouseBindings) ($ ev_subwindow e)
+                if isr then userCode $ whenJust (M.lookup (cleanMask (ev_state e), b) $ mouseBindings xmc) ($ ev_subwindow e)
                        else focus w
                 sendMessage e -- Always send button events.
 
@@ -199,7 +212,7 @@ makeMain normalBorderColor focusedBorderColor layoutHook workspaces
                                 , wc_y            = ev_y e
                                 , wc_width        = ev_width e
                                 , wc_height       = ev_height e
-                                , wc_border_width = fromIntegral borderWidth
+                                , wc_border_width = fromIntegral (borderWidth xmc)
                                 , wc_sibling      = ev_above e
                                 , wc_stack_mode   = ev_detail e }
                             when (member w ws) (float w)
@@ -216,7 +229,7 @@ makeMain normalBorderColor focusedBorderColor layoutHook workspaces
 
             -- property notify
             handle PropertyEvent { ev_event_type = t, ev_atom = a }
-                | t == propertyNotify && a == wM_NAME = userCode logHook
+                | t == propertyNotify && a == wM_NAME = userCode $ logHook xmc
 
             handle e = broadcastMessage e -- trace (eventName e) -- ignoring
 
@@ -243,22 +256,22 @@ scan dpy rootw = do
                          && (wa_map_state wa == waIsViewable || ic)
 
 -- | Grab the keys back
-grabKeys :: M.Map (ButtonMask,KeySym) (X ()) -> X ()
-grabKeys keys = do
+grabKeys :: XMonadConfig l -> X ()
+grabKeys xmc = do
     XConf { display = dpy, theRoot = rootw } <- ask
     let grab kc m = io $ grabKey dpy kc m rootw True grabModeAsync grabModeAsync
     io $ ungrabKey dpy anyKey anyModifier rootw
-    forM_ (M.keys keys) $ \(mask,sym) -> do
+    forM_ (M.keys $ keys xmc) $ \(mask,sym) -> do
          kc <- io $ keysymToKeycode dpy sym
          -- "If the specified KeySym is not defined for any KeyCode,
          -- XKeysymToKeycode() returns zero."
          when (kc /= '\0') $ mapM_ (grab kc . (mask .|.)) extraModifiers
 
 -- | XXX comment me
-grabButtons :: M.Map (ButtonMask, Button)  (Window -> X ()) -> X ()
-grabButtons mouseBindings = do
+grabButtons :: XMonadConfig l -> X ()
+grabButtons xmc = do
     XConf { display = dpy, theRoot = rootw } <- ask
     let grab button mask = io $ grabButton dpy button mask rootw False buttonPressMask
                                            grabModeAsync grabModeSync none none
     io $ ungrabButton dpy anyButton anyModifier rootw
-    mapM_ (\(m,b) -> mapM_ (grab b . (m .|.)) extraModifiers) (M.keys mouseBindings)
+    mapM_ (\(m,b) -> mapM_ (grab b . (m .|.)) extraModifiers) (M.keys $ mouseBindings xmc)

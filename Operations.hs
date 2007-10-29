@@ -37,7 +37,7 @@ import Graphics.X11.Xlib
 import Graphics.X11.Xinerama (getScreenInfo)
 import Graphics.X11.Xlib.Extras
 
-import {-# SOURCE #-} Main (borderWidth,logHook,manageHook,numlockMask,serialisedLayouts)
+import {-# SOURCE #-} Main (manageHook,numlockMask,serialisedLayouts)
 
 -- ---------------------------------------------------------------------
 -- |
@@ -170,7 +170,7 @@ windows f = do
 
     whenJust (W.peek ws) $ \w -> io $ setWindowBorder d w fbc
     setTopFocus
-    userCode logHook
+    asks logHook >>= userCode
     -- io performGC -- really helps, but seems to trigger GC bugs?
 
     -- hide every window that was potentially visible before, but is not
@@ -214,7 +214,8 @@ setInitialProperties :: Window -> X ()
 setInitialProperties w = asks normalBorder >>= \nb -> withDisplay $ \d -> do
     setWMState w iconicState
     io $ selectInput d w $ clientMask
-    io $ setWindowBorderWidth d w borderWidth
+    bw <- asks borderWidth
+    io $ setWindowBorderWidth d w bw
     -- we must initially set the color of new windows, to maintain invariants
     -- required by the border setting in 'windows'
     io $ setWindowBorder d w nb
@@ -543,11 +544,11 @@ floatLocation :: Window -> X (ScreenId, W.RationalRect)
 floatLocation w = withDisplay $ \d -> do
     ws <- gets windowset
     wa <- io $ getWindowAttributes d w
+    bw <- fi `fmap` asks borderWidth
 
     -- XXX horrible
     let sc = fromMaybe (W.current ws) $ find (pointWithin (fi $ wa_x wa) (fi $ wa_y wa) . screenRect . W.screenDetail) $ W.screens ws
         sr = screenRect . W.screenDetail $ sc
-        bw = fi borderWidth
         rr = W.RationalRect ((fi (wa_x wa) - fi (rect_x sr)) % fi (rect_width sr))
                             ((fi (wa_y wa) - fi (rect_y sr)) % fi (rect_height sr))
                             (fi (wa_width  wa + bw*2) % fi (rect_width sr))

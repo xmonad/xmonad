@@ -50,7 +50,10 @@ data XState = XState
     , dragging     :: !(Maybe (Position -> Position -> X (), X ())) }
 data XConf = XConf
     { display       :: Display      -- ^ the X11 display
+    , logHook       :: !(X ())      -- ^ the loghook function
+    , terminal      :: !String      -- ^ the user's preferred terminal
     , theRoot       :: !Window      -- ^ the root window
+    , borderWidth   :: !Dimension   -- ^ the preferred border width
     , normalBorder  :: !Pixel       -- ^ border color of unfocused windows
     , focusedBorder :: !Pixel     } -- ^ border color of the focused window
 
