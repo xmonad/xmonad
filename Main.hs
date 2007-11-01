@@ -240,7 +240,7 @@ defaultConfig = XConfig { borderWidth = 1 -- Width of the window border in pixel
                         -- above, but you may program your own selection behaviour here. Layout
                         -- transformers, for example, would be hooked in here.
                         --
-                        , layoutHook = layout
+                        , layoutHook = Layout layout
                         , terminal = "xterm" -- The preferred terminal program.
                         , normalBorderColor = "#dddddd" -- Border color for unfocused windows.
                         , focusedBorderColor = "#ff0000" -- Border color for focused windows.

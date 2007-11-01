@@ -16,8 +16,7 @@
 -----------------------------------------------------------------------------
 
 module XMonad (
-    X, WindowSet, WindowSpace, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), XConfig(..), LayoutClass(..), Layout(..),
-    Typeable, Message, SomeMessage(..), fromMessage, runLayout, LayoutMessages(..),
+    X, WindowSet, WindowSpace, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), XConfig(..), LayoutClass(..), Layout(..), readsLayout, Typeable, Message, SomeMessage(..), fromMessage, runLayout, LayoutMessages(..),
     runX, catchX, userCode, io, catchIO, withDisplay, withWindowSet, isRoot, getAtom, spawn, restart, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
   ) where
@@ -55,20 +54,18 @@ data XConf = XConf
     , focusedBorder :: !Pixel     }   -- ^ border color of the focused window
 
 -- todo, better name
-data XConfig = forall l. (LayoutClass l Window, Read (l Window)) =>
-                        XConfig { normalBorderColor :: !String
-                                     , focusedBorderColor :: !String
-                                     , terminal :: !String
-                                     , layoutHook :: !(l Window)
-                                     , manageHook :: Window -> String -> String -> String -> X (WindowSet -> WindowSet)
-                                     , workspaces :: ![String]
-                                     , defaultGaps :: ![(Int,Int,Int,Int)]
-                                     , numlockMask :: KeyMask
-                                     , keys :: !(M.Map (ButtonMask,KeySym) (X ()))
-                                     , mouseBindings :: !(M.Map (ButtonMask, Button) (Window -> X ()))
-                                     , borderWidth :: !Dimension
-                                     , logHook :: !(X ())
-                                     }
+data XConfig = XConfig { normalBorderColor :: !String
+                       , focusedBorderColor :: !String
+                       , terminal :: !String
+                       , layoutHook :: !(Layout Window)
+                       , manageHook :: !(Window -> String -> String -> String -> X (WindowSet -> WindowSet))
+                       , workspaces :: ![String]
+                       , defaultGaps :: ![(Int,Int,Int,Int)]
+                       , numlockMask :: KeyMask
+                       , keys :: !(M.Map (ButtonMask,KeySym) (X ()))
+                       , mouseBindings :: !(M.Map (ButtonMask, Button) (Window -> X ()))
+                       , borderWidth :: !Dimension
+                       , logHook :: !(X ()) }
 
 type WindowSet   = StackSet  WorkspaceId (Layout Window) Window ScreenId ScreenDetail
 type WindowSpace = Workspace WorkspaceId (Layout Window) Window
@@ -147,9 +144,13 @@ atom_WM_STATE           = getAtom "WM_STATE"
 ------------------------------------------------------------------------
 -- | LayoutClass handling. See particular instances in Operations.hs
 
--- | An existential type that can hold any object that is in the LayoutClass.
-data Layout a = forall l. (LayoutClass l a) => Layout (l a)
+-- | An existential type that can hold any object that is in Read and LayoutClass.
+data Layout a = forall l. (LayoutClass l a, Read (l a)) => Layout (l a)
 
+-- | Using the 'Layout' as a witness, parse existentially wrapped windows
+-- from a 'String'
+readsLayout :: Layout a -> String -> [(Layout a, String)]
+readsLayout (Layout l) s = [(Layout (asTypeOf x l), rs) | (x, rs) <- reads s]
 
 -- | The different layout modes
 --

@@ -50,7 +50,8 @@ makeMain xmc = do
     hSetBuffering stdout NoBuffering
     args <- getArgs
 
-    let (layout, lreads) = case xmc of XConfig {layoutHook = lh } -> (Layout lh, \s -> [(Layout (x `asTypeOf` lh), s') | (x, s') <- reads s])
+    let layout = layoutHook xmc
+        lreads = readsLayout layout
         initialWinset = new layout (workspaces xmc) $ zipWith SD xinesc gaps
 
         maybeRead reads' s = case reads' s of
