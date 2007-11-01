@@ -20,8 +20,8 @@ module Main where
 -- Useful imports
 --
 import Control.Monad.Reader ( asks )
-import XMonad hiding (workspaces)
-import qualified XMonad (workspaces)
+import XMonad hiding (workspaces, manageHook)
+import qualified XMonad (workspaces, manageHook)
 import Layouts
 import Operations
 import qualified StackSet as W
@@ -253,6 +253,7 @@ defaultConfig = XConfig { borderWidth = 1 -- Width of the window border in pixel
                         --
                         -- See the 'DynamicLog' extension for examples.
                         , logHook = return ()
+                        , XMonad.manageHook = manageHook
                         }
 
 -- % The main function

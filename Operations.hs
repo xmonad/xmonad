@@ -37,7 +37,7 @@ import Graphics.X11.Xlib
 import Graphics.X11.Xinerama (getScreenInfo)
 import Graphics.X11.Xlib.Extras
 
-import {-# SOURCE #-} Main (manageHook,numlockMask)
+import {-# SOURCE #-} Main (numlockMask)
 
 -- ---------------------------------------------------------------------
 -- |
@@ -67,7 +67,8 @@ manage w = whenX (fmap not $ isClient w) $ withDisplay $ \d -> do
 
     n <- fmap (fromMaybe "") $ io $ fetchName d w
     (ClassHint rn rc) <- io $ getClassHint d w
-    g <- manageHook w n rn rc `catchX` return id
+    mh <- asks (manageHook . config)
+    g <- mh w n rn rc `catchX` return id
     windows (g . f)
 
 -- | unmanage. A window no longer exists, remove it from the window

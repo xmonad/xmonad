@@ -60,6 +60,7 @@ data XConfig = forall l. (LayoutClass l Window, Read (l Window)) =>
                                      , focusedBorderColor :: !String
                                      , terminal :: !String
                                      , layoutHook :: !(l Window)
+                                     , manageHook :: Window -> String -> String -> String -> X (WindowSet -> WindowSet)
                                      , workspaces :: ![String]
                                      , defaultGaps :: ![(Int,Int,Int,Int)]
                                      , keys :: !(M.Map (ButtonMask,KeySym) (X ()))
