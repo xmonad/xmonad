@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Config.hs
+-- Module      :  DefaultConfig.hs
 -- Copyright   :  (c) Spencer Janssen 2007
 -- License     :  BSD3-style (see LICENSE)
 --
@@ -14,7 +14,7 @@
 --
 ------------------------------------------------------------------------
 
-module DefaultConfig (defaultConfig) where
+module XMonad.DefaultConfig (defaultConfig) where
 
 --
 -- Useful imports
@@ -22,15 +22,14 @@ module DefaultConfig (defaultConfig) where
 import Control.Monad.Reader ( asks )
 import XMonad hiding (workspaces, manageHook, numlockMask)
 import qualified XMonad (workspaces, manageHook, numlockMask)
-import Layouts
-import Operations
-import qualified StackSet as W
+import XMonad.Layouts
+import XMonad.Operations
+import qualified XMonad.StackSet as W
 import Data.Ratio
 import Data.Bits ((.|.))
 import qualified Data.Map as M
 import System.Exit
 import Graphics.X11.Xlib
-import EventLoop
 
 -- % Extension-provided imports
 
@@ -245,8 +244,8 @@ defaultConfig = XConfig { borderWidth = 1 -- Width of the window border in pixel
                         , normalBorderColor = "#dddddd" -- Border color for unfocused windows.
                         , focusedBorderColor = "#ff0000" -- Border color for focused windows.
                         , XMonad.numlockMask = numlockMask
-                        , XMonad.keys = DefaultConfig.keys
-                        , XMonad.mouseBindings = DefaultConfig.mouseBindings
+                        , XMonad.keys = XMonad.DefaultConfig.keys
+                        , XMonad.mouseBindings = XMonad.DefaultConfig.mouseBindings
                         -- | Perform an arbitrary action on each internal state change or X event.
                         -- Examples include:
                         --      * do nothing

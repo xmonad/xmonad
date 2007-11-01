@@ -14,8 +14,8 @@
 
 module Main (main) where
 
-import EventLoop (makeMain)
-import DefaultConfig (defaultConfig)
+import XMonad.EventLoop (makeMain)
+import XMonad.DefaultConfig (defaultConfig)
 
 import Control.Exception (handle)
 import System.IO

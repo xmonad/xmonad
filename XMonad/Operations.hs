@@ -16,11 +16,11 @@
 --
 -----------------------------------------------------------------------------
 
-module Operations where
+module XMonad.Operations where
 
 import XMonad
-import Layouts (Full(..))
-import qualified StackSet as W
+import XMonad.Layouts (Full(..))
+import qualified XMonad.StackSet as W
 
 import Data.Maybe
 import Data.List            (nub, (\\), find)

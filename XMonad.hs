@@ -21,7 +21,7 @@ module XMonad (
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
   ) where
 
-import StackSet
+import XMonad.StackSet
 
 import Prelude hiding ( catch )
 import Control.Exception (catch, throw, Exception(ExitException))

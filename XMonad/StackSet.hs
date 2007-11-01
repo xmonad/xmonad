@@ -11,7 +11,7 @@
 -- Portability :  portable, Haskell 98
 --
 
-module StackSet (
+module XMonad.StackSet (
         -- * Introduction
         -- $intro
         StackSet(..), Workspace(..), Screen(..), Stack(..), RationalRect(..),

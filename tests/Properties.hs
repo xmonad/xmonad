@@ -1,8 +1,8 @@
 {-# OPTIONS -fglasgow-exts #-}
 module Properties where
 
-import StackSet hiding (filter)
-import qualified StackSet as S (filter)
+import XMonad.StackSet hiding (filter)
+import qualified XMonad.StackSet as S (filter)
 
 import Debug.Trace
 import Data.Word

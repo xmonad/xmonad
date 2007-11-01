@@ -19,11 +19,11 @@ author:             Spencer Janssen
 maintainer:         sjanssen@cse.unl.edu
 build-depends:      base>=2.0, mtl, unix, X11==1.3.0
 extra-source-files: README TODO tests/loc.hs tests/Properties.hs man/xmonad.1.in
-                    Config.hs-boot util/GenerateManpage.hs man/xmonad.1 man/xmonad.html
+                    util/GenerateManpage.hs man/xmonad.1 man/xmonad.html
 
 executable:         xmonad
 main-is:            Main.hs
-other-modules:      EventLoop Layouts Operations StackSet XMonad
+other-modules:      XMonad.EventLoop XMonad.Layouts XMonad.Operations XMonad.StackSet XMonad
 ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
 ghc-prof-options:   -prof -auto-all
 extensions:         GeneralizedNewtypeDeriving

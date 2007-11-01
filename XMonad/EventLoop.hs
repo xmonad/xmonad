@@ -13,7 +13,7 @@
 --
 -----------------------------------------------------------------------------
 
-module EventLoop (makeMain) where
+module XMonad.EventLoop (makeMain) where
 
 import Data.Bits
 import qualified Data.Map as M
@@ -29,9 +29,9 @@ import Graphics.X11.Xlib.Extras
 import Graphics.X11.Xinerama    (getScreenInfo)
 
 import XMonad
-import StackSet (new, floating, member)
-import qualified StackSet as W
-import Operations
+import XMonad.StackSet (new, floating, member)
+import qualified XMonad.StackSet as W
+import XMonad.Operations
 
 import System.IO
 

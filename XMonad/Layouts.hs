@@ -15,14 +15,14 @@
 --
 -----------------------------------------------------------------------------
 
-module Layouts (ChangeLayout(..), Choose, (|||), Resize(..), IncMasterN(..),
+module XMonad.Layouts (ChangeLayout(..), Choose, (|||), Resize(..), IncMasterN(..),
                 Full(..), Tall(..), Mirror(..), mirrorRect, splitVertically,
                 splitHorizontally, splitHorizontallyBy, splitVerticallyBy) where
 
 import XMonad
 
 import Graphics.X11 (Rectangle(..))
-import qualified StackSet as W
+import qualified XMonad.StackSet as W
 import Control.Arrow ((***), second)
 import Control.Monad
 import Data.Maybe (fromMaybe)
