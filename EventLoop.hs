@@ -13,7 +13,7 @@
 --
 -----------------------------------------------------------------------------
 
-module EventLoop ( makeMain, XMonadConfig(..) ) where
+module EventLoop (makeMain) where
 
 import Data.Bits
 import qualified Data.Map as M
@@ -28,31 +28,17 @@ import Graphics.X11.Xlib hiding (refreshKeyboardMapping)
 import Graphics.X11.Xlib.Extras
 import Graphics.X11.Xinerama    (getScreenInfo)
 
-import XMonad hiding ( logHook, borderWidth )
-import qualified XMonad ( logHook, borderWidth )
+import XMonad
 import StackSet (new, floating, member)
 import qualified StackSet as W
 import Operations
 
 import System.IO
 
-data XMonadConfig = forall l. (LayoutClass l Window, Read (l Window)) =>
-                        XMonadConfig { normalBorderColor :: !String
-                                     , focusedBorderColor :: !String
-                                     , defaultTerminal :: !String
-                                     , layoutHook :: !(l Window)
-                                     , workspaces :: ![String]
-                                     , defaultGaps :: ![(Int,Int,Int,Int)]
-                                     , keys :: !(M.Map (ButtonMask,KeySym) (X ()))
-                                     , mouseBindings :: !(M.Map (ButtonMask, Button) (Window -> X ()))
-                                     , borderWidth :: !Dimension
-                                     , logHook :: !(X ())
-                                     }
-
 -- |
 -- The main entry point
 --
-makeMain :: XMonadConfig -> IO ()
+makeMain :: XConfig -> IO ()
 makeMain xmc = do
     dpy   <- openDisplay ""
     let dflt = defaultScreen dpy
@@ -64,7 +50,7 @@ makeMain xmc = do
     hSetBuffering stdout NoBuffering
     args <- getArgs
 
-    let (layout, lreads) = case xmc of XMonadConfig {layoutHook = lh } -> (Layout lh, \s -> [(Layout (x `asTypeOf` lh), s') | (x, s') <- reads s])
+    let (layout, lreads) = case xmc of XConfig {layoutHook = lh } -> (Layout lh, \s -> [(Layout (x `asTypeOf` lh), s') | (x, s') <- reads s])
         initialWinset = new layout (workspaces xmc) $ zipWith SD xinesc gaps
 
         maybeRead reads' s = case reads' s of
@@ -81,8 +67,7 @@ makeMain xmc = do
 
         cf = XConf
             { display       = dpy
-            , XMonad.logHook = logHook xmc
-            , XMonad.borderWidth = borderWidth xmc
+            , config        = xmc
             , terminal      = defaultTerminal xmc
             , theRoot       = rootw
             , normalBorder  = nbc
@@ -259,7 +244,7 @@ scan dpy rootw = do
                          && (wa_map_state wa == waIsViewable || ic)
 
 -- | Grab the keys back
-grabKeys :: XMonadConfig -> X ()
+grabKeys :: XConfig -> X ()
 grabKeys xmc = do
     XConf { display = dpy, theRoot = rootw } <- ask
     let grab kc m = io $ grabKey dpy kc m rootw True grabModeAsync grabModeAsync
@@ -271,7 +256,7 @@ grabKeys xmc = do
          when (kc /= '\0') $ mapM_ (grab kc . (mask .|.)) extraModifiers
 
 -- | XXX comment me
-grabButtons :: XMonadConfig -> X ()
+grabButtons :: XConfig -> X ()
 grabButtons xmc = do
     XConf { display = dpy, theRoot = rootw } <- ask
     let grab button mask = io $ grabButton dpy button mask rootw False buttonPressMask

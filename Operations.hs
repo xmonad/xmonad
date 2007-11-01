@@ -167,7 +167,7 @@ windows f = do
 
     whenJust (W.peek ws) $ \w -> io $ setWindowBorder d w fbc
     setTopFocus
-    asks logHook >>= userCode
+    asks (logHook . config) >>= userCode
     -- io performGC -- really helps, but seems to trigger GC bugs?
 
     -- hide every window that was potentially visible before, but is not
@@ -211,7 +211,7 @@ setInitialProperties :: Window -> X ()
 setInitialProperties w = asks normalBorder >>= \nb -> withDisplay $ \d -> do
     setWMState w iconicState
     io $ selectInput d w $ clientMask
-    bw <- asks borderWidth
+    bw <- asks (borderWidth . config)
     io $ setWindowBorderWidth d w bw
     -- we must initially set the color of new windows, to maintain invariants
     -- required by the border setting in 'windows'
@@ -388,7 +388,7 @@ floatLocation :: Window -> X (ScreenId, W.RationalRect)
 floatLocation w = withDisplay $ \d -> do
     ws <- gets windowset
     wa <- io $ getWindowAttributes d w
-    bw <- fi `fmap` asks borderWidth
+    bw <- fi `fmap` asks (borderWidth . config)
 
     -- XXX horrible
     let sc = fromMaybe (W.current ws) $ find (pointWithin (fi $ wa_x wa) (fi $ wa_y wa) . screenRect . W.screenDetail) $ W.screens ws

@@ -16,7 +16,7 @@
 -----------------------------------------------------------------------------
 
 module XMonad (
-    X, WindowSet, WindowSpace, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), LayoutClass(..), Layout(..),
+    X, WindowSet, WindowSpace, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), XConfig(..), LayoutClass(..), Layout(..),
     Typeable, Message, SomeMessage(..), fromMessage, runLayout, LayoutMessages(..),
     runX, catchX, userCode, io, catchIO, withDisplay, withWindowSet, isRoot, getAtom, spawn, restart, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
@@ -46,14 +46,28 @@ data XState = XState
     , mapped       :: !(S.Set Window)      -- ^ the Set of mapped windows
     , waitingUnmap :: !(M.Map Window Int)  -- ^ the number of expected UnmapEvents
     , dragging     :: !(Maybe (Position -> Position -> X (), X ())) }
+
 data XConf = XConf
     { display       :: Display        -- ^ the X11 display
-    , logHook       :: !(X ())        -- ^ the loghook function
+    , config        :: !XConfig       -- ^ initial user configuration
     , terminal      :: !String        -- ^ the user's preferred terminal
     , theRoot       :: !Window        -- ^ the root window
-    , borderWidth   :: !Dimension     -- ^ the preferred border width
     , normalBorder  :: !Pixel         -- ^ border color of unfocused windows
     , focusedBorder :: !Pixel     }   -- ^ border color of the focused window
+
+-- todo, better name
+data XConfig = forall l. (LayoutClass l Window, Read (l Window)) =>
+                        XConfig { normalBorderColor :: !String
+                                     , focusedBorderColor :: !String
+                                     , defaultTerminal :: !String
+                                     , layoutHook :: !(l Window)
+                                     , workspaces :: ![String]
+                                     , defaultGaps :: ![(Int,Int,Int,Int)]
+                                     , keys :: !(M.Map (ButtonMask,KeySym) (X ()))
+                                     , mouseBindings :: !(M.Map (ButtonMask, Button) (Window -> X ()))
+                                     , borderWidth :: !Dimension
+                                     , logHook :: !(X ())
+                                     }
 
 type WindowSet   = StackSet  WorkspaceId (Layout Window) Window ScreenId ScreenDetail
 type WindowSpace = Workspace WorkspaceId (Layout Window) Window

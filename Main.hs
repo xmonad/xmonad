@@ -20,7 +20,8 @@ module Main where
 -- Useful imports
 --
 import Control.Monad.Reader ( asks )
-import XMonad hiding ( logHook, borderWidth )
+import XMonad hiding (workspaces)
+import qualified XMonad (workspaces)
 import Layouts
 import Operations
 import qualified StackSet as W
@@ -29,8 +30,7 @@ import Data.Bits ((.|.))
 import qualified Data.Map as M
 import System.Exit
 import Graphics.X11.Xlib
-import EventLoop hiding ( workspaces )
-import qualified EventLoop ( workspaces )
+import EventLoop
 
 -- % Extension-provided imports
 
@@ -230,30 +230,30 @@ mouseBindings = M.fromList $
 
 -- % Extension-provided definitions
 
-defaultConfig :: XMonadConfig
-defaultConfig = XMonadConfig { borderWidth = 1 -- Width of the window border in pixels.
-                             , EventLoop.workspaces = workspaces
-                             , defaultGaps = [(0,0,0,0)] -- 15 for default dzen font
-                             -- | The top level layout switcher. Most users will not need to modify this binding.
-                             --
-                             -- By default, we simply switch between the layouts listed in `layouts'
-                             -- above, but you may program your own selection behaviour here. Layout
-                             -- transformers, for example, would be hooked in here.
-                             --
-                             , layoutHook = layout
-                             , defaultTerminal = "xterm" -- The preferred terminal program.
-                             , normalBorderColor = "#dddddd" -- Border color for unfocused windows.
-                             , focusedBorderColor = "#ff0000" -- Border color for focused windows.
-                             , EventLoop.keys = Main.keys
-                             , EventLoop.mouseBindings = Main.mouseBindings
-                             -- | Perform an arbitrary action on each internal state change or X event.
-                             -- Examples include:
-                             --      * do nothing
-                             --      * log the state to stdout
-                             --
-                             -- See the 'DynamicLog' extension for examples.
-                             , logHook = return ()
-                             }
+defaultConfig :: XConfig
+defaultConfig = XConfig { borderWidth = 1 -- Width of the window border in pixels.
+                        , XMonad.workspaces = workspaces
+                        , defaultGaps = [(0,0,0,0)] -- 15 for default dzen font
+                        -- | The top level layout switcher. Most users will not need to modify this binding.
+                        --
+                        -- By default, we simply switch between the layouts listed in `layouts'
+                        -- above, but you may program your own selection behaviour here. Layout
+                        -- transformers, for example, would be hooked in here.
+                        --
+                        , layoutHook = layout
+                        , defaultTerminal = "xterm" -- The preferred terminal program.
+                        , normalBorderColor = "#dddddd" -- Border color for unfocused windows.
+                        , focusedBorderColor = "#ff0000" -- Border color for focused windows.
+                        , XMonad.keys = Main.keys
+                        , XMonad.mouseBindings = Main.mouseBindings
+                        -- | Perform an arbitrary action on each internal state change or X event.
+                        -- Examples include:
+                        --      * do nothing
+                        --      * log the state to stdout
+                        --
+                        -- See the 'DynamicLog' extension for examples.
+                        , logHook = return ()
+                        }
 
 -- % The main function
 
