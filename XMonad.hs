@@ -63,6 +63,7 @@ data XConfig = forall l. (LayoutClass l Window, Read (l Window)) =>
                                      , manageHook :: Window -> String -> String -> String -> X (WindowSet -> WindowSet)
                                      , workspaces :: ![String]
                                      , defaultGaps :: ![(Int,Int,Int,Int)]
+                                     , numlockMask :: KeyMask
                                      , keys :: !(M.Map (ButtonMask,KeySym) (X ()))
                                      , mouseBindings :: !(M.Map (ButtonMask, Button) (Window -> X ()))
                                      , borderWidth :: !Dimension

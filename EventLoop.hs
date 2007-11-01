@@ -124,7 +124,8 @@ makeMain xmc = do
             handle (KeyEvent {ev_event_type = t, ev_state = m, ev_keycode = code})
                 | t == keyPress = withDisplay $ \dpy -> do
                     s  <- io $ keycodeToKeysym dpy code 0
-                    userCode $ whenJust (M.lookup (cleanMask m,s) (keys xmc)) id
+                    mClean <- cleanMask m
+                    userCode $ whenJust (M.lookup (mClean, s) (keys xmc)) id
 
             -- manage a new window
             handle (MapRequestEvent    {ev_window = w}) = withDisplay $ \dpy -> do
@@ -172,7 +173,8 @@ makeMain xmc = do
                 -- If it's the root window, then it's something we
                 -- grabbed in grabButtons. Otherwise, it's click-to-focus.
                 isr <- isRoot w
-                if isr then userCode $ whenJust (M.lookup (cleanMask (ev_state e), b) $ mouseBindings xmc) ($ ev_subwindow e)
+                m <- cleanMask $ ev_state e
+                if isr then userCode $ whenJust (M.lookup (m, b) $ mouseBindings xmc) ($ ev_subwindow e)
                        else focus w
                 sendMessage e -- Always send button events.
 
@@ -252,7 +254,7 @@ grabKeys xmc = do
          kc <- io $ keysymToKeycode dpy sym
          -- "If the specified KeySym is not defined for any KeyCode,
          -- XKeysymToKeycode() returns zero."
-         when (kc /= '\0') $ mapM_ (grab kc . (mask .|.)) extraModifiers
+         when (kc /= '\0') $ mapM_ (grab kc . (mask .|.)) =<< extraModifiers
 
 -- | XXX comment me
 grabButtons :: XConfig -> X ()
@@ -261,4 +263,5 @@ grabButtons xmc = do
     let grab button mask = io $ grabButton dpy button mask rootw False buttonPressMask
                                            grabModeAsync grabModeSync none none
     io $ ungrabButton dpy anyButton anyModifier rootw
-    mapM_ (\(m,b) -> mapM_ (grab b . (m .|.)) extraModifiers) (M.keys $ mouseBindings xmc)
+    ems <- extraModifiers
+    mapM_ (\(m,b) -> mapM_ (grab b . (m .|.)) ems) (M.keys $ mouseBindings xmc)

@@ -20,8 +20,8 @@ module Main where
 -- Useful imports
 --
 import Control.Monad.Reader ( asks )
-import XMonad hiding (workspaces, manageHook)
-import qualified XMonad (workspaces, manageHook)
+import XMonad hiding (workspaces, manageHook, numlockMask)
+import qualified XMonad (workspaces, manageHook, numlockMask)
 import Layouts
 import Operations
 import qualified StackSet as W
@@ -244,6 +244,7 @@ defaultConfig = XConfig { borderWidth = 1 -- Width of the window border in pixel
                         , terminal = "xterm" -- The preferred terminal program.
                         , normalBorderColor = "#dddddd" -- Border color for unfocused windows.
                         , focusedBorderColor = "#ff0000" -- Border color for focused windows.
+                        , XMonad.numlockMask = numlockMask
                         , XMonad.keys = Main.keys
                         , XMonad.mouseBindings = Main.mouseBindings
                         -- | Perform an arbitrary action on each internal state change or X event.

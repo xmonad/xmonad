@@ -37,8 +37,6 @@ import Graphics.X11.Xlib
 import Graphics.X11.Xinerama (getScreenInfo)
 import Graphics.X11.Xlib.Extras
 
-import {-# SOURCE #-} Main (numlockMask)
-
 -- ---------------------------------------------------------------------
 -- |
 -- Window manager operations
@@ -367,12 +365,16 @@ isClient w = withWindowSet $ return . W.member w
 
 -- | Combinations of extra modifier masks we need to grab keys\/buttons for.
 -- (numlock and capslock)
-extraModifiers :: [KeyMask]
-extraModifiers = [0, numlockMask, lockMask, numlockMask .|. lockMask ]
+extraModifiers :: X [KeyMask]
+extraModifiers = do
+    nlm <- asks (numlockMask . config)
+    return [0, nlm, lockMask, nlm .|. lockMask ]
 
 -- | Strip numlock\/capslock from a mask
-cleanMask :: KeyMask -> KeyMask
-cleanMask = (complement (numlockMask .|. lockMask) .&.)
+cleanMask :: KeyMask -> X KeyMask
+cleanMask km = do
+    nlm <- asks (numlockMask . config)
+    return (complement (nlm .|. lockMask) .&. km)
 
 -- | Get the Pixel value for a named color
 initColor :: Display -> String -> IO Pixel
