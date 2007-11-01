@@ -71,6 +71,14 @@ instance (LayoutClass l a, LayoutClass r a) => LayoutClass (Choose l r) a where
         mr <- handleMessage r (SomeMessage FirstLayout)
         return . Just . SRight l $ fromMaybe r mr
 
+    handleMessage lr m | Just ReleaseResources <- fromMessage m =
+        liftM2 ((Just .) . cons)
+                    (fmap (fromMaybe l) $ handleMessage l m)
+                    (fmap (fromMaybe r) $ handleMessage r m)
+     where (cons, l, r) = case lr of
+                            (SLeft  r l) -> (flip SLeft, l, r)
+                            (SRight l r) -> (SRight, l, r)
+
     -- The default cases for left and right:
     handleMessage (SLeft  r l) m = fmap (fmap $ SLeft  r) $ handleMessage l m
     handleMessage (SRight l r) m = fmap (fmap $ SRight l) $ handleMessage r m
