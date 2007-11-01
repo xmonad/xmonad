@@ -68,7 +68,6 @@ makeMain xmc = do
         cf = XConf
             { display       = dpy
             , config        = xmc
-            , terminal      = defaultTerminal xmc
             , theRoot       = rootw
             , normalBorder  = nbc
             , focusedBorder = fbc }

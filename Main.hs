@@ -157,7 +157,7 @@ layout = tiled ||| Mirror tiled ||| Full
 keys :: M.Map (KeyMask, KeySym) (X ())
 keys = M.fromList $
     -- launching and killing programs
-    [ ((modMask .|. shiftMask, xK_Return), asks terminal >>= spawn) -- %! Launch terminal
+    [ ((modMask .|. shiftMask, xK_Return), asks (terminal . config) >>= spawn) -- %! Launch terminal
     , ((modMask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && eval \"exec $exe\"") -- %! Launch dmenu
     , ((modMask .|. shiftMask, xK_p     ), spawn "gmrun") -- %! Launch gmrun
     , ((modMask .|. shiftMask, xK_c     ), kill) -- %! Close the focused window
@@ -241,7 +241,7 @@ defaultConfig = XConfig { borderWidth = 1 -- Width of the window border in pixel
                         -- transformers, for example, would be hooked in here.
                         --
                         , layoutHook = layout
-                        , defaultTerminal = "xterm" -- The preferred terminal program.
+                        , terminal = "xterm" -- The preferred terminal program.
                         , normalBorderColor = "#dddddd" -- Border color for unfocused windows.
                         , focusedBorderColor = "#ff0000" -- Border color for focused windows.
                         , XMonad.keys = Main.keys
