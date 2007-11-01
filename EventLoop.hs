@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
 ----------------------------------------------------------------------------
 -- |
 -- Module      :  Main.hs
@@ -35,22 +36,23 @@ import Operations
 
 import System.IO
 
-data XMonadConfig l = XMonadConfig { normalBorderColor :: !String
-                                   , focusedBorderColor :: !String
-                                   , defaultTerminal :: !String
-                                   , layoutHook :: !(l Window)
-                                   , workspaces :: ![String]
-                                   , defaultGaps :: ![(Int,Int,Int,Int)]
-                                   , keys :: !(M.Map (ButtonMask,KeySym) (X ()))
-                                   , mouseBindings :: !(M.Map (ButtonMask, Button) (Window -> X ()))
-                                   , borderWidth :: !Dimension
-                                   , logHook :: !(X ())
-                                   }
+data XMonadConfig = forall l. (LayoutClass l Window, Read (l Window)) =>
+                        XMonadConfig { normalBorderColor :: !String
+                                     , focusedBorderColor :: !String
+                                     , defaultTerminal :: !String
+                                     , layoutHook :: !(l Window)
+                                     , workspaces :: ![String]
+                                     , defaultGaps :: ![(Int,Int,Int,Int)]
+                                     , keys :: !(M.Map (ButtonMask,KeySym) (X ()))
+                                     , mouseBindings :: !(M.Map (ButtonMask, Button) (Window -> X ()))
+                                     , borderWidth :: !Dimension
+                                     , logHook :: !(X ())
+                                     }
 
 -- |
 -- The main entry point
 --
-makeMain :: LayoutClass l Window => XMonadConfig l -> IO ()
+makeMain :: XMonadConfig -> IO ()
 makeMain xmc = do
     dpy   <- openDisplay ""
     let dflt = defaultScreen dpy
@@ -62,17 +64,18 @@ makeMain xmc = do
     hSetBuffering stdout NoBuffering
     args <- getArgs
 
-    let initialWinset = new (Layout $ layoutHook xmc) (workspaces xmc) $ zipWith SD xinesc gaps
+    let (layout, lreads) = case xmc of XMonadConfig {layoutHook = lh } -> (Layout lh, \s -> [(Layout (x `asTypeOf` lh), s') | (x, s') <- reads s])
+        initialWinset = new layout (workspaces xmc) $ zipWith SD xinesc gaps
 
-        maybeRead s = case reads s of
-                            [(x, "")] -> Just x
-                            _         -> Nothing
+        maybeRead reads' s = case reads' s of
+                                [(x, "")] -> Just x
+                                _         -> Nothing
 
         winset = fromMaybe initialWinset $ do
                     ("--resume" : s : _) <- return args
-                    ws                   <- maybeRead s
-                    return . W.ensureTags (Layout $ layoutHook xmc) (workspaces xmc)
-                           $ W.mapLayout (fromMaybe (Layout $ layoutHook xmc) . maybeRead) ws
+                    ws                   <- maybeRead reads s
+                    return . W.ensureTags layout (workspaces xmc)
+                           $ W.mapLayout (fromMaybe layout . maybeRead lreads) ws
 
         gaps = take (length xinesc) $ defaultGaps xmc ++ repeat (0,0,0,0)
 
@@ -256,7 +259,7 @@ scan dpy rootw = do
                          && (wa_map_state wa == waIsViewable || ic)
 
 -- | Grab the keys back
-grabKeys :: XMonadConfig l -> X ()
+grabKeys :: XMonadConfig -> X ()
 grabKeys xmc = do
     XConf { display = dpy, theRoot = rootw } <- ask
     let grab kc m = io $ grabKey dpy kc m rootw True grabModeAsync grabModeAsync
@@ -268,7 +271,7 @@ grabKeys xmc = do
          when (kc /= '\0') $ mapM_ (grab kc . (mask .|.)) extraModifiers
 
 -- | XXX comment me
-grabButtons :: XMonadConfig l -> X ()
+grabButtons :: XMonadConfig -> X ()
 grabButtons xmc = do
     XConf { display = dpy, theRoot = rootw } <- ask
     let grab button mask = io $ grabButton dpy button mask rootw False buttonPressMask

@@ -4,4 +4,3 @@ import XMonad
 numlockMask :: KeyMask
 workspaces :: [WorkspaceId]
 manageHook :: Window -> String -> String -> String -> X (WindowSet -> WindowSet)
-serialisedLayouts :: [Layout Window]

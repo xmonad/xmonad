@@ -3,7 +3,6 @@ module Properties where
 
 import StackSet hiding (filter)
 import qualified StackSet as S (filter)
-import Operations (tile)
 
 import Debug.Trace
 import Data.Word

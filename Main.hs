@@ -21,6 +21,7 @@ module Main where
 --
 import Control.Monad.Reader ( asks )
 import XMonad hiding ( logHook, borderWidth )
+import Layouts
 import Operations
 import qualified StackSet as W
 import Data.Ratio
@@ -128,14 +129,11 @@ manageHook _ _ _ _ = return id
 -- defaults, as xmonad preserves your old layout settings by default.
 --
 
--- | The list of possible layouts. Add your custom layouts to this list.
-layouts :: [Layout Window]
-layouts = [ Layout tiled
-          , Layout $ Mirror tiled
-          , Layout Full
-          -- Add extra layouts you want to use here:
-          -- % Extension-provided layouts
-          ]
+-- | The available layouts.  Note that each layout is separated by |||, which
+-- denotes layout choice.
+layout = tiled ||| Mirror tiled ||| Full
+     -- Add extra layouts you want to use here:
+     -- % Extension-provided layouts
   where
      -- default tiling algorithm partitions the screen into two panes
      tiled   = Tall nmaster delta ratio
@@ -148,12 +146,6 @@ layouts = [ Layout tiled
 
      -- Percent of screen to increment by when resizing panes
      delta   = 3%100
-
--- | Register with xmonad a list of layouts whose state we can preserve over restarts.
--- There is typically no need to modify this list, the defaults are fine.
---
-serialisedLayouts :: [Layout Window]
-serialisedLayouts = Layout (layoutHook defaultConfig) : layouts
 
 ------------------------------------------------------------------------
 -- Key bindings:
@@ -171,7 +163,7 @@ keys = M.fromList $
     , ((modMask .|. shiftMask, xK_c     ), kill) -- %! Close the focused window
 
     , ((modMask,               xK_space ), sendMessage NextLayout) -- %! Rotate through the available layout algorithms
-    , ((modMask .|. shiftMask, xK_space ), setLayout $ layoutHook defaultConfig) -- %!  Reset the layouts on the current workspace to default
+    , ((modMask .|. shiftMask, xK_space ), setLayout $ Layout layout) -- %!  Reset the layouts on the current workspace to default
 
     , ((modMask,               xK_n     ), refresh) -- %! Resize viewed windows to the correct size
 
@@ -238,7 +230,7 @@ mouseBindings = M.fromList $
 
 -- % Extension-provided definitions
 
-defaultConfig :: XMonadConfig Select
+defaultConfig :: XMonadConfig
 defaultConfig = XMonadConfig { borderWidth = 1 -- Width of the window border in pixels.
                              , EventLoop.workspaces = workspaces
                              , defaultGaps = [(0,0,0,0)] -- 15 for default dzen font
@@ -247,8 +239,8 @@ defaultConfig = XMonadConfig { borderWidth = 1 -- Width of the window border in 
                              -- By default, we simply switch between the layouts listed in `layouts'
                              -- above, but you may program your own selection behaviour here. Layout
                              -- transformers, for example, would be hooked in here.
-                             --       
-                             , layoutHook = Select layouts
+                             --
+                             , layoutHook = layout
                              , defaultTerminal = "xterm" -- The preferred terminal program.
                              , normalBorderColor = "#dddddd" -- Border color for unfocused windows.
                              , focusedBorderColor = "#ff0000" -- Border color for focused windows.

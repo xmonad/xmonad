@@ -19,6 +19,7 @@
 module Operations where
 
 import XMonad
+import Layouts (Full(..))
 import qualified StackSet as W
 
 import Data.Maybe
@@ -37,7 +38,7 @@ import Graphics.X11.Xlib
 import Graphics.X11.Xinerama (getScreenInfo)
 import Graphics.X11.Xlib.Extras
 
-import {-# SOURCE #-} Main (manageHook,numlockMask,serialisedLayouts)
+import {-# SOURCE #-} Main (manageHook,numlockMask)
 
 -- ---------------------------------------------------------------------
 -- |
@@ -110,10 +111,6 @@ kill = withDisplay $ \d -> withFocused $ \w -> do
 
 -- ---------------------------------------------------------------------
 -- Managing windows
-
-data LayoutMessages = Hide | ReleaseResources deriving ( Typeable, Eq )
-
-instance Message LayoutMessages
 
 -- | windows. Modify the current window list with a pure function, and refresh
 windows :: (WindowSet -> WindowSet) -> X ()
@@ -352,159 +349,6 @@ setLayout l = do
     ss@(W.StackSet { W.current = c@(W.Screen { W.workspace = ws })}) <- gets windowset
     handleMessage (W.layout ws) (SomeMessage ReleaseResources)
     windows $ const $ ss {W.current = c { W.workspace = ws { W.layout = Layout l } } }
-
--- | X Events are valid Messages
-instance Message Event
-
-------------------------------------------------------------------------
--- LayoutClass selection manager
-
--- | A layout that allows users to switch between various layout options.
--- This layout accepts three Messages:
---
--- >    NextLayout
--- >    PrevLayout
--- >    JumpToLayout.
---
-data ChangeLayout = NextLayout | PrevLayout | JumpToLayout String
-                 deriving (Eq, Show, Typeable)
-
-instance Message ChangeLayout
-
-instance ReadableLayout Window where
-    readTypes = Layout (Select []) :
-                Layout Full : Layout (Tall 1 0.1 0.5) :
-                Layout (Mirror $ Tall 1 0.1 0.5) :
-                serialisedLayouts
-
-data Select a = Select [Layout a] deriving (Show, Read)
-
-instance ReadableLayout a => LayoutClass Select a where
-    doLayout (Select (l:ls)) r s =
-        second (fmap (Select . (:ls))) `fmap` doLayout l r s
-    doLayout (Select []) r s      =
-        second (const Nothing) `fmap` doLayout Full r s
-
-    -- respond to messages only when there's an actual choice:
-    handleMessage (Select (l:ls@(_:_))) m
-         | Just NextLayout       <- fromMessage m = switchl rls
-         | Just PrevLayout       <- fromMessage m = switchl rls'
-         | Just (JumpToLayout x) <- fromMessage m = switchl (j x)
-         | Just ReleaseResources <- fromMessage m = do -- each branch has a different type
-                 mlls' <- mapM (flip handleMessage m) (l:ls)
-                 let lls' = zipWith fromMaybe (l:ls) mlls'
-                 return (Just (Select lls'))
-
-        where rls []     = []
-              rls (x:xs) = xs ++ [x]
-              rls' = reverse . rls . reverse
-
-              j s zs = case partition ((s ==) . description) zs of (xs,ys) -> xs++ys
-
-              switchl f = do ml' <- handleMessage l (SomeMessage Hide)
-                             return $ Just (Select $ f $ fromMaybe l ml':ls)
-
-    -- otherwise, or if we don't understand the message, pass it along to the real layout:
-    handleMessage (Select (l:ls)) m =
-       fmap (Select . (:ls)) `fmap` handleMessage l m
-
-    -- Unless there is no layout...
-    handleMessage (Select []) _ = return Nothing
-
-    description (Select (x:_)) = description x
-    description _              = "default"
-
---
--- | Builtin layout algorithms:
---
--- > fullscreen mode
--- > tall mode
---
--- The latter algorithms support the following operations:
---
--- >    Shrink
--- >    Expand
---
-data Resize     = Shrink | Expand   deriving Typeable
-
--- | You can also increase the number of clients in the master pane
-data IncMasterN = IncMasterN Int    deriving Typeable
-
-instance Message Resize
-instance Message IncMasterN
-
--- | Simple fullscreen mode, just render all windows fullscreen.
-data Full a = Full deriving (Show, Read)
-
-instance LayoutClass Full a
-
--- | The inbuilt tiling mode of xmonad, and its operations.
-data Tall a = Tall Int Rational Rational deriving (Show, Read)
-
-instance LayoutClass Tall a where
-    pureLayout (Tall nmaster _ frac) r s = zip ws rs
-      where ws = W.integrate s
-            rs = tile frac r nmaster (length ws)
-
-    pureMessage (Tall nmaster delta frac) m = msum [fmap resize (fromMessage m)
-                                                   ,fmap incmastern (fromMessage m)]
-        where resize Shrink = Tall nmaster delta (max 0 $ frac-delta)
-              resize Expand = Tall nmaster delta (min 1 $ frac+delta)
-              incmastern (IncMasterN d) = Tall (max 0 (nmaster+d)) delta frac
-    description _ = "Tall"
-
--- | Mirror a rectangle
-mirrorRect :: Rectangle -> Rectangle
-mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
-
--- | Mirror a layout, compute its 90 degree rotated form.
-data Mirror l a = Mirror (l a) deriving (Show, Read)
-
-instance LayoutClass l a => LayoutClass (Mirror l) a where
-    doLayout (Mirror l) r s = (map (second mirrorRect) *** fmap Mirror)
-                                `fmap` doLayout l (mirrorRect r) s
-    handleMessage (Mirror l) = fmap (fmap Mirror) . handleMessage l
-    description (Mirror l) = "Mirror "++ description l
-
--- | tile.  Compute the positions for windows using the default 2 pane tiling algorithm.
---
--- The screen is divided (currently) into two panes. all clients are
--- then partioned between these two panes. one pane, the `master', by
--- convention has the least number of windows in it (by default, 1).
--- the variable `nmaster' controls how many windows are rendered in the
--- master pane.
---
--- `delta' specifies the ratio of the screen to resize by.
---
--- 'frac' specifies what proportion of the screen to devote to the
--- master area.
---
-tile :: Rational -> Rectangle -> Int -> Int -> [Rectangle]
-tile f r nmaster n = if n <= nmaster || nmaster == 0
-    then splitVertically n r
-    else splitVertically nmaster r1 ++ splitVertically (n-nmaster) r2 -- two columns
-  where (r1,r2) = splitHorizontallyBy f r
-
---
--- Divide the screen vertically into n subrectangles
---
-splitVertically, splitHorizontally :: Int -> Rectangle -> [Rectangle]
-splitVertically n r | n < 2 = [r]
-splitVertically n (Rectangle sx sy sw sh) = Rectangle sx sy sw smallh :
-    splitVertically (n-1) (Rectangle sx (sy+fromIntegral smallh) sw (sh-smallh))
-  where smallh = sh `div` fromIntegral n --hmm, this is a fold or map.
-
-splitHorizontally n = map mirrorRect . splitVertically n . mirrorRect
-
--- Divide the screen into two rectangles, using a rational to specify the ratio
-splitHorizontallyBy, splitVerticallyBy :: RealFrac r => r -> Rectangle -> (Rectangle, Rectangle)
-splitHorizontallyBy f (Rectangle sx sy sw sh) =
-    ( Rectangle sx sy leftw sh
-    , Rectangle (sx + fromIntegral leftw) sy (sw-fromIntegral leftw) sh)
-  where leftw = floor $ fromIntegral sw * f
-
--- | XXX comment me
-splitVerticallyBy f = (mirrorRect *** mirrorRect) . splitHorizontallyBy f . mirrorRect
 
 ------------------------------------------------------------------------
 -- Utilities

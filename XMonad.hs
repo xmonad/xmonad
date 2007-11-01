@@ -16,8 +16,8 @@
 -----------------------------------------------------------------------------
 
 module XMonad (
-    X, WindowSet, WindowSpace, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), LayoutClass(..), Layout(..), ReadableLayout(..),
-    Typeable, Message, SomeMessage(..), fromMessage, runLayout,
+    X, WindowSet, WindowSpace, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), LayoutClass(..), Layout(..),
+    Typeable, Message, SomeMessage(..), fromMessage, runLayout, LayoutMessages(..),
     runX, catchX, userCode, io, catchIO, withDisplay, withWindowSet, isRoot, getAtom, spawn, restart, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
   ) where
@@ -28,14 +28,12 @@ import Prelude hiding ( catch )
 import Control.Exception (catch, throw, Exception(ExitException))
 import Control.Monad.State
 import Control.Monad.Reader
-import Control.Arrow (first)
 import System.IO
 import System.Posix.Process (executeFile, forkProcess, getProcessStatus, createSession)
 import System.Exit
 import System.Environment
 import Graphics.X11.Xlib
--- for Read instance
-import Graphics.X11.Xlib.Extras ()
+import Graphics.X11.Xlib.Extras (Event)
 import Data.Typeable
 
 import qualified Data.Map as M
@@ -49,13 +47,13 @@ data XState = XState
     , waitingUnmap :: !(M.Map Window Int)  -- ^ the number of expected UnmapEvents
     , dragging     :: !(Maybe (Position -> Position -> X (), X ())) }
 data XConf = XConf
-    { display       :: Display      -- ^ the X11 display
-    , logHook       :: !(X ())      -- ^ the loghook function
-    , terminal      :: !String      -- ^ the user's preferred terminal
-    , theRoot       :: !Window      -- ^ the root window
-    , borderWidth   :: !Dimension   -- ^ the preferred border width
-    , normalBorder  :: !Pixel       -- ^ border color of unfocused windows
-    , focusedBorder :: !Pixel     } -- ^ border color of the focused window
+    { display       :: Display        -- ^ the X11 display
+    , logHook       :: !(X ())        -- ^ the loghook function
+    , terminal      :: !String        -- ^ the user's preferred terminal
+    , theRoot       :: !Window        -- ^ the root window
+    , borderWidth   :: !Dimension     -- ^ the preferred border width
+    , normalBorder  :: !Pixel         -- ^ border color of unfocused windows
+    , focusedBorder :: !Pixel     }   -- ^ border color of the focused window
 
 type WindowSet   = StackSet  WorkspaceId (Layout Window) Window ScreenId ScreenDetail
 type WindowSpace = Workspace WorkspaceId (Layout Window) Window
@@ -135,13 +133,8 @@ atom_WM_STATE           = getAtom "WM_STATE"
 -- | LayoutClass handling. See particular instances in Operations.hs
 
 -- | An existential type that can hold any object that is in the LayoutClass.
-data Layout a = forall l. LayoutClass l a => Layout (l a)
+data Layout a = forall l. (LayoutClass l a) => Layout (l a)
 
-
--- | This class defines a set of layout types (held in Layout
---  objects) that are used when trying to read an existentially wrapped Layout.
-class ReadableLayout a where
-    readTypes :: [Layout a]
 
 -- | The different layout modes
 --
@@ -150,7 +143,7 @@ class ReadableLayout a where
 -- by 'doLayout', then it is not shown on screen.  Windows are restacked
 -- according to the order they are returned by 'doLayout'.
 --
-class (Show (layout a), Read (layout a)) => LayoutClass layout a where
+class Show (layout a) => LayoutClass layout a where
 
     -- | Given a Rectangle in which to place the windows, and a Stack of
     -- windows, return a list of windows and their corresponding Rectangles.
@@ -184,22 +177,7 @@ class (Show (layout a), Read (layout a)) => LayoutClass layout a where
     description :: layout a -> String
     description      = show
 
--- Here's the magic for parsing serialised state of existentially
--- wrapped layouts: attempt to parse using the Read instance from each
--- type in our list of types, if any suceed, take the first one.
-instance ReadableLayout a => Read (Layout a) where
-
-    -- We take the first parse only, because multiple matches indicate a bad parse.
-    readsPrec _ s = take 1 $ concatMap readLayout readTypes
-        where
-            readLayout (Layout x) = map (first Layout) $ readAsType x
-
-            -- the type indicates which Read instance to dispatch to.
-            -- That is, read asTypeOf the argument from the readTypes.
-            readAsType :: LayoutClass l a => l a -> [(l a, String)]
-            readAsType _ = reads s
-
-instance ReadableLayout a => LayoutClass Layout a where
+instance LayoutClass Layout Window where
     doLayout (Layout l) r s  = fmap (fmap Layout) `liftM` doLayout l r s
     handleMessage (Layout l) = fmap (fmap Layout) . handleMessage l
     description (Layout l)   = description l
@@ -228,6 +206,17 @@ data SomeMessage = forall a. Message a => SomeMessage a
 --
 fromMessage :: Message m => SomeMessage -> Maybe m
 fromMessage (SomeMessage m) = cast m
+
+-- | X Events are valid Messages
+instance Message Event
+
+-- | LayoutMessages are core messages that all layouts (especially stateful
+-- layouts) should consider handling.
+data LayoutMessages = Hide              -- ^ sent when a layout becomes non-visible
+                    | ReleaseResources  -- ^ sent when xmonad is exiting or restarting
+    deriving (Typeable, Eq)
+
+instance Message LayoutMessages
 
 -- ---------------------------------------------------------------------
 -- | General utilities
