@@ -16,7 +16,7 @@
 -----------------------------------------------------------------------------
 
 module Layouts (ChangeLayout(..), Choose, (|||), Resize(..), IncMasterN(..),
-                Full(..), Tall(..), Mirror(..), splitVertically,
+                Full(..), Tall(..), Mirror(..), mirrorRect, splitVertically,
                 splitHorizontally, splitHorizontallyBy, splitVerticallyBy) where
 
 import XMonad
