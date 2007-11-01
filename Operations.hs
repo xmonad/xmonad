@@ -23,7 +23,7 @@ import Layouts (Full(..))
 import qualified StackSet as W
 
 import Data.Maybe
-import Data.List            (nub, (\\), find, partition)
+import Data.List            (nub, (\\), find)
 import Data.Bits            ((.|.), (.&.), complement)
 import Data.Ratio
 import qualified Data.Map as M
@@ -31,7 +31,6 @@ import qualified Data.Set as S
 
 import Control.Monad.State
 import Control.Monad.Reader
-import Control.Arrow ((***), second)
 
 import System.IO
 import Graphics.X11.Xlib
