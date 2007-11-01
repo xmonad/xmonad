@@ -194,7 +194,7 @@ keys = M.fromList $
 
     -- quit, or restart
     , ((modMask .|. shiftMask, xK_q     ), io (exitWith ExitSuccess)) -- %! Quit xmonad
-    , ((modMask              , xK_q     ), broadcastMessage ReleaseResources >> restart Nothing True) -- %! Restart xmonad
+    , ((modMask              , xK_q     ), broadcastMessage ReleaseResources >> restart (Just "xmonad") True) -- %! Restart xmonad
 
     -- % Extension-provided key bindings
     ]
