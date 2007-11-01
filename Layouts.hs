@@ -59,7 +59,8 @@ instance (LayoutClass l a, LayoutClass r a) => LayoutClass (Choose l r) a where
 
     handleMessage lr m | Just FirstLayout <- fromMessage m = case lr of
         SLeft {}   -> return Nothing
-        SRight l r -> fmap (Just . flip SLeft l . fromMaybe r) $ handleMessage r m
+        SRight l r -> fmap (Just . flip SLeft l . fromMaybe r)
+                        $ handleMessage r (SomeMessage Hide)
 
     handleMessage lr m | Just NextLayout <- fromMessage m = do
         mlr <- handleMessage lr $ SomeMessage NextNoWrap
