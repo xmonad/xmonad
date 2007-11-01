@@ -189,7 +189,8 @@ keys = M.fromList $
     , ((modMask              , xK_period), sendMessage (IncMasterN (-1))) -- %! Deincrement the number of windows in the master area
 
     -- toggle the status bar gap
-    , ((modMask              , xK_b     ), modifyGap (\i n -> let x = (defaultGaps defaultConfig ++ repeat (0,0,0,0)) !! i in if n == x then (0,0,0,0) else x)) -- %! Toggle the status bar gap
+    , ((modMask              , xK_b     ), do gs <- asks (defaultGaps . config)
+                                              modifyGap (\i n -> let x = (gs ++ repeat (0,0,0,0)) !! i in if n == x then (0,0,0,0) else x)) -- %! Toggle the status bar gap
 
     -- quit, or restart
     , ((modMask .|. shiftMask, xK_q     ), io (exitWith ExitSuccess)) -- %! Quit xmonad
