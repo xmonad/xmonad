@@ -51,7 +51,12 @@ data XConf = XConf
     , config        :: !XConfig       -- ^ initial user configuration
     , theRoot       :: !Window        -- ^ the root window
     , normalBorder  :: !Pixel         -- ^ border color of unfocused windows
-    , focusedBorder :: !Pixel     }   -- ^ border color of the focused window
+    , focusedBorder :: !Pixel         -- ^ border color of the focused window
+    , keyActions    :: !(M.Map (KeyMask, KeySym) (X ()))
+                                      -- ^ a mapping of key presses to actions
+    , buttonActions :: !(M.Map (KeyMask, Button) (Window -> X ()))
+                                      -- ^ a mapping of button presses to actions
+    }
 
 -- todo, better name
 data XConfig = XConfig { normalBorderColor :: !String
@@ -61,9 +66,10 @@ data XConfig = XConfig { normalBorderColor :: !String
                        , manageHook :: !(Window -> String -> String -> String -> X (WindowSet -> WindowSet))
                        , workspaces :: ![String]
                        , defaultGaps :: ![(Int,Int,Int,Int)]
-                       , numlockMask :: KeyMask
-                       , keys :: !(M.Map (ButtonMask,KeySym) (X ()))
-                       , mouseBindings :: !(M.Map (ButtonMask, Button) (Window -> X ()))
+                       , numlockMask :: !KeyMask
+                       , modMask :: !KeyMask
+                       , keys :: !(XConfig -> M.Map (ButtonMask,KeySym) (X ()))
+                       , mouseBindings :: !(XConfig -> M.Map (ButtonMask, Button) (Window -> X ()))
                        , borderWidth :: !Dimension
                        , logHook :: !(X ()) }
 

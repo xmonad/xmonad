@@ -50,8 +50,8 @@ workspaces = map show [1 .. 9 :: Int]
 -- ("right alt"), which does not conflict with emacs keybindings. The
 -- "windows key" is usually mod4Mask.
 --
-modMask :: KeyMask
-modMask = mod1Mask
+defaultModMask :: KeyMask
+defaultModMask = mod1Mask
 
 -- | The mask for the numlock key. Numlock status is "masked" from the
 -- current modifier status, so the keybindings will work with numlock on or
@@ -153,10 +153,10 @@ layout = tiled ||| Mirror tiled ||| Full
 --
 -- (The comment formatting character is used when generating the manpage)
 --
-keys :: M.Map (KeyMask, KeySym) (X ())
-keys = M.fromList $
+keys :: XConfig -> M.Map (KeyMask, KeySym) (X ())
+keys conf@(XConfig {modMask = modMask}) = M.fromList $
     -- launching and killing programs
-    [ ((modMask .|. shiftMask, xK_Return), asks (terminal . config) >>= spawn) -- %! Launch terminal
+    [ ((modMask .|. shiftMask, xK_Return), spawn $ terminal conf) -- %! Launch terminal
     , ((modMask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && eval \"exec $exe\"") -- %! Launch dmenu
     , ((modMask .|. shiftMask, xK_p     ), spawn "gmrun") -- %! Launch gmrun
     , ((modMask .|. shiftMask, xK_c     ), kill) -- %! Close the focused window
@@ -189,8 +189,7 @@ keys = M.fromList $
     , ((modMask              , xK_period), sendMessage (IncMasterN (-1))) -- %! Deincrement the number of windows in the master area
 
     -- toggle the status bar gap
-    , ((modMask              , xK_b     ), do gs <- asks (defaultGaps . config)
-                                              modifyGap (\i n -> let x = (gs ++ repeat (0,0,0,0)) !! i in if n == x then (0,0,0,0) else x)) -- %! Toggle the status bar gap
+    , ((modMask              , xK_b     ), modifyGap (\i n -> let x = (defaultGaps conf ++ repeat (0,0,0,0)) !! i in if n == x then (0,0,0,0) else x)) -- %! Toggle the status bar gap
 
     -- quit, or restart
     , ((modMask .|. shiftMask, xK_q     ), io (exitWith ExitSuccess)) -- %! Quit xmonad
@@ -215,8 +214,8 @@ keys = M.fromList $
 
 -- | Mouse bindings: default actions bound to mouse events
 --
-mouseBindings :: M.Map (KeyMask, Button) (Window -> X ())
-mouseBindings = M.fromList $
+mouseBindings :: XConfig -> M.Map (KeyMask, Button) (Window -> X ())
+mouseBindings (XConfig {modMask = modMask}) = M.fromList $
     -- mod-button1 %! Set the window to floating mode and move by dragging
     [ ((modMask, button1), (\w -> focus w >> mouseMoveWindow w))
     -- mod-button2 %! Raise the window to the top of the stack
@@ -245,6 +244,7 @@ defaultConfig = XConfig { borderWidth = 1 -- Width of the window border in pixel
                         , normalBorderColor = "#dddddd" -- Border color for unfocused windows.
                         , focusedBorderColor = "#ff0000" -- Border color for focused windows.
                         , XMonad.numlockMask = numlockMask
+                        , modMask = defaultModMask
                         , XMonad.keys = XMonad.DefaultConfig.keys
                         , XMonad.mouseBindings = XMonad.DefaultConfig.mouseBindings
                         -- | Perform an arbitrary action on each internal state change or X event.
