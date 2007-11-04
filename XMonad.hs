@@ -1,4 +1,7 @@
-{-# LANGUAGE ExistentialQuantification, FlexibleInstances, GeneralizedNewtypeDeriving, MultiParamTypeClasses #-}
+{-# LANGUAGE ExistentialQuantification, FlexibleInstances, GeneralizedNewtypeDeriving,
+             MultiParamTypeClasses, TypeSynonymInstances #-}
+-- required for deriving Typeable
+{-# OPTIONS_GHC -fglasgow-exts #-}
 
 -----------------------------------------------------------------------------
 -- |
