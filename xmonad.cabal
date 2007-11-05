@@ -26,6 +26,8 @@ exposed-modules:    XMonad
                     XMonad.Layouts
                     XMonad.Operations
                     XMonad.StackSet
+ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
+ghc-prof-options:   -prof -auto-all
 
 executable:         xmonad
 main-is:            Main.hs
