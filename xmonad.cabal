@@ -31,7 +31,7 @@ library
                         XMonad.Layouts
                         XMonad.Operations
                         XMonad.StackSet
-    ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
+    ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -Werror -optl-Wl,-s
     ghc-prof-options:   -prof -auto-all
 
     if flag(small_base)
@@ -46,6 +46,6 @@ library
 executable xmonad
     main-is:            Main.hs
     other-modules:      XMonad.Core XMonad.Layouts XMonad.Operations XMonad.StackSet XMonad
-    ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
+    ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -Werror -optl-Wl,-s
     ghc-prof-options:   -prof -auto-all
 -- Also requires deriving Typeable, PatternGuards
