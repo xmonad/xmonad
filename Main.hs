@@ -31,7 +31,7 @@ main :: IO ()
 main = do
     handle (hPrint stderr) buildLaunch
     -- if buildLaunch returns, execute the trusted core
-    makeMain defaultConfig
+    xmonad defaultConfig
 
 -- | Build "~/.xmonad/Main.hs" with ghc, then execute it.  If there are no
 -- errors, this function does not return.  An exception is raised in any of
@@ -51,3 +51,4 @@ buildLaunch = do
     args <- getArgs
     executeFile (dir ++ "/Main") False args Nothing
     return ()
+

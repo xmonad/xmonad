@@ -13,7 +13,7 @@
 --
 -----------------------------------------------------------------------------
 
-module XMonad.Core (makeMain) where
+module XMonad.Core (xmonad) where
 
 import Data.Bits
 import qualified Data.Map as M
@@ -38,8 +38,8 @@ import System.IO
 -- |
 -- The main entry point
 --
-makeMain :: XConfig -> IO ()
-makeMain xmc = do
+xmonad :: XConfig -> IO ()
+xmonad xmc = do
     dpy   <- openDisplay ""
     let dflt = defaultScreen dpy
 
