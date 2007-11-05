@@ -48,5 +48,4 @@ executable xmonad
     other-modules:      XMonad.Core XMonad.Layouts XMonad.Operations XMonad.StackSet XMonad
     ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
     ghc-prof-options:   -prof -auto-all
-    extensions:         GeneralizedNewtypeDeriving
 -- Also requires deriving Typeable, PatternGuards
