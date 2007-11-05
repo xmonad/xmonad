@@ -1,3 +1,4 @@
+{-# OPTIONS -fno-warn-missing-signatures #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  DefaultConfig.hs
@@ -8,9 +9,9 @@
 -- Stability   :  stable
 -- Portability :  portable
 --
--- This module specifies configurable defaults for xmonad. If you change
--- values here, be sure to recompile and restart (mod-q) xmonad,
--- for the changes to take effect.
+-- This module specifies the default configuration values for xmonad.
+-- Users will typically use record syntax to override particular fields
+-- they disagree with, in the defaultConfig structure.
 --
 ------------------------------------------------------------------------
 
@@ -19,9 +20,13 @@ module XMonad.DefaultConfig (defaultConfig) where
 --
 -- Useful imports
 --
-import Control.Monad.Reader ( asks )
-import XMonad hiding (workspaces, manageHook, numlockMask)
-import qualified XMonad (workspaces, manageHook, numlockMask)
+import XMonad hiding
+    (workspaces,manageHook,numlockMask,keys,logHook,borderWidth,mouseBindings
+    ,defaultGaps,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor)
+import qualified XMonad
+    (workspaces,manageHook,numlockMask,keys,logHook,borderWidth,mouseBindings
+    ,defaultGaps,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor)
+
 import XMonad.Layouts
 import XMonad.Operations
 import qualified XMonad.StackSet as W
@@ -69,6 +74,17 @@ defaultModMask = mod1Mask
 numlockMask :: KeyMask
 numlockMask = mod2Mask
 
+-- | Width of the window border in pixels.
+--
+borderWidth :: Dimension
+borderWidth = 1
+
+-- | Border colors for unfocused and focused windows, respectively.
+--
+normalBorderColor, focusedBorderColor :: String
+normalBorderColor  = "#dddddd"
+focusedBorderColor = "#ff0000"
+
 -- | Default offset of drawable screen boundaries from each physical
 -- screen. Anything non-zero here will leave a gap of that many pixels
 -- on the given edge, on the that screen. A useful gap at top of screen
@@ -81,8 +97,8 @@ numlockMask = mod2Mask
 --
 -- Fields are: top, bottom, left, right.
 --
---defaultGaps :: [(Int,Int,Int,Int)]
-
+defaultGaps :: [(Int,Int,Int,Int)]
+defaultGaps = [(0,0,0,0)] -- 15 for default dzen font
 
 ------------------------------------------------------------------------
 -- Window rules
@@ -120,6 +136,19 @@ manageHook _ _ "Gecko" _ = return $ W.shift "web"
 manageHook _ _ _ _ = return id
 
 ------------------------------------------------------------------------
+-- Logging
+
+-- | Perform an arbitrary action on each internal state change or X event.
+-- Examples include:
+--      * do nothing
+--      * log the state to stdout
+--
+-- See the 'DynamicLog' extension for examples.
+--
+logHook :: X ()
+logHook = return ()
+
+------------------------------------------------------------------------
 -- Extensible layouts
 --
 -- You can specify and transform your layouts by modifying these values.
@@ -149,20 +178,25 @@ layout = tiled ||| Mirror tiled ||| Full
 ------------------------------------------------------------------------
 -- Key bindings:
 
+-- | The preferred terminal program, which is used in a binding below and by
+-- certain contrib modules.
+terminal :: String
+terminal = "xterm"
+
 -- | The xmonad key bindings. Add, modify or remove key bindings here.
 --
 -- (The comment formatting character is used when generating the manpage)
 --
 keys :: XConfig -> M.Map (KeyMask, KeySym) (X ())
-keys conf@(XConfig {modMask = modMask}) = M.fromList $
+keys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     -- launching and killing programs
-    [ ((modMask .|. shiftMask, xK_Return), spawn $ terminal conf) -- %! Launch terminal
+    [ ((modMask .|. shiftMask, xK_Return), spawn $ XMonad.terminal conf) -- %! Launch terminal
     , ((modMask,               xK_p     ), spawn "exe=`dmenu_path | dmenu` && eval \"exec $exe\"") -- %! Launch dmenu
     , ((modMask .|. shiftMask, xK_p     ), spawn "gmrun") -- %! Launch gmrun
     , ((modMask .|. shiftMask, xK_c     ), kill) -- %! Close the focused window
 
     , ((modMask,               xK_space ), sendMessage NextLayout) -- %! Rotate through the available layout algorithms
-    , ((modMask .|. shiftMask, xK_space ), setLayout $ layoutHook conf) -- %!  Reset the layouts on the current workspace to default
+    , ((modMask .|. shiftMask, xK_space ), setLayout $ XMonad.layoutHook conf) -- %!  Reset the layouts on the current workspace to default
 
     , ((modMask,               xK_n     ), refresh) -- %! Resize viewed windows to the correct size
 
@@ -189,7 +223,7 @@ keys conf@(XConfig {modMask = modMask}) = M.fromList $
     , ((modMask              , xK_period), sendMessage (IncMasterN (-1))) -- %! Deincrement the number of windows in the master area
 
     -- toggle the status bar gap
-    , ((modMask              , xK_b     ), modifyGap (\i n -> let x = (defaultGaps conf ++ repeat (0,0,0,0)) !! i in if n == x then (0,0,0,0) else x)) -- %! Toggle the status bar gap
+    , ((modMask              , xK_b     ), modifyGap (\i n -> let x = (XMonad.defaultGaps conf ++ repeat (0,0,0,0)) !! i in if n == x then (0,0,0,0) else x)) -- %! Toggle the status bar gap
 
     -- quit, or restart
     , ((modMask .|. shiftMask, xK_q     ), io (exitWith ExitSuccess)) -- %! Quit xmonad
@@ -215,7 +249,7 @@ keys conf@(XConfig {modMask = modMask}) = M.fromList $
 -- | Mouse bindings: default actions bound to mouse events
 --
 mouseBindings :: XConfig -> M.Map (KeyMask, Button) (Window -> X ())
-mouseBindings (XConfig {modMask = modMask}) = M.fromList $
+mouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
     -- mod-button1 %! Set the window to floating mode and move by dragging
     [ ((modMask, button1), (\w -> focus w >> mouseMoveWindow w))
     -- mod-button2 %! Raise the window to the top of the stack
@@ -229,30 +263,19 @@ mouseBindings (XConfig {modMask = modMask}) = M.fromList $
 
 -- % Extension-provided definitions
 
+-- | And, finally, the default set of configuration values itself
 defaultConfig :: XConfig
-defaultConfig = XConfig { borderWidth = 1 -- Width of the window border in pixels.
-                        , XMonad.workspaces = workspaces
-                        , defaultGaps = [(0,0,0,0)] -- 15 for default dzen font
-                        -- | The top level layout switcher. Most users will not need to modify this binding.
-                        --
-                        -- By default, we simply switch between the layouts listed in `layouts'
-                        -- above, but you may program your own selection behaviour here. Layout
-                        -- transformers, for example, would be hooked in here.
-                        --
-                        , layoutHook = Layout layout
-                        , terminal = "xterm" -- The preferred terminal program.
-                        , normalBorderColor = "#dddddd" -- Border color for unfocused windows.
-                        , focusedBorderColor = "#ff0000" -- Border color for focused windows.
-                        , XMonad.numlockMask = numlockMask
-                        , modMask = defaultModMask
-                        , XMonad.keys = XMonad.DefaultConfig.keys
-                        , XMonad.mouseBindings = XMonad.DefaultConfig.mouseBindings
-                        -- | Perform an arbitrary action on each internal state change or X event.
-                        -- Examples include:
-                        --      * do nothing
-                        --      * log the state to stdout
-                        --
-                        -- See the 'DynamicLog' extension for examples.
-                        , logHook = return ()
-                        , XMonad.manageHook = manageHook
-                        }
+defaultConfig = XConfig
+    { XMonad.borderWidth        = borderWidth
+    , XMonad.workspaces         = workspaces
+    , XMonad.defaultGaps        = defaultGaps
+    , XMonad.layoutHook         = Layout layout
+    , XMonad.terminal           = terminal
+    , XMonad.normalBorderColor  = normalBorderColor
+    , XMonad.focusedBorderColor = focusedBorderColor
+    , XMonad.numlockMask        = numlockMask
+    , XMonad.modMask            = defaultModMask
+    , XMonad.keys               = keys
+    , XMonad.logHook            = logHook
+    , XMonad.mouseBindings      = mouseBindings
+    , XMonad.manageHook         = manageHook }
