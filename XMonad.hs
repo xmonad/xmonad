@@ -62,19 +62,21 @@ data XConf = XConf
     }
 
 -- todo, better name
-data XConfig = XConfig { normalBorderColor :: !String
-                       , focusedBorderColor :: !String
-                       , terminal :: !String
-                       , layoutHook :: !(Layout Window)
-                       , manageHook :: !(Window -> String -> String -> String -> X (WindowSet -> WindowSet))
-                       , workspaces :: ![String]
-                       , defaultGaps :: ![(Int,Int,Int,Int)]
-                       , numlockMask :: !KeyMask
-                       , modMask :: !KeyMask
-                       , keys :: !(XConfig -> M.Map (ButtonMask,KeySym) (X ()))
-                       , mouseBindings :: !(XConfig -> M.Map (ButtonMask, Button) (Window -> X ()))
-                       , borderWidth :: !Dimension
-                       , logHook :: !(X ()) }
+data XConfig = XConfig
+    { normalBorderColor  :: !String
+    , focusedBorderColor :: !String
+    , terminal           :: !String
+    , layoutHook         :: !(Layout Window)
+    , manageHook         :: Window -> String -> String -> String -> X (WindowSet -> WindowSet)
+    , workspaces         :: [String]
+    , defaultGaps        :: [(Int,Int,Int,Int)]
+    , numlockMask        :: !KeyMask
+    , modMask            :: !KeyMask
+    , keys               :: XConfig -> M.Map (ButtonMask,KeySym) (X ())
+    , mouseBindings      :: XConfig -> M.Map (ButtonMask, Button) (Window -> X ())
+    , borderWidth        :: !Dimension
+    , logHook            :: X ()
+    }
 
 type WindowSet   = StackSet  WorkspaceId (Layout Window) Window ScreenId ScreenDetail
 type WindowSpace = Workspace WorkspaceId (Layout Window) Window
@@ -113,8 +115,7 @@ catchX :: X a -> X a -> X a
 catchX job errcase = do
     st <- get
     c <- ask
-    (a, s') <- io $ runX c st job `catch`
-                    \e -> case e of
+    (a, s') <- io $ runX c st job `catch` \e -> case e of
                             ExitException {} -> throw e
                             _ -> do hPrint stderr e; runX c st errcase
     put s'
