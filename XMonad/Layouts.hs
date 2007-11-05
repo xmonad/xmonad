@@ -76,8 +76,8 @@ instance (LayoutClass l a, LayoutClass r a) => LayoutClass (Choose l r) a where
                     (fmap (fromMaybe l) $ handleMessage l m)
                     (fmap (fromMaybe r) $ handleMessage r m)
      where (cons, l, r) = case lr of
-                            (SLeft  r l) -> (flip SLeft, l, r)
-                            (SRight l r) -> (SRight, l, r)
+                            (SLeft  r' l') -> (flip SLeft, l', r')
+                            (SRight l' r') -> (SRight, l', r')
 
     -- The default cases for left and right:
     handleMessage (SLeft  r l) m = fmap (fmap $ SLeft  r) $ handleMessage l m
