@@ -17,22 +17,36 @@ license:            BSD3
 license-file:       LICENSE
 author:             Spencer Janssen
 maintainer:         sjanssen@cse.unl.edu
-build-depends:      base>=2.0, mtl, unix, X11==1.3.0
 extra-source-files: README TODO tests/loc.hs tests/Properties.hs man/xmonad.1.in
                     util/GenerateManpage.hs man/xmonad.1 man/xmonad.html
-exposed-modules:    XMonad
-                    XMonad.Config
-                    XMonad.Core
-                    XMonad.Layouts
-                    XMonad.Operations
-                    XMonad.StackSet
-ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
-ghc-prof-options:   -prof -auto-all
+cabal-version:      >= 1.2
 
-executable:         xmonad
-main-is:            Main.hs
-other-modules:      XMonad.Core XMonad.Layouts XMonad.Operations XMonad.StackSet XMonad
-ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
-ghc-prof-options:   -prof -auto-all
-extensions:         GeneralizedNewtypeDeriving
+flag small_base
+  description: Choose the new smaller, split-up base package.
+
+library
+    exposed-modules:    XMonad
+                        XMonad.Config
+                        XMonad.Core
+                        XMonad.Layouts
+                        XMonad.Operations
+                        XMonad.StackSet
+    ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
+    ghc-prof-options:   -prof -auto-all
+
+    if flag(small_base)
+        build-depends: base >= 3, containers, directory, process
+    else
+        build-depends: base < 3
+
+    build-depends: X11==1.3.0, mtl, unix
+
+
+
+executable xmonad
+    main-is:            Main.hs
+    other-modules:      XMonad.Core XMonad.Layouts XMonad.Operations XMonad.StackSet XMonad
+    ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
+    ghc-prof-options:   -prof -auto-all
+    extensions:         GeneralizedNewtypeDeriving
 -- Also requires deriving Typeable, PatternGuards
