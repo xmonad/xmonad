@@ -30,25 +30,24 @@ import System.Posix.Process (executeFile)
 main :: IO ()
 main = do
     handle (hPrint stderr) buildLaunch
-    -- if buildLaunch returns, execute the trusted core
-    xmonad defaultConfig
+    xmonad defaultConfig -- if buildLaunch returns, execute the trusted core
 
--- | Build "~/.xmonad/Main.hs" with ghc, then execute it.  If there are no
+-- | Build "~/.xmonad/xmonad.hs" with ghc, then execute it.  If there are no
 -- errors, this function does not return.  An exception is raised in any of
 -- these cases:
---            * ghc missing
---            * ~/.xmonad/Main.hs missing
---            * Main.hs fails to compile
---            * Missing xmonad/XMonadContrib modules due to ghc upgrade
+--   * ghc missing
+--   * ~/.xmonad/xmonad.hs missing
+--   * xmonad.hs fails to compile
+--      ** wrong ghc in path (fails to compile)
+--      ** type error, syntax error, ..
+--   * Missing xmonad/XMonadContrib modules due to ghc upgrade
 --
 buildLaunch ::  IO ()
 buildLaunch = do
     dir <- fmap (++ "/.xmonad") getHomeDirectory
-    pid <- runProcess "ghc" ["--make", "Main.hs"] (Just dir)
+    pid <- runProcess "ghc" ["--make", "xmonad.hs"] (Just dir)
         Nothing Nothing Nothing Nothing
     ExitSuccess <- waitForProcess pid
-
     args <- getArgs
-    executeFile (dir ++ "/Main") False args Nothing
+    executeFile (dir ++ "/xmonad") False args Nothing
     return ()
-
