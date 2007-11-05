@@ -1,7 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 ----------------------------------------------------------------------------
 -- |
--- Module      :  EventLoop.hs
+-- Module      :  Core.hs
 -- Copyright   :  (c) Spencer Janssen 2007
 -- License     :  BSD3-style (see LICENSE)
 --
@@ -13,7 +13,7 @@
 --
 -----------------------------------------------------------------------------
 
-module XMonad.EventLoop (makeMain) where
+module XMonad.Core (makeMain) where
 
 import Data.Bits
 import qualified Data.Map as M

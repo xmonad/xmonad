@@ -14,8 +14,8 @@
 
 module Main (main) where
 
-import XMonad.EventLoop (makeMain)
-import XMonad.DefaultConfig (defaultConfig)
+import XMonad.Core
+import XMonad.Config
 
 import Control.Exception (handle)
 import System.IO
@@ -24,6 +24,14 @@ import System.Directory
 import System.Environment
 import System.Exit
 import System.Posix.Process (executeFile)
+
+-- | The entry point into xmonad. Attempts to compile any custom main
+-- for xmonad, and if it doesn't find one, just launches the default.
+main :: IO ()
+main = do
+    handle (hPrint stderr) buildLaunch
+    -- if buildLaunch returns, execute the trusted core
+    makeMain defaultConfig
 
 -- | Build "~/.xmonad/Main.hs" with ghc, then execute it.  If there are no
 -- errors, this function does not return.  An exception is raised in any of
@@ -43,9 +51,3 @@ buildLaunch = do
     args <- getArgs
     executeFile (dir ++ "/Main") False args Nothing
     return ()
-
-main :: IO ()
-main = do
-    handle (hPrint stderr) buildLaunch
-    -- if buildLaunch returns, execute the trusted core
-    makeMain defaultConfig

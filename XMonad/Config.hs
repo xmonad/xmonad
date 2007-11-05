@@ -1,7 +1,7 @@
 {-# OPTIONS -fno-warn-missing-signatures #-}
 -----------------------------------------------------------------------------
 -- |
--- Module      :  DefaultConfig.hs
+-- Module      :  XMonad.Config
 -- Copyright   :  (c) Spencer Janssen 2007
 -- License     :  BSD3-style (see LICENSE)
 --
@@ -15,7 +15,7 @@
 --
 ------------------------------------------------------------------------
 
-module XMonad.DefaultConfig (defaultConfig) where
+module XMonad.Config (defaultConfig) where
 
 --
 -- Useful imports
