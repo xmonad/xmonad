@@ -1,0 +1,27 @@
+xmonad is configure by creating and editing the file:
+
+    ~/.xmonad/xmonad.hs
+
+which is a Haskell source file. Here is an example,
+
+    --
+    -- An example, simple ~/.xmonad/xmonad.hs file.
+    -- It overrides a few basic settings, reusing all the other defaults,
+    -- and also uses the DynamicLog extension.
+    -- 
+
+    import XMonad
+    import XMonad.Core
+    import XMonad.Config
+
+    main = xmonad $ defaultConfig
+        { borderWidth        = 2
+        , normalBorderColor  = "#cccccc"
+        , focusedBorderColor = "#cd8b00" }
+
+
+You may typecheck this file, or develop it in ghci, as you see fit.
+
+To have xmonad pick up your defaults, try mod-q. xmonad will attempt to
+compile this file, and run it. If it is unable to, the defaults are
+used.
