@@ -25,3 +25,11 @@ You may typecheck this file, or develop it in ghci, as you see fit.
 To have xmonad pick up your defaults, try mod-q. xmonad will attempt to
 compile this file, and run it. If it is unable to, the defaults are
 used.
+
+The default configuration values are defined in the source file:
+
+   XMonad/Config.hs 
+
+the XConfig data structure itself is defined in:
+
+    XMonad.hs
