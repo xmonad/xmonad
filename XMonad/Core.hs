@@ -281,7 +281,7 @@ restart mprog resume = do
  where showWs = show . mapLayout show
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
-whenJust :: Maybe a -> (a -> X ()) -> X ()
+whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
 whenJust mg f = maybe (return ()) f mg
 
 -- | Conditionally run an action, using a X event to decide
