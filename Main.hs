@@ -22,7 +22,6 @@ import System.IO
 import System.Process
 import System.Directory
 import System.Environment
-import System.Exit
 import System.Posix.Process (executeFile)
 
 -- | The entry point into xmonad. Attempts to compile any custom main
@@ -47,7 +46,7 @@ buildLaunch = do
     dir <- fmap (++ "/.xmonad") getHomeDirectory
     pid <- runProcess "ghc" ["--make", "xmonad.hs"] (Just dir)
         Nothing Nothing Nothing Nothing
-    ExitSuccess <- waitForProcess pid
+    waitForProcess pid
     args <- getArgs
     executeFile (dir ++ "/xmonad") False args Nothing
     return ()
