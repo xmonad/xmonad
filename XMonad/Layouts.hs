@@ -19,7 +19,7 @@ module XMonad.Layouts (ChangeLayout(..), Choose, (|||), Resize(..), IncMasterN(.
                 Full(..), Tall(..), Mirror(..), mirrorRect, splitVertically,
                 splitHorizontally, splitHorizontallyBy, splitVerticallyBy) where
 
-import XMonad
+import XMonad.Core
 
 import Graphics.X11 (Rectangle(..))
 import qualified XMonad.StackSet as W

@@ -26,8 +26,9 @@ flag small_base
 
 library
     exposed-modules:    XMonad
-                        XMonad.Config
+                        XMonad.Main
                         XMonad.Core
+                        XMonad.Config
                         XMonad.Layouts
                         XMonad.Operations
                         XMonad.StackSet
@@ -45,6 +46,6 @@ library
 
 executable xmonad
     main-is:            Main.hs
-    other-modules:      XMonad.Core XMonad.Layouts XMonad.Operations XMonad.StackSet XMonad
+    other-modules:      XMonad.Core XMonad.Main XMonad.Layouts XMonad.Operations XMonad.StackSet XMonad
     ghc-options:        -funbox-strict-fields -Wall -Werror -optl-Wl,-s
     ghc-prof-options:   -prof -auto-all

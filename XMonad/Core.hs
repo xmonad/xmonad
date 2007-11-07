@@ -1,277 +1,294 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
-----------------------------------------------------------------------------
+{-# LANGUAGE ExistentialQuantification, FlexibleInstances, GeneralizedNewtypeDeriving,
+             MultiParamTypeClasses, TypeSynonymInstances #-}
+-- required for deriving Typeable
+{-# OPTIONS_GHC -fglasgow-exts #-}
+
+-----------------------------------------------------------------------------
 -- |
--- Module      :  Core.hs
+-- Module      :  XMonad/Core.hs
 -- Copyright   :  (c) Spencer Janssen 2007
 -- License     :  BSD3-style (see LICENSE)
 --
 -- Maintainer  :  sjanssen@cse.unl.edu
 -- Stability   :  unstable
--- Portability :  not portable, uses mtl, X11, posix
+-- Portability :  not portable, uses cunning newtype deriving
 --
--- xmonad, a minimalist, tiling window manager for X11
+-- The X monad, a state monad transformer over IO, for the window
+-- manager state, and support routines.
 --
 -----------------------------------------------------------------------------
 
-module XMonad.Core (xmonad) where
+module XMonad.Core (
+    X, WindowSet, WindowSpace, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), XConfig(..), LayoutClass(..), Layout(..), readsLayout, Typeable, Message, SomeMessage(..), fromMessage, runLayout, LayoutMessages(..),
+    runX, catchX, userCode, io, catchIO, withDisplay, withWindowSet, isRoot, getAtom, spawn, restart, trace, whenJust, whenX,
+    atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
+  ) where
 
-import Data.Bits
+import XMonad.StackSet
+
+import Prelude hiding ( catch )
+import Control.Exception (catch, throw, Exception(ExitException))
+import Control.Monad.State
+import Control.Monad.Reader
+import System.IO
+import System.Posix.Process (executeFile, forkProcess, getProcessStatus, createSession)
+import System.Exit
+import System.Environment
+import Graphics.X11.Xlib
+import Graphics.X11.Xlib.Extras (Event)
+import Data.Typeable
+
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Control.Monad.Reader
-import Control.Monad.State
-import Data.Maybe (fromMaybe)
 
-import System.Environment (getArgs)
+-- | XState, the window manager state.
+-- Just the display, width, height and a window list
+data XState = XState
+    { windowset    :: !WindowSet           -- ^ workspace list
+    , mapped       :: !(S.Set Window)      -- ^ the Set of mapped windows
+    , waitingUnmap :: !(M.Map Window Int)  -- ^ the number of expected UnmapEvents
+    , dragging     :: !(Maybe (Position -> Position -> X (), X ())) }
 
-import Graphics.X11.Xlib hiding (refreshKeyboardMapping)
-import Graphics.X11.Xlib.Extras
-import Graphics.X11.Xinerama    (getScreenInfo)
+data XConf = XConf
+    { display       :: Display        -- ^ the X11 display
+    , config        :: !XConfig       -- ^ initial user configuration
+    , theRoot       :: !Window        -- ^ the root window
+    , normalBorder  :: !Pixel         -- ^ border color of unfocused windows
+    , focusedBorder :: !Pixel         -- ^ border color of the focused window
+    , keyActions    :: !(M.Map (KeyMask, KeySym) (X ()))
+                                      -- ^ a mapping of key presses to actions
+    , buttonActions :: !(M.Map (KeyMask, Button) (Window -> X ()))
+                                      -- ^ a mapping of button presses to actions
+    }
 
-import XMonad
-import XMonad.StackSet (new, floating, member)
-import qualified XMonad.StackSet as W
-import XMonad.Operations
+-- todo, better name
+data XConfig = XConfig
+    { normalBorderColor  :: !String
+    , focusedBorderColor :: !String
+    , terminal           :: !String
+    , layoutHook         :: !(Layout Window)
+    , manageHook         :: Window -> String -> String -> String -> X (WindowSet -> WindowSet)
+    , workspaces         :: [String]
+    , defaultGaps        :: [(Int,Int,Int,Int)]
+    , numlockMask        :: !KeyMask
+    , modMask            :: !KeyMask
+    , keys               :: XConfig -> M.Map (ButtonMask,KeySym) (X ())
+    , mouseBindings      :: XConfig -> M.Map (ButtonMask, Button) (Window -> X ())
+    , borderWidth        :: !Dimension
+    , logHook            :: X ()
+    }
 
-import System.IO
+type WindowSet   = StackSet  WorkspaceId (Layout Window) Window ScreenId ScreenDetail
+type WindowSpace = Workspace WorkspaceId (Layout Window) Window
+
+-- | Virtual workspace indicies
+type WorkspaceId = String
+
+-- | Physical screen indicies
+newtype ScreenId    = S Int deriving (Eq,Ord,Show,Read,Enum,Num,Integral,Real)
+
+-- | TODO Comment me
+data ScreenDetail   = SD { screenRect :: !Rectangle
+                         , statusGap  :: !(Int,Int,Int,Int) -- ^ width of status bar on the screen
+                         } deriving (Eq,Show, Read)
+
+------------------------------------------------------------------------
+
+-- | The X monad, a StateT transformer over IO encapsulating the window
+-- manager state
+--
+-- Dynamic components may be retrieved with 'get', static components
+-- with 'ask'. With newtype deriving we get readers and state monads
+-- instantiated on XConf and XState automatically.
+--
+newtype X a = X (ReaderT XConf (StateT XState IO) a)
+    deriving (Functor, Monad, MonadIO, MonadState XState, MonadReader XConf)
+
+-- | Run the X monad, given a chunk of X monad code, and an initial state
+-- Return the result, and final state
+runX :: XConf -> XState -> X a -> IO (a, XState)
+runX c st (X a) = runStateT (runReaderT a c) st
+
+-- | Run in the X monad, and in case of exception, and catch it and log it
+-- to stderr, and run the error case.
+catchX :: X a -> X a -> X a
+catchX job errcase = do
+    st <- get
+    c <- ask
+    (a, s') <- io $ runX c st job `catch` \e -> case e of
+                            ExitException {} -> throw e
+                            _ -> do hPrint stderr e; runX c st errcase
+    put s'
+    return a
+
+-- | Execute the argument, catching all exceptions.  Either this function or
+-- catchX should be used at all callsites of user customized code.
+userCode :: X () -> X ()
+userCode a = catchX (a >> return ()) (return ())
+
+-- ---------------------------------------------------------------------
+-- Convenient wrappers to state
+
+-- | Run a monad action with the current display settings
+withDisplay :: (Display -> X a) -> X a
+withDisplay   f = asks display >>= f
+
+-- | Run a monadic action with the current stack set
+withWindowSet :: (WindowSet -> X a) -> X a
+withWindowSet f = gets windowset >>= f
+
+-- | True if the given window is the root window
+isRoot :: Window -> X Bool
+isRoot w = liftM (w==) (asks theRoot)
+
+-- | Wrapper for the common case of atom internment
+getAtom :: String -> X Atom
+getAtom str = withDisplay $ \dpy -> io $ internAtom dpy str False
+
+-- | Common non-predefined atoms
+atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, atom_WM_STATE :: X Atom
+atom_WM_PROTOCOLS       = getAtom "WM_PROTOCOLS"
+atom_WM_DELETE_WINDOW   = getAtom "WM_DELETE_WINDOW"
+atom_WM_STATE           = getAtom "WM_STATE"
+
+------------------------------------------------------------------------
+-- | LayoutClass handling. See particular instances in Operations.hs
+
+-- | An existential type that can hold any object that is in Read and LayoutClass.
+data Layout a = forall l. (LayoutClass l a, Read (l a)) => Layout (l a)
+
+-- | Using the 'Layout' as a witness, parse existentially wrapped windows
+-- from a 'String'
+readsLayout :: Layout a -> String -> [(Layout a, String)]
+readsLayout (Layout l) s = [(Layout (asTypeOf x l), rs) | (x, rs) <- reads s]
+
+-- | The different layout modes
+--
+-- 'doLayout': given a Rectangle and a Stack, layout the stack elements
+-- inside the given Rectangle.  If an element is not given a Rectangle
+-- by 'doLayout', then it is not shown on screen.  Windows are restacked
+-- according to the order they are returned by 'doLayout'.
+--
+class Show (layout a) => LayoutClass layout a where
+
+    -- | Given a Rectangle in which to place the windows, and a Stack of
+    -- windows, return a list of windows and their corresponding Rectangles.
+    -- The order of windows in this list should be the desired stacking order.
+    -- Also return a modified layout, if this layout needs to be modified
+    -- (e.g. if we keep track of the windows we have displayed).
+    doLayout    :: layout a -> Rectangle -> Stack a -> X ([(a, Rectangle)], Maybe (layout a))
+    doLayout l r s   = return (pureLayout l r s, Nothing)
+
+    -- | This is a pure version of doLayout, for cases where we don't need
+    -- access to the X monad to determine how to layou out the windows, and
+    -- we don't need to modify our layout itself.
+    pureLayout  :: layout a -> Rectangle -> Stack a -> [(a, Rectangle)]
+    pureLayout _ r s = [(focus s, r)]
+
+    -- | 'handleMessage' performs message handling for that layout.  If
+    -- 'handleMessage' returns Nothing, then the layout did not respond to
+    -- that message and the screen is not refreshed.  Otherwise, 'handleMessage'
+    -- returns an updated 'LayoutClass' and the screen is refreshed.
+    --
+    handleMessage :: layout a -> SomeMessage -> X (Maybe (layout a))
+    handleMessage l  = return . pureMessage l
+
+    -- | Respond to a message by (possibly) changing our layout, but taking
+    -- no other action.  If the layout changes, the screen will be refreshed.
+    pureMessage :: layout a -> SomeMessage -> Maybe (layout a)
+    pureMessage _ _  = Nothing
+
+    -- | This should be a human-readable string that is used when selecting
+    -- layouts by name.
+    description :: layout a -> String
+    description      = show
+
+instance LayoutClass Layout Window where
+    doLayout (Layout l) r s  = fmap (fmap Layout) `liftM` doLayout l r s
+    handleMessage (Layout l) = fmap (fmap Layout) . handleMessage l
+    description (Layout l)   = description l
+
+instance Show (Layout a) where show (Layout l) = show l
+
+-- | This calls doLayout if there are any windows to be laid out.
+runLayout :: LayoutClass l a => l a -> Rectangle -> Maybe (Stack a) -> X ([(a, Rectangle)], Maybe (l a))
+runLayout l r = maybe (return ([], Nothing)) (doLayout l r)
+
+-- | Based on ideas in /An Extensible Dynamically-Typed Hierarchy of Exceptions/,
+-- Simon Marlow, 2006. Use extensible messages to the handleMessage handler.
+--
+-- User-extensible messages must be a member of this class.
+--
+class Typeable a => Message a
 
 -- |
--- The main entry point
+-- A wrapped value of some type in the Message class.
 --
-xmonad :: XConfig -> IO ()
-xmonad xmc = do
-    dpy   <- openDisplay ""
-    let dflt = defaultScreen dpy
+data SomeMessage = forall a. Message a => SomeMessage a
 
-    rootw  <- rootWindow dpy dflt
-    xinesc <- getScreenInfo dpy
-    nbc    <- initColor dpy $ normalBorderColor xmc
-    fbc    <- initColor dpy $ focusedBorderColor xmc
-    hSetBuffering stdout NoBuffering
-    args <- getArgs
+-- |
+-- And now, unwrap a given, unknown Message type, performing a (dynamic)
+-- type check on the result.
+--
+fromMessage :: Message m => SomeMessage -> Maybe m
+fromMessage (SomeMessage m) = cast m
 
-    let layout = layoutHook xmc
-        lreads = readsLayout layout
-        initialWinset = new layout (workspaces xmc) $ zipWith SD xinesc gaps
+-- | X Events are valid Messages
+instance Message Event
 
-        maybeRead reads' s = case reads' s of
-                                [(x, "")] -> Just x
-                                _         -> Nothing
+-- | LayoutMessages are core messages that all layouts (especially stateful
+-- layouts) should consider handling.
+data LayoutMessages = Hide              -- ^ sent when a layout becomes non-visible
+                    | ReleaseResources  -- ^ sent when xmonad is exiting or restarting
+    deriving (Typeable, Eq)
 
-        winset = fromMaybe initialWinset $ do
-                    ("--resume" : s : _) <- return args
-                    ws                   <- maybeRead reads s
-                    return . W.ensureTags layout (workspaces xmc)
-                           $ W.mapLayout (fromMaybe layout . maybeRead lreads) ws
+instance Message LayoutMessages
 
-        gaps = take (length xinesc) $ defaultGaps xmc ++ repeat (0,0,0,0)
+-- ---------------------------------------------------------------------
+-- | General utilities
+--
+-- Lift an IO action into the X monad
+io :: IO a -> X a
+io = liftIO
 
-        cf = XConf
-            { display       = dpy
-            , config        = xmc
-            , theRoot       = rootw
-            , normalBorder  = nbc
-            , focusedBorder = fbc
-            , keyActions    = keys xmc xmc
-            , buttonActions = mouseBindings xmc xmc }
-        st = XState
-            { windowset     = initialWinset
-            , mapped        = S.empty
-            , waitingUnmap  = M.empty
-            , dragging      = Nothing }
+-- | Lift an IO action into the X monad.  If the action results in an IO
+-- exception, log the exception to stderr and continue normal execution.
+catchIO :: IO () -> X ()
+catchIO f = liftIO (f `catch` \e -> hPrint stderr e >> hFlush stderr)
 
-    xSetErrorHandler -- in C, I'm too lazy to write the binding: dons
-
-    -- setup initial X environment
-    sync dpy False
-    selectInput dpy rootw $  substructureRedirectMask .|. substructureNotifyMask
-                         .|. enterWindowMask .|. leaveWindowMask .|. structureNotifyMask
-
-    allocaXEvent $ \e ->
-        runX cf st $ do
-
-            grabKeys
-            grabButtons
-
-            io $ sync dpy False
-
-            -- bootstrap the windowset, Operations.windows will identify all
-            -- the windows in winset as new and set initial properties for
-            -- those windows
-            windows (const winset)
-
-            -- scan for all top-level windows, add the unmanaged ones to the
-            -- windowset
-            ws <- io $ scan dpy rootw
-            mapM_ manage ws
-
-            -- main loop, for all you HOF/recursion fans out there.
-            forever_ $ handle =<< io (nextEvent dpy e >> getEvent e)
-
+-- | spawn. Launch an external application
+spawn :: String -> X ()
+spawn x = io $ do
+    pid <- forkProcess $ do
+        forkProcess (createSession >> executeFile "/bin/sh" False ["-c", x] Nothing)
+        exitWith ExitSuccess
+    getProcessStatus True False pid
     return ()
-      where forever_ a = a >> forever_ a
 
-
--- ---------------------------------------------------------------------
--- | Event handler. Map X events onto calls into Operations.hs, which
--- modify our internal model of the window manager state.
+-- | Restart xmonad via exec().
 --
--- Events dwm handles that we don't:
+-- If the first parameter is 'Just name', restart will attempt to execute the
+-- program corresponding to 'name'.  Otherwise, xmonad will attempt to execute
+-- the name of the current program.
 --
---    [ButtonPress]    = buttonpress,
---    [Expose]         = expose,
---    [PropertyNotify] = propertynotify,
---
-handle :: Event -> X ()
+-- When the second parameter is 'True', xmonad will attempt to resume with the
+-- current window state.
+restart :: Maybe String -> Bool -> X ()
+restart mprog resume = do
+    prog <- maybe (io getProgName) return mprog
+    args <- if resume then gets (("--resume":) . return . showWs . windowset) else return []
+    catchIO (executeFile prog True args Nothing)
+ where showWs = show . mapLayout show
 
--- run window manager command
-handle (KeyEvent {ev_event_type = t, ev_state = m, ev_keycode = code})
-    | t == keyPress = withDisplay $ \dpy -> do
-        s  <- io $ keycodeToKeysym dpy code 0
-        mClean <- cleanMask m
-        ks <- asks keyActions
-        userCode $ whenJust (M.lookup (mClean, s) ks) id
+-- | Run a side effecting action with the current workspace. Like 'when' but
+whenJust :: Maybe a -> (a -> X ()) -> X ()
+whenJust mg f = maybe (return ()) f mg
 
--- manage a new window
-handle (MapRequestEvent    {ev_window = w}) = withDisplay $ \dpy -> do
-    wa <- io $ getWindowAttributes dpy w -- ignore override windows
-    -- need to ignore mapping requests by managed windows not on the current workspace
-    managed <- isClient w
-    when (not (wa_override_redirect wa) && not managed) $ do manage w
+-- | Conditionally run an action, using a X event to decide
+whenX :: X Bool -> X () -> X ()
+whenX a f = a >>= \b -> when b f
 
--- window destroyed, unmanage it
--- window gone,      unmanage it
-handle (DestroyWindowEvent {ev_window = w}) = whenX (isClient w) $ unmanage w
-
--- We track expected unmap events in waitingUnmap.  We ignore this event unless
--- it is synthetic or we are not expecting an unmap notification from a window.
-handle (UnmapEvent {ev_window = w, ev_send_event = synthetic}) = whenX (isClient w) $ do
-    e <- gets (fromMaybe 0 . M.lookup w . waitingUnmap)
-    if (synthetic || e == 0)
-        then unmanage w
-        else modify (\s -> s { waitingUnmap = M.adjust pred w (waitingUnmap s) })
-
--- set keyboard mapping
-handle e@(MappingNotifyEvent {}) = do
-    io $ refreshKeyboardMapping e
-    when (ev_request e == mappingKeyboard) grabKeys
-
--- handle button release, which may finish dragging.
-handle e@(ButtonEvent {ev_event_type = t})
-    | t == buttonRelease = do
-    drag <- gets dragging
-    case drag of
-        -- we're done dragging and have released the mouse:
-        Just (_,f) -> modify (\s -> s { dragging = Nothing }) >> f
-        Nothing    -> broadcastMessage e
-
--- handle motionNotify event, which may mean we are dragging.
-handle e@(MotionEvent {ev_event_type = _t, ev_x = x, ev_y = y}) = do
-    drag <- gets dragging
-    case drag of
-        Just (d,_) -> d (fromIntegral x) (fromIntegral y) -- we're dragging
-        Nothing -> broadcastMessage e
-
--- click on an unfocused window, makes it focused on this workspace
-handle e@(ButtonEvent {ev_window = w,ev_event_type = t,ev_button = b })
-    | t == buttonPress = do
-    -- If it's the root window, then it's something we
-    -- grabbed in grabButtons. Otherwise, it's click-to-focus.
-    isr <- isRoot w
-    m <- cleanMask $ ev_state e
-    ba <- asks buttonActions
-    if isr then userCode $ whenJust (M.lookup (m, b) ba) ($ ev_subwindow e)
-           else focus w
-    sendMessage e -- Always send button events.
-
--- entered a normal window, makes this focused.
-handle e@(CrossingEvent {ev_window = w, ev_event_type = t})
-    | t == enterNotify && ev_mode   e == notifyNormal
-                       && ev_detail e /= notifyInferior = focus w
-
--- left a window, check if we need to focus root
-handle e@(CrossingEvent {ev_event_type = t})
-    | t == leaveNotify
-    = do rootw <- asks theRoot
-         when (ev_window e == rootw && not (ev_same_screen e)) $ setFocusX rootw
-
--- configure a window
-handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
-    ws <- gets windowset
-    wa <- io $ getWindowAttributes dpy w
-
-    bw <- asks (borderWidth . config)
-
-    if M.member w (floating ws)
-        || not (member w ws)
-        then do io $ configureWindow dpy w (ev_value_mask e) $ WindowChanges
-                    { wc_x            = ev_x e
-                    , wc_y            = ev_y e
-                    , wc_width        = ev_width e
-                    , wc_height       = ev_height e
-                    , wc_border_width = fromIntegral bw
-                    , wc_sibling      = ev_above e
-                    , wc_stack_mode   = ev_detail e }
-                when (member w ws) (float w)
-        else io $ allocaXEvent $ \ev -> do
-                 setEventType ev configureNotify
-                 setConfigureEvent ev w w
-                     (wa_x wa) (wa_y wa) (wa_width wa)
-                     (wa_height wa) (ev_border_width e) none (wa_override_redirect wa)
-                 sendEvent dpy w False 0 ev
-    io $ sync dpy False
-
--- configuration changes in the root may mean display settings have changed
-handle (ConfigureEvent {ev_window = w}) = whenX (isRoot w) rescreen
-
--- property notify
-handle PropertyEvent { ev_event_type = t, ev_atom = a }
-    | t == propertyNotify && a == wM_NAME = userCode =<< asks (logHook . config)
-
-handle e = broadcastMessage e -- trace (eventName e) -- ignoring
-
-
--- ---------------------------------------------------------------------
--- IO stuff. Doesn't require any X state
--- Most of these things run only on startup (bar grabkeys)
-
--- | scan for any new windows to manage. If they're already managed,
--- this should be idempotent.
-scan :: Display -> Window -> IO [Window]
-scan dpy rootw = do
-    (_, _, ws) <- queryTree dpy rootw
-    filterM ok ws
-  -- TODO: scan for windows that are either 'IsViewable' or where WM_STATE ==
-  -- Iconic
-  where ok w = do wa <- getWindowAttributes dpy w
-                  a  <- internAtom dpy "WM_STATE" False
-                  p  <- getWindowProperty32 dpy a w
-                  let ic = case p of
-                            Just (3:_) -> True -- 3 for iconified
-                            _          -> False
-                  return $ not (wa_override_redirect wa)
-                         && (wa_map_state wa == waIsViewable || ic)
-
--- | Grab the keys back
-grabKeys :: X ()
-grabKeys = do
-    XConf { display = dpy, theRoot = rootw } <- ask
-    let grab kc m = io $ grabKey dpy kc m rootw True grabModeAsync grabModeAsync
-    io $ ungrabKey dpy anyKey anyModifier rootw
-    ks <- asks keyActions
-    forM_ (M.keys ks) $ \(mask,sym) -> do
-         kc <- io $ keysymToKeycode dpy sym
-         -- "If the specified KeySym is not defined for any KeyCode,
-         -- XKeysymToKeycode() returns zero."
-         when (kc /= '\0') $ mapM_ (grab kc . (mask .|.)) =<< extraModifiers
-
--- | XXX comment me
-grabButtons :: X ()
-grabButtons = do
-    XConf { display = dpy, theRoot = rootw } <- ask
-    let grab button mask = io $ grabButton dpy button mask rootw False buttonPressMask
-                                           grabModeAsync grabModeSync none none
-    io $ ungrabButton dpy anyButton anyModifier rootw
-    ems <- extraModifiers
-    ba <- asks buttonActions
-    mapM_ (\(m,b) -> mapM_ (grab b . (m .|.)) ems) (M.keys $ ba)
+-- | A 'trace' for the X monad. Logs a string to stderr. The result may
+-- be found in your .xsession-errors file
+trace :: String -> X ()
+trace msg = io $! do hPutStrLn stderr msg; hFlush stderr

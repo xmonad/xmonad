@@ -14,7 +14,7 @@
 
 module Main (main) where
 
-import XMonad.Core
+import XMonad.Main
 import XMonad.Config
 
 import Control.Exception (handle)

@@ -18,7 +18,7 @@
 
 module XMonad.Operations where
 
-import XMonad
+import XMonad.Core
 import XMonad.Layouts (Full(..))
 import qualified XMonad.StackSet as W
 

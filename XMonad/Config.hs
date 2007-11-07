@@ -20,10 +20,10 @@ module XMonad.Config (defaultConfig) where
 --
 -- Useful imports
 --
-import XMonad hiding
+import XMonad.Core as XMonad hiding
     (workspaces,manageHook,numlockMask,keys,logHook,borderWidth,mouseBindings
     ,defaultGaps,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor)
-import qualified XMonad
+import qualified XMonad.Core as XMonad
     (workspaces,manageHook,numlockMask,keys,logHook,borderWidth,mouseBindings
     ,defaultGaps,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor)
 
