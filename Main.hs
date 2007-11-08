@@ -16,10 +16,10 @@ module Main (main) where
 
 import XMonad.Main
 import XMonad.Config
+import XMonad.Core (recompile)
 
 import Control.Exception (handle)
 import System.IO
-import System.Process
 import System.Directory
 import System.Environment
 import System.Posix.Process (executeFile)
@@ -43,10 +43,8 @@ main = do
 --
 buildLaunch ::  IO ()
 buildLaunch = do
+    recompile
     dir <- fmap (++ "/.xmonad") getHomeDirectory
-    pid <- runProcess "ghc" ["--make", "xmonad.hs"] (Just dir)
-        Nothing Nothing Nothing Nothing
-    waitForProcess pid
     args <- getArgs
     executeFile (dir ++ "/xmonad") False args Nothing
     return ()

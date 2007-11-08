@@ -20,7 +20,7 @@
 
 module XMonad.Core (
     X, WindowSet, WindowSpace, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), XConfig(..), LayoutClass(..), Layout(..), readsLayout, Typeable, Message, SomeMessage(..), fromMessage, runLayout, LayoutMessages(..),
-    runX, catchX, userCode, io, catchIO, withDisplay, withWindowSet, isRoot, getAtom, spawn, restart, trace, whenJust, whenX,
+    runX, catchX, userCode, io, catchIO, withDisplay, withWindowSet, isRoot, getAtom, spawn, restart, recompile, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
   ) where
 
@@ -32,6 +32,8 @@ import Control.Monad.State
 import Control.Monad.Reader
 import System.IO
 import System.Posix.Process (executeFile, forkProcess, getProcessStatus, createSession)
+import System.Process
+import System.Directory
 import System.Exit
 import System.Environment
 import Graphics.X11.Xlib
@@ -280,6 +282,17 @@ restart mprog resume = do
     args <- if resume then gets (("--resume":) . return . showWs . windowset) else return []
     catchIO (executeFile prog True args Nothing)
  where showWs = show . mapLayout show
+
+-- | Recompile ~\/xmonad\/xmonad.hs.
+--
+-- Raises an exception if ghc can't be found.
+recompile :: IO ()
+recompile = do
+    dir <- fmap (++ "/.xmonad") getHomeDirectory
+    pid <- runProcess "ghc" ["--make", "xmonad.hs"] (Just dir)
+        Nothing Nothing Nothing Nothing
+    waitForProcess pid
+    return ()
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
