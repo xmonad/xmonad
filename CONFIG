@@ -7,7 +7,6 @@ which is a Haskell source file. Here is an example,
     --
     -- An example, simple ~/.xmonad/xmonad.hs file.
     -- It overrides a few basic settings, reusing all the other defaults,
-    -- and also uses the DynamicLog extension.
     -- 
 
     import XMonad
