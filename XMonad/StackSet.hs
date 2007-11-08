@@ -42,7 +42,7 @@ module XMonad.StackSet (
     ) where
 
 import Prelude hiding (filter)
-import Data.Maybe   (listToMaybe,fromJust)
+import Data.Maybe   (listToMaybe,fromJust,isJust)
 import qualified Data.List as L (deleteBy,find,splitAt,filter,nub)
 import Data.List ( (\\) )
 import qualified Data.Map  as M (Map,insert,delete,empty)
@@ -439,7 +439,7 @@ mapLayout f (StackSet v vs hs m) = StackSet (fScreen v) (map fScreen vs) (map fW
 
 -- | /O(n)/. Is a window in the StackSet.
 member :: Eq a => a -> StackSet i l a s sd -> Bool
-member a s = maybe False (const True) (findTag a s)
+member a s = isJust (findTag a s)
 
 -- | /O(1) on current window, O(n) in general/.
 -- Return Just the workspace tag of the given window, or Nothing
