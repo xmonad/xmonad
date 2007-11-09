@@ -1,11 +1,11 @@
-               xmonad : a lightweight X11 window manager.
+                    xmonad : a tiling window manager
 
                            http://xmonad.org
 
     xmonad is a tiling window manager for X. Windows are arranged
     automatically to tile the screen without gaps or overlap, maximising
-    screen use. Window manager features are accessible from
-    the keyboard: a mouse is optional. xmonad is written, configured and
+    screen use. Window manager features are accessible from the
+    keyboard: a mouse is optional. xmonad is written, configured and
     extensible in Haskell. Custom layout algorithms, key bindings and
     other extensions may be written by the user in config files. Layouts
     are applied dynamically, and different layouts may be used on each
@@ -14,12 +14,16 @@
 
 Building:
 
- Get the dependencies
+ Building is quite straightforward, and requries a basic Haskell toolchain.
+ We'll walk through the complete list of toolchain dependencies.
 
+ * GHC: the Glasgow Haskell Compiler
+  
     You first need a Haskell compiler. Your distribution's package
-    system will have binaries of GHC (the Glasgow Haskell Compiler), the
-    system we use, so install that. If your distro doesn't provide a
-    binary, you can find them here:
+    system will have binaries of GHC (the Glasgow Haskell Compiler), the 
+    compiler we use, so install that first. If your operating system's
+    package system doesn't provide a binary version of GHC, you can find
+    them here:
 
         http://haskell.org/ghc
 
@@ -27,12 +31,21 @@ Building:
 
         apt-get install ghc6
 
+    It shouldn't be necessary to compile GHC from source -- every common 
+    system has a pre-build binary version.
+
+ * X11 libraries:
+
     Since you're building an X application, you'll need the C X11
     library headers. On many platforms, these come pre-installed. For
     others, such as Debian, you can get them from your package manager:
 
         apt-get install libx11-dev
 
+    Typically you need: libXinerama libXext libX11
+
+ * Cabal
+ 
     xmonad requires a recent version of Cabal, >= 1.2.0. If you're using
     GHC 6.8, then it comes bundled with the right version. If you're
     using GHC 6.6.x, you'll need to build and install Cabal from hackage
@@ -45,6 +58,8 @@ Building:
         $ ghc-pkg list Cabal
         Cabal-1.2.2.0
 
+ * Haskell libraries: mtl, unix, X11
+
     Finally, you need the Haskell libraries xmonad depends on. Since
     you've a working GHC installation now, most of these will be
     provided. To check whether you've got a package run 'ghc-pkg list
@@ -54,14 +69,16 @@ Building:
     unix  http://hackage.haskell.org/cgi-bin/hackage-scripts/package/unix-2.0 
     X11   http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-1.3.0
 
-And then build xmonad with Cabal as follows (the same goes for the other
-Haskell libraries):
+ * Build xmonad: 
 
-    runhaskell Setup.lhs configure --user --prefix=$HOME
-    runhaskell Setup.lhs build
-    runhaskell Setup.lhs install --user
+    Once you've got all the dependencies in place (which should be
+    straightforward), build xmonad:
 
-And you're done.
+        runhaskell Setup.lhs configure --user --prefix=$HOME
+        runhaskell Setup.lhs build
+        runhaskell Setup.lhs install --user
+
+    And you're done!
 
 ------------------------------------------------------------------------
 
@@ -90,13 +107,14 @@ Running xmonad:
 
 XMonadContrib
 
-    There are various contributed modules that can be used with xmonad.
-    Examples include an ion3-like tabbed layout, a prompt/program launcher,
-    and various other useful modules.  XMonadContrib is available at:
+    There are many extensions to xmonad available in the XMonadContrib
+    (xmc) library. Examples include an ion3-like tabbed layout, a
+    prompt/program launcher, and various other useful modules.
+    XMonadContrib is available at:
 
-    0.4 release:   http://www.xmonad.org/XMonadContrib-0.4.tar.gz
+        0.4 release:   http://www.xmonad.org/XMonadContrib-0.4.tar.gz
 
-    darcs version: darcs get http://code.haskell.org/XMonadContrib
+        darcs version: darcs get http://code.haskell.org/XMonadContrib
 
 ------------------------------------------------------------------------
 
