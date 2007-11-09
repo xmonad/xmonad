@@ -67,7 +67,7 @@ data XConfig = XConfig
     , focusedBorderColor :: !String
     , terminal           :: !String
     , layoutHook         :: !(Layout Window)
-    , manageHook         :: Window -> String -> String -> String -> X (WindowSet -> WindowSet)
+    , manageHook         :: Window -> X (WindowSet -> WindowSet)
     , workspaces         :: [String]
     , defaultGaps        :: [(Int,Int,Int,Int)]
     , numlockMask        :: !KeyMask
@@ -77,6 +77,7 @@ data XConfig = XConfig
     , borderWidth        :: !Dimension
     , logHook            :: X ()
     }
+
 
 type WindowSet   = StackSet  WorkspaceId (Layout Window) Window ScreenId ScreenDetail
 type WindowSpace = Workspace WorkspaceId (Layout Window) Window

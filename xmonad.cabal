@@ -30,6 +30,7 @@ library
                         XMonad.Core
                         XMonad.Config
                         XMonad.Layouts
+                        XMonad.ManageHook
                         XMonad.Operations
                         XMonad.StackSet
     ghc-options:        -funbox-strict-fields -Wall -Werror -optl-Wl,-s

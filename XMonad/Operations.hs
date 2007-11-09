@@ -63,10 +63,8 @@ manage w = whenX (fmap not $ isClient w) $ withDisplay $ \d -> do
              | otherwise                  = W.insertUp w ws
             where i = fromMaybe (W.tag . W.workspace . W.current $ ws) $ W.lookupWorkspace sc ws
 
-    n <- fmap (fromMaybe "") $ io $ fetchName d w
-    (ClassHint rn rc) <- io $ getClassHint d w
     mh <- asks (manageHook . config)
-    g <- mh w n rn rc `catchX` return id
+    g <- mh w `catchX` return id
     windows (g . f)
 
 -- | unmanage. A window no longer exists, remove it from the window

@@ -29,6 +29,7 @@ import qualified XMonad.Core as XMonad
 
 import XMonad.Layouts
 import XMonad.Operations
+import XMonad.ManageHook
 import qualified XMonad.StackSet as W
 import Data.Ratio
 import Data.Bits ((.|.))
@@ -112,28 +113,13 @@ defaultGaps = [(0,0,0,0)] -- 15 for default dzen font
 --  xprop | grep WM_CLASS
 -- and click on the client you're interested in.
 --
-manageHook :: Window -- ^ the new window to manage
-           -> String -- ^ window title
-           -> String -- ^ window resource name
-           -> String -- ^ window resource class
-           -> X (WindowSet -> WindowSet)
-
--- Always float various programs:
-manageHook w _ _ c | c `elem` floats = fmap (W.float w . snd) (floatLocation w)
+manageHook :: ManageHook
+manageHook = composeAll . concat $
+                [ [ className =? c --> doFloat | c <- floats]
+                , [ resource =? r --> doIgnore | r <- ignore]
+                , [ resource =? "Gecko" --> doF (W.shift "web") ]]
  where floats = ["MPlayer", "Gimp"]
-
--- Desktop panels and dock apps should be ignored by xmonad:
-manageHook w _ n _ | n `elem` ignore = reveal w >> return (W.delete w)
- where ignore = ["gnome-panel", "desktop_window", "kicker", "kdesktop"]
-
--- Automatically send Firefox windows to the "web" workspace:
--- If a workspace named "web" doesn't exist, the window will appear on the
--- current workspace.
-manageHook _ _ "Gecko" _ = return $ W.shift "web"
-
--- The default rule: return the WindowSet unmodified.  You typically do not
--- want to modify this line.
-manageHook _ _ _ _ = return id
+       ignore = ["gnome-panel", "desktop_window", "kicker", "kdesktop"]
 
 ------------------------------------------------------------------------
 -- Logging
