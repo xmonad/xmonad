@@ -33,6 +33,18 @@ Building:
 
         apt-get install libx11-dev
 
+    xmonad requires a recent version of Cabal, >= 1.2.0. If you're using
+    GHC 6.8, then it comes bundled with the right version. If you're
+    using GHC 6.6.x, you'll need to build and install Cabal from hackage
+    first:
+
+          http://hackage.haskell.org/cgi-bin/hackage-scripts/package/Cabal
+
+    You can check which version you have with the command:
+
+        $ ghc-pkg list Cabal
+        Cabal-1.2.2.0
+
     Finally, you need the Haskell libraries xmonad depends on. Since
     you've a working GHC installation now, most of these will be
     provided. To check whether you've got a package run 'ghc-pkg list
