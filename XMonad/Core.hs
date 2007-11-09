@@ -258,8 +258,8 @@ catchIO :: IO () -> X ()
 catchIO f = liftIO (f `catch` \e -> hPrint stderr e >> hFlush stderr)
 
 -- | spawn. Launch an external application
-spawn :: String -> X ()
-spawn x = io $ do
+spawn :: MonadIO m => String -> m ()
+spawn x = liftIO $ do
     pid <- forkProcess $ do
         forkProcess (createSession >> executeFile "/bin/sh" False ["-c", x] Nothing)
         exitWith ExitSuccess
@@ -291,5 +291,5 @@ whenX a f = a >>= \b -> when b f
 
 -- | A 'trace' for the X monad. Logs a string to stderr. The result may
 -- be found in your .xsession-errors file
-trace :: String -> X ()
-trace msg = io $! do hPutStrLn stderr msg; hFlush stderr
+trace :: MonadIO m => String -> m ()
+trace msg = liftIO $ do hPutStrLn stderr msg; hFlush stderr
