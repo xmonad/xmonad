@@ -10,8 +10,8 @@
 -- Portability :  portable
 --
 -- This module specifies the default configuration values for xmonad.
--- Users will typically use record syntax to override particular fields
--- they disagree with, in the defaultConfig structure.
+-- Users should not modify this file. Rather, they should provide their
+-- own ~/.xmonad/xmonad.hs that overrides specific fields in defaultConfig.
 --
 ------------------------------------------------------------------------
 
