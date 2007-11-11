@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE MultiParamTypeClasses, FlexibleContexts #-}
 ----------------------------------------------------------------------------
 -- |
 -- Module      :  Core.hs
