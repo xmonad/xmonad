@@ -38,8 +38,10 @@ import System.IO
 -- |
 -- The main entry point
 --
-xmonad :: XConfig -> IO ()
-xmonad xmc = do
+xmonad :: (LayoutClass l Window, Read (l Window)) => XConfig l -> IO ()
+xmonad initxmc = do
+    -- First, wrap the layout in an existential, to keep things pretty:
+    let xmc = initxmc { layoutHook = Layout $ layoutHook initxmc }
     dpy   <- openDisplay ""
     let dflt = defaultScreen dpy
 

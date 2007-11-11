@@ -51,7 +51,7 @@ data XState = XState
 
 data XConf = XConf
     { display       :: Display        -- ^ the X11 display
-    , config        :: !XConfig       -- ^ initial user configuration
+    , config        :: !(XConfig Layout)       -- ^ initial user configuration
     , theRoot       :: !Window        -- ^ the root window
     , normalBorder  :: !Pixel         -- ^ border color of unfocused windows
     , focusedBorder :: !Pixel         -- ^ border color of the focused window
@@ -62,18 +62,18 @@ data XConf = XConf
     }
 
 -- todo, better name
-data XConfig = XConfig
+data XConfig l = XConfig
     { normalBorderColor  :: !String
     , focusedBorderColor :: !String
     , terminal           :: !String
-    , layoutHook         :: !(Layout Window)
+    , layoutHook         :: !(l Window)
     , manageHook         :: Window -> X (WindowSet -> WindowSet)
     , workspaces         :: [String]
     , defaultGaps        :: [(Int,Int,Int,Int)]
     , numlockMask        :: !KeyMask
     , modMask            :: !KeyMask
-    , keys               :: XConfig -> M.Map (ButtonMask,KeySym) (X ())
-    , mouseBindings      :: XConfig -> M.Map (ButtonMask, Button) (Window -> X ())
+    , keys               :: XConfig Layout -> M.Map (ButtonMask,KeySym) (X ())
+    , mouseBindings      :: XConfig Layout -> M.Map (ButtonMask, Button) (Window -> X ())
     , borderWidth        :: !Dimension
     , logHook            :: X ()
     }

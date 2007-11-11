@@ -173,7 +173,7 @@ terminal = "xterm"
 --
 -- (The comment formatting character is used when generating the manpage)
 --
-keys :: XConfig -> M.Map (KeyMask, KeySym) (X ())
+keys :: XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
 keys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     -- launching and killing programs
     [ ((modMask .|. shiftMask, xK_Return), spawn $ XMonad.terminal conf) -- %! Launch terminal
@@ -234,7 +234,7 @@ keys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
 
 -- | Mouse bindings: default actions bound to mouse events
 --
-mouseBindings :: XConfig -> M.Map (KeyMask, Button) (Window -> X ())
+mouseBindings :: XConfig Layout -> M.Map (KeyMask, Button) (Window -> X ())
 mouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
     -- mod-button1 %! Set the window to floating mode and move by dragging
     [ ((modMask, button1), (\w -> focus w >> mouseMoveWindow w))
@@ -250,12 +250,11 @@ mouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
 -- % Extension-provided definitions
 
 -- | And, finally, the default set of configuration values itself
-defaultConfig :: XConfig
 defaultConfig = XConfig
     { XMonad.borderWidth        = borderWidth
     , XMonad.workspaces         = workspaces
     , XMonad.defaultGaps        = defaultGaps
-    , XMonad.layoutHook         = Layout layout
+    , XMonad.layoutHook         = layout
     , XMonad.terminal           = terminal
     , XMonad.normalBorderColor  = normalBorderColor
     , XMonad.focusedBorderColor = focusedBorderColor
