@@ -31,7 +31,6 @@ import XMonad.Layouts
 import XMonad.Operations
 import XMonad.ManageHook
 import qualified XMonad.StackSet as W
-import Data.Ratio
 import Data.Bits ((.|.))
 import qualified Data.Map as M
 import System.Exit
@@ -152,10 +151,10 @@ layout = tiled ||| Mirror tiled ||| Full
      nmaster = 1
 
      -- Default proportion of screen occupied by master pane
-     ratio   = 1%2
+     ratio   = 0.5
 
      -- Percent of screen to increment by when resizing panes
-     delta   = 3%100
+     delta   = 0.03
 
 ------------------------------------------------------------------------
 -- Key bindings:
