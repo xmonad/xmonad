@@ -41,7 +41,7 @@ library
     else
         build-depends: base < 3
 
-    build-depends: X11==1.3.0, mtl, unix
+    build-depends: X11==1.3.0.20071111, mtl, unix
 
 
 
