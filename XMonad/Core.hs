@@ -292,4 +292,4 @@ whenX a f = a >>= \b -> when b f
 -- | A 'trace' for the X monad. Logs a string to stderr. The result may
 -- be found in your .xsession-errors file
 trace :: MonadIO m => String -> m ()
-trace msg = liftIO $ do hPutStrLn stderr msg; hFlush stderr
+trace = liftIO . hPutStrLn stderr
