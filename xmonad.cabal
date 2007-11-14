@@ -16,7 +16,7 @@ category:           System
 license:            BSD3
 license-file:       LICENSE
 author:             Spencer Janssen
-maintainer:         sjanssen@cse.unl.edu
+maintainer:         xmonad@haskell.org
 extra-source-files: README TODO tests/loc.hs tests/Properties.hs man/xmonad.1.in
                     util/GenerateManpage.hs man/xmonad.1 man/xmonad.html
 cabal-version:      >= 1.2
@@ -33,20 +33,20 @@ library
                         XMonad.ManageHook
                         XMonad.Operations
                         XMonad.StackSet
-    ghc-options:        -funbox-strict-fields -Wall -Werror -optl-Wl,-s
-    ghc-prof-options:   -prof -auto-all
 
     if flag(small_base)
         build-depends: base >= 3, containers, directory, process
     else
         build-depends: base < 3
-
     build-depends: X11==1.3.0.20071111, mtl, unix
 
-
+    ghc-options:        -funbox-strict-fields -Wall -Werror -optl-Wl,-s
+    ghc-prof-options:   -prof -auto-all
 
 executable xmonad
     main-is:            Main.hs
-    other-modules:      XMonad.Core XMonad.Main XMonad.Layouts XMonad.Operations XMonad.StackSet XMonad
+    other-modules:      XMonad.Core XMonad.Main XMonad.Layouts
+                        XMonad.Operations XMonad.StackSet XMonad
+
     ghc-options:        -funbox-strict-fields -Wall -Werror -optl-Wl,-s
     ghc-prof-options:   -prof -auto-all
