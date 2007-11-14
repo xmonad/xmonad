@@ -1,8 +1,16 @@
-xmonad is configure by creating and editing the file:
+== Configuring xmonad ==
+
+xmonad is configure by creating and editing the Haskell file:
 
     ~/.xmonad/xmonad.hs
 
-which is a Haskell source file. Here is an example,
+xmonad then uses default settings from this file as arguments to the
+window manager.
+
+== A simple example ==
+
+Here is a basic example, which takes defaults from xmonad, and overrides 
+the border width, default terminal, and some colours:
 
     --
     -- An example, simple ~/.xmonad/xmonad.hs file.
@@ -13,15 +21,54 @@ which is a Haskell source file. Here is an example,
 
     main = xmonad $ defaultConfig
         { borderWidth        = 2
+        , terminal           = "urxvt"
         , normalBorderColor  = "#cccccc"
         , focusedBorderColor = "#cd8b00" }
 
+This will run 'xmonad', the window manager, with your settings passed as
+arguments.
 
-You may typecheck this file, or develop it in ghci, as you see fit.
+Overriding default settings like this (using "record update syntax"),
+will yield the shortest config file, as you only have to describe values
+that differ from the defaults.
 
-To have xmonad pick up your defaults, try mod-q. xmonad will attempt to
-compile this file, and run it. If it is unable to, the defaults are
-used.
+An alternative is to inline the entire default config file from xmonad,
+and edit values you wish to change. This is requires more work, but some
+users may find this easier. You can find the defaults in the file:
+
+    XMonad/Config.hs
+
+== Checking your xmonad.hs is correct ==
+
+Place this text in ~/.xmonad/xmonad.hs, and then check that it is
+syntactically and type correct, by loading it in the Haskell
+interpreter:
+
+    $ ghci ~/.xmonad/xmonad.hs  
+    GHCi, version 6.8.1: http://www.haskell.org/ghc/  :? for help
+    Loading package base ... linking ... done.
+    Ok, modules loaded: Main.
+
+    Prelude Main> :t main
+    main :: IO ()
+
+Ok, looks good.  
+
+== Loading your configuration ==
+
+To have xmonad start using your settings, try mod-q. xmonad will attempt
+to compile this file, and run it. If it is unable to, the defaults are
+used. This requires GHC and xmonad are in your $PATH settings. If
+GHC isn't in your path, you can still compile the xmonad.hs file yourself:
+
+    $ cd ~/.xmonad
+    $ ghc --make xmonad.hs
+    $ ls
+    xmonad    xmonad.hi xmonad.hs xmonad.o
+
+When you hit mod-q, this newly compiled xmonad will be used.
+
+== Where are the defaults? == 
 
 The default configuration values are defined in the source file:
 
@@ -30,3 +77,10 @@ The default configuration values are defined in the source file:
 the XConfig data structure itself is defined in:
 
     XMonad.hs
+
+== Extensions ==
+
+Since the xmonad.hs file is just another Haskell module, you may import
+and use any Haskell code or libraries you wish. For example, you can use
+things from the xmonad-contrib library, or other code you write
+yourself.
