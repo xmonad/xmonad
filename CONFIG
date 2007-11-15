@@ -1,6 +1,6 @@
 == Configuring xmonad ==
 
-xmonad is configure by creating and editing the Haskell file:
+xmonad is configured by creating and editing the Haskell file:
 
     ~/.xmonad/xmonad.hs
 
@@ -9,13 +9,13 @@ window manager.
 
 == A simple example ==
 
-Here is a basic example, which takes defaults from xmonad, and overrides 
+Here is a basic example, which takes defaults from xmonad, and overrides
 the border width, default terminal, and some colours:
 
     --
     -- An example, simple ~/.xmonad/xmonad.hs file.
     -- It overrides a few basic settings, reusing all the other defaults,
-    -- 
+    --
 
     import XMonad
 
@@ -44,7 +44,7 @@ Place this text in ~/.xmonad/xmonad.hs, and then check that it is
 syntactically and type correct, by loading it in the Haskell
 interpreter:
 
-    $ ghci ~/.xmonad/xmonad.hs  
+    $ ghci ~/.xmonad/xmonad.hs
     GHCi, version 6.8.1: http://www.haskell.org/ghc/  :? for help
     Loading package base ... linking ... done.
     Ok, modules loaded: Main.
@@ -52,7 +52,7 @@ interpreter:
     Prelude Main> :t main
     main :: IO ()
 
-Ok, looks good.  
+Ok, looks good.
 
 == Loading your configuration ==
 
@@ -68,15 +68,15 @@ GHC isn't in your path, you can still compile the xmonad.hs file yourself:
 
 When you hit mod-q, this newly compiled xmonad will be used.
 
-== Where are the defaults? == 
+== Where are the defaults? ==
 
 The default configuration values are defined in the source file:
 
-   XMonad/Config.hs 
+    XMonad/Config.hs
 
 the XConfig data structure itself is defined in:
 
-    XMonad.hs
+    XMonad/Core.hs
 
 == Extensions ==
 
