@@ -16,6 +16,7 @@
 * document, with photos, any new layouts
 * double check README build instructions
 * test core with 6.6 and 6.8
-* upload X11/xmonad to hacakge
-* check examples/text in use-facing Config.hs
+* bump xmonad.cabal version and X11 version
+* upload X11 and xmonad to hackage
+* check examples/text in user-facing Config.hs
 * check tour.html and intro.html are up to date, and mention all core bindings

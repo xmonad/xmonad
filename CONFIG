@@ -9,13 +9,9 @@ on startup.
 
 == A simple example ==
 
-Here is a basic example, which takes defaults from xmonad, and overrides 
-the border width, default terminal, and some colours:
-
-    --
-    -- An example, simple ~/.xmonad/xmonad.hs file.
-    -- It overrides a few basic settings, reusing all the other defaults,
-    -- 
+Here is a basic example, which overrides the default border width,
+default terminal, and some colours. This text goes in the file
+$HOME/.xmonad/xmonad.hs :
 
     import XMonad
 
