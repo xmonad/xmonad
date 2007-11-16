@@ -4,18 +4,18 @@ xmonad is configured by creating and editing the Haskell file:
 
     ~/.xmonad/xmonad.hs
 
-xmonad then uses default settings from this file as arguments to the
-window manager.
+xmonad then uses settings from this file as arguments to the window manager,
+on startup.
 
 == A simple example ==
 
-Here is a basic example, which takes defaults from xmonad, and overrides
+Here is a basic example, which takes defaults from xmonad, and overrides 
 the border width, default terminal, and some colours:
 
     --
     -- An example, simple ~/.xmonad/xmonad.hs file.
     -- It overrides a few basic settings, reusing all the other defaults,
-    --
+    -- 
 
     import XMonad
 
@@ -25,23 +25,14 @@ the border width, default terminal, and some colours:
         , normalBorderColor  = "#cccccc"
         , focusedBorderColor = "#cd8b00" }
 
-This will run 'xmonad', the window manager, with your settings passed as
-arguments.
-
-Overriding default settings like this (using "record update syntax"),
-will yield the shortest config file, as you only have to describe values
-that differ from the defaults.
-
-An alternative is to inline the entire default config file from xmonad,
-and edit values you wish to change. This is requires more work, but some
-users may find this easier. You can find the defaults in the file:
+You can find the defaults in the file:
 
     XMonad/Config.hs
 
 == Checking your xmonad.hs is correct ==
 
 Place this text in ~/.xmonad/xmonad.hs, and then check that it is
-syntactically and type correct, by loading it in the Haskell
+syntactically and type correct by loading it in the Haskell
 interpreter:
 
     $ ghci ~/.xmonad/xmonad.hs
@@ -56,10 +47,13 @@ Ok, looks good.
 
 == Loading your configuration ==
 
-To have xmonad start using your settings, try mod-q. xmonad will attempt
-to compile this file, and run it. If it is unable to, the defaults are
-used. This requires GHC and xmonad are in your $PATH settings. If
-GHC isn't in your path, you can still compile the xmonad.hs file yourself:
+To have xmonad start using your settings, type 'mod-q'.  xmonad will
+then load this new file, and run it.  If it is unable to, the defaults
+are used. 
+
+To load succesfully, both 'xmonad' and 'ghc' must be in your $PATH
+environment variable.  If GHC isn't in your path, for some reason, you
+can compile the xmonad.hs file yourself:
 
     $ cd ~/.xmonad
     $ ghc --make xmonad.hs
