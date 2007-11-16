@@ -12,6 +12,8 @@
 --
 -----------------------------------------------------------------------------
 
+-- XXX examples required
+
 module XMonad.ManageHook where
 
 import XMonad.Core
