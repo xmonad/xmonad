@@ -15,7 +15,12 @@
 Building:
 
  Building is quite straightforward, and requries a basic Haskell toolchain.
- We'll walk through the complete list of toolchain dependencies.
+ On many systems xmonad is available as a binary package in your
+ package system (e.g. on debian or gentoo). If at all possible, use this
+ in preference to a source build, as the dependency resolution will be
+ simpler.
+
+ We'll now walk through the complete list of toolchain dependencies.
 
  * GHC: the Glasgow Haskell Compiler
   
@@ -120,19 +125,19 @@ XMonadContrib
 
 Other useful programs:
 
- For a program dispatch menu:
+ A nicer xterm replacment, that supports resizing better:
 
-    dmenu           http://www.suckless.org/download/
- or
-    gmrun           (in your package system)
+    urxvt       http://software.schmorp.de/pkg/rxvt-unicode.html
 
  For custom status bars:
 
-    dzen            http://gotmor.googlepages.com/dzen
+    dzen        http://gotmor.googlepages.com/dzen
+    xmobar      http://hackage.haskell.org/cgi-bin/hackage-scripts/package/xmobar
 
- A nicer xterm replacment, that supports resizing better:
+ For a program dispatch menu:
 
-    urxvt           http://software.schmorp.de/pkg/rxvt-unicode.html
+    dmenu       http://www.suckless.org/download/
+    gmrun       (in your package system)
 
 Authors:
 
