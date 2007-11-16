@@ -8,6 +8,8 @@
 
 = Release management =
 
+* configuration documentation
+
 * build and typecheck all XMC
 * generate haddocks for core and XMC, upload to xmonad.org
 * generate manpage, generate html manpage
