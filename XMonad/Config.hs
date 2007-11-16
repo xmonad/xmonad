@@ -11,7 +11,7 @@
 --
 -- This module specifies the default configuration values for xmonad.
 -- Users should not modify this file. Rather, they should provide their
--- own ~/.xmonad/xmonad.hs that overrides specific fields in defaultConfig.
+-- own @~\/.xmonad\/xmonad.hs@ that overrides specific fields in defaultConfig.
 --
 ------------------------------------------------------------------------
 
