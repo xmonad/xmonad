@@ -65,19 +65,22 @@ data XConf = XConf
 
 -- todo, better name
 data XConfig l = XConfig
-    { normalBorderColor  :: !String
-    , focusedBorderColor :: !String
-    , terminal           :: !String
-    , layoutHook         :: !(l Window)
-    , manageHook         :: Window -> X (WindowSet -> WindowSet)
-    , workspaces         :: [String]
-    , defaultGaps        :: [(Int,Int,Int,Int)]
-    , numlockMask        :: !KeyMask
-    , modMask            :: !KeyMask
+    { normalBorderColor  :: !String             -- ^ Non focused windows border color. Default: \"#dddddd\"
+    , focusedBorderColor :: !String             -- ^ Focused windows border color. Default: \"#ff0000\"
+    , terminal           :: !String             -- ^ The preferred terminal application. Default: \"xterm\"
+    , layoutHook         :: !(l Window)         -- ^ The avaiable layouts
+    , manageHook         :: Window -> X (WindowSet -> WindowSet) 
+                                                -- ^ The action to run when a new window is opened
+    , workspaces         :: [String]            -- ^ The list of workspaces' names
+    , defaultGaps        :: [(Int,Int,Int,Int)] -- ^ The list of gaps, per screen
+    , numlockMask        :: !KeyMask            -- ^ The numlock modifier
+    , modMask            :: !KeyMask            -- ^ the mod modifier
     , keys               :: XConfig Layout -> M.Map (ButtonMask,KeySym) (X ())
+                                                -- ^ The key binding: a map from key presses and actions
     , mouseBindings      :: XConfig Layout -> M.Map (ButtonMask, Button) (Window -> X ())
-    , borderWidth        :: !Dimension
-    , logHook            :: X ()
+                                                -- ^ The mouse bindings
+    , borderWidth        :: !Dimension          -- ^ The border width
+    , logHook            :: X ()                -- ^ The action to perform when the windows set is changed
     }
 
 
@@ -90,7 +93,7 @@ type WorkspaceId = String
 -- | Physical screen indicies
 newtype ScreenId    = S Int deriving (Eq,Ord,Show,Read,Enum,Num,Integral,Real)
 
--- | TODO Comment me
+-- | The 'Rectangle' with screen dimensions and the list of gaps
 data ScreenDetail   = SD { screenRect :: !Rectangle
                          , statusGap  :: !(Int,Int,Int,Int) -- ^ width of status bar on the screen
                          } deriving (Eq,Show, Read)
