@@ -292,7 +292,7 @@ restart mprog resume = do
 recompile :: IO ()
 recompile = do
     dir <- fmap (++ "/.xmonad") getHomeDirectory
-    pid <- runProcess "ghc" ["--make", "xmonad.hs"] (Just dir)
+    pid <- runProcess "ghc" ["--make", "xmonad.hs", "-i"] (Just dir)
         Nothing Nothing Nothing Nothing
     waitForProcess pid
     return ()
