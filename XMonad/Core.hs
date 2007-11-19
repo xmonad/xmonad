@@ -324,9 +324,13 @@ recompile = do
                 let msg = unlines $
                         ["Error detected while loading xmonad configuration file: " ++ src]
                         ++ lines ghcErr ++ ["","Please check the file for errors."]
-
-                waitForProcess =<< runProcess "xmessage" [msg]
-                    Nothing Nothing Nothing Nothing Nothing
+                -- usual double fork for async processes, and no zombies.
+                -- careful to use exec directly, avoiding shell
+                -- interpreting chars in the command line args
+                pid <- forkProcess $ do
+                    forkProcess $ createSession >> executeFile "xmessage" True [msg] Nothing
+                    exitWith ExitSuccess
+                getProcessStatus True False pid
                 return ()
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
