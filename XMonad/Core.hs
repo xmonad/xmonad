@@ -294,14 +294,22 @@ restart mprog resume = do
 
 -- | Recompile ~\/xmonad\/xmonad.hs.
 --
--- Raises an exception if ghc can't be found.
+-- The -i flag is used to restrict recompilation to the xmonad.hs file.
+-- Raises an exception if GHC can't be found, or if anything else goes wrong.
+--
 recompile :: IO ()
 recompile = do
-    dir <- fmap (++ "/.xmonad") getHomeDirectory
-    pid <- runProcess "ghc" ["--make", "xmonad.hs", "-i"] (Just dir)
-        Nothing Nothing Nothing Nothing
-    waitForProcess pid
-    return ()
+    dir     <- liftM (++ "/.xmonad") getHomeDirectory
+    let src = dir ++ "/" ++ "xmonad.hs"
+        obj = dir ++ "/" ++ "xmonad.o"
+    yes     <- doesFileExist src
+    when yes $ do
+        srcT <- getModificationTime src
+        objT <- getModificationTime obj
+        when (srcT > objT) $ do
+            waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i"] (Just dir)
+                                    Nothing Nothing Nothing Nothing
+            return ()
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()

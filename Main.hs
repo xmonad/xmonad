@@ -44,7 +44,7 @@ main = do
 buildLaunch ::  IO ()
 buildLaunch = do
     recompile
-    dir <- fmap (++ "/.xmonad") getHomeDirectory
+    dir  <- fmap (++ "/.xmonad") getHomeDirectory
     args <- getArgs
     executeFile (dir ++ "/xmonad") False args Nothing
     return ()
