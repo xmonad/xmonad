@@ -308,8 +308,8 @@ restart mprog resume = do
 -- status, any stderr produced by GHC, written to the file xmonad.errors,
 -- will be displayed to the user with xmessage
 --
-recompile :: IO ()
-recompile = do
+recompile :: MonadIO m => m ()
+recompile = liftIO $ do
     dir <- liftM (++ "/.xmonad") getHomeDirectory
     let bin = dir ++ "/" ++ "xmonad"
         err = bin ++ ".errors"
