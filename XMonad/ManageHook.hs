@@ -1,3 +1,5 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  XMonad/ManageHook.hs
@@ -17,15 +19,15 @@
 module XMonad.ManageHook where
 
 import XMonad.Core
-import Graphics.X11
 import Graphics.X11.Xlib.Extras
-import Control.Monad
+import Control.Monad.Reader
 import Data.Maybe
+import Data.Monoid
 import qualified XMonad.StackSet as W
 import XMonad.Operations (floatLocation, reveal)
 
-type ManageHook = Query (WindowSet -> WindowSet)
-type Query a    = Window -> X a
+liftX :: X a -> Query a
+liftX = Query . lift
 
 -- | The identity hook that returns the WindowSet unchanged.
 idHook :: ManageHook
@@ -33,34 +35,34 @@ idHook = doF id
 
 -- | Compose two 'ManageHook's
 (<+>) :: ManageHook -> ManageHook -> ManageHook
-f <+> g = \w -> liftM2 (.) (f w) (g w)
+f <+> g = mappend f g
 
 -- | Compose the list of 'ManageHook's
 composeAll :: [ManageHook] -> ManageHook
-composeAll = foldr (<+>) idHook
+composeAll = mconcat
 
 -- | 'p --> x'.  If 'p' returns 'True', execute the 'ManageHook'.
 (-->) :: Query Bool -> ManageHook -> ManageHook
-p --> f = \w -> p w >>= \b -> if b then f w else idHook w
+p --> f = p >>= \b -> if b then f else mempty
 
 -- | 'q =? x'. if the result of 'q' equals 'x', return 'True'.
 (=?) :: Eq a => Query a -> a -> Query Bool
-q =? x = \w -> fmap (== x) (q w)
+q =? x = fmap (== x) q
 
 -- | Queries that return the window title, resource, or class.
 title, resource, className :: Query String
-title     = \w -> withDisplay $ \d -> fmap (fromMaybe "") $ io $ fetchName d w
-resource  = \w -> withDisplay $ \d -> fmap resName $ io $ getClassHint d w
-className = \w -> withDisplay $ \d -> fmap resClass $ io $ getClassHint d w
+title     = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap (fromMaybe "") $ io $ fetchName d w)
+resource  = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resName $ io $ getClassHint d w)
+className = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resClass $ io $ getClassHint d w)
 
 -- | Modify the 'WindowSet' with a pure function.
 doF :: (WindowSet -> WindowSet) -> ManageHook
-doF f = const (return f)
+doF = return . Endo
 
 -- | Move the window to the floating layer.
 doFloat :: ManageHook
-doFloat = \w -> fmap (W.float w . snd) (floatLocation w)
+doFloat = ask >>= \w -> doF . W.float w . snd =<< liftX (floatLocation w)
 
 -- | Map the window and remove it from the 'WindowSet'.
 doIgnore :: ManageHook
-doIgnore = \w -> reveal w >> return (W.delete w)
+doIgnore = ask >>= \w -> liftX (reveal w) >> doF (W.delete w)

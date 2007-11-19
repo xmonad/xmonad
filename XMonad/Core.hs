@@ -27,7 +27,7 @@ module XMonad.Core (
     runX, catchX, userCode, io, catchIO,
     withDisplay, withWindowSet, isRoot,
     getAtom, spawn, restart, recompile, trace, whenJust, whenX,
-    atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
+    atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, ManageHook, Query(..), runManageHook
   ) where
 
 import XMonad.StackSet
@@ -45,6 +45,7 @@ import System.Environment
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras (Event)
 import Data.Typeable
+import Data.Monoid
 
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -75,7 +76,7 @@ data XConfig l = XConfig
     , focusedBorderColor :: !String             -- ^ Focused windows border color. Default: \"#ff0000\"
     , terminal           :: !String             -- ^ The preferred terminal application. Default: \"xterm\"
     , layoutHook         :: !(l Window)         -- ^ The avaiable layouts
-    , manageHook         :: Window -> X (WindowSet -> WindowSet) 
+    , manageHook         :: !ManageHook
                                                 -- ^ The action to run when a new window is opened
     , workspaces         :: [String]            -- ^ The list of workspaces' names
     , defaultGaps        :: [(Int,Int,Int,Int)] -- ^ The list of gaps, per screen
@@ -115,6 +116,20 @@ data ScreenDetail   = SD { screenRect :: !Rectangle
 --
 newtype X a = X (ReaderT XConf (StateT XState IO) a)
     deriving (Functor, Monad, MonadIO, MonadState XState, MonadReader XConf)
+
+instance (Monoid a) => Monoid (X a) where
+    mempty  = return mempty
+    mappend = liftM2 mappend
+
+type ManageHook = Query (Endo WindowSet)
+newtype Query a = Query (ReaderT Window X a) deriving (Functor, Monad, MonadReader Window)
+
+runManageHook :: ManageHook -> Window -> X (WindowSet -> WindowSet)
+runManageHook (Query m) w = fmap appEndo $ runReaderT m w
+
+instance Monoid a => Monoid (Query a) where
+    mempty  = return mempty
+    mappend = liftM2 mappend
 
 -- | Run the X monad, given a chunk of X monad code, and an initial state
 -- Return the result, and final state
