@@ -325,7 +325,9 @@ recompile = do
                         ["Error detected while loading xmonad configuration file: " ++ src]
                         ++ lines ghcErr ++ ["","Please check the file for errors."]
 
-                spawn $ "xmessage '" ++ msg ++ "'"
+                waitForProcess =<< runProcess "xmessage" [msg]
+                    Nothing Nothing Nothing Nothing Nothing
+                return ()
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
