@@ -270,9 +270,14 @@ catchIO f = liftIO (f `catch` \e -> hPrint stderr e >> hFlush stderr)
 
 -- | spawn. Launch an external application
 spawn :: MonadIO m => String -> m ()
-spawn x = liftIO $ do
+spawn x = doubleFork $ executeFile "/bin/sh" False ["-c", x] Nothing
+
+-- | Double fork and execute an IO action (usually one of the exec family of
+-- functions)
+doubleFork :: MonadIO m => IO () -> m ()
+doubleFork m = liftIO $ do
     pid <- forkProcess $ do
-        forkProcess (createSession >> executeFile "/bin/sh" False ["-c", x] Nothing)
+        forkProcess (createSession >> m)
         exitWith ExitSuccess
     getProcessStatus True False pid
     return ()
@@ -324,14 +329,7 @@ recompile = do
                 let msg = unlines $
                         ["Error detected while loading xmonad configuration file: " ++ src]
                         ++ lines ghcErr ++ ["","Please check the file for errors."]
-                -- usual double fork for async processes, and no zombies.
-                -- careful to use exec directly, avoiding shell
-                -- interpreting chars in the command line args
-                pid <- forkProcess $ do
-                    forkProcess $ createSession >> executeFile "xmessage" True [msg] Nothing
-                    exitWith ExitSuccess
-                getProcessStatus True False pid
-                return ()
+                doubleFork $ executeFile "xmessage" True [msg] Nothing
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
