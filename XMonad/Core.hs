@@ -314,22 +314,21 @@ recompile = liftIO $ do
     let bin = dir ++ "/" ++ "xmonad"
         err = bin ++ ".errors"
         src = bin ++ ".hs"
-    yes <- doesFileExist src
-    when yes $ do
-        srcT <- getModificationTime src
-        binT <- catch (getModificationTime bin) (const $ return srcT) -- needs recompiling
-        when (srcT >= binT) $ do
-            status <- bracket (openFile err WriteMode) hClose $ \h -> do
-                waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-v0"] (Just dir)
-                                        Nothing Nothing Nothing (Just h)
+    srcT <- getModTime src
+    binT <- getModTime bin
+    when (srcT > binT) $ do
+        status <- bracket (openFile err WriteMode) hClose $ \h -> do
+            waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-v0"] (Just dir)
+                                    Nothing Nothing Nothing (Just h)
 
-            -- now, if it fails, run xmessage to let the user know:
-            when (status /= ExitSuccess) $ do
-                ghcErr <- readFile err
-                let msg = unlines $
-                        ["Error detected while loading xmonad configuration file: " ++ src]
-                        ++ lines ghcErr ++ ["","Please check the file for errors."]
-                doubleFork $ executeFile "xmessage" True [msg] Nothing
+        -- now, if it fails, run xmessage to let the user know:
+        when (status /= ExitSuccess) $ do
+            ghcErr <- readFile err
+            let msg = unlines $
+                    ["Error detected while loading xmonad configuration file: " ++ src]
+                    ++ lines ghcErr ++ ["","Please check the file for errors."]
+            doubleFork $ executeFile "xmessage" True [msg] Nothing
+ where getModTime f = catch (fmap Just $ getModificationTime f) (const $ return Nothing)
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
