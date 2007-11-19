@@ -33,7 +33,7 @@ module XMonad.Core (
 import XMonad.StackSet
 
 import Prelude hiding ( catch )
-import Control.Exception (catch, throw, Exception(ExitException))
+import Control.Exception (catch, bracket, throw, Exception(ExitException))
 import Control.Monad.State
 import Control.Monad.Reader
 import System.IO
@@ -299,19 +299,35 @@ restart mprog resume = do
 --
 -- The file is only recompiled if it is newer than its binary.
 --
+-- In the event of an error, signalled with GHC returning non-zero exit
+-- status, any stderr produced by GHC, written to the file xmonad.errors,
+-- will be displayed to the user with xmessage
+--
 recompile :: IO ()
 recompile = do
     dir <- liftM (++ "/.xmonad") getHomeDirectory
     let bin = dir ++ "/" ++ "xmonad"
+        err = bin ++ ".errors"
         src = bin ++ ".hs"
     yes <- doesFileExist src
     when yes $ do
         srcT <- getModificationTime src
         binT <- getModificationTime bin
         when (srcT > binT) $ do
-            waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i"] (Just dir)
-                                    Nothing Nothing Nothing Nothing
-            return ()
+            status <- bracket (openFile err WriteMode) hClose $ \h -> do
+                waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-v0"] (Just dir)
+                                        Nothing Nothing Nothing (Just h)
+
+            -- now, if it fails, run xmessage to let the user know:
+            when (status /= ExitSuccess) $ do
+                ghcErr <- readFile err
+                let msg = unlines $
+                        ["Error detected while loading xmonad configuration file: " ++ src]
+                        ++ lines ghcErr ++ ["","Please check the file for errors."]
+
+                waitForProcess =<< runProcess "xmessage" [msg]
+                    Nothing Nothing Nothing Nothing Nothing
+                return ()
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
