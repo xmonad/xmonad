@@ -312,8 +312,8 @@ recompile = do
     yes <- doesFileExist src
     when yes $ do
         srcT <- getModificationTime src
-        binT <- getModificationTime bin
-        when (srcT > binT) $ do
+        binT <- catch (getModificationTime bin) (const $ return srcT) -- needs recompiling 
+        when (srcT >= binT) $ do
             status <- bracket (openFile err WriteMode) hClose $ \h -> do
                 waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-v0"] (Just dir)
                                         Nothing Nothing Nothing (Just h)
