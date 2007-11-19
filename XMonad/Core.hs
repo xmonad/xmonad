@@ -19,8 +19,14 @@
 -----------------------------------------------------------------------------
 
 module XMonad.Core (
-    X, WindowSet, WindowSpace, WorkspaceId, ScreenId(..), ScreenDetail(..), XState(..), XConf(..), XConfig(..), LayoutClass(..), Layout(..), readsLayout, Typeable, Message, SomeMessage(..), fromMessage, runLayout, LayoutMessages(..),
-    runX, catchX, userCode, io, catchIO, withDisplay, withWindowSet, isRoot, getAtom, spawn, restart, recompile, trace, whenJust, whenX,
+    X, WindowSet, WindowSpace, WorkspaceId,
+    ScreenId(..), ScreenDetail(..), XState(..),
+    XConf(..), XConfig(..), LayoutClass(..),
+    Layout(..), readsLayout, Typeable, Message,
+    SomeMessage(..), fromMessage, runLayout, LayoutMessages(..),
+    runX, catchX, userCode, io, catchIO,
+    withDisplay, withWindowSet, isRoot,
+    getAtom, spawn, restart, recompile, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW
   ) where
 
