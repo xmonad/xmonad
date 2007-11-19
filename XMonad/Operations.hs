@@ -51,7 +51,7 @@ manage w = whenX (fmap not $ isClient w) $ withDisplay $ \d -> do
     sh <- io $ getWMNormalHints d w
 
     let isFixedSize = sh_min_size sh /= Nothing && sh_min_size sh == sh_max_size sh
-    isTransient <- isJust `liftM` io (getTransientForHint d w)
+    isTransient <- isJust `fmap` io (getTransientForHint d w)
 
     (sc, rr) <- floatLocation w
     -- ensure that float windows don't go over the edge of the screen
@@ -296,7 +296,7 @@ setFocusX w = withWindowSet $ \ws -> do
             setButtonGrab True otherw
 
     -- If we ungrab buttons on the root window, we lose our mouse bindings.
-    whenX (not `liftM` isRoot w) $ setButtonGrab False w
+    whenX (not `fmap` isRoot w) $ setButtonGrab False w
     io $ do setInputFocus dpy w revertToPointerRoot 0
             -- raiseWindow dpy w
 
@@ -376,7 +376,7 @@ cleanMask km = do
 
 -- | Get the Pixel value for a named color
 initColor :: Display -> String -> IO Pixel
-initColor dpy c = (color_pixel . fst) `liftM` allocNamedColor dpy colormap c
+initColor dpy c = (color_pixel . fst) `fmap` allocNamedColor dpy colormap c
     where colormap = defaultColormap dpy (defaultScreen dpy)
 
 ------------------------------------------------------------------------

@@ -151,7 +151,7 @@ withWindowSet f = gets windowset >>= f
 
 -- | True if the given window is the root window
 isRoot :: Window -> X Bool
-isRoot w = liftM (w==) (asks theRoot)
+isRoot w = fmap (w==) (asks theRoot)
 
 -- | Wrapper for the common case of atom internment
 getAtom :: String -> X Atom
@@ -216,7 +216,7 @@ class Show (layout a) => LayoutClass layout a where
     description      = show
 
 instance LayoutClass Layout Window where
-    doLayout (Layout l) r s  = fmap (fmap Layout) `liftM` doLayout l r s
+    doLayout (Layout l) r s  = fmap (fmap Layout) `fmap` doLayout l r s
     handleMessage (Layout l) = fmap (fmap Layout) . handleMessage l
     description (Layout l)   = description l
 
@@ -310,7 +310,7 @@ restart mprog resume = do
 --
 recompile :: MonadIO m => m ()
 recompile = liftIO $ do
-    dir <- liftM (++ "/.xmonad") getHomeDirectory
+    dir <- fmap (++ "/.xmonad") getHomeDirectory
     let bin = dir ++ "/" ++ "xmonad"
         err = bin ++ ".errors"
         src = bin ++ ".hs"
