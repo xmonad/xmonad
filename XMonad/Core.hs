@@ -297,16 +297,18 @@ restart mprog resume = do
 -- The -i flag is used to restrict recompilation to the xmonad.hs file.
 -- Raises an exception if GHC can't be found, or if anything else goes wrong.
 --
+-- The file is only recompiled if it is newer than its binary.
+--
 recompile :: IO ()
 recompile = do
-    dir     <- liftM (++ "/.xmonad") getHomeDirectory
-    let src = dir ++ "/" ++ "xmonad.hs"
-        obj = dir ++ "/" ++ "xmonad.o"
-    yes     <- doesFileExist src
+    dir <- liftM (++ "/.xmonad") getHomeDirectory
+    let bin = dir ++ "/" ++ "xmonad"
+        src = bin ++ ".hs"
+    yes <- doesFileExist src
     when yes $ do
         srcT <- getModificationTime src
-        objT <- getModificationTime obj
-        when (srcT > objT) $ do
+        binT <- getModificationTime bin
+        when (srcT > binT) $ do
             waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i"] (Just dir)
                                     Nothing Nothing Nothing Nothing
             return ()
