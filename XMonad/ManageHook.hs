@@ -35,7 +35,7 @@ idHook = doF id
 
 -- | Compose two 'ManageHook's
 (<+>) :: ManageHook -> ManageHook -> ManageHook
-f <+> g = mappend f g
+(<+>) = mappend
 
 -- | Compose the list of 'ManageHook's
 composeAll :: [ManageHook] -> ManageHook
