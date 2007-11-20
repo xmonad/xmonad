@@ -334,7 +334,7 @@ recompile = liftIO $ do
     binT <- getModTime bin
     when (srcT > binT) $ do
         status <- bracket (openFile err WriteMode) hClose $ \h -> do
-            waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-v0"] (Just dir)
+            waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-no-recomp", "-v0"] (Just dir)
                                     Nothing Nothing Nothing (Just h)
 
         -- now, if it fails, run xmessage to let the user know:
