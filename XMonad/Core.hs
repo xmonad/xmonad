@@ -316,7 +316,6 @@ restart mprog resume = do
 -- | Recompile ~\/xmonad\/xmonad.hs.
 --
 -- The -i flag is used to restrict recompilation to the xmonad.hs file.
--- Raises an exception if GHC can't be found, or if anything else goes wrong.
 --
 -- The file is only recompiled if it is newer than its binary.
 --
