@@ -43,7 +43,7 @@ main = do
 --
 buildLaunch ::  IO ()
 buildLaunch = do
-    recompile
+    recompile False
     dir  <- fmap (++ "/.xmonad") getHomeDirectory
     args <- getArgs
     executeFile (dir ++ "/xmonad") False args Nothing

@@ -313,25 +313,27 @@ restart mprog resume = do
     catchIO (executeFile prog True args Nothing)
  where showWs = show . mapLayout show
 
--- | Recompile ~\/xmonad\/xmonad.hs.
+-- | 'recompile force', recompile ~\/.xmonad\/xmonad.hs when any of the
+-- following apply:
+--      * force is True
+--      * the xmonad executable does not exist
+--      * the xmonad executable is older than xmonad.hs
 --
--- The -i flag is used to restrict recompilation to the xmonad.hs file.
+-- The -i flag is used to restrict recompilation to the xmonad.hs file only.
 --
--- The file is only recompiled if it is newer than its binary.
+-- Compilation errors (if any) are logged to ~\/.xmonad\/xmonad.errors.  If
+-- GHC indicates failure with a non-zero exit code, an xmessage containing
+-- GHC's is spawned.
 --
--- In the event of an error, signalled with GHC returning non-zero exit
--- status, any stderr produced by GHC, written to the file xmonad.errors,
--- will be displayed to the user with xmessage
---
-recompile :: MonadIO m => m ()
-recompile = liftIO $ do
+recompile :: MonadIO m => Bool -> m ()
+recompile force = liftIO $ do
     dir <- (++ "/.xmonad") <$> getHomeDirectory
     let bin = dir ++ "/" ++ "xmonad"
         err = bin ++ ".errors"
         src = bin ++ ".hs"
     srcT <- getModTime src
     binT <- getModTime bin
-    when (srcT > binT) $ do
+    when (force || srcT > binT) $ do
         status <- bracket (openFile err WriteMode) hClose $ \h -> do
             waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-no-recomp", "-v0"] (Just dir)
                                     Nothing Nothing Nothing (Just h)
