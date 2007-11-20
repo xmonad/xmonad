@@ -29,6 +29,7 @@ import Data.Ratio
 import qualified Data.Map as M
 import qualified Data.Set as S
 
+import Control.Applicative
 import Control.Monad.State
 import Control.Monad.Reader
 
@@ -47,11 +48,11 @@ import Graphics.X11.Xlib.Extras
 -- border set, and its event mask set.
 --
 manage :: Window -> X ()
-manage w = whenX (fmap not $ isClient w) $ withDisplay $ \d -> do
+manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
     sh <- io $ getWMNormalHints d w
 
     let isFixedSize = sh_min_size sh /= Nothing && sh_min_size sh == sh_max_size sh
-    isTransient <- isJust `fmap` io (getTransientForHint d w)
+    isTransient <- isJust <$> io (getTransientForHint d w)
 
     (sc, rr) <- floatLocation w
     -- ensure that float windows don't go over the edge of the screen
@@ -234,7 +235,7 @@ clearEvents mask = withDisplay $ \d -> io $ do
 -- rectangle, including its border.
 tileWindow :: Window -> Rectangle -> X ()
 tileWindow w r = withDisplay $ \d -> do
-    bw <- (fromIntegral . wa_border_width) `fmap` io (getWindowAttributes d w)
+    bw <- (fromIntegral . wa_border_width) <$> io (getWindowAttributes d w)
     -- give all windows at least 1x1 pixels
     let least x | x <= bw*2  = 1
                 | otherwise  = x - bw*2
@@ -296,7 +297,7 @@ setFocusX w = withWindowSet $ \ws -> do
             setButtonGrab True otherw
 
     -- If we ungrab buttons on the root window, we lose our mouse bindings.
-    whenX (not `fmap` isRoot w) $ setButtonGrab False w
+    whenX (not <$> isRoot w) $ setButtonGrab False w
     io $ do setInputFocus dpy w revertToPointerRoot 0
             -- raiseWindow dpy w
 
@@ -307,7 +308,7 @@ setFocusX w = withWindowSet $ \ws -> do
 -- layout the windows, then refresh.
 sendMessage :: Message a => a -> X ()
 sendMessage a = do
-    w <- (W.workspace . W.current) `fmap` gets windowset
+    w <- W.workspace . W.current <$> gets windowset
     ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
     whenJust ml' $ \l' -> do
         windows $ \ws -> ws { W.current = (W.current ws)
@@ -335,7 +336,7 @@ runOnWorkspaces :: (WindowSpace -> X WindowSpace) -> X ()
 runOnWorkspaces job =do
     ws <- gets windowset
     h <- mapM job $ W.hidden ws
-    c:v <- mapM (\s -> fmap (\w -> s { W.workspace = w}) $ job (W.workspace s))
+    c:v <- mapM (\s -> (\w -> s { W.workspace = w}) <$> job (W.workspace s))
              $ W.current ws : W.visible ws
     modify $ \s -> s { windowset = ws { W.current = c, W.visible = v, W.hidden = h } }
 
@@ -376,7 +377,7 @@ cleanMask km = do
 
 -- | Get the Pixel value for a named color
 initColor :: Display -> String -> IO Pixel
-initColor dpy c = (color_pixel . fst) `fmap` allocNamedColor dpy colormap c
+initColor dpy c = (color_pixel . fst) <$> allocNamedColor dpy colormap c
     where colormap = defaultColormap dpy (defaultScreen dpy)
 
 ------------------------------------------------------------------------
@@ -388,7 +389,7 @@ floatLocation :: Window -> X (ScreenId, W.RationalRect)
 floatLocation w = withDisplay $ \d -> do
     ws <- gets windowset
     wa <- io $ getWindowAttributes d w
-    bw <- fi `fmap` asks (borderWidth . config)
+    bw <- fi <$> asks (borderWidth . config)
 
     -- XXX horrible
     let sc = fromMaybe (W.current ws) $ find (pointWithin (fi $ wa_x wa) (fi $ wa_y wa) . screenRect . W.screenDetail) $ W.screens ws

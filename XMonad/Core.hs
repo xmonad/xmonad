@@ -34,6 +34,7 @@ import XMonad.StackSet
 
 import Prelude hiding ( catch )
 import Control.Exception (catch, bracket, throw, Exception(ExitException))
+import Control.Applicative
 import Control.Monad.State
 import Control.Monad.Reader
 import System.IO
@@ -125,7 +126,7 @@ type ManageHook = Query (Endo WindowSet)
 newtype Query a = Query (ReaderT Window X a) deriving (Functor, Monad, MonadReader Window)
 
 runManageHook :: ManageHook -> Window -> X (WindowSet -> WindowSet)
-runManageHook (Query m) w = fmap appEndo $ runReaderT m w
+runManageHook (Query m) w = appEndo <$> runReaderT m w
 
 instance Monoid a => Monoid (Query a) where
     mempty  = return mempty
@@ -166,7 +167,7 @@ withWindowSet f = gets windowset >>= f
 
 -- | True if the given window is the root window
 isRoot :: Window -> X Bool
-isRoot w = fmap (w==) (asks theRoot)
+isRoot w = (w==) <$> asks theRoot
 
 -- | Wrapper for the common case of atom internment
 getAtom :: String -> X Atom
@@ -325,7 +326,7 @@ restart mprog resume = do
 --
 recompile :: MonadIO m => m ()
 recompile = liftIO $ do
-    dir <- fmap (++ "/.xmonad") getHomeDirectory
+    dir <- (++ "/.xmonad") <$> getHomeDirectory
     let bin = dir ++ "/" ++ "xmonad"
         err = bin ++ ".errors"
         src = bin ++ ".hs"
@@ -343,7 +344,7 @@ recompile = liftIO $ do
                     ["Error detected while loading xmonad configuration file: " ++ src]
                     ++ lines ghcErr ++ ["","Please check the file for errors."]
             doubleFork $ executeFile "xmessage" True [msg] Nothing
- where getModTime f = catch (fmap Just $ getModificationTime f) (const $ return Nothing)
+ where getModTime f = catch (Just <$> getModificationTime f) (const $ return Nothing)
 
 -- | Run a side effecting action with the current workspace. Like 'when' but
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
