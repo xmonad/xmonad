@@ -49,6 +49,16 @@ p --> f = p >>= \b -> if b then f else mempty
 (=?) :: Eq a => Query a -> a -> Query Bool
 q =? x = fmap (== x) q
 
+infixr 3 <&&>, <||>
+
+-- | 'p <&&> q'.  '&&' lifted to a Monad.
+(<&&>) :: Monad m => m Bool -> m Bool -> m Bool
+(<&&>) = liftM2 (&&)
+
+-- | 'p <||> q'.  '||' lifted to a Monad.
+(<||>) :: Monad m => m Bool -> m Bool -> m Bool
+(<||>) = liftM2 (||)
+
 -- | Queries that return the window title, resource, or class.
 title, resource, className :: Query String
 title     = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap (fromMaybe "") $ io $ fetchName d w)
