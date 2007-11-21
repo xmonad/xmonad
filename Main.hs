@@ -16,11 +16,10 @@ module Main (main) where
 
 import XMonad.Main
 import XMonad.Config
-import XMonad.Core (recompile)
+import XMonad.Core (getXMonadDir, recompile)
 
 import Control.Exception (handle)
 import System.IO
-import System.Directory
 import System.Environment
 import System.Posix.Process (executeFile)
 
@@ -44,7 +43,7 @@ main = do
 buildLaunch ::  IO ()
 buildLaunch = do
     recompile False
-    dir  <- fmap (++ "/.xmonad") getHomeDirectory
+    dir  <- getXMonadDir
     args <- getArgs
     executeFile (dir ++ "/xmonad") False args Nothing
     return ()

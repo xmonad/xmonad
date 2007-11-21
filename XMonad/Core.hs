@@ -26,7 +26,7 @@ module XMonad.Core (
     SomeMessage(..), fromMessage, runLayout, LayoutMessages(..),
     runX, catchX, userCode, io, catchIO,
     withDisplay, withWindowSet, isRoot,
-    getAtom, spawn, restart, recompile, trace, whenJust, whenX,
+    getAtom, spawn, restart, getXMonadDir, recompile, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, ManageHook, Query(..), runManageHook
   ) where
 
@@ -313,6 +313,10 @@ restart mprog resume = do
     catchIO (executeFile prog True args Nothing)
  where showWs = show . mapLayout show
 
+-- | Return the path to @~\/.xmonad@.
+getXMonadDir :: MonadIO m => m String
+getXMonadDir = io $ getAppUserDataDirectory "xmonad"
+
 -- | 'recompile force', recompile ~\/.xmonad\/xmonad.hs when any of the
 -- following apply:
 --      * force is True
@@ -327,7 +331,7 @@ restart mprog resume = do
 --
 recompile :: MonadIO m => Bool -> m ()
 recompile force = io $ do
-    dir <- (++ "/.xmonad") <$> getHomeDirectory
+    dir <- getXMonadDir
     let bin = dir ++ "/" ++ "xmonad"
         err = bin ++ ".errors"
         src = bin ++ ".hs"
