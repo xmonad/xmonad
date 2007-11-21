@@ -276,13 +276,13 @@ instance Message LayoutMessages
 -- | General utilities
 --
 -- Lift an IO action into the X monad
-io :: IO a -> X a
+io :: MonadIO m => IO a -> m a
 io = liftIO
 
 -- | Lift an IO action into the X monad.  If the action results in an IO
 -- exception, log the exception to stderr and continue normal execution.
 catchIO :: IO () -> X ()
-catchIO f = liftIO (f `catch` \e -> hPrint stderr e >> hFlush stderr)
+catchIO f = io (f `catch` \e -> hPrint stderr e >> hFlush stderr)
 
 -- | spawn. Launch an external application
 spawn :: MonadIO m => String -> m ()
@@ -291,7 +291,7 @@ spawn x = doubleFork $ executeFile "/bin/sh" False ["-c", x] Nothing
 -- | Double fork and execute an IO action (usually one of the exec family of
 -- functions)
 doubleFork :: MonadIO m => IO () -> m ()
-doubleFork m = liftIO $ do
+doubleFork m = io $ do
     pid <- forkProcess $ do
         forkProcess (createSession >> m)
         exitWith ExitSuccess
@@ -326,7 +326,7 @@ restart mprog resume = do
 -- GHC's is spawned.
 --
 recompile :: MonadIO m => Bool -> m ()
-recompile force = liftIO $ do
+recompile force = io $ do
     dir <- (++ "/.xmonad") <$> getHomeDirectory
     let bin = dir ++ "/" ++ "xmonad"
         err = bin ++ ".errors"
@@ -358,4 +358,4 @@ whenX a f = a >>= \b -> when b f
 -- | A 'trace' for the X monad. Logs a string to stderr. The result may
 -- be found in your .xsession-errors file
 trace :: MonadIO m => String -> m ()
-trace = liftIO . hPutStrLn stderr
+trace = io . hPutStrLn stderr
