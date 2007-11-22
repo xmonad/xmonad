@@ -345,8 +345,8 @@ getXMonadDir = io $ getAppUserDataDirectory "xmonad"
 -- The -i flag is used to restrict recompilation to the xmonad.hs file only.
 --
 -- Compilation errors (if any) are logged to ~\/.xmonad\/xmonad.errors.  If
--- GHC indicates failure with a non-zero exit code, an xmessage containing
--- GHC's is spawned.
+-- GHC indicates failure with a non-zero exit code, an xmessage displaying
+-- that file is spawned.
 --
 -- False is returned if there is compilation errors.
 --
