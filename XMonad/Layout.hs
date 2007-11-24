@@ -15,7 +15,7 @@
 --
 -----------------------------------------------------------------------------
 
-module XMonad.Layouts (ChangeLayout(..), Choose, (|||), Resize(..), IncMasterN(..),
+module XMonad.Layout (ChangeLayout(..), Choose, (|||), Resize(..), IncMasterN(..),
                 Full(..), Tall(..), Mirror(..), mirrorRect, splitVertically,
                 splitHorizontally, splitHorizontallyBy, splitVerticallyBy) where
 

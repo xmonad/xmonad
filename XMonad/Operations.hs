@@ -19,7 +19,7 @@
 module XMonad.Operations where
 
 import XMonad.Core
-import XMonad.Layouts (Full(..))
+import XMonad.Layout (Full(..))
 import qualified XMonad.StackSet as W
 
 import Data.Maybe

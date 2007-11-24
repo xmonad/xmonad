@@ -27,7 +27,7 @@ import qualified XMonad.Core as XMonad
     (workspaces,manageHook,numlockMask,keys,logHook,borderWidth,mouseBindings
     ,defaultGaps,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor)
 
-import XMonad.Layouts
+import XMonad.Layout
 import XMonad.Operations
 import XMonad.ManageHook
 import qualified XMonad.StackSet as W

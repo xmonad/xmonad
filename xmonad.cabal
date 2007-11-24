@@ -30,7 +30,7 @@ library
                         XMonad.Main
                         XMonad.Core
                         XMonad.Config
-                        XMonad.Layouts
+                        XMonad.Layout
                         XMonad.ManageHook
                         XMonad.Operations
                         XMonad.StackSet
@@ -47,7 +47,7 @@ library
 
 executable xmonad
     main-is:            Main.hs
-    other-modules:      XMonad.Core XMonad.Main XMonad.Layouts
+    other-modules:      XMonad.Core XMonad.Main XMonad.Layout
                         XMonad.Operations XMonad.StackSet XMonad
 
     ghc-options:        -funbox-strict-fields -Wall -Werror -optl-Wl,-s
