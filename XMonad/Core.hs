@@ -213,7 +213,7 @@ class Show (layout a) => LayoutClass layout a where
     doLayout l r s   = return (pureLayout l r s, Nothing)
 
     -- | This is a pure version of doLayout, for cases where we don't need
-    -- access to the X monad to determine how to layou out the windows, and
+    -- access to the X monad to determine how to layout the windows, and
     -- we don't need to modify our layout itself.
     pureLayout  :: layout a -> Rectangle -> Stack a -> [(a, Rectangle)]
     pureLayout _ r s = [(focus s, r)]
@@ -221,7 +221,7 @@ class Show (layout a) => LayoutClass layout a where
     -- | 'handleMessage' performs message handling for that layout.  If
     -- 'handleMessage' returns Nothing, then the layout did not respond to
     -- that message and the screen is not refreshed.  Otherwise, 'handleMessage'
-    -- returns an updated 'LayoutClass' and the screen is refreshed.
+    -- returns an updated 'Layout' and the screen is refreshed.
     --
     handleMessage :: layout a -> SomeMessage -> X (Maybe (layout a))
     handleMessage l  = return . pureMessage l

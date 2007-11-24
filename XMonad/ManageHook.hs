@@ -61,9 +61,9 @@ infixr 3 <&&>, <||>
 
 -- | Queries that return the window title, resource, or class.
 title, resource, className :: Query String
-title     = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap (fromMaybe "") $ io $ fetchName d w)
-resource  = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resName $ io $ getClassHint d w)
-className = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resClass $ io $ getClassHint d w)
+title     = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap (fromMaybe "") $ io $ fetchName    d w)
+resource  = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resName        $ io $ getClassHint d w)
+className = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resClass       $ io $ getClassHint d w)
 
 -- | Modify the 'WindowSet' with a pure function.
 doF :: (WindowSet -> WindowSet) -> ManageHook
