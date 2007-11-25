@@ -10,10 +10,8 @@
 
 * configuration documentation
 
-* build and typecheck all XMC
 * generate haddocks for core and XMC, upload to xmonad.org
 * generate manpage, generate html manpage
-* document, with photos, any new layouts
 * double check README build instructions
 * test core with 6.6 and 6.8
 * bump xmonad.cabal version and X11 version
