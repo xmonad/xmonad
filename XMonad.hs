@@ -17,6 +17,7 @@ module XMonad (
     module XMonad.Main,
     module XMonad.Core,
     module XMonad.Config,
+    module XMonad.ManageHook,
  -- module Graphics.X11.Xlib, -- conflicts with lots of extensions
     (.|.)
 
@@ -26,6 +27,7 @@ module XMonad (
 import XMonad.Main
 import XMonad.Core
 import XMonad.Config
+import XMonad.ManageHook
 -- import XMonad.StackSet -- conflicts with 'workspaces' defined in XMonad.hs
 
 -- modules needed to get basic configuration working
