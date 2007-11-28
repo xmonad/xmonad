@@ -123,7 +123,7 @@ instance (Monoid a) => Monoid (X a) where
     mappend = liftM2 mappend
 
 type ManageHook = Query (Endo WindowSet)
-newtype Query a = Query (ReaderT Window X a) deriving (Functor, Monad, MonadReader Window)
+newtype Query a = Query (ReaderT Window X a) deriving (Functor, Monad, MonadReader Window, MonadIO)
 
 runManageHook :: ManageHook -> Window -> X (WindowSet -> WindowSet)
 runManageHook (Query m) w = appEndo <$> runReaderT m w
