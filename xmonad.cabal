@@ -17,8 +17,9 @@ license:            BSD3
 license-file:       LICENSE
 author:             Spencer Janssen
 maintainer:         xmonad@haskell.org
-extra-source-files: README TODO tests/loc.hs tests/Properties.hs man/xmonad.1.in
-                    util/GenerateManpage.hs man/xmonad.1 man/xmonad.html
+extra-source-files: README TODO CONFIG STYLE tests/loc.hs tests/Properties.hs
+                    man/xmonad.1.in man/xmonad.1 man/xmonad.html
+                    util/GenerateManpage.hs
 cabal-version:      >= 1.2
 
 flag small_base
