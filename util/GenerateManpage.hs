@@ -42,6 +42,6 @@ replace :: Eq a => a -> a -> [a] -> [a]
 replace x y = map (\a -> if a == x then y else a)
 
 main = do
-    troffBindings <- (concatMap troff . allBindings) `liftM` readFile "./Config.hs"
+    troffBindings <- (concatMap troff . allBindings) `liftM` readFile "./XMonad/Config.hs"
     let sed = unlines . replace "___KEYBINDINGS___" troffBindings . lines
     readFile "./man/xmonad.1.in" >>= return . sed >>= writeFile "./man/xmonad.1"
