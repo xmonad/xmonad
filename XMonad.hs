@@ -18,8 +18,12 @@ module XMonad (
     module XMonad.Core,
     module XMonad.Config,
     module XMonad.ManageHook,
- -- module Graphics.X11.Xlib, -- conflicts with lots of extensions
-    (.|.)
+    module Graphics.X11,
+    module Graphics.X11.Xlib.Extras,
+    (.|.),
+    MonadState(..), gets, modify,
+    MonadReader(..), asks,
+    MonadIO(..)
 
  ) where
 
@@ -32,4 +36,8 @@ import XMonad.ManageHook
 
 -- modules needed to get basic configuration working
 import Data.Bits
--- import Graphics.X11.Xlib
+import Graphics.X11 hiding (refreshKeyboardMapping)
+import Graphics.X11.Xlib.Extras
+
+import Control.Monad.State
+import Control.Monad.Reader
