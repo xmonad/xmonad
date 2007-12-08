@@ -17,7 +17,7 @@ module XMonad (
     module XMonad.Main,
     module XMonad.Core,
     module XMonad.Config,
-    module XMonad.Layouts,
+    module XMonad.Layout,
     module XMonad.ManageHook,
     module XMonad.Operations,
     module Graphics.X11,
@@ -33,7 +33,7 @@ module XMonad (
 import XMonad.Main
 import XMonad.Core
 import XMonad.Config
-import XMonad.Layouts
+import XMonad.Layout
 import XMonad.ManageHook
 import XMonad.Operations
 -- import XMonad.StackSet -- conflicts with 'workspaces' defined in XMonad.hs
