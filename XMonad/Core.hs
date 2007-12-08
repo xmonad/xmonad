@@ -116,14 +116,19 @@ data ScreenDetail   = SD { screenRect :: !Rectangle
 -- instantiated on XConf and XState automatically.
 --
 newtype X a = X (ReaderT XConf (StateT XState IO) a)
+#ifndef __HADDOCK__
     deriving (Functor, Monad, MonadIO, MonadState XState, MonadReader XConf)
+#endif
 
 instance (Monoid a) => Monoid (X a) where
     mempty  = return mempty
     mappend = liftM2 mappend
 
 type ManageHook = Query (Endo WindowSet)
-newtype Query a = Query (ReaderT Window X a) deriving (Functor, Monad, MonadReader Window, MonadIO)
+newtype Query a = Query (ReaderT Window X a)
+#ifndef __HADDOCK__
+    deriving (Functor, Monad, MonadReader Window, MonadIO)
+#endif
 
 runManageHook :: ManageHook -> Window -> X (WindowSet -> WindowSet)
 runManageHook (Query m) w = appEndo <$> runReaderT m w

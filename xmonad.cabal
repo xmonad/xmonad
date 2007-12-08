@@ -43,6 +43,7 @@ library
 
     ghc-options:        -funbox-strict-fields -Wall -Werror -optl-Wl,-s
     ghc-prof-options:   -prof -auto-all
+    extensions:         CPP
 
 executable xmonad
     main-is:            Main.hs
@@ -51,3 +52,4 @@ executable xmonad
 
     ghc-options:        -funbox-strict-fields -Wall -Werror -optl-Wl,-s
     ghc-prof-options:   -prof -auto-all
+    extensions:         CPP
