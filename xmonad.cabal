@@ -18,7 +18,7 @@ license-file:       LICENSE
 author:             Spencer Janssen
 maintainer:         xmonad@haskell.org
 extra-source-files: README TODO CONFIG STYLE tests/loc.hs tests/Properties.hs
-                    man/xmonad.1.in man/xmonad.1 man/xmonad.html man/xmonad-template.hs
+                    man/xmonad.1.in man/xmonad.1 man/xmonad.html man/xmonad.hs
                     util/GenerateManpage.hs
 cabal-version:      >= 1.2
 

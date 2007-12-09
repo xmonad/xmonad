@@ -7,7 +7,7 @@ xmonad is configured by creating and editing the file:
 xmonad then uses settings from this file as arguments to the window manager,
 on startup. For a complete example of possible settings, see the file:
 
-    man/xmonad-template.hs
+    man/xmonad.hs
 
 Further examples are on the website, wiki and extension documentation.
 
