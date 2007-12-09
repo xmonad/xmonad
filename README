@@ -110,6 +110,12 @@ Running xmonad:
 
 ------------------------------------------------------------------------
 
+Configuring:
+
+    See the CONFIG document
+
+------------------------------------------------------------------------
+
 XMonadContrib
 
     There are many extensions to xmonad available in the XMonadContrib
