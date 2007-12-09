@@ -123,7 +123,7 @@ XMonadContrib
     prompt/program launcher, and various other useful modules.
     XMonadContrib is available at:
 
-        0.4 release:   http://www.xmonad.org/XMonadContrib-0.4.tar.gz
+        0.5 release:   http://hackage.haskell.org/cgi-bin/hackage-scripts/package/xmonad-contrib-0.5
 
         darcs version: darcs get http://code.haskell.org/XMonadContrib
 
