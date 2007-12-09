@@ -111,12 +111,11 @@ defaultGaps = [(0,0,0,0)] -- 15 for default dzen font
 -- and click on the client you're interested in.
 --
 manageHook :: ManageHook
-manageHook = composeAll . concat $
-                [ [ className =? c --> doFloat | c <- floats]
-                , [ resource =? r --> doIgnore | r <- ignore]
-                , [ resource =? "Gecko" --> doF (W.shift "web") ]]
- where floats = ["MPlayer", "Gimp"]
-       ignore = ["gnome-panel", "desktop_window", "kicker", "kdesktop"]
+manageHook = composeAll
+                [ className =? "MPlayer"        --> doFloat
+                , className =? "Gimp"           --> doFloat
+                , resource  =? "desktop_window" --> doIgnore
+                , resource  =? "kdesktop"       --> doIgnore ]
 
 ------------------------------------------------------------------------
 -- Logging
