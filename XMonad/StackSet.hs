@@ -14,6 +14,16 @@
 module XMonad.StackSet (
         -- * Introduction
         -- $intro
+
+        -- ** The Zipper
+        -- $zipper
+
+        -- ** Xinerama support
+        -- $xinerama
+
+        -- ** Master and Focus
+        -- $focus
+
         StackSet(..), Workspace(..), Screen(..), Stack(..), RationalRect(..),
         -- *  Construction
         -- $construction
@@ -65,8 +75,8 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 -- Note that workspaces are indexed from 0, windows are numbered
 -- uniquely. A '*' indicates the window on each workspace that has
 -- focus, and which workspace is current.
---
--- Zipper
+
+-- $zipper
 --
 -- We encode all the focus tracking directly in the data structure, with a 'zipper':
 --
@@ -94,9 +104,8 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 -- Another good reference is:
 --
 --      The Zipper, Haskell wikibook
---
--- Xinerama support:
---
+
+-- $xinerama
 -- Xinerama in X11 lets us view multiple virtual workspaces
 -- simultaneously. While only one will ever be in focus (i.e. will
 -- receive keyboard events), other workspaces may be passively
@@ -104,8 +113,8 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 -- associated (viewed) on which physical screens.  To keep track of
 -- this, StackSet keeps separate lists of visible but non-focused
 -- workspaces, and non-visible workspaces.  
---
--- Master and Focus
+
+-- $focus
 --
 -- Each stack tracks a focused item, and for tiling purposes also tracks
 -- a 'master' position. The connection between 'master' and 'focus'
