@@ -25,6 +25,10 @@ cabal-version:      >= 1.2
 flag small_base
   description: Choose the new smaller, split-up base package.
 
+flag testing
+  description: Testing mode, only build minimal components
+  default: False
+
 library
     exposed-modules:    XMonad
                         XMonad.Main
@@ -44,6 +48,8 @@ library
     ghc-options:        -funbox-strict-fields -Wall -Werror -optl-Wl,-s
     ghc-prof-options:   -prof -auto-all
     extensions:         CPP
+    if flag(testing)
+        buildable: False
 
 executable xmonad
     main-is:            Main.hs
