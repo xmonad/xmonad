@@ -222,6 +222,9 @@ myLayout = tiled ||| Mirror tiled ||| Full
 -- > xprop | grep WM_CLASS
 -- and click on the client you're interested in.
 --
+-- To match on the WM_NAME, you can use 'title' in the same way that
+-- 'className' and 'resource' are used below.
+--
 myManageHook = composeAll
     [ className =? "MPlayer"        --> doFloat
     , className =? "Gimp"           --> doFloat
