@@ -4,7 +4,7 @@
 
 -- --------------------------------------------------------------------------
 -- |
--- Module      :  Operations.hs
+-- Module      :  XMonad.Operations
 -- Copyright   :  (c) Spencer Janssen 2007
 -- License     :  BSD3-style (see LICENSE)
 --
