@@ -14,9 +14,7 @@
 
 module Main (main) where
 
-import XMonad.Main
-import XMonad.Config
-import XMonad.Core (getXMonadDir, recompile)
+import XMonad
 
 import Control.Exception (handle)
 import System.IO
