@@ -72,9 +72,7 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
 -- list, on whatever workspace it is.
 --
 unmanage :: Window -> X ()
-unmanage w = do
-    windows (W.delete w)
-    setWMState w withdrawnState
+unmanage = windows . W.delete
 
 -- | Modify the size of the status gap at the top of the current screen
 -- Taking a function giving the current screen, and current geometry.
@@ -113,7 +111,10 @@ windows f = do
     let oldvisible = concatMap (W.integrate' . W.stack . W.workspace) $ W.current old : W.visible old
         ws = f old
     XConf { display = d , normalBorder = nbc, focusedBorder = fbc } <- ask
+
     mapM_ setInitialProperties (W.allWindows ws \\ W.allWindows old)
+    mapM_ (flip setWMState withdrawnState) (W.allWindows old \\ W.allWindows ws)
+
     whenJust (W.peek old) $ \otherw -> io $ setWindowBorder d otherw nbc
     modify (\s -> s { windowset = ws })
 
