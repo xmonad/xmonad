@@ -77,7 +77,6 @@ unmanage :: Window -> X ()
 unmanage w = do
     windows (W.delete w)
     setWMState w withdrawnState
-    modify (\s -> s {mapped = S.delete w (mapped s), waitingUnmap = M.delete w (waitingUnmap s)})
 
 -- | Modify the size of the status gap at the top of the current screen
 -- Taking a function giving the current screen, and current geometry.
