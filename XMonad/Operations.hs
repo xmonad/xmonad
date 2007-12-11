@@ -71,8 +71,6 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
 -- | unmanage. A window no longer exists, remove it from the window
 -- list, on whatever workspace it is.
 --
--- should also unmap?
---
 unmanage :: Window -> X ()
 unmanage w = do
     windows (W.delete w)
