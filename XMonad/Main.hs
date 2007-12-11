@@ -151,7 +151,9 @@ handle (UnmapEvent {ev_window = w, ev_send_event = synthetic}) = whenX (isClient
     e <- gets (fromMaybe 0 . M.lookup w . waitingUnmap)
     if (synthetic || e == 0)
         then unmanage w
-        else modify (\s -> s { waitingUnmap = M.adjust pred w (waitingUnmap s) })
+        else modify (\s -> s { waitingUnmap = M.update mpred w (waitingUnmap s) })
+ where mpred 1 = Nothing
+       mpred n = Just $ pred n
 
 -- set keyboard mapping
 handle e@(MappingNotifyEvent {}) = do
