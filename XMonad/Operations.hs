@@ -113,7 +113,6 @@ windows f = do
     XConf { display = d , normalBorder = nbc, focusedBorder = fbc } <- ask
 
     mapM_ setInitialProperties (W.allWindows ws \\ W.allWindows old)
-    mapM_ (flip setWMState withdrawnState) (W.allWindows old \\ W.allWindows ws)
 
     whenJust (W.peek old) $ \otherw -> io $ setWindowBorder d otherw nbc
     modify (\s -> s { windowset = ws })
@@ -167,6 +166,11 @@ windows f = do
     -- hide every window that was potentially visible before, but is not
     -- given a position by a layout now.
     mapM_ hide (nub oldvisible \\ visible)
+
+    -- all windows that are no longer in the windowset are marked as
+    -- withdrawn, it is important to do this after the above, otherwise 'hide'
+    -- will overwrite withdrawnState with iconicState
+    mapM_ (flip setWMState withdrawnState) (W.allWindows old \\ W.allWindows ws)
 
     clearEvents enterWindowMask
 
