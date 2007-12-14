@@ -72,7 +72,7 @@ Building:
 
     mtl   http://hackage.haskell.org/cgi-bin/hackage-scripts/package/mtl-1.0
     unix  http://hackage.haskell.org/cgi-bin/hackage-scripts/package/unix-2.0 
-    X11   http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-1.3.0
+    X11   http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-1.4.1
 
  * Build xmonad: 
 
