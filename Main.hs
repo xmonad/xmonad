@@ -18,6 +18,7 @@ import XMonad
 
 import Control.Exception (handle)
 import System.IO
+import System.Info
 import System.Environment
 import System.Posix.Process (executeFile)
 
@@ -43,5 +44,5 @@ buildLaunch = do
     recompile False
     dir  <- getXMonadDir
     args <- getArgs
-    executeFile (dir ++ "/xmonad") False args Nothing
+    executeFile (dir ++ "/xmonad-"++arch++"-"++os) False args Nothing
     return ()

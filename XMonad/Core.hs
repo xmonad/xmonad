@@ -38,6 +38,7 @@ import Control.Applicative
 import Control.Monad.State
 import Control.Monad.Reader
 import System.IO
+import System.Info
 import System.Posix.Process (executeFile, forkProcess, getProcessStatus, createSession)
 import System.Process
 import System.Directory
@@ -355,14 +356,16 @@ getXMonadDir = io $ getAppUserDataDirectory "xmonad"
 recompile :: MonadIO m => Bool -> m ()
 recompile force = io $ do
     dir <- getXMonadDir
-    let bin = dir ++ "/" ++ "xmonad"
-        err = bin ++ ".errors"
-        src = bin ++ ".hs"
+    let binn = "xmonad-"++arch++"-"++os
+        bin  = dir ++ "/" ++ binn
+        base = dir ++ "/" ++ "xmonad"
+        err  = base ++ ".errors"
+        src  = base ++ ".hs"
     srcT <- getModTime src
     binT <- getModTime bin
     when (force || srcT > binT) $ do
         status <- bracket (openFile err WriteMode) hClose $ \h -> do
-            waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-no-recomp", "-v0"] (Just dir)
+            waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-no-recomp", "-v0", "-o",binn] (Just dir)
                                     Nothing Nothing Nothing (Just h)
 
         -- now, if it fails, run xmessage to let the user know:
