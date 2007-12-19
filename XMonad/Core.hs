@@ -332,6 +332,7 @@ runOnWorkspaces job =do
 restart :: Maybe String -> Bool -> X ()
 restart mprog resume = do
     broadcastMessage ReleaseResources
+    io . flush =<< asks display
     prog <- maybe (io getProgName) return mprog
     args <- if resume then gets (("--resume":) . return . showWs . windowset) else return []
     catchIO (executeFile prog True args Nothing)
