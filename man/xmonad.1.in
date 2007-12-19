@@ -27,6 +27,6 @@ xmonad
 .RE
 to your \fI~/.xinitrc\fR file
 .SH CUSTOMIZATION
-\fBxmonad\fR is customized by creating a custom Config.hs and (re)compiling the source code. After recompiling, 'restart' is used to fork the new version, with changes reflected immediately.
+\fBxmonad\fR is customized in ~/.xmonad/xmonad.hs, and then restarting with mod-q.
 .SH BUGS
 Probably. If you find any, please report them: http://code.google.com/p/xmonad/issues/list
