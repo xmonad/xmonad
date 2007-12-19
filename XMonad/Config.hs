@@ -207,7 +207,7 @@ keys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
 
     -- quit, or restart
     , ((modMask .|. shiftMask, xK_q     ), io (exitWith ExitSuccess)) -- %! Quit xmonad
-    , ((modMask              , xK_q     ), restart (Just "xmonad") True) -- %! Restart xmonad
+    , ((modMask              , xK_q     ), restart "xmonad" True) -- %! Restart xmonad
     ]
     ++
     -- mod-[1..9] %! Switch to workspace N

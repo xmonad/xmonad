@@ -43,7 +43,6 @@ import System.Posix.Process (executeFile, forkProcess, getProcessStatus, createS
 import System.Process
 import System.Directory
 import System.Exit
-import System.Environment
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras (Event)
 import Data.Typeable
@@ -321,19 +320,14 @@ runOnWorkspaces job =do
              $ current ws : visible ws
     modify $ \s -> s { windowset = ws { current = c, visible = v, hidden = h } }
 
--- | Restart xmonad via exec().
+-- | @restart name resume@. Attempt to restart xmonad by executing the program
+-- @name@.  If @resume@ is 'True', restart with the current window state.
+-- When executing another window manager, @resume@ should be 'False'.
 --
--- If the first parameter is 'Just name', restart will attempt to execute the
--- program corresponding to 'name'.  Otherwise, xmonad will attempt to execute
--- the name of the current program.
---
--- When the second parameter is 'True', xmonad will attempt to resume with the
--- current window state.
-restart :: Maybe String -> Bool -> X ()
-restart mprog resume = do
+restart :: String -> Bool -> X ()
+restart prog resume = do
     broadcastMessage ReleaseResources
     io . flush =<< asks display
-    prog <- maybe (io getProgName) return mprog
     args <- if resume then gets (("--resume":) . return . showWs . windowset) else return []
     catchIO (executeFile prog True args Nothing)
  where showWs = show . mapLayout show
