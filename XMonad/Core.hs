@@ -25,12 +25,12 @@ module XMonad.Core (
     Layout(..), readsLayout, Typeable, Message,
     SomeMessage(..), fromMessage, runLayout, LayoutMessages(..),
     runX, catchX, userCode, io, catchIO,
-    withDisplay, withWindowSet, isRoot,
+    withDisplay, withWindowSet, isRoot, runOnWorkspaces, broadcastMessage,
     getAtom, spawn, restart, getXMonadDir, recompile, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, ManageHook, Query(..), runManageHook
   ) where
 
-import XMonad.StackSet
+import XMonad.StackSet hiding (modify)
 
 import Prelude hiding ( catch )
 import Control.Exception (catch, bracket, throw, Exception(ExitException))
@@ -303,6 +303,23 @@ doubleFork m = io $ do
     getProcessStatus True False pid
     return ()
 
+-- | Send a message to all visible layouts, without necessarily refreshing.
+-- This is how we implement the hooks, such as UnDoLayout.
+broadcastMessage :: Message a => a -> X ()
+broadcastMessage a = runOnWorkspaces $ \w -> do
+    ml' <- handleMessage (layout w) (SomeMessage a) `catchX` return Nothing
+    return $ w { layout = maybe (layout w) id ml' }
+
+-- | This is basically a map function, running a function in the X monad on
+-- each workspace with the output of that function being the modified workspace.
+runOnWorkspaces :: (WindowSpace -> X WindowSpace) -> X ()
+runOnWorkspaces job =do
+    ws <- gets windowset
+    h <- mapM job $ hidden ws
+    c:v <- mapM (\s -> (\w -> s { workspace = w}) <$> job (workspace s))
+             $ current ws : visible ws
+    modify $ \s -> s { windowset = ws { current = c, visible = v, hidden = h } }
+
 -- | Restart xmonad via exec().
 --
 -- If the first parameter is 'Just name', restart will attempt to execute the
@@ -313,6 +330,7 @@ doubleFork m = io $ do
 -- current window state.
 restart :: Maybe String -> Bool -> X ()
 restart mprog resume = do
+    broadcastMessage ReleaseResources
     prog <- maybe (io getProgName) return mprog
     args <- if resume then gets (("--resume":) . return . showWs . windowset) else return []
     catchIO (executeFile prog True args Nothing)

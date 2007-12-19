@@ -324,23 +324,6 @@ sendMessageToWorkspaces a l = runOnWorkspaces $ \w ->
               return $ w { W.layout = maybe (W.layout w) id ml' }
       else return w
 
--- | Send a message to all visible layouts, without necessarily refreshing.
--- This is how we implement the hooks, such as UnDoLayout.
-broadcastMessage :: Message a => a -> X ()
-broadcastMessage a = runOnWorkspaces $ \w -> do
-    ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
-    return $ w { W.layout = maybe (W.layout w) id ml' }
-
--- | This is basically a map function, running a function in the X monad on
--- each workspace with the output of that function being the modified workspace.
-runOnWorkspaces :: (WindowSpace -> X WindowSpace) -> X ()
-runOnWorkspaces job =do
-    ws <- gets windowset
-    h <- mapM job $ W.hidden ws
-    c:v <- mapM (\s -> (\w -> s { W.workspace = w}) <$> job (W.workspace s))
-             $ W.current ws : W.visible ws
-    modify $ \s -> s { windowset = ws { W.current = c, W.visible = v, W.hidden = h } }
-
 -- | Set the layout of the currently viewed workspace
 setLayout :: Layout Window -> X ()
 setLayout l = do
