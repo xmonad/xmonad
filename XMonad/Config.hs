@@ -10,8 +10,12 @@
 -- Portability :  portable
 --
 -- This module specifies the default configuration values for xmonad.
--- Users should not modify this file. Rather, they should provide their
--- own @~\/.xmonad\/xmonad.hs@ that overrides specific fields in defaultConfig.
+--
+-- DO NOT MODIFY THIS FILE!  It won't work.  You may configure xmonad
+-- by providing your own @~\/.xmonad\/xmonad.hs@ that overrides
+-- specific fields in 'defaultConfig'.  For a starting point, you can
+-- copy the @xmonad.hs@ found in the @man@ directory, or look at
+-- examples on the xmonad wiki.
 --
 ------------------------------------------------------------------------
 
