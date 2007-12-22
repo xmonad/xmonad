@@ -113,9 +113,7 @@ defaultGaps = [(0,0,0,0)] -- 15 for default dzen font
 manageHook :: ManageHook
 manageHook = composeAll
                 [ className =? "MPlayer"        --> doFloat
-                , className =? "Gimp"           --> doFloat
-                , resource  =? "desktop_window" --> doIgnore
-                , resource  =? "kdesktop"       --> doIgnore ]
+                , className =? "Gimp"           --> doFloat ]
 
 ------------------------------------------------------------------------
 -- Logging
