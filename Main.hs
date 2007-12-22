@@ -26,8 +26,15 @@ import System.Posix.Process (executeFile)
 -- for xmonad, and if it doesn't find one, just launches the default.
 main :: IO ()
 main = do
-    handle (hPrint stderr) buildLaunch
-    xmonad defaultConfig -- if buildLaunch returns, execute the trusted core
+    args <- getArgs
+    let launch = handle (hPrint stderr) buildLaunch >> xmonad defaultConfig
+    case args of
+        []                    -> launch
+        ["--resume", _]       -> launch
+        ["--recompile"]       -> recompile False
+        ["--recompile-force"] -> recompile True
+        ["--version"]         -> putStrLn "xmonad 0.5"
+        _                     -> fail "unrecognized flags"
 
 -- | Build "~/.xmonad/xmonad.hs" with ghc, then execute it.  If there are no
 -- errors, this function does not return.  An exception is raised in any of
