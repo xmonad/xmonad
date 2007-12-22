@@ -313,7 +313,7 @@ broadcastMessage a = runOnWorkspaces $ \w -> do
 -- | This is basically a map function, running a function in the X monad on
 -- each workspace with the output of that function being the modified workspace.
 runOnWorkspaces :: (WindowSpace -> X WindowSpace) -> X ()
-runOnWorkspaces job =do
+runOnWorkspaces job = do
     ws <- gets windowset
     h <- mapM job $ hidden ws
     c:v <- mapM (\s -> (\w -> s { workspace = w}) <$> job (workspace s))
