@@ -189,7 +189,7 @@ handle e@(ButtonEvent {ev_window = w,ev_event_type = t,ev_button = b })
     ba <- asks buttonActions
     if isr then userCode $ whenJust (M.lookup (m, b) ba) ($ ev_subwindow e)
            else focus w
-    sendMessage e -- Always send button events.
+    broadcastMessage e -- Always send button events.
 
 -- entered a normal window, makes this focused.
 handle e@(CrossingEvent {ev_window = w, ev_event_type = t})
