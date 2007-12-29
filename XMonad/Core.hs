@@ -88,6 +88,7 @@ data XConfig l = XConfig
                                                  -- ^ The mouse bindings
     , borderWidth        :: !Dimension           -- ^ The border width
     , logHook            :: !(X ())              -- ^ The action to perform when the windows set is changed
+    , focusFollowsMouse  :: !Bool                -- ^ Whether window entry events can change focus
     }
 
 

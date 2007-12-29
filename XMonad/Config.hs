@@ -26,10 +26,12 @@ module XMonad.Config (defaultConfig) where
 --
 import XMonad.Core as XMonad hiding
     (workspaces,manageHook,numlockMask,keys,logHook,borderWidth,mouseBindings
-    ,defaultGaps,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor)
+    ,defaultGaps,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor
+    ,focusFollowsMouse)
 import qualified XMonad.Core as XMonad
     (workspaces,manageHook,numlockMask,keys,logHook,borderWidth,mouseBindings
-    ,defaultGaps,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor)
+    ,defaultGaps,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor
+    ,focusFollowsMouse)
 
 import XMonad.Layout
 import XMonad.Operations
@@ -165,6 +167,10 @@ layout = tiled ||| Mirror tiled ||| Full
 terminal :: String
 terminal = "xterm"
 
+-- | Whether focus follows the mouse pointer.
+focusFollowsMouse :: Bool
+focusFollowsMouse = True
+
 -- | The xmonad key bindings. Add, modify or remove key bindings here.
 --
 -- (The comment formatting character is used when generating the manpage)
@@ -251,4 +257,5 @@ defaultConfig = XConfig
     , XMonad.keys               = keys
     , XMonad.logHook            = logHook
     , XMonad.mouseBindings      = mouseBindings
-    , XMonad.manageHook         = manageHook }
+    , XMonad.manageHook         = manageHook
+    , XMonad.focusFollowsMouse  = focusFollowsMouse }

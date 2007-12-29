@@ -194,7 +194,8 @@ handle e@(ButtonEvent {ev_window = w,ev_event_type = t,ev_button = b })
 -- entered a normal window, makes this focused.
 handle e@(CrossingEvent {ev_window = w, ev_event_type = t})
     | t == enterNotify && ev_mode   e == notifyNormal
-                       && ev_detail e /= notifyInferior = focus w
+                       && ev_detail e /= notifyInferior
+    = whenX (asks $ focusFollowsMouse . config) (focus w)
 
 -- left a window, check if we need to focus root
 handle e@(CrossingEvent {ev_event_type = t})
