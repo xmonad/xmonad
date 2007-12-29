@@ -76,7 +76,7 @@ data XConfig l = XConfig
     { normalBorderColor  :: !String             -- ^ Non focused windows border color. Default: \"#dddddd\"
     , focusedBorderColor :: !String             -- ^ Focused windows border color. Default: \"#ff0000\"
     , terminal           :: !String             -- ^ The preferred terminal application. Default: \"xterm\"
-    , layoutHook         :: !(l Window)         -- ^ The avaiable layouts
+    , layoutHook         :: !(l Window)         -- ^ The available layouts
     , manageHook         :: !ManageHook         -- ^ The action to run when a new window is opened
     , workspaces         :: [String]            -- ^ The list of workspaces' names
     , defaultGaps        :: [(Int,Int,Int,Int)] -- ^ The list of gaps, per screen
