@@ -246,11 +246,11 @@ tileWindow w r = withDisplay $ \d -> do
 
 -- ---------------------------------------------------------------------
 
--- | rescreen.  The screen configuration may have changed (due to
--- xrandr), update the state and refresh the screen, and reset the gap.
-rescreen :: X ()
-rescreen = do
-    xinesc' <- withDisplay (io . getScreenInfo)
+-- | getCleanedScreenInfo. reads the list of screens and removes
+-- duplicated or contained screens.
+getCleanedScreenInfo :: Display -> IO ([(ScreenId, Rectangle)])
+getCleanedScreenInfo dpy = do
+    xinesc' <- getScreenInfo dpy
     let xinescN' = zip [0..] xinesc'
         containedIn :: Rectangle -> Rectangle -> Bool
         containedIn (Rectangle x1 y1 w1 h1) (Rectangle x2 y2 w2 h2) =
@@ -262,6 +262,14 @@ rescreen = do
         xinescS' = filter (\(_,r1) -> not (any (\r2 -> r1 `containedIn` r2 && r1 /= r2) xinesc')) xinescN'
         -- removes all duplicate screens but the first
         xinesc   = foldr (\r l -> if snd r `elem` map snd l then l else r:l) [] xinescS'
+    return xinesc
+
+
+-- | rescreen.  The screen configuration may have changed (due to
+-- xrandr), update the state and refresh the screen, and reset the gap.
+rescreen :: X ()
+rescreen = do
+    xinesc <- withDisplay (io . getCleanedScreenInfo)
 
     windows $ \ws@(W.StackSet { W.current = v, W.visible = vs, W.hidden = hs }) ->
         let (xs, ys) = splitAt (length xinesc) $ map W.workspace (v:vs) ++ hs
