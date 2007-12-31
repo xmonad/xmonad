@@ -250,11 +250,22 @@ tileWindow w r = withDisplay $ \d -> do
 -- xrandr), update the state and refresh the screen, and reset the gap.
 rescreen :: X ()
 rescreen = do
-    xinesc <- withDisplay (io . getScreenInfo)
+    xinesc' <- withDisplay (io . getScreenInfo)
+    let xinescN' = zip [0..] xinesc'
+        containedIn :: Rectangle -> Rectangle -> Bool
+        containedIn (Rectangle x1 y1 w1 h1) (Rectangle x2 y2 w2 h2) =
+                x1 >= x2 &&
+                y1 >= y2 &&
+                fromIntegral x1 + w1 <= fromIntegral x2 + w2 &&
+                fromIntegral y1 + h1 <= fromIntegral y2 + h2
+        -- remove all screens completely contained in another.
+        xinescS' = filter (\(_,r1) -> not (any (\r2 -> r1 `containedIn` r2 && r1 /= r2) xinesc')) xinescN'
+        -- removes all duplicate screens but the first
+        xinesc   = foldr (\r l -> if snd r `elem` map snd l then l else r:l) [] xinescS'
 
     windows $ \ws@(W.StackSet { W.current = v, W.visible = vs, W.hidden = hs }) ->
         let (xs, ys) = splitAt (length xinesc) $ map W.workspace (v:vs) ++ hs
-            (a:as)   = zipWith3 W.Screen xs [0..] $ zipWith SD xinesc gs
+            (a:as)   = zipWith3 (\x (n,s) g -> W.Screen x n (SD s g)) xs xinesc gs
             sgs      = map (statusGap . W.screenDetail) (v:vs)
             gs       = take (length xinesc) (sgs ++ repeat (0,0,0,0))
         in  ws { W.current = a
