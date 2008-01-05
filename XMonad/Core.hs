@@ -348,7 +348,9 @@ getXMonadDir = io $ getAppUserDataDirectory "xmonad"
 -- GHC indicates failure with a non-zero exit code, an xmessage containing
 -- GHC's is spawned.
 --
-recompile :: MonadIO m => Bool -> m ()
+-- False is returned if there is compilation errors.
+--
+recompile :: MonadIO m => Bool -> m Bool
 recompile force = io $ do
     dir <- getXMonadDir
     let binn = "xmonad-"++arch++"-"++os
@@ -358,7 +360,8 @@ recompile force = io $ do
         src  = base ++ ".hs"
     srcT <- getModTime src
     binT <- getModTime bin
-    when (force || srcT > binT) $ do
+    if (force || srcT > binT)
+      then do
         status <- bracket (openFile err WriteMode) hClose $ \h -> do
             waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-no-recomp", "-v0", "-o",binn] (Just dir)
                                     Nothing Nothing Nothing (Just h)
@@ -370,6 +373,8 @@ recompile force = io $ do
                     ["Error detected while loading xmonad configuration file: " ++ src]
                     ++ lines ghcErr ++ ["","Please check the file for errors."]
             doubleFork $ executeFile "xmessage" True [msg] Nothing
+        return (status == ExitSuccess)
+      else return True
  where getModTime f = catch (Just <$> getModificationTime f) (const $ return Nothing)
 
 -- | Run a side effecting action with the current workspace. Like 'when' but

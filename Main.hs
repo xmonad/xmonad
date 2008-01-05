@@ -31,8 +31,8 @@ main = do
     case args of
         []                    -> launch
         ["--resume", _]       -> launch
-        ["--recompile"]       -> recompile False
-        ["--recompile-force"] -> recompile True
+        ["--recompile"]       -> recompile False >> return ()
+        ["--recompile-force"] -> recompile True >> return ()
         ["--version"]         -> putStrLn "xmonad 0.5"
         _                     -> fail "unrecognized flags"
 
