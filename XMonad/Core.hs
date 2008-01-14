@@ -24,7 +24,7 @@ module XMonad.Core (
     XConf(..), XConfig(..), LayoutClass(..),
     Layout(..), readsLayout, Typeable, Message,
     SomeMessage(..), fromMessage, runLayout, LayoutMessages(..),
-    runX, catchX, userCode, io, catchIO,
+    runX, catchX, userCode, io, catchIO, doubleFork,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces, broadcastMessage,
     getAtom, spawn, restart, getXMonadDir, recompile, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, ManageHook, Query(..), runManageHook
