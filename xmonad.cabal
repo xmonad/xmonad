@@ -45,7 +45,7 @@ library
         build-depends: base < 3
     build-depends: X11>=1.4.1, mtl, unix
 
-    ghc-options:        -funbox-strict-fields -Wall -Werror -optl-Wl,-s
+    ghc-options:        -funbox-strict-fields -Wall -optl-Wl,-s
     ghc-prof-options:   -prof -auto-all
     extensions:         CPP
     if flag(testing)
@@ -56,6 +56,8 @@ executable xmonad
     other-modules:      XMonad.Core XMonad.Main XMonad.Layout
                         XMonad.Operations XMonad.StackSet XMonad
 
-    ghc-options:        -funbox-strict-fields -Wall -Werror -optl-Wl,-s
+    ghc-options:        -funbox-strict-fields -Wall -optl-Wl,-s
     ghc-prof-options:   -prof -auto-all
     extensions:         CPP
+    if flag(testing)
+        ghc-options: -Werror
