@@ -26,7 +26,6 @@ import System.Environment (getArgs)
 
 import Graphics.X11.Xlib hiding (refreshKeyboardMapping)
 import Graphics.X11.Xlib.Extras
-import Graphics.X11.Xinerama    (getScreenInfo)
 
 import XMonad.Core
 import XMonad.StackSet (new, floating, member)
@@ -46,7 +45,7 @@ xmonad initxmc = do
     let dflt = defaultScreen dpy
 
     rootw  <- rootWindow dpy dflt
-    xinesc <- getScreenInfo dpy
+    xinesc <- getCleanedScreenInfo dpy
     nbc    <- initColor dpy $ normalBorderColor xmc
     fbc    <- initColor dpy $ focusedBorderColor xmc
     hSetBuffering stdout NoBuffering
