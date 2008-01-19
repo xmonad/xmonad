@@ -22,6 +22,10 @@ import System.Info
 import System.Environment
 import System.Posix.Process (executeFile)
 
+#ifdef TESTING
+import qualified Properties
+#endif
+
 -- | The entry point into xmonad. Attempts to compile any custom main
 -- for xmonad, and if it doesn't find one, just launches the default.
 main :: IO ()
@@ -34,6 +38,9 @@ main = do
         ["--recompile"]       -> recompile False >> return ()
         ["--recompile-force"] -> recompile True >> return ()
         ["--version"]         -> putStrLn "xmonad 0.5"
+#ifdef TESTING
+        ("--run-tests":_)     -> Properties.main
+#endif
         _                     -> fail "unrecognized flags"
 
 -- | Build "~/.xmonad/xmonad.hs" with ghc, then execute it.  If there are no

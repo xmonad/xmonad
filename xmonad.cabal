@@ -23,11 +23,11 @@ extra-source-files: README TODO CONFIG STYLE tests/loc.hs tests/Properties.hs
 cabal-version:      >= 1.2
 
 flag small_base
-  description: Choose the new smaller, split-up base package.
+    description: Choose the new smaller, split-up base package.
 
 flag testing
-  description: Testing mode, only build minimal components
-  default: False
+    description: Testing mode, only build minimal components
+    default: False
 
 library
     exposed-modules:    XMonad
@@ -48,6 +48,7 @@ library
     ghc-options:        -funbox-strict-fields -Wall -optl-Wl,-s
     ghc-prof-options:   -prof -auto-all
     extensions:         CPP
+
     if flag(testing)
         buildable: False
 
@@ -59,5 +60,11 @@ executable xmonad
     ghc-options:        -funbox-strict-fields -Wall -optl-Wl,-s
     ghc-prof-options:   -prof -auto-all
     extensions:         CPP
+
     if flag(testing)
-        ghc-options: -Werror
+        cpp-options:    -DTESTING
+        hs-source-dirs: . tests/
+        build-depends:  QuickCheck
+        ghc-options:    -Werror
+    if flag(testing) && flag(small_base)
+        build-depends:  random

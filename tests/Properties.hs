@@ -1,4 +1,4 @@
-{-# OPTIONS -fglasgow-exts #-}
+{-# OPTIONS -fglasgow-exts -w #-}
 module Properties where
 
 import XMonad.StackSet hiding (filter)
@@ -52,7 +52,6 @@ instance (Integral i, Integral s, Eq a, Arbitrary a, Arbitrary l, Arbitrary sd)
                        | s <- ls ]
 
         return $ fromList (fromIntegral n, sds,fs,ls,lay)
-    coarbitrary = error "no coarbitrary for StackSet"
 
 
 -- | fromList. Build a new StackSet from a list of list of elements,
@@ -652,7 +651,7 @@ noOverlaps xs  = and [ verts a `notOverlap` verts b
 
 main :: IO ()
 main = do
-    args <- getArgs
+    args <- fmap (drop 1) getArgs
     let n = if null args then 100 else read (head args)
     (results, passed) <- liftM unzip $ mapM (\(s,a) -> printf "%-25s: " s >> a n) tests
     printf "Passed %d tests!\n" (sum passed)
@@ -941,6 +940,7 @@ instance Arbitrary EmptyStackSet where
         l <- arbitrary
         -- there cannot be more screens than workspaces:
         return . EmptyStackSet . new l ns $ take (min (length ns) (length sds)) sds
+    coarbitrary = error "coarbitrary EmptyStackSet"
 
 -- | Generates a value that satisfies a predicate.
 suchThat :: Gen a -> (a -> Bool) -> Gen a
