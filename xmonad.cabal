@@ -64,7 +64,7 @@ executable xmonad
     if flag(testing)
         cpp-options:    -DTESTING
         hs-source-dirs: . tests/
-        build-depends:  QuickCheck
+        build-depends:  QuickCheck < 2
         ghc-options:    -Werror
     if flag(testing) && flag(small_base)
         build-depends:  random
