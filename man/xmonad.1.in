@@ -18,6 +18,17 @@ You can switch to workspace N with mod-N. For example, to switch to workspace 5,
 .PP
 When running with multiple monitors (Xinerama), each screen has exactly 1 workspace visible. mod-{w,e,r} switch the focus between screens, while shift-mod-{w,e,r} move the current window to that screen. When \fBxmonad\fR starts, workspace 1 is on screen 1, workspace 2 is on screen 2, etc. When switching workspaces to one that is already visible, the current and visible workspaces are swapped. 
 .PP
+.SS Flags
+\fBxmonad\fR has several flags which you may pass to the executable. These flags are:
+.TP
+\fB--recompile 
+Recompiles your configuration in ~/.xmonad/xmonad.hs if it is newer than your already existing ~/.xmonad/xmonad executable.
+.TP
+\fB--recompile-force
+Unconditionally recompiles your configuration in ~/.xmonad/xmonad.hs.
+.TP
+\fB--version
+Display version of \fBxmonad\fR.
 .SS Default keyboard bindings
 ___KEYBINDINGS___
 .SH EXAMPLES
