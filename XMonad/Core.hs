@@ -218,6 +218,10 @@ class Show (layout a) => LayoutClass layout a where
     pureLayout  :: layout a -> Rectangle -> Stack a -> [(a, Rectangle)]
     pureLayout _ r s = [(focus s, r)]
 
+    -- | 'emptyLayout' is called when there is no window.
+    emptyLayout :: layout a -> Rectangle -> X ([(a, Rectangle)], Maybe (layout a))
+    emptyLayout _ _ = return ([], Nothing)
+
     -- | 'handleMessage' performs message handling for that layout.  If
     -- 'handleMessage' returns Nothing, then the layout did not respond to
     -- that message and the screen is not refreshed.  Otherwise, 'handleMessage'
@@ -238,6 +242,7 @@ class Show (layout a) => LayoutClass layout a where
 
 instance LayoutClass Layout Window where
     doLayout (Layout l) r s  = fmap (fmap Layout) `fmap` doLayout l r s
+    emptyLayout (Layout l) r = fmap (fmap Layout) `fmap` emptyLayout l r
     handleMessage (Layout l) = fmap (fmap Layout) . handleMessage l
     description (Layout l)   = description l
 
@@ -245,7 +250,7 @@ instance Show (Layout a) where show (Layout l) = show l
 
 -- | This calls doLayout if there are any windows to be laid out.
 runLayout :: LayoutClass l a => l a -> Rectangle -> Maybe (Stack a) -> X ([(a, Rectangle)], Maybe (l a))
-runLayout l r = maybe (return ([], Nothing)) (doLayout l r)
+runLayout l r = maybe (emptyLayout l r) (doLayout l r)
 
 -- | Based on ideas in /An Extensible Dynamically-Typed Hierarchy of Exceptions/,
 -- Simon Marlow, 2006. Use extensible messages to the handleMessage handler.
