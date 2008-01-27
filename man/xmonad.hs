@@ -230,6 +230,10 @@ myManageHook = composeAll
     , resource  =? "desktop_window" --> doIgnore
     , resource  =? "kdesktop"       --> doIgnore ]
 
+-- Whether focus follows the mouse pointer.
+myFocusFollowsMouse :: Bool
+myFocusFollowsMouse = True
+
 
 ------------------------------------------------------------------------
 -- Status bars and logging
@@ -259,6 +263,7 @@ main = xmonad defaults
 defaults = defaultConfig {
       -- simple stuff
         terminal           = myTerminal,
+        focusFollowsMouse  = myFocusFollowsMouse,
         borderWidth        = myBorderWidth,
         modMask            = myModMask,
         numlockMask        = myNumlockMask,
