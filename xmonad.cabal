@@ -54,8 +54,14 @@ library
 
 executable xmonad
     main-is:            Main.hs
-    other-modules:      XMonad.Core XMonad.Main XMonad.Layout
-                        XMonad.Operations XMonad.StackSet XMonad
+    other-modules:      XMonad
+                        XMonad.Main
+                        XMonad.Core
+                        XMonad.Config
+                        XMonad.Layout
+                        XMonad.ManageHook
+                        XMonad.Operations
+                        XMonad.StackSet
 
     ghc-options:        -funbox-strict-fields -Wall -optl-Wl,-s
     ghc-prof-options:   -prof -auto-all
