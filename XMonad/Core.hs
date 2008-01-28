@@ -291,7 +291,7 @@ io = liftIO
 
 -- | Lift an IO action into the X monad.  If the action results in an IO
 -- exception, log the exception to stderr and continue normal execution.
-catchIO :: IO () -> X ()
+catchIO :: MonadIO m => IO () -> m ()
 catchIO f = io (f `catch` \e -> hPrint stderr e >> hFlush stderr)
 
 -- | spawn. Launch an external application

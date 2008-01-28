@@ -16,7 +16,6 @@ module Main (main) where
 
 import XMonad
 
-import Control.Exception (handle)
 import System.IO
 import System.Info
 import System.Environment
@@ -31,7 +30,7 @@ import qualified Properties
 main :: IO ()
 main = do
     args <- getArgs
-    let launch = handle (hPrint stderr) buildLaunch >> xmonad defaultConfig
+    let launch = catchIO buildLaunch >> xmonad defaultConfig
     case args of
         []                    -> launch
         ["--resume", _]       -> launch
