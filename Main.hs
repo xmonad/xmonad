@@ -36,7 +36,7 @@ main = do
         ["--resume", _]       -> launch
         ["--recompile"]       -> recompile False >> return ()
         ["--recompile-force"] -> recompile True >> return ()
-        ["--version"]         -> putStrLn "xmonad 0.5"
+        ["--version"]         -> putStrLn "xmonad 0.6"
 #ifdef TESTING
         ("--run-tests":_)     -> Properties.main
 #endif
