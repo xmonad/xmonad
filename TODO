@@ -10,7 +10,6 @@
 
 * configuration documentation
 
-* Be sure to bump --version
 * generate haddocks for core and XMC, upload to xmonad.org
 * generate manpage, generate html manpage
 * double check README build instructions

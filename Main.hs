@@ -21,6 +21,9 @@ import System.Info
 import System.Environment
 import System.Posix.Process (executeFile)
 
+import Paths_xmonad (version)
+import Data.Version (showVersion)
+
 #ifdef TESTING
 import qualified Properties
 #endif
@@ -36,7 +39,7 @@ main = do
         ["--resume", _]       -> launch
         ["--recompile"]       -> recompile False >> return ()
         ["--recompile-force"] -> recompile True >> return ()
-        ["--version"]         -> putStrLn "xmonad 0.6"
+        ["--version"]         -> putStrLn ("xmonad " ++ showVersion version)
 #ifdef TESTING
         ("--run-tests":_)     -> Properties.main
 #endif
