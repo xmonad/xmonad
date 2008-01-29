@@ -37,6 +37,7 @@ main = do
     case args of
         []                    -> launch
         ["--resume", _]       -> launch
+        ["--help"]            -> usage
         ["--recompile"]       -> recompile False >> return ()
         ["--recompile-force"] -> recompile True >> return ()
         ["--version"]         -> putStrLn ("xmonad " ++ showVersion version)
@@ -44,6 +45,22 @@ main = do
         ("--run-tests":_)     -> Properties.main
 #endif
         _                     -> fail "unrecognized flags"
+
+usage :: IO ()
+usage = do
+    self <- getProgName
+    putStr . unlines $
+        concat ["Usage: ", self, " [OPTION]"] :
+        "Options:" :
+        "  --help                       Print this message" :
+        "  --version                    Print the version number" :
+        "  --recompile                  Recompile your ~/.xmonad/xmonad.hs if it's been changed" :
+        "  --recompile-force            Recompile your ~/.xmonad/xmonad.hs" :
+#ifdef TESTING
+        "  --run-tests                  Run the test suite" :
+#endif
+        "  --resume STATE               Internal flag, do not use" :
+        []
 
 -- | Build "~/.xmonad/xmonad.hs" with ghc, then execute it.  If there are no
 -- errors, this function does not return.  An exception is raised in any of
