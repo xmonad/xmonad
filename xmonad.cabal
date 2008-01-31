@@ -21,6 +21,7 @@ extra-source-files: README TODO CONFIG STYLE tests/loc.hs tests/Properties.hs
                     man/xmonad.1.in man/xmonad.1 man/xmonad.html man/xmonad.hs
                     util/GenerateManpage.hs
 cabal-version:      >= 1.2
+build-type:         Simple
 
 flag small_base
     description: Choose the new smaller, split-up base package.
