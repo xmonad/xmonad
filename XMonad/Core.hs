@@ -51,14 +51,14 @@ import Data.Monoid
 import qualified Data.Map as M
 import qualified Data.Set as S
 
--- | XState, the window manager state.
--- Just the display, width, height and a window list
+-- | XState, the (mutable) window manager state.
 data XState = XState
     { windowset    :: !WindowSet           -- ^ workspace list
     , mapped       :: !(S.Set Window)      -- ^ the Set of mapped windows
     , waitingUnmap :: !(M.Map Window Int)  -- ^ the number of expected UnmapEvents
     , dragging     :: !(Maybe (Position -> Position -> X (), X ())) }
 
+-- | XConf, the (read-only) window manager configuration.
 data XConf = XConf
     { display       :: Display        -- ^ the X11 display
     , config        :: !(XConfig Layout)       -- ^ initial user configuration
@@ -95,21 +95,22 @@ data XConfig l = XConfig
 type WindowSet   = StackSet  WorkspaceId (Layout Window) Window ScreenId ScreenDetail
 type WindowSpace = Workspace WorkspaceId (Layout Window) Window
 
--- | Virtual workspace indicies
+-- | Virtual workspace indices
 type WorkspaceId = String
 
--- | Physical screen indicies
+-- | Physical screen indices
 newtype ScreenId    = S Int deriving (Eq,Ord,Show,Read,Enum,Num,Integral,Real)
 
 -- | The 'Rectangle' with screen dimensions and the list of gaps
 data ScreenDetail   = SD { screenRect :: !Rectangle
-                         , statusGap  :: !(Int,Int,Int,Int) -- ^ width of status bar on the screen
+                         , statusGap  :: !(Int,Int,Int,Int) -- ^ gaps on the sides of the screen that shouldn't be tiled, usually for status bars
                          } deriving (Eq,Show, Read)
 
 ------------------------------------------------------------------------
 
--- | The X monad, a StateT transformer over IO encapsulating the window
--- manager state
+-- | The X monad, ReaderT and StateT transformers over IO
+-- encapsulating the window manager configuration and state,
+-- respectively.
 --
 -- Dynamic components may be retrieved with 'get', static components
 -- with 'ask'. With newtype deriving we get readers and state monads
@@ -195,18 +196,17 @@ data Layout a = forall l. (LayoutClass l a, Read (l a)) => Layout (l a)
 readsLayout :: Layout a -> String -> [(Layout a, String)]
 readsLayout (Layout l) s = [(Layout (asTypeOf x l), rs) | (x, rs) <- reads s]
 
--- | The different layout modes
---
--- 'doLayout': given a Rectangle and a Stack, layout the stack elements
--- inside the given Rectangle.  If an element is not given a Rectangle
--- by 'doLayout', then it is not shown on screen.  Windows are restacked
--- according to the order they are returned by 'doLayout'.
+-- | Every layout must be an instance of LayoutClass, which defines
+-- the basic layout operations along with a sensible default for each.
 --
 class Show (layout a) => LayoutClass layout a where
 
-    -- | Given a Rectangle in which to place the windows, and a Stack of
-    -- windows, return a list of windows and their corresponding Rectangles.
-    -- The order of windows in this list should be the desired stacking order.
+    -- | Given a Rectangle in which to place the windows, and a Stack
+    -- of windows, return a list of windows and their corresponding
+    -- Rectangles.  If an element is not given a Rectangle by
+    -- 'doLayout', then it is not shown on screen.  The order of
+    -- windows in this list should be the desired stacking order.
+    --
     -- Also return a modified layout, if this layout needs to be modified
     -- (e.g. if we keep track of the windows we have displayed).
     doLayout    :: layout a -> Rectangle -> Stack a -> X ([(a, Rectangle)], Maybe (layout a))
@@ -248,7 +248,8 @@ instance LayoutClass Layout Window where
 
 instance Show (Layout a) where show (Layout l) = show l
 
--- | This calls doLayout if there are any windows to be laid out.
+-- | This calls doLayout if there are any windows to be laid out, and
+--   emptyLayout otherwise.
 runLayout :: LayoutClass l a => l a -> Rectangle -> Maybe (Stack a) -> X ([(a, Rectangle)], Maybe (l a))
 runLayout l r = maybe (emptyLayout l r) (doLayout l r)
 
@@ -341,7 +342,7 @@ restart prog resume = do
 getXMonadDir :: MonadIO m => m String
 getXMonadDir = io $ getAppUserDataDirectory "xmonad"
 
--- | 'recompile force', recompile ~\/.xmonad\/xmonad.hs when any of the
+-- | 'recompile force', recompile @~\/.xmonad\/xmonad.hs@ when any of the
 -- following apply:
 --      * force is True
 --      * the xmonad executable does not exist
@@ -353,7 +354,7 @@ getXMonadDir = io $ getAppUserDataDirectory "xmonad"
 -- GHC indicates failure with a non-zero exit code, an xmessage displaying
 -- that file is spawned.
 --
--- False is returned if there is compilation errors.
+-- False is returned if there are compilation errors.
 --
 recompile :: MonadIO m => Bool -> m Bool
 recompile force = io $ do
@@ -382,7 +383,7 @@ recompile force = io $ do
       else return True
  where getModTime f = catch (Just <$> getModificationTime f) (const $ return Nothing)
 
--- | Run a side effecting action with the current workspace. Like 'when' but
+-- | Conditionally run an action, using a @Maybe a@ to decide.
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
 whenJust mg f = maybe (return ()) f mg
 

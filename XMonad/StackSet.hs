@@ -112,7 +112,7 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 -- viewable.  We thus need to track which virtual workspaces are
 -- associated (viewed) on which physical screens.  To keep track of
 -- this, StackSet keeps separate lists of visible but non-focused
--- workspaces, and non-visible workspaces.  
+-- workspaces, and non-visible workspaces.
 
 -- $focus
 --
@@ -145,7 +145,7 @@ data Screen i l a sid sd = Screen { workspace :: !(Workspace i l a)
     deriving (Show, Read, Eq)
 
 -- |
--- A workspace is just a tag - its index - and a stack
+-- A workspace is just a tag, a layout, and a stack.
 --
 data Workspace i l a = Workspace  { tag :: !i, layout :: l, stack :: Maybe (Stack a) }
     deriving (Show, Read, Eq)
@@ -301,7 +301,7 @@ integrate (Stack x l r) = reverse l ++ x : r
 integrate' :: Maybe (Stack a) -> [a]
 integrate' = maybe [] integrate
 
--- | 
+-- |
 -- /O(n)/. Turn a list into a possibly empty stack (i.e., a zipper):
 -- the first element of the list is current, and the rest of the list
 -- is down.
@@ -414,7 +414,7 @@ mapLayout f (StackSet v vs hs m) = StackSet (fScreen v) (map fScreen vs) (map fW
     fScreen (Screen ws s sd) = Screen (fWorkspace ws) s sd
     fWorkspace (Workspace t l s) = Workspace t (f l) s
 
--- | /O(n)/. Is a window in the StackSet.
+-- | /O(n)/. Is a window in the StackSet?
 member :: Eq a => a -> StackSet i l a s sd -> Bool
 member a s = isJust (findTag a s)
 
