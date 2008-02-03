@@ -378,7 +378,7 @@ recompile force = io $ do
             let msg = unlines $
                     ["Error detected while loading xmonad configuration file: " ++ src]
                     ++ lines ghcErr ++ ["","Please check the file for errors."]
-            doubleFork $ executeFile "xmessage" True [msg] Nothing
+            doubleFork $ executeFile "xmessage" True ["-default", "okay", msg] Nothing
         return (status == ExitSuccess)
       else return True
  where getModTime f = catch (Just <$> getModificationTime f) (const $ return Nothing)
