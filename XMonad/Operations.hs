@@ -23,6 +23,7 @@ import XMonad.Layout (Full(..))
 import qualified XMonad.StackSet as W
 
 import Data.Maybe
+import Data.Monoid          (appEndo)
 import Data.List            (nub, (\\), find)
 import Data.Bits            ((.|.), (.&.), complement)
 import Data.Ratio
@@ -65,7 +66,7 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
             where i = fromMaybe (W.tag . W.workspace . W.current $ ws) $ W.lookupWorkspace sc ws
 
     mh <- asks (manageHook . config)
-    g <- runManageHook mh w `catchX` return id
+    g <- fmap appEndo (runQuery mh w) `catchX` return id
     windows (g . f)
 
 -- | unmanage. A window no longer exists, remove it from the window

@@ -27,7 +27,7 @@ module XMonad.Core (
     runX, catchX, userCode, io, catchIO, doubleFork,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces, broadcastMessage,
     getAtom, spawn, restart, getXMonadDir, recompile, trace, whenJust, whenX,
-    atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, ManageHook, Query(..), runManageHook
+    atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, ManageHook, Query(..), runQuery
   ) where
 
 import XMonad.StackSet hiding (modify)
@@ -131,8 +131,8 @@ newtype Query a = Query (ReaderT Window X a)
     deriving (Functor, Monad, MonadReader Window, MonadIO)
 #endif
 
-runManageHook :: ManageHook -> Window -> X (WindowSet -> WindowSet)
-runManageHook (Query m) w = appEndo <$> runReaderT m w
+runQuery :: Query a -> Window -> X a
+runQuery (Query m) w = runReaderT m w
 
 instance Monoid a => Monoid (Query a) where
     mempty  = return mempty
