@@ -25,11 +25,11 @@ module XMonad.Config (defaultConfig) where
 -- Useful imports
 --
 import XMonad.Core as XMonad hiding
-    (workspaces,manageHook,numlockMask,keys,logHook,borderWidth,mouseBindings
+    (workspaces,manageHook,numlockMask,keys,logHook,startupHook,borderWidth,mouseBindings
     ,defaultGaps,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor
     ,focusFollowsMouse)
 import qualified XMonad.Core as XMonad
-    (workspaces,manageHook,numlockMask,keys,logHook,borderWidth,mouseBindings
+    (workspaces,manageHook,numlockMask,keys,logHook,startupHook,borderWidth,mouseBindings
     ,defaultGaps,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor
     ,focusFollowsMouse)
 
@@ -133,6 +133,10 @@ manageHook = composeAll
 --
 logHook :: X ()
 logHook = return ()
+
+-- | Perform an arbitrary action at xmonad startup.
+startupHook :: X ()
+startupHook = return ()
 
 ------------------------------------------------------------------------
 -- Extensible layouts
@@ -256,6 +260,7 @@ defaultConfig = XConfig
     , XMonad.modMask            = defaultModMask
     , XMonad.keys               = keys
     , XMonad.logHook            = logHook
+    , XMonad.startupHook        = startupHook
     , XMonad.mouseBindings      = mouseBindings
     , XMonad.manageHook         = manageHook
     , XMonad.focusFollowsMouse  = focusFollowsMouse }

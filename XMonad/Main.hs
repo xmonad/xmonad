@@ -116,6 +116,8 @@ xmonad initxmc = do
             -- manage the as-yet-unmanaged windows
             mapM_ manage (ws \\ W.allWindows winset)
 
+            startupHook initxmc
+
             -- main loop, for all you HOF/recursion fans out there.
             forever_ $ handle =<< io (nextEvent dpy e >> getEvent e)
 

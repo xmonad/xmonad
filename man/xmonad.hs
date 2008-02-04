@@ -248,6 +248,16 @@ myFocusFollowsMouse = True
 myLogHook = return ()
 
 ------------------------------------------------------------------------
+-- Startup hook
+
+-- Perform an arbitrary action each time xmonad starts or is restarted
+-- with mod-q.  Used by, e.g., XMonad.Layout.PerWorkspace to initialize
+-- per-workspace layout choices.
+--
+-- By default, do nothing.
+myStartupHook = return ()
+
+------------------------------------------------------------------------
 -- Now run xmonad with all the defaults we set up.
 
 -- Run xmonad with the settings you specify. No need to modify this.
@@ -279,5 +289,6 @@ defaults = defaultConfig {
       -- hooks, layouts
         layoutHook         = myLayout,
         manageHook         = myManageHook,
-        logHook            = myLogHook
+        logHook            = myLogHook,
+        startupHook        = myStartupHook
     }
