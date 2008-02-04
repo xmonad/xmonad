@@ -121,6 +121,10 @@ newtype X a = X (ReaderT XConf (StateT XState IO) a)
     deriving (Functor, Monad, MonadIO, MonadState XState, MonadReader XConf)
 #endif
 
+instance Applicative X where
+  pure = return
+  (<*>) = ap
+
 instance (Monoid a) => Monoid (X a) where
     mempty  = return mempty
     mappend = liftM2 mappend
