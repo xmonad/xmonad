@@ -31,8 +31,9 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 
 import Control.Applicative
-import Control.Monad.State
 import Control.Monad.Reader
+import Control.Monad.State
+import qualified Control.Exception as C
 
 import System.IO
 import Graphics.X11.Xlib
@@ -381,8 +382,9 @@ cleanMask km = do
     return (complement (nlm .|. lockMask) .&. km)
 
 -- | Get the Pixel value for a named color
-initColor :: Display -> String -> IO Pixel
-initColor dpy c = (color_pixel . fst) <$> allocNamedColor dpy colormap c
+initColor :: Display -> String -> IO (Maybe Pixel)
+initColor dpy c = C.handle (\_ -> return Nothing) $
+    (Just . color_pixel . fst) <$> allocNamedColor dpy colormap c
     where colormap = defaultColormap dpy (defaultScreen dpy)
 
 ------------------------------------------------------------------------

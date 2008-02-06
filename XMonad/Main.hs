@@ -28,6 +28,7 @@ import Graphics.X11.Xlib hiding (refreshKeyboardMapping)
 import Graphics.X11.Xlib.Extras
 
 import XMonad.Core
+import qualified XMonad.Config as Default
 import XMonad.StackSet (new, floating, member)
 import qualified XMonad.StackSet as W
 import XMonad.Operations
@@ -46,8 +47,14 @@ xmonad initxmc = do
 
     rootw  <- rootWindow dpy dflt
     xinesc <- getCleanedScreenInfo dpy
-    nbc    <- initColor dpy $ normalBorderColor xmc
-    fbc    <- initColor dpy $ focusedBorderColor xmc
+    nbc    <- do v            <- initColor dpy $ normalBorderColor  xmc
+                 ~(Just nbc_) <- initColor dpy $ normalBorderColor Default.defaultConfig
+                 return (fromMaybe nbc_ v)
+
+    fbc    <- do v <- initColor dpy $ focusedBorderColor xmc
+                 ~(Just fbc_)  <- initColor dpy $ focusedBorderColor Default.defaultConfig
+                 return (fromMaybe fbc_ v)
+
     hSetBuffering stdout NoBuffering
     args <- getArgs
 
