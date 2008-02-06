@@ -18,4 +18,4 @@
 * upload X11 and xmonad to hackage
 * check examples/text in user-facing Config.hs
 * check tour.html and intro.html are up to date, and mention all core bindings
-* md5sums for tarballs.
+* confirm template config is type correct
