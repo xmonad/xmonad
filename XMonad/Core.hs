@@ -1,5 +1,5 @@
 {-# LANGUAGE ExistentialQuantification, FlexibleInstances, GeneralizedNewtypeDeriving,
-             MultiParamTypeClasses, TypeSynonymInstances #-}
+             MultiParamTypeClasses, TypeSynonymInstances, CPP #-}
 -- required for deriving Typeable
 {-# OPTIONS_GHC -fglasgow-exts #-}
 
