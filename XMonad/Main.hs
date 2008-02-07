@@ -16,6 +16,7 @@
 module XMonad.Main (xmonad) where
 
 import Data.Bits
+import Data.List ((\\))
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Control.Monad.Reader
@@ -103,15 +104,17 @@ xmonad initxmc = do
 
             io $ sync dpy False
 
+            ws <- io $ scan dpy rootw
+
             -- bootstrap the windowset, Operations.windows will identify all
             -- the windows in winset as new and set initial properties for
-            -- those windows
-            windows (const winset)
+            -- those windows.  Remove all windows that are no longer top-level
+            -- children of the root, they may have disappeared since 
+            -- restarting.
+            windows . const . foldr W.delete winset $ W.allWindows winset \\ ws
 
-            -- scan for all top-level windows, add the unmanaged ones to the
-            -- windowset
-            ws <- io $ scan dpy rootw
-            mapM_ manage ws
+            -- manage the as-yet-unmanaged windows
+            mapM_ manage (ws \\ W.allWindows winset)
 
             -- main loop, for all you HOF/recursion fans out there.
             forever_ $ handle =<< io (nextEvent dpy e >> getEvent e)
