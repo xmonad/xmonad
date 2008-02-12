@@ -12,6 +12,16 @@
     workspace. Xinerama is fully supported, allowing windows to be tiled
     on several physical screens.
 
+Quick start:
+
+Obtain the dependent libraries, then build with:
+
+        runhaskell Setup.lhs configure --user --prefix=$HOME
+        runhaskell Setup.lhs build
+        runhaskell Setup.lhs install --user
+
+For the full story, read on.
+
 Building:
 
  Building is quite straightforward, and requries a basic Haskell toolchain.
