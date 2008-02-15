@@ -9,19 +9,19 @@ xmonad \- a tiling window manager
 .PP
 By default, \fBxmonad\fR provides three layout algorithms: tall, wide and fullscreen. In tall or wide mode, windows are tiled and arranged to prevent overlap and maximise screen use. Sets of windows are grouped together on virtual screens, and each screen retains its own layout, which may be reconfigured dynamically. Multiple physical monitors are supported via Xinerama, allowing simultaneous display of a number of screens.
 .PP
-By utilising the expressivity of a modern functional language with a rich static type system, \fBxmonad\fR provides a complete, featureful window manager in less than 500 lines of code, with an emphasis on correctness and robustness. Internal properties of the window manager are checked using a combination of static guarantees provided by the type system, and type-based automated testing. A benefit of this is that the code is simple to understand, and easy to modify.
+By utilising the expressivity of a modern functional language with a rich static type system, \fBxmonad\fR provides a complete, featureful window manager in less than 1200 lines of code, with an emphasis on correctness and robustness. Internal properties of the window manager are checked using a combination of static guarantees provided by the type system, and type-based automated testing. A benefit of this is that the code is simple to understand, and easy to modify.
 .SH USAGE
 .PP
 \fBxmonad\fR places each window into a "workspace". Each workspace can have any number of windows, which you can cycle though with mod-j and mod-k. Windows are either displayed full screen, tiled horizontally, or tiled vertically. You can toggle the layout mode with mod-space, which will cycle through the available modes.
 .PP
 You can switch to workspace N with mod-N. For example, to switch to workspace 5, you would press mod-5. Similarly, you can move the current window to another workspace with mod-shift-N.
 .PP
-When running with multiple monitors (Xinerama), each screen has exactly 1 workspace visible. mod-{w,e,r} switch the focus between screens, while shift-mod-{w,e,r} move the current window to that screen. When \fBxmonad\fR starts, workspace 1 is on screen 1, workspace 2 is on screen 2, etc. When switching workspaces to one that is already visible, the current and visible workspaces are swapped. 
+When running with multiple monitors (Xinerama), each screen has exactly 1 workspace visible. mod-{w,e,r} switch the focus between screens, while shift-mod-{w,e,r} move the current window to that screen. When \fBxmonad\fR starts, workspace 1 is on screen 1, workspace 2 is on screen 2, etc. When switching workspaces to one that is already visible, the current and visible workspaces are swapped.
 .PP
 .SS Flags
 \fBxmonad\fR has several flags which you may pass to the executable. These flags are:
 .TP
-\fB--recompile 
+\fB--recompile
 Recompiles your configuration in ~/.xmonad/xmonad.hs if it is newer than your already existing ~/.xmonad/xmonad executable.
 .TP
 \fB--recompile-force
