@@ -51,11 +51,8 @@ instance Message NextNoWrap
 
 -- This has lots of pseudo duplicated code, we must find a better way
 instance (LayoutClass l a, LayoutClass r a) => LayoutClass (Choose l r) a where
-    doLayout (SLeft  r l) = (fmap (second . fmap $ SLeft r) .) . doLayout l
-    doLayout (SRight l r) = (fmap (second . fmap $ SRight l) .) . doLayout r
-
-    emptyLayout (SLeft  r l) = (fmap (second . fmap $ SLeft r) .) $ emptyLayout l
-    emptyLayout (SRight l r) = (fmap (second . fmap $ SRight l) .) $ emptyLayout r
+    runLayout (W.Workspace i (SLeft  r l) ms) = fmap (second . fmap $ SLeft  r) . runLayout (W.Workspace i l ms)
+    runLayout (W.Workspace i (SRight l r) ms) = fmap (second . fmap $ SRight l) . runLayout (W.Workspace i r ms)
 
     description (SLeft _ l)  = description l
     description (SRight _ r) = description r
