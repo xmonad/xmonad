@@ -128,10 +128,10 @@ windows f = do
     let allscreens     = W.screens ws
         summed_visible = scanl (++) [] $ map (W.integrate' . W.stack . W.workspace) allscreens
     visible <- fmap concat $ forM (zip allscreens summed_visible) $ \ (w, vis) -> do
-        let n      = W.tag (W.workspace w)
-            this   = W.view n ws
-            l = W.layout (W.workspace w)
-            flt = filter (flip M.member (W.floating ws)) (W.index this)
+        let wsp   = W.workspace w
+            this  = W.view n ws
+            n     = W.tag wsp
+            flt   = filter (flip M.member (W.floating ws)) (W.index this)
             tiled = (W.stack . W.workspace . W.current $ this)
                     >>= W.filter (`M.notMember` W.floating ws)
                     >>= W.filter (`notElem` vis)
@@ -142,7 +142,7 @@ windows f = do
 
         -- just the tiled windows:
         -- now tile the windows on this workspace, modified by the gap
-        (rs, ml') <- runLayout l viewrect tiled `catchX` runLayout (Layout Full) viewrect tiled
+        (rs, ml') <- runLayout wsp { W.stack = tiled } viewrect`catchX` runLayout wsp { W.layout = Layout Full, W.stack = tiled } viewrect
         mapM_ (uncurry tileWindow) rs
         whenJust ml' $ \l' -> runOnWorkspaces (\ww -> if W.tag ww == n
                                                       then return $ ww { W.layout = l'}

@@ -23,7 +23,7 @@ module XMonad.Core (
     ScreenId(..), ScreenDetail(..), XState(..),
     XConf(..), XConfig(..), LayoutClass(..),
     Layout(..), readsLayout, Typeable, Message,
-    SomeMessage(..), fromMessage, runLayout, LayoutMessages(..),
+    SomeMessage(..), fromMessage, LayoutMessages(..),
     runX, catchX, userCode, io, catchIO, doubleFork,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces, broadcastMessage,
     getAtom, spawn, restart, getXMonadDir, recompile, trace, whenJust, whenX,
@@ -206,6 +206,11 @@ readsLayout (Layout l) s = [(Layout (asTypeOf x l), rs) | (x, rs) <- reads s]
 --
 class Show (layout a) => LayoutClass layout a where
 
+    -- | This calls doLayout if there are any windows to be laid out, and
+    --   emptyLayout otherwise.
+    runLayout :: Workspace WorkspaceId (layout a) a -> Rectangle -> X ([(a, Rectangle)], Maybe (layout a))
+    runLayout (Workspace _ l ms) r = maybe (emptyLayout l r) (doLayout l r) ms
+
     -- | Given a Rectangle in which to place the windows, and a Stack
     -- of windows, return a list of windows and their corresponding
     -- Rectangles.  If an element is not given a Rectangle by
@@ -231,7 +236,6 @@ class Show (layout a) => LayoutClass layout a where
     -- 'handleMessage' returns Nothing, then the layout did not respond to
     -- that message and the screen is not refreshed.  Otherwise, 'handleMessage'
     -- returns an updated 'Layout' and the screen is refreshed.
-    --
     handleMessage :: layout a -> SomeMessage -> X (Maybe (layout a))
     handleMessage l  = return . pureMessage l
 
@@ -246,17 +250,13 @@ class Show (layout a) => LayoutClass layout a where
     description      = show
 
 instance LayoutClass Layout Window where
+    runLayout (Workspace i (Layout l) ms) r = fmap (fmap Layout) `fmap` runLayout (Workspace i l ms) r
     doLayout (Layout l) r s  = fmap (fmap Layout) `fmap` doLayout l r s
     emptyLayout (Layout l) r = fmap (fmap Layout) `fmap` emptyLayout l r
     handleMessage (Layout l) = fmap (fmap Layout) . handleMessage l
     description (Layout l)   = description l
 
 instance Show (Layout a) where show (Layout l) = show l
-
--- | This calls doLayout if there are any windows to be laid out, and
---   emptyLayout otherwise.
-runLayout :: LayoutClass l a => l a -> Rectangle -> Maybe (Stack a) -> X ([(a, Rectangle)], Maybe (l a))
-runLayout l r = maybe (emptyLayout l r) (doLayout l r)
 
 -- | Based on ideas in /An Extensible Dynamically-Typed Hierarchy of Exceptions/,
 -- Simon Marlow, 2006. Use extensible messages to the handleMessage handler.
