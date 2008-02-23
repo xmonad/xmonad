@@ -25,8 +25,8 @@ module XMonad.Core (
     Layout(..), readsLayout, Typeable, Message,
     SomeMessage(..), fromMessage, LayoutMessages(..),
     runX, catchX, userCode, io, catchIO, doubleFork,
-    withDisplay, withWindowSet, isRoot, runOnWorkspaces, broadcastMessage,
-    getAtom, spawn, restart, getXMonadDir, recompile, trace, whenJust, whenX,
+    withDisplay, withWindowSet, isRoot, runOnWorkspaces,
+    getAtom, spawn, getXMonadDir, recompile, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, ManageHook, Query(..), runQuery
   ) where
 
@@ -353,13 +353,6 @@ doubleFork m = io $ do
     getProcessStatus True False pid
     return ()
 
--- | Send a message to all visible layouts, without necessarily refreshing.
--- This is how we implement the hooks, such as UnDoLayout.
-broadcastMessage :: Message a => a -> X ()
-broadcastMessage a = runOnWorkspaces $ \w -> do
-    ml' <- handleMessage (layout w) (SomeMessage a) `catchX` return Nothing
-    return $ w { layout = maybe (layout w) id ml' }
-
 -- | This is basically a map function, running a function in the X monad on
 -- each workspace with the output of that function being the modified workspace.
 runOnWorkspaces :: (WindowSpace -> X WindowSpace) -> X ()
@@ -369,18 +362,6 @@ runOnWorkspaces job = do
     c:v <- mapM (\s -> (\w -> s { workspace = w}) <$> job (workspace s))
              $ current ws : visible ws
     modify $ \s -> s { windowset = ws { current = c, visible = v, hidden = h } }
-
--- | @restart name resume@. Attempt to restart xmonad by executing the program
--- @name@.  If @resume@ is 'True', restart with the current window state.
--- When executing another window manager, @resume@ should be 'False'.
---
-restart :: String -> Bool -> X ()
-restart prog resume = do
-    broadcastMessage ReleaseResources
-    io . flush =<< asks display
-    args <- if resume then gets (("--resume":) . return . showWs . windowset) else return []
-    catchIO (executeFile prog True args Nothing)
- where showWs = show . mapLayout show
 
 -- | Return the path to @~\/.xmonad@.
 getXMonadDir :: MonadIO m => m String

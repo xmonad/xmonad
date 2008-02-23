@@ -36,6 +36,7 @@ import Control.Monad.State
 import qualified Control.Exception as C
 
 import System.IO
+import System.Posix.Process (executeFile)
 import Graphics.X11.Xlib
 import Graphics.X11.Xinerama (getScreenInfo)
 import Graphics.X11.Xlib.Extras
@@ -121,8 +122,8 @@ windows f = do
 
     -- notify non visibility
     let tags_oldvisible = map (W.tag . W.workspace) $ W.current old : W.visible old
-        gottenhidden    = filter (`elem` tags_oldvisible) $ map W.tag $ W.hidden ws
-    sendMessageToWorkspaces Hide gottenhidden
+        gottenhidden    = filter (flip elem tags_oldvisible . W.tag) $ W.hidden ws
+    mapM_ (sendMessageWithNoRefresh Hide) gottenhidden
 
     -- for each workspace, layout the currently visible workspaces
     let allscreens     = W.screens ws
@@ -144,9 +145,7 @@ windows f = do
         -- now tile the windows on this workspace, modified by the gap
         (rs, ml') <- runLayout wsp { W.stack = tiled } viewrect`catchX` runLayout wsp { W.layout = Layout Full, W.stack = tiled } viewrect
         mapM_ (uncurry tileWindow) rs
-        whenJust ml' $ \l' -> runOnWorkspaces (\ww -> if W.tag ww == n
-                                                      then return $ ww { W.layout = l'}
-                                                      else return ww)
+        updateLayout n ml'
 
         -- now the floating windows:
         -- move/resize the floating windows, if there are any
@@ -338,13 +337,26 @@ sendMessage a = do
                                 { W.workspace = (W.workspace $ W.current ws)
                                   { W.layout = l' }}}
 
--- | Send a message to a list of workspaces' layouts, without necessarily refreshing.
-sendMessageToWorkspaces :: Message a => a -> [WorkspaceId] -> X ()
-sendMessageToWorkspaces a l = runOnWorkspaces $ \w ->
-   if W.tag w `elem` l
-      then do ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
-              return $ w { W.layout = maybe (W.layout w) id ml' }
-      else return w
+-- | Send a message to all layouts, without refreshing.
+broadcastMessage :: Message a => a -> X ()
+broadcastMessage a = withWindowSet $ \ws -> do
+                       let c = W.workspace . W.current $ ws
+                           v = map W.workspace . W.visible $ ws
+                           h = W.hidden ws
+                       mapM_ (sendMessageWithNoRefresh a) (c : v ++ h)
+
+-- | Send a message to a layout, without refreshing.
+sendMessageWithNoRefresh :: Message a => a -> W.Workspace WorkspaceId (Layout Window) Window -> X ()
+sendMessageWithNoRefresh a w =
+  handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing >>=
+  updateLayout  (W.tag    w)
+
+-- | Update the layout field of a workspace
+updateLayout :: WorkspaceId -> Maybe (Layout Window) -> X ()
+updateLayout i ml = whenJust ml $ \l ->
+                    runOnWorkspaces $ \ww -> if W.tag ww == i
+                                             then return $ ww { W.layout = l}
+                                             else return ww
 
 -- | Set the layout of the currently viewed workspace
 setLayout :: Layout Window -> X ()
@@ -386,6 +398,17 @@ initColor :: Display -> String -> IO (Maybe Pixel)
 initColor dpy c = C.handle (\_ -> return Nothing) $
     (Just . color_pixel . fst) <$> allocNamedColor dpy colormap c
     where colormap = defaultColormap dpy (defaultScreen dpy)
+
+-- | @restart name resume@. Attempt to restart xmonad by executing the program
+-- @name@.  If @resume@ is 'True', restart with the current window state.
+-- When executing another window manager, @resume@ should be 'False'.
+restart :: String -> Bool -> X ()
+restart prog resume = do
+    broadcastMessage ReleaseResources
+    io . flush =<< asks display
+    args <- if resume then gets (("--resume":) . return . showWs . windowset) else return []
+    catchIO (executeFile prog True args Nothing)
+ where showWs = show . W.mapLayout show
 
 ------------------------------------------------------------------------
 -- | Floating layer support
