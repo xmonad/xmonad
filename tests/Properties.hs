@@ -139,7 +139,7 @@ prop_view_I (n :: NonNegative Int) (x :: T) =
     n `tagMember` x ==> invariant $ view (fromIntegral n) x
 
 prop_greedyView_I (n :: NonNegative Int) (x :: T) =
-    n `tagMember` x ==> invariant $ view (fromIntegral n) x
+    n `tagMember` x ==> invariant $ greedyView (fromIntegral n) x
 
 prop_focusUp_I (n :: NonNegative Int) (x :: T) =
     invariant $ foldr (const focusUp) x [1..n]
@@ -235,6 +235,13 @@ prop_greedyView_current (x :: T) (n :: NonNegative Int) = i `tagMember` x ==>
     tag (workspace $ current (greedyView i x)) == i
   where
     i = fromIntegral n
+
+-- greedyView leaves things unchanged for invalid workspaces
+prop_greedyView_current_id (x :: T) (n :: NonNegative Int) = not (i `tagMember` x) ==>
+    tag (workspace $ current (greedyView i x)) == j
+  where
+    i = fromIntegral n
+    j = tag (workspace (current x))
 
 -- greedyView *only* sets the current workspace, and touches Xinerama.
 -- no workspace contents will be changed.
@@ -675,6 +682,7 @@ main = do
 
         ,("greedyView : invariant"    , mytest prop_greedyView_I)
         ,("greedyView sets current"   , mytest prop_greedyView_current)
+        ,("greedyView is safe "   ,   mytest prop_greedyView_current_id)
         ,("greedyView idempotent"     , mytest prop_greedyView_idem)
         ,("greedyView reversible"     , mytest prop_greedyView_reversible)
         ,("greedyView is local"       , mytest prop_greedyView_local)
