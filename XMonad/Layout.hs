@@ -130,11 +130,9 @@ mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 data Mirror l a = Mirror (l a) deriving (Show, Read)
 
 instance LayoutClass l a => LayoutClass (Mirror l) a where
-    doLayout (Mirror l) r s = (map (second mirrorRect) *** fmap Mirror)
-                                `fmap` doLayout l (mirrorRect r) s
+    runLayout (W.Workspace i (Mirror l) ms) r = (map (second mirrorRect) *** fmap Mirror)
+                                                `fmap` runLayout (W.Workspace i l ms) (mirrorRect r)
     handleMessage (Mirror l) = fmap (fmap Mirror) . handleMessage l
-    emptyLayout (Mirror l) r = (map (second mirrorRect) *** fmap Mirror)
-                                  `fmap` emptyLayout l (mirrorRect r)
     description (Mirror l) = "Mirror "++ description l
 
 -- | tile.  Compute the positions for windows using the default 2 pane tiling algorithm.
