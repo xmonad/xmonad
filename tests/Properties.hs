@@ -547,6 +547,12 @@ prop_float_reversible n (x :: T) =
         where
             geom = RationalRect 100 100 100 100
 
+prop_float_geometry n (x :: T) =
+    n `member` x ==> let s = float n geom x
+                     in M.lookup n (floating s) == Just geom
+        where
+            geom = RationalRect 100 100 100 100
+
 -- check rectanges were set
 {-
 prop_float_sets_geometry n (x :: T) =
@@ -756,6 +762,7 @@ main = do
         ,("shiftWin fix current" , mytest prop_shift_win_fix_current)
 
         ,("floating is reversible" , mytest prop_float_reversible)
+        ,("floating sets geometry" , mytest prop_float_geometry)
         ,("screens includes current", mytest prop_screens)
         ,("differentiate works", mytest prop_differentiate)
         ,("lookupTagOnScreen", mytest prop_lookup_current)
