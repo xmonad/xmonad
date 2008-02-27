@@ -553,13 +553,13 @@ prop_float_geometry n (x :: T) =
         where
             geom = RationalRect 100 100 100 100
 
--- check rectanges were set
-{-
-prop_float_sets_geometry n (x :: T) =
-    n `member` x ==> let y = float n geom x in M.lookup y (floating x) == Just geom
+prop_float_delete n (x :: T) =
+    n `member` x ==> let s = float n geom x
+                         t = delete n s
+                     in not (n `member` t)
         where
             geom = RationalRect 100 100 100 100
--}
+
 
 ------------------------------------------------------------------------
 
@@ -763,7 +763,9 @@ main = do
 
         ,("floating is reversible" , mytest prop_float_reversible)
         ,("floating sets geometry" , mytest prop_float_geometry)
+        ,("floats can be deleted", mytest prop_float_delete)
         ,("screens includes current", mytest prop_screens)
+
         ,("differentiate works", mytest prop_differentiate)
         ,("lookupTagOnScreen", mytest prop_lookup_current)
         ,("lookupTagOnVisbleScreen", mytest prop_lookup_visible)
