@@ -355,6 +355,10 @@ prop_focusWindow_local (n :: NonNegative Int) (x::T ) =
                        i = fromIntegral n `mod` length s
                    in hidden_spaces (focusWindow (s !! i) x) == hidden_spaces x
 
+-- On an invalid window, the stackset is unmodified
+prop_focusWindow_identity (n :: Char) (x::T ) =
+    not (n `member` x) ==> focusWindow n x == x
+
 -- ---------------------------------------------------------------------
 -- member/findTag
 
@@ -718,6 +722,7 @@ main = do
 
         ,("focusWindow is local", mytest prop_focusWindow_local)
         ,("focusWindow works"   , mytest prop_focusWindow_works)
+        ,("focusWindow identity", mytest prop_focusWindow_identity)
 
         ,("findTag"           , mytest prop_findIndex)
         ,("allWindows/member"   , mytest prop_allWindowsMember)
