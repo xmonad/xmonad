@@ -136,10 +136,10 @@ prop_empty_I  (n :: Positive Int) l = forAll (choose (1,fromIntegral n)) $  \m -
         invariant $ new l [0..fromIntegral n-1] ms
 
 prop_view_I (n :: NonNegative Int) (x :: T) =
-    n `tagMember` x ==> invariant $ view (fromIntegral n) x
+    invariant $ view (fromIntegral n) x
 
 prop_greedyView_I (n :: NonNegative Int) (x :: T) =
-    n `tagMember` x ==> invariant $ greedyView (fromIntegral n) x
+    invariant $ greedyView (fromIntegral n) x
 
 prop_focusUp_I (n :: NonNegative Int) (x :: T) =
     invariant $ foldr (const focusUp) x [1..n]
