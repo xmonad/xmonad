@@ -419,11 +419,10 @@ float :: Window -> X ()
 float w = do
     rr <- floatLocation w
     windows $ \ws -> W.float w rr . fromMaybe ws $ do
-        let sc = W.screen $ W.current ws
         i <- W.findTag w ws
         guard $ i `elem` map (W.tag . W.workspace) (W.screens ws)
         f <- W.peek ws
-        sw <- W.lookupWorkspace sc ws
+        sw <- W.lookupWorkspace (W.screen $ W.current ws) ws
         return (W.focusWindow f . W.shiftWin sw w $ ws)
 
 -- ---------------------------------------------------------------------
