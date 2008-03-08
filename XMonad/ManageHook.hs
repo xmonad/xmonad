@@ -71,7 +71,7 @@ doF = return . Endo
 
 -- | Move the window to the floating layer.
 doFloat :: ManageHook
-doFloat = ask >>= \w -> doF . W.float w . snd =<< liftX (floatLocation w)
+doFloat = ask >>= \w -> doF . W.float w =<< liftX (floatLocation w)
 
 -- | Map the window and remove it from the 'WindowSet'.
 doIgnore :: ManageHook
