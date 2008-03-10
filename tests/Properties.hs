@@ -622,8 +622,25 @@ prop_rename1 (x::T) o n = o `tagMember` x && not (n `tagMember` x) ==>
     let y = renameTag o n x
             in n `tagMember` y
 
+-- | 
+-- Ensure that a given set of workspace tags is present by renaming
+-- existing workspaces and\/or creating new hidden workspaces as
+-- necessary.
+--
 prop_ensure (x :: T) l xs = let y = ensureTags l xs x
                                 in and [ n `tagMember` y | n <- xs ]
+
+-- adding a tag should create a new hidden workspace
+prop_ensure_append (x :: T) l n =
+    not (n  `tagMember` x)
+      ==>
+   (hidden y /= hidden x        -- doesn't append, renames
+   &&
+   and [ isNothing (stack z) && layout z == l | z <- hidden y, tag z == n ]
+   )
+  where
+    y  = ensureTags l (n:ts) x
+    ts = [ tag z | z <- workspaces x ]
 
 prop_mapWorkspaceId (x::T) = x == mapWorkspace id x
 
@@ -777,6 +794,7 @@ main = do
         ,("screens works",      mytest prop_screens_works)
         ,("renaming works",     mytest prop_rename1)
         ,("ensure works",     mytest prop_ensure)
+        ,("ensure hidden semantics",     mytest prop_ensure_append)
 
         ,("mapWorkspace id", mytest prop_mapWorkspaceId)
         ,("mapWorkspace inverse", mytest prop_mapWorkspaceInverse)
