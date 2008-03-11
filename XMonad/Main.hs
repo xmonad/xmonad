@@ -109,7 +109,7 @@ xmonad initxmc = do
             -- bootstrap the windowset, Operations.windows will identify all
             -- the windows in winset as new and set initial properties for
             -- those windows.  Remove all windows that are no longer top-level
-            -- children of the root, they may have disappeared since 
+            -- children of the root, they may have disappeared since
             -- restarting.
             windows . const . foldr W.delete winset $ W.allWindows winset \\ ws
 
@@ -202,7 +202,8 @@ handle e@(ButtonEvent {ev_window = w,ev_event_type = t,ev_button = b })
            else focus w
     broadcastMessage e -- Always send button events.
 
--- entered a normal window, makes this focused.
+-- entered a normal window: focus it if focusFollowsMouse is set to
+-- True in the user's config.
 handle e@(CrossingEvent {ev_window = w, ev_event_type = t})
     | t == enterNotify && ev_mode   e == notifyNormal
                        && ev_detail e /= notifyInferior
