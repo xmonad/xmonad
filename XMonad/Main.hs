@@ -24,6 +24,7 @@ import Control.Monad.State
 import Data.Maybe (fromMaybe)
 
 import System.Environment (getArgs)
+import System.Posix.Signals
 
 import Graphics.X11.Xlib hiding (refreshKeyboardMapping)
 import Graphics.X11.Xlib.Extras
@@ -41,6 +42,8 @@ import System.IO
 --
 xmonad :: (LayoutClass l Window, Read (l Window)) => XConfig l -> IO ()
 xmonad initxmc = do
+    -- ignore SIGPIPE
+    installHandler openEndedPipe Ignore Nothing
     -- First, wrap the layout in an existential, to keep things pretty:
     let xmc = initxmc { layoutHook = Layout $ layoutHook initxmc }
     dpy   <- openDisplay ""
