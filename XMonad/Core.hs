@@ -229,7 +229,9 @@ class Show (layout a) => LayoutClass layout a where
     --   'runLayout'; it is only useful for layouts which wish to make
     --   use of more of the 'Workspace' information (for example,
     --   "XMonad.Layout.PerWorkspace").
-    runLayout :: Workspace WorkspaceId (layout a) a -> Rectangle -> X ([(a, Rectangle)], Maybe (layout a))
+    runLayout :: Workspace WorkspaceId (layout a) a
+              -> Rectangle
+              -> X ([(a, Rectangle)], Maybe (layout a))
     runLayout (Workspace _ l ms) r = maybe (emptyLayout l r) (doLayout l r) ms
 
     -- | Given a 'Rectangle' in which to place the windows, and a 'Stack'
@@ -246,7 +248,8 @@ class Show (layout a) => LayoutClass layout a where
     -- Layouts which do not need access to the 'X' monad ('IO', window
     -- manager state, or configuration) and do not keep track of their
     -- own state should implement 'pureLayout' instead of 'doLayout'.
-    doLayout    :: layout a -> Rectangle -> Stack a -> X ([(a, Rectangle)], Maybe (layout a))
+    doLayout    :: layout a -> Rectangle -> Stack a
+                -> X ([(a, Rectangle)], Maybe (layout a))
     doLayout l r s   = return (pureLayout l r s, Nothing)
 
     -- | This is a pure version of 'doLayout', for cases where we
