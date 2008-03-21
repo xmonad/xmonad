@@ -56,7 +56,7 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
     let isFixedSize = sh_min_size sh /= Nothing && sh_min_size sh == sh_max_size sh
     isTransient <- isJust <$> io (getTransientForHint d w)
 
-    rr <- floatLocation w
+    (sc, rr) <- floatLocation w
     -- ensure that float windows don't go over the edge of the screen
     let adjust (W.RationalRect x y wid h) | x + wid > 1 || y + h > 1 || x < 0 || y < 0
                                               = W.RationalRect (0.5 - wid/2) (0.5 - h/2) wid h
@@ -64,7 +64,7 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
 
         f ws | isFixedSize || isTransient = W.float w (adjust rr) . W.insertUp w . W.view i $ ws
              | otherwise                  = W.insertUp w ws
-            where i = W.tag $ W.workspace $ W.current ws
+            where i = fromMaybe (W.tag . W.workspace . W.current $ ws) $ W.lookupWorkspace sc ws
 
     mh <- asks (manageHook . config)
     g <- fmap appEndo (runQuery mh w) `catchX` return id
@@ -392,7 +392,7 @@ initColor dpy c = C.handle (\_ -> return Nothing) $
 
 -- | Given a window, find the screen it is located on, and compute
 -- the geometry of that window wrt. that screen.
-floatLocation :: Window -> X (W.RationalRect)
+floatLocation :: Window -> X (ScreenId, W.RationalRect)
 floatLocation w = withDisplay $ \d -> do
     ws <- gets windowset
     wa <- io $ getWindowAttributes d w
@@ -406,7 +406,7 @@ floatLocation w = withDisplay $ \d -> do
                             (fi (wa_width  wa + bw*2) % fi (rect_width sr))
                             (fi (wa_height wa + bw*2) % fi (rect_height sr))
 
-    return rr
+    return (W.screen $ sc, rr)
   where fi x = fromIntegral x
         pointWithin :: Integer -> Integer -> Rectangle -> Bool
         pointWithin x y r = x >= fi (rect_x r) &&
@@ -417,12 +417,12 @@ floatLocation w = withDisplay $ \d -> do
 -- | Make a tiled window floating, using its suggested rectangle
 float :: Window -> X ()
 float w = do
-    rr <- floatLocation w
+    (sc, rr) <- floatLocation w
     windows $ \ws -> W.float w rr . fromMaybe ws $ do
-        i <- W.findTag w ws
+        i  <- W.findTag w ws
         guard $ i `elem` map (W.tag . W.workspace) (W.screens ws)
-        f <- W.peek ws
-        sw <- W.lookupWorkspace (W.screen $ W.current ws) ws
+        f  <- W.peek ws
+        sw <- W.lookupWorkspace sc ws
         return (W.focusWindow f . W.shiftWin sw w $ ws)
 
 -- ---------------------------------------------------------------------
