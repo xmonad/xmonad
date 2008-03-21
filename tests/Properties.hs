@@ -2,6 +2,7 @@
 module Properties where
 
 import XMonad.StackSet hiding (filter)
+import XMonad.Layout
 import qualified XMonad.StackSet as S (filter)
 
 import Debug.Trace
@@ -656,8 +657,8 @@ prop_mapLayoutInverse (x::T) = x == mapLayout pred (mapLayout succ x)
 -- some properties for layouts:
 
 -- 1 window should always be tiled fullscreen
-{-
 prop_tile_fullscreen rect = tile pct rect 1 1 == [rect]
+    where pct = 1/2
 
 -- multiple windows
 prop_tile_non_overlap rect windows nmaster = noOverlaps (tile pct rect nmaster windows)
@@ -678,8 +679,6 @@ noOverlaps xs  = and [ verts a `notOverlap` verts b
                  (left2,bottom2,right2,top2)
         =  (top1 < bottom2 || top2 < bottom1)
         || (right1 < left2 || right2 < left1)
-
--}
 
 ------------------------------------------------------------------------
 
@@ -808,10 +807,9 @@ main = do
 
         -- renaming
 
-{-
         ,("tile 1 window fullsize", mytest prop_tile_fullscreen)
         ,("tiles never overlap",    mytest prop_tile_non_overlap)
--}
+
 
         ]
 
