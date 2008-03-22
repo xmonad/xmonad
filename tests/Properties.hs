@@ -744,6 +744,11 @@ prop_purelayout_full rect (t :: T) =
           st = fromJust . stack . workspace . current $ t
           ts = pureLayout layoot rect st
 
+-- what happens when we send an IncMaster message to Full --- Nothing
+prop_sendmsg_full (NonNegative k) =
+         isNothing (Full `pureMessage` (SomeMessage (IncMasterN k)))
+
+prop_desc_full = description Full == show Full
 
 ------------------------------------------------------------------------
 
@@ -887,17 +892,20 @@ main = do
         ,("new fails with abort",   mytest prop_new_abort)
         ,("shiftWin identity",      mytest prop_shift_win_indentity)
 
-        -- renaming
+        -- tall layout
 
         ,("tile 1 window fullsize", mytest prop_tile_fullscreen)
         ,("tiles never overlap",    mytest prop_tile_non_overlap)
         ,("pure layout tall",       mytest prop_purelayout_tall)
-
         ,("send shrink    tall",    mytest prop_shrink_tall)
         ,("send expand    tall",    mytest prop_expand_tall)
         ,("send incmaster tall",    mytest prop_incmaster_tall)
 
+        -- full layout
+
         ,("pure layout full",       mytest prop_purelayout_full)
+        ,("send message full",      mytest prop_sendmsg_full)
+        ,("describe full",          mytest prop_desc_full)
 
 
         ]
