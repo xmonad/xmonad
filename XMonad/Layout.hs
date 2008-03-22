@@ -140,6 +140,8 @@ instance LayoutClass l a => LayoutClass (Mirror l) a where
     handleMessage (Mirror l) = fmap (fmap Mirror) . handleMessage l
     description (Mirror l) = "Mirror "++ description l
 
+------------------------------------------------------------------------
+
 -- | tile.  Compute the positions for windows using the default 2 pane tiling algorithm.
 --
 -- The screen is divided (currently) into two panes. all clients are
