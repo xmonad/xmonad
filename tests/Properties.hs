@@ -4,6 +4,7 @@ module Properties where
 import XMonad.StackSet hiding (filter)
 import XMonad.Layout
 import XMonad.Core hiding (workspaces,trace)
+import XMonad.Operations  ( applyResizeIncHint )
 import qualified XMonad.StackSet as S (filter)
 
 import Debug.Trace
@@ -810,6 +811,19 @@ noOverlaps xs  = and [ verts a `notOverlap` verts b
         || (right1 < left2 || right2 < left1)
 
 ------------------------------------------------------------------------
+-- Aspect ratios
+
+prop_resize_inc (NonZero (NonNegative inc_w),NonZero (NonNegative inc_h))  b@(w,h) =
+    w' `mod` inc_w == 0 && h' `mod` inc_h == 0
+   where (w',h') = applyResizeIncHint a b
+         a = (inc_w,inc_h)
+
+prop_resize_inc_extra ((NonNegative inc_w))  b@(w,h) =
+     (w,h) == (w',h')
+   where (w',h') = applyResizeIncHint a b
+         a = (-inc_w,0::Dimension)-- inc_h)
+
+------------------------------------------------------------------------
 
 main :: IO ()
 main = do
@@ -953,6 +967,10 @@ main = do
         ,("describe full",          mytest prop_desc_full)
 
         ,("describe mirror",        mytest prop_desc_mirror)
+
+        -- resize hints
+        ,("window hints: inc",      mytest prop_resize_inc)
+        ,("window hints: inc all",  mytest prop_resize_inc_extra)
 
         ]
 
