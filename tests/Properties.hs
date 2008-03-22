@@ -666,6 +666,44 @@ prop_tile_non_overlap rect windows nmaster = noOverlaps (tile pct rect nmaster w
   where _ = rect :: Rectangle
         pct = 3 % 100
 
+-- splitting horizontally yields sensible results
+prop_split_hoziontal (NonNegative n) x =
+{-
+    trace (show (rect_x x
+                ,rect_width x
+                ,rect_x x + fromIntegral (rect_width x)
+                ,map rect_x xs))
+          $
+-}
+
+        sum (map rect_width xs) == rect_width x
+     &&
+        all (== rect_height x) (map rect_height xs)
+     &&
+        (map rect_x xs) == (sort $ map rect_x xs)
+
+    where
+        xs = splitHorizontally n x
+
+-- splitting horizontally yields sensible results
+prop_splitVertically (r :: Rational) x =
+
+        rect_x x == rect_x a && rect_x x == rect_x b
+      &&
+        rect_width x == rect_width a && rect_width x == rect_width b
+
+{-
+    trace (show (rect_x x
+                ,rect_width x
+                ,rect_x x + fromIntegral (rect_width x)
+                ,map rect_x xs))
+          $
+-}
+
+    where
+        (a,b) = splitVerticallyBy r x
+
+
 -- pureLayout works.
 prop_purelayout_tall n r1 r2 rect (t :: T) =
     isJust (peek t) ==>
@@ -752,6 +790,10 @@ prop_desc_full = description Full == show Full
 
 ------------------------------------------------------------------------
 
+prop_desc_mirror n r1 r2 = description (Mirror $! t) == "Mirror Tall"
+    where t = Tall n r1 r2
+
+------------------------------------------------------------------------
 
 noOverlaps []  = True
 noOverlaps [_] = True
@@ -896,6 +938,9 @@ main = do
 
         ,("tile 1 window fullsize", mytest prop_tile_fullscreen)
         ,("tiles never overlap",    mytest prop_tile_non_overlap)
+        ,("split hozizontally",     mytest prop_split_hoziontal)
+        ,("split verticalBy",       mytest prop_splitVertically)
+
         ,("pure layout tall",       mytest prop_purelayout_tall)
         ,("send shrink    tall",    mytest prop_shrink_tall)
         ,("send expand    tall",    mytest prop_expand_tall)
@@ -907,6 +952,7 @@ main = do
         ,("send message full",      mytest prop_sendmsg_full)
         ,("describe full",          mytest prop_desc_full)
 
+        ,("describe mirror",        mytest prop_desc_mirror)
 
         ]
 
