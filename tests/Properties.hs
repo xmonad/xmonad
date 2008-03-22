@@ -3,7 +3,7 @@ module Properties where
 
 import XMonad.StackSet hiding (filter)
 import XMonad.Layout
-import XMonad.Core (pureLayout)
+import XMonad.Core hiding (workspaces,trace)
 import qualified XMonad.StackSet as S (filter)
 
 import Debug.Trace
@@ -655,11 +655,16 @@ prop_mapLayoutId (x::T) = x == mapLayout id x
 prop_mapLayoutInverse (x::T) = x == mapLayout pred (mapLayout succ x)
 
 ------------------------------------------------------------------------
--- some properties for layouts:
+-- The Tall layout
 
 -- 1 window should always be tiled fullscreen
 prop_tile_fullscreen rect = tile pct rect 1 1 == [rect]
     where pct = 1/2
+
+-- multiple windows
+prop_tile_non_overlap rect windows nmaster = noOverlaps (tile pct rect nmaster windows)
+  where _ = rect :: Rectangle
+        pct = 3 % 100
 
 -- pureLayout works.
 prop_purelayout_tall n r1 r2 rect (t :: T) =
@@ -667,11 +672,66 @@ prop_purelayout_tall n r1 r2 rect (t :: T) =
         length ts == length (index t)
       &&
         noOverlaps (map snd ts)
+      &&
+        description layoot == "Tall"
     where layoot = Tall n r1 r2
           st = fromJust . stack . workspace . current $ t
           ts = pureLayout layoot rect st
 
--- pureLayout works.
+-- Test message handling of Tall
+
+-- what happens when we send a Shrink message to Tall
+prop_shrink_tall (NonNegative n) (NonZero (NonNegative delta)) (NonNegative frac) =
+        n == n' && delta == delta' -- these state components are unchanged
+    && frac' <= frac  && (if frac' < frac then frac' == 0 || frac' == frac - delta
+                                          else frac == 0 )
+        -- remaining fraction should shrink
+    where
+         l1                   = Tall n delta frac
+         Just l2@(Tall n' delta' frac') = l1 `pureMessage` (SomeMessage Shrink)
+        --  pureMessage :: layout a -> SomeMessage -> Maybe (layout a)
+
+
+-- what happens when we send a Shrink message to Tall
+prop_expand_tall (NonNegative n)
+                 (NonZero (NonNegative delta))
+                 (NonNegative n1)
+                 (NonZero (NonNegative d1)) =
+
+       n == n'
+    && delta == delta' -- these state components are unchanged
+    && frac' >= frac
+    && (if frac' > frac
+           then frac' == 1 || frac' == frac + delta
+           else frac == 1 )
+
+        -- remaining fraction should shrink
+    where
+         frac                 = min 1 (n1 % d1)
+         l1                   = Tall n delta frac
+         Just l2@(Tall n' delta' frac') = l1 `pureMessage` (SomeMessage Expand)
+        --  pureMessage :: layout a -> SomeMessage -> Maybe (layout a)
+
+-- what happens when we send an IncMaster message to Tall
+prop_incmaster_tall (NonNegative n) (NonZero (NonNegative delta)) (NonNegative frac)
+                    (NonNegative k) =
+       delta == delta'  && frac == frac' && n' == n + k
+    where
+         l1                   = Tall n delta frac
+         Just l2@(Tall n' delta' frac') = l1 `pureMessage` (SomeMessage (IncMasterN k))
+        --  pureMessage :: layout a -> SomeMessage -> Maybe (layout a)
+
+
+
+     --   toMessage LT = SomeMessage Shrink
+     --   toMessage EQ = SomeMessage Expand
+     --   toMessage GT = SomeMessage (IncMasterN 1)
+
+
+------------------------------------------------------------------------
+-- Full layout
+
+-- pureLayout works for Full
 prop_purelayout_full rect (t :: T) =
     isJust (peek t) ==>
         length ts == 1        -- only one window to view
@@ -684,11 +744,9 @@ prop_purelayout_full rect (t :: T) =
           st = fromJust . stack . workspace . current $ t
           ts = pureLayout layoot rect st
 
--- multiple windows
-prop_tile_non_overlap rect windows nmaster = noOverlaps (tile pct rect nmaster windows)
-  where _ = rect :: Rectangle
 
-pct = 3 % 100
+------------------------------------------------------------------------
+
 
 noOverlaps []  = True
 noOverlaps [_] = True
@@ -710,7 +768,7 @@ main :: IO ()
 main = do
     args <- fmap (drop 1) getArgs
     let n = if null args then 100 else read (head args)
-    (results, passed) <- liftM unzip $ mapM (\(s,a) -> printf "%-25s: " s >> a n) tests
+    (results, passed) <- liftM unzip $ mapM (\(s,a) -> printf "%-40s: " s >> a n) tests
     printf "Passed %d tests!\n" (sum passed)
     when (not . and $ results) $ fail "Not all tests passed!"
  where
@@ -834,6 +892,11 @@ main = do
         ,("tile 1 window fullsize", mytest prop_tile_fullscreen)
         ,("tiles never overlap",    mytest prop_tile_non_overlap)
         ,("pure layout tall",       mytest prop_purelayout_tall)
+
+        ,("send shrink    tall",    mytest prop_shrink_tall)
+        ,("send expand    tall",    mytest prop_expand_tall)
+        ,("send incmaster tall",    mytest prop_incmaster_tall)
+
         ,("pure layout full",       mytest prop_purelayout_full)
 
 
