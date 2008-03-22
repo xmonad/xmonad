@@ -667,8 +667,20 @@ prop_purelayout_tall n r1 r2 rect (t :: T) =
         length ts == length (index t)
       &&
         noOverlaps (map snd ts)
-
     where layoot = Tall n r1 r2
+          st = fromJust . stack . workspace . current $ t
+          ts = pureLayout layoot rect st
+
+-- pureLayout works.
+prop_purelayout_full rect (t :: T) =
+    isJust (peek t) ==>
+        length ts == 1        -- only one window to view
+      &&
+        snd (head ts) == rect -- and sets fullscreen
+      &&
+        fst (head ts) == fromJust (peek t) -- and the focused window is shown
+
+    where layoot = Full
           st = fromJust . stack . workspace . current $ t
           ts = pureLayout layoot rect st
 
@@ -822,6 +834,7 @@ main = do
         ,("tile 1 window fullsize", mytest prop_tile_fullscreen)
         ,("tiles never overlap",    mytest prop_tile_non_overlap)
         ,("pure layout tall",       mytest prop_purelayout_tall)
+        ,("pure layout full",       mytest prop_purelayout_full)
 
 
         ]
