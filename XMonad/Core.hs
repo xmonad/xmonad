@@ -270,7 +270,8 @@ class Show (layout a) => LayoutClass layout a where
     --
     -- Layouts which do not need access to the 'X' monad to decide how
     -- to handle messages should implement 'pureMessage' instead of
-    -- 'handleMessage'.
+    -- 'handleMessage' (this restricts the risk of error, and makes
+    -- testing much easier).
     handleMessage :: layout a -> SomeMessage -> X (Maybe (layout a))
     handleMessage l  = return . pureMessage l
 
