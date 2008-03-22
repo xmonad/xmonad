@@ -46,7 +46,7 @@ import Data.Maybe (fromMaybe)
 data Resize     = Shrink | Expand   deriving Typeable
 
 -- | You can also increase the number of clients in the master pane
-data IncMasterN = IncMasterN Int    deriving Typeable
+data IncMasterN = IncMasterN !Int    deriving Typeable
 
 instance Message Resize
 instance Message IncMasterN
@@ -57,7 +57,7 @@ data Full a = Full deriving (Show, Read)
 instance LayoutClass Full a
 
 -- | The builtin tiling mode of xmonad, and its operations.
-data Tall a = Tall Int Rational Rational deriving (Show, Read)
+data Tall a = Tall !Int !Rational !Rational deriving (Show, Read)
                         -- TODO should be capped [0..1] ..
 
 -- a nice pure layout, lots of properties for the layout, and its messages, in Properties.hs
