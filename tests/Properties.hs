@@ -3,6 +3,7 @@ module Properties where
 
 import XMonad.StackSet hiding (filter)
 import XMonad.Layout
+import XMonad.Core (pureLayout)
 import qualified XMonad.StackSet as S (filter)
 
 import Debug.Trace
@@ -660,6 +661,17 @@ prop_mapLayoutInverse (x::T) = x == mapLayout pred (mapLayout succ x)
 prop_tile_fullscreen rect = tile pct rect 1 1 == [rect]
     where pct = 1/2
 
+-- pureLayout works.
+prop_purelayout_tall n r1 r2 rect (t :: T) =
+    isJust (peek t) ==>
+        length ts == length (index t)
+      &&
+        noOverlaps (map snd ts)
+
+    where layoot = Tall n r1 r2
+          st = fromJust . stack . workspace . current $ t
+          ts = pureLayout layoot rect st
+
 -- multiple windows
 prop_tile_non_overlap rect windows nmaster = noOverlaps (tile pct rect nmaster windows)
   where _ = rect :: Rectangle
@@ -809,6 +821,7 @@ main = do
 
         ,("tile 1 window fullsize", mytest prop_tile_fullscreen)
         ,("tiles never overlap",    mytest prop_tile_non_overlap)
+        ,("pure layout tall",       mytest prop_purelayout_tall)
 
 
         ]
