@@ -143,7 +143,8 @@ windows f = do
 
         -- just the tiled windows:
         -- now tile the windows on this workspace, modified by the gap
-        (rs, ml') <- runLayout wsp { W.stack = tiled } viewrect`catchX` runLayout wsp { W.layout = Layout Full, W.stack = tiled } viewrect
+        (rs, ml') <- runLayout wsp { W.stack = tiled } viewrect `catchX`
+                     runLayout wsp { W.stack = tiled, W.layout = Layout Full } viewrect
         mapM_ (uncurry tileWindow) rs
         updateLayout n ml'
 
@@ -340,23 +341,21 @@ sendMessage a = do
 -- | Send a message to all layouts, without refreshing.
 broadcastMessage :: Message a => a -> X ()
 broadcastMessage a = withWindowSet $ \ws -> do
-                       let c = W.workspace . W.current $ ws
-                           v = map W.workspace . W.visible $ ws
-                           h = W.hidden ws
-                       mapM_ (sendMessageWithNoRefresh a) (c : v ++ h)
+   let c = W.workspace . W.current $ ws
+       v = map W.workspace . W.visible $ ws
+       h = W.hidden ws
+   mapM_ (sendMessageWithNoRefresh a) (c : v ++ h)
 
 -- | Send a message to a layout, without refreshing.
 sendMessageWithNoRefresh :: Message a => a -> W.Workspace WorkspaceId (Layout Window) Window -> X ()
 sendMessageWithNoRefresh a w =
-  handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing >>=
-  updateLayout  (W.tag    w)
+    handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing >>=
+    updateLayout  (W.tag w)
 
 -- | Update the layout field of a workspace
 updateLayout :: WorkspaceId -> Maybe (Layout Window) -> X ()
 updateLayout i ml = whenJust ml $ \l ->
-                    runOnWorkspaces $ \ww -> if W.tag ww == i
-                                             then return $ ww { W.layout = l}
-                                             else return ww
+    runOnWorkspaces $ \ww -> return $ if W.tag ww == i then ww { W.layout = l} else ww
 
 -- | Set the layout of the currently viewed workspace
 setLayout :: Layout Window -> X ()
@@ -398,6 +397,8 @@ initColor :: Display -> String -> IO (Maybe Pixel)
 initColor dpy c = C.handle (\_ -> return Nothing) $
     (Just . color_pixel . fst) <$> allocNamedColor dpy colormap c
     where colormap = defaultColormap dpy (defaultScreen dpy)
+
+------------------------------------------------------------------------
 
 -- | @restart name resume@. Attempt to restart xmonad by executing the program
 -- @name@.  If @resume@ is 'True', restart with the current window state.
