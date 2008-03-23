@@ -4,7 +4,7 @@ module Properties where
 import XMonad.StackSet hiding (filter)
 import XMonad.Layout
 import XMonad.Core hiding (workspaces,trace)
-import XMonad.Operations  ( applyResizeIncHint )
+import XMonad.Operations  ( applyResizeIncHint, applyMaxSizeHint )
 import qualified XMonad.StackSet as S (filter)
 
 import Debug.Trace
@@ -823,6 +823,16 @@ prop_resize_inc_extra ((NonNegative inc_w))  b@(w,h) =
    where (w',h') = applyResizeIncHint a b
          a = (-inc_w,0::Dimension)-- inc_h)
 
+prop_resize_max (NonZero (NonNegative inc_w),NonZero (NonNegative inc_h))  b@(w,h) =
+    w' <= inc_w && h' <= inc_h
+   where (w',h') = applyMaxSizeHint a b
+         a = (inc_w,inc_h)
+
+prop_resize_max_extra ((NonNegative inc_w))  b@(w,h) =
+     (w,h) == (w',h')
+   where (w',h') = applyMaxSizeHint a b
+         a = (-inc_w,0::Dimension)-- inc_h)
+
 ------------------------------------------------------------------------
 
 main :: IO ()
@@ -971,6 +981,8 @@ main = do
         -- resize hints
         ,("window hints: inc",      mytest prop_resize_inc)
         ,("window hints: inc all",  mytest prop_resize_inc_extra)
+        ,("window hints: max",      mytest prop_resize_max)
+        ,("window hints: max all ", mytest prop_resize_max_extra)
 
         ]
 
