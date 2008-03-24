@@ -403,6 +403,9 @@ recompile force = io $ do
             let msg = unlines $
                     ["Error detected while loading xmonad configuration file: " ++ src]
                     ++ lines ghcErr ++ ["","Please check the file for errors."]
+            -- nb, the ordering of printing, then forking, is crucial due to
+            -- lazy evaluation
+            hPutStrLn stderr msg
             doubleFork $ executeFile "xmessage" True ["-default", "okay", msg] Nothing
         return (status == ExitSuccess)
       else return True
