@@ -22,10 +22,7 @@ When running with multiple monitors (Xinerama), each screen has exactly 1 worksp
 \fBxmonad\fR has several flags which you may pass to the executable. These flags are:
 .TP
 \fB--recompile
-Recompiles your configuration in ~/.xmonad/xmonad.hs if it is newer than your already existing ~/.xmonad/xmonad executable.
-.TP
-\fB--recompile-force
-Unconditionally recompiles your configuration in ~/.xmonad/xmonad.hs.
+Recompiles your configuration in ~/.xmonad/xmonad.hs
 .TP
 \fB--version
 Display version of \fBxmonad\fR.

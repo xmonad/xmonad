@@ -38,8 +38,7 @@ main = do
         []                    -> launch
         ["--resume", _]       -> launch
         ["--help"]            -> usage
-        ["--recompile"]       -> recompile False >> return ()
-        ["--recompile-force"] -> recompile True >> return ()
+        ["--recompile"]       -> recompile True >> return ()
         ["--version"]         -> putStrLn ("xmonad " ++ showVersion version)
 #ifdef TESTING
         ("--run-tests":_)     -> Properties.main
@@ -54,8 +53,7 @@ usage = do
         "Options:" :
         "  --help                       Print this message" :
         "  --version                    Print the version number" :
-        "  --recompile                  Recompile your ~/.xmonad/xmonad.hs if it's been changed" :
-        "  --recompile-force            Recompile your ~/.xmonad/xmonad.hs" :
+        "  --recompile                  Recompile your ~/.xmonad/xmonad.hs" :
 #ifdef TESTING
         "  --run-tests                  Run the test suite" :
 #endif
