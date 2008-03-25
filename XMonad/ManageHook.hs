@@ -68,11 +68,11 @@ className = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resClass       $ io 
 
 -- | A query that can return an arbitrary X property of type String,
 --   identified by name.
-property :: String -> Query String
-property p = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap (fromMaybe "") $ getProperty d w p)
+stringProperty :: String -> Query String
+stringProperty p = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap (fromMaybe "") $ getStringProperty d w p)
 
-getProperty :: Display -> Window -> String -> X (Maybe String)
-getProperty d w p = do
+getStringProperty :: Display -> Window -> String -> X (Maybe String)
+getStringProperty d w p = do
   a  <- getAtom p
   md <- io $ getWindowProperty8 d a w
   return $ fmap (map (toEnum . fromIntegral)) md
