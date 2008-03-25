@@ -20,6 +20,7 @@ module XMonad.ManageHook where
 
 import XMonad.Core
 import Graphics.X11.Xlib.Extras
+import Graphics.X11.Xlib (Display,Window)
 import Control.Monad.Reader
 import Data.Maybe
 import Data.Monoid
@@ -64,6 +65,17 @@ title, resource, className :: Query String
 title     = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap (fromMaybe "") $ io $ fetchName    d w)
 resource  = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resName        $ io $ getClassHint d w)
 className = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resClass       $ io $ getClassHint d w)
+
+-- | A query that can return an arbitrary X property of type String,
+--   identified by name.
+property :: String -> Query String
+property p = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap (fromMaybe "") $ getProperty d w p)
+
+getProperty :: Display -> Window -> String -> X (Maybe String)
+getProperty d w p = do
+  a  <- getAtom p
+  md <- io $ getWindowProperty8 d a w
+  return $ fmap (map (toEnum . fromIntegral)) md
 
 -- | Modify the 'WindowSet' with a pure function.
 doF :: (WindowSet -> WindowSet) -> ManageHook
