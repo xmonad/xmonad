@@ -77,15 +77,6 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
 unmanage :: Window -> X ()
 unmanage = windows . W.delete
 
--- | Modify the size of the status gap at the top of the current screen
--- Taking a function giving the current screen, and current geometry.
-modifyGap :: (Int -> (Int,Int,Int,Int) -> (Int,Int,Int,Int)) -> X ()
-modifyGap f = do
-    windows $ \ws@(W.StackSet { W.current = c@(W.Screen { W.screenDetail = sd }) }) ->
-        let n = fromIntegral . W.screen $ c
-            g = f n . statusGap $ sd
-        in ws { W.current = c { W.screenDetail = sd { statusGap = g } } }
-
 -- | Kill the currently focused client. If we do kill it, we'll get a
 -- delete notify back from X.
 --
@@ -136,10 +127,7 @@ windows f = do
             tiled = (W.stack . W.workspace . W.current $ this)
                     >>= W.filter (`M.notMember` W.floating ws)
                     >>= W.filter (`notElem` vis)
-            (SD (Rectangle sx sy sw sh)
-                (gt,gb,gl,gr))          = W.screenDetail w
-            viewrect = Rectangle (sx + fromIntegral gl)        (sy + fromIntegral gt)
-                                 (sw - fromIntegral (gl + gr)) (sh - fromIntegral (gt + gb))
+            viewrect@(Rectangle sx sy sw sh) = screenRect $ W.screenDetail w
 
         -- just the tiled windows:
         -- now tile the windows on this workspace, modified by the gap
@@ -276,9 +264,7 @@ rescreen = do
 
     windows $ \ws@(W.StackSet { W.current = v, W.visible = vs, W.hidden = hs }) ->
         let (xs, ys) = splitAt (length xinesc) $ map W.workspace (v:vs) ++ hs
-            (a:as)   = zipWith3 W.Screen xs [0..] $ zipWith SD xinesc gs
-            sgs      = map (statusGap . W.screenDetail) (v:vs)
-            gs       = take (length xinesc) (sgs ++ repeat (0,0,0,0))
+            (a:as)   = zipWith3 W.Screen xs [0..] $ map SD xinesc
         in  ws { W.current = a
                , W.visible = as
                , W.hidden  = ys }

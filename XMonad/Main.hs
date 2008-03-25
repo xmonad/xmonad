@@ -64,7 +64,7 @@ xmonad initxmc = do
 
     let layout = layoutHook xmc
         lreads = readsLayout layout
-        initialWinset = new layout (workspaces xmc) $ zipWith SD xinesc gaps
+        initialWinset = new layout (workspaces xmc) $ map SD xinesc
 
         maybeRead reads' s = case reads' s of
                                 [(x, "")] -> Just x
@@ -75,8 +75,6 @@ xmonad initxmc = do
                     ws                   <- maybeRead reads s
                     return . W.ensureTags layout (workspaces xmc)
                            $ W.mapLayout (fromMaybe layout . maybeRead lreads) ws
-
-        gaps = take (length xinesc) $ defaultGaps xmc ++ repeat (0,0,0,0)
 
         cf = XConf
             { display       = dpy

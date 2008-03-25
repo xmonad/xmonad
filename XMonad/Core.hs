@@ -79,7 +79,6 @@ data XConfig l = XConfig
     , layoutHook         :: !(l Window)          -- ^ The available layouts
     , manageHook         :: !ManageHook          -- ^ The action to run when a new window is opened
     , workspaces         :: ![String]            -- ^ The list of workspaces' names
-    , defaultGaps        :: ![(Int,Int,Int,Int)] -- ^ The list of gaps, per screen
     , numlockMask        :: !KeyMask             -- ^ The numlock modifier
     , modMask            :: !KeyMask             -- ^ the mod modifier
     , keys               :: !(XConfig Layout -> M.Map (ButtonMask,KeySym) (X ()))
@@ -102,10 +101,8 @@ type WorkspaceId = String
 -- | Physical screen indices
 newtype ScreenId    = S Int deriving (Eq,Ord,Show,Read,Enum,Num,Integral,Real)
 
--- | The 'Rectangle' with screen dimensions and the list of gaps
-data ScreenDetail   = SD { screenRect :: !Rectangle
-                         , statusGap  :: !(Int,Int,Int,Int) -- ^ gaps on the sides of the screen that shouldn't be tiled, usually for status bars
-                         } deriving (Eq,Show, Read)
+-- | The 'Rectangle' with screen dimensions
+data ScreenDetail   = SD { screenRect :: !Rectangle } deriving (Eq,Show, Read)
 
 ------------------------------------------------------------------------
 

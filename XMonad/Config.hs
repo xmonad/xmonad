@@ -26,12 +26,10 @@ module XMonad.Config (defaultConfig) where
 --
 import XMonad.Core as XMonad hiding
     (workspaces,manageHook,numlockMask,keys,logHook,startupHook,borderWidth,mouseBindings
-    ,defaultGaps,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor
-    ,focusFollowsMouse)
+    ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse)
 import qualified XMonad.Core as XMonad
     (workspaces,manageHook,numlockMask,keys,logHook,startupHook,borderWidth,mouseBindings
-    ,defaultGaps,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor
-    ,focusFollowsMouse)
+    ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse)
 
 import XMonad.Layout
 import XMonad.Operations
@@ -88,21 +86,6 @@ borderWidth = 1
 normalBorderColor, focusedBorderColor :: String
 normalBorderColor  = "#dddddd"
 focusedBorderColor = "#ff0000"
-
--- | Default offset of drawable screen boundaries from each physical
--- screen. Anything non-zero here will leave a gap of that many pixels
--- on the given edge, on the that screen. A useful gap at top of screen
--- for a menu bar (e.g. 15)
---
--- An example, to set a top gap on monitor 1, and a gap on the bottom of
--- monitor 2, you'd use a list of geometries like so:
---
--- > defaultGaps = [(18,0,0,0),(0,18,0,0)] -- 2 gaps on 2 monitors
---
--- Fields are: top, bottom, left, right.
---
-defaultGaps :: [(Int,Int,Int,Int)]
-defaultGaps = [(0,0,0,0)] -- 15 for default dzen font
 
 ------------------------------------------------------------------------
 -- Window rules
@@ -216,7 +199,7 @@ keys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask              , xK_period), sendMessage (IncMasterN (-1))) -- %! Deincrement the number of windows in the master area
 
     -- toggle the status bar gap
-    , ((modMask              , xK_b     ), modifyGap (\i n -> let x = (XMonad.defaultGaps conf ++ repeat (0,0,0,0)) !! i in if n == x then (0,0,0,0) else x)) -- %! Toggle the status bar gap
+    --, ((modMask              , xK_b     ), modifyGap (\i n -> let x = (XMonad.defaultGaps conf ++ repeat (0,0,0,0)) !! i in if n == x then (0,0,0,0) else x)) -- %! Toggle the status bar gap
 
     -- quit, or restart
     , ((modMask .|. shiftMask, xK_q     ), io (exitWith ExitSuccess)) -- %! Quit xmonad
@@ -252,7 +235,6 @@ mouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
 defaultConfig = XConfig
     { XMonad.borderWidth        = borderWidth
     , XMonad.workspaces         = workspaces
-    , XMonad.defaultGaps        = defaultGaps
     , XMonad.layoutHook         = layout
     , XMonad.terminal           = terminal
     , XMonad.normalBorderColor  = normalBorderColor
