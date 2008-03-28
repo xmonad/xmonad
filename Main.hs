@@ -57,7 +57,6 @@ usage = do
 #ifdef TESTING
         "  --run-tests                  Run the test suite" :
 #endif
-        "  --resume STATE               Internal flag, do not use" :
         []
 
 -- | Build "~/.xmonad/xmonad.hs" with ghc, then execute it.  If there are no
