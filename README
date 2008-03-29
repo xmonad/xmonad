@@ -133,9 +133,9 @@ XMonadContrib
     prompt/program launcher, and various other useful modules.
     XMonadContrib is available at:
 
-        0.6 release:   http://hackage.haskell.org/cgi-bin/hackage-scripts/package/xmonad-contrib-0.6
+        latest release: http://hackage.haskell.org/cgi-bin/hackage-scripts/package/xmonad-contrib
 
-        darcs version: darcs get http://code.haskell.org/XMonadContrib
+        darcs version:  darcs get http://code.haskell.org/XMonadContrib
 
 ------------------------------------------------------------------------
 
