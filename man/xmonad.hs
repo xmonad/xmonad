@@ -60,20 +60,6 @@ myWorkspaces    = ["1","2","3","4","5","6","7","8","9"]
 myNormalBorderColor  = "#dddddd"
 myFocusedBorderColor = "#ff0000"
 
--- Default offset of drawable screen boundaries from each physical
--- screen. Anything non-zero here will leave a gap of that many pixels
--- on the given edge, on the that screen. A useful gap at top of screen
--- for a menu bar (e.g. 15)
---
--- An example, to set a top gap on monitor 1, and a gap on the bottom of
--- monitor 2, you'd use a list of geometries like so:
---
--- > defaultGaps = [(18,0,0,0),(0,18,0,0)] -- 2 gaps on 2 monitors
---
--- Fields are: top, bottom, left, right.
---
-myDefaultGaps   = [(0,0,0,0)]
-
 ------------------------------------------------------------------------
 -- Key bindings. Add, modify or remove key bindings here.
 --
@@ -137,9 +123,7 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask              , xK_period), sendMessage (IncMasterN (-1)))
 
     -- toggle the status bar gap
-    , ((modMask              , xK_b     ),
-          modifyGap (\i n -> let x = (XMonad.defaultGaps conf ++ repeat (0,0,0,0)) !! i
-                             in if n == x then (0,0,0,0) else x))
+    -- TODO, update this binding with avoidStruts , ((modMask              , xK_b     ),
 
     -- Quit xmonad
     , ((modMask .|. shiftMask, xK_q     ), io (exitWith ExitSuccess))
@@ -280,7 +264,6 @@ defaults = defaultConfig {
         workspaces         = myWorkspaces,
         normalBorderColor  = myNormalBorderColor,
         focusedBorderColor = myFocusedBorderColor,
-        defaultGaps        = myDefaultGaps,
 
       -- key bindings
         keys               = myKeys,
