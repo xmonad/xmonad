@@ -479,8 +479,8 @@ mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     io $ warpPointer d none w 0 0 0 0 (fromIntegral (wa_width wa)) (fromIntegral (wa_height wa))
     mouseDrag (\ex ey -> do
                  io $ resizeWindow d w `uncurry`
-                    applySizeHints sh (ex - fromIntegral (wa_x wa),
-                                       ey - fromIntegral (wa_y wa)))
+                    applySizeHintsContents sh (ex - fromIntegral (wa_x wa),
+                                               ey - fromIntegral (wa_y wa)))
               (float w)
 
 -- ---------------------------------------------------------------------
@@ -488,10 +488,26 @@ mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
 
 type D = (Dimension, Dimension)
 
+-- | Given a window, build an adjuster function that will reduce the given
+-- dimensions according to the window's border width and size hints.
+mkAdjust :: Window -> X (D -> D)
+mkAdjust w = withDisplay $ \d -> liftIO $ do
+    sh <- getWMNormalHints d w
+    bw <- fmap (fromIntegral . wa_border_width) $ getWindowAttributes d w
+    return $ applySizeHints bw sh
+
+-- | Reduce the dimensions if needed to comply to the given SizeHints, taking
+-- window borders into account.
+applySizeHints :: Integral a => Dimension -> SizeHints -> (a, a) -> D
+applySizeHints bw sh =
+    tmap (+ 2 * bw) . applySizeHintsContents sh . tmap (subtract $ 2 * fromIntegral bw)
+    where
+    tmap f (x, y) = (f x, f y)
+
 -- | Reduce the dimensions if needed to comply to the given SizeHints.
-applySizeHints :: Integral a => SizeHints -> (a,a) -> D
-applySizeHints sh (w,h) = applySizeHints' sh (fromIntegral $ max 1 w,
-                                              fromIntegral $ max 1 h)
+applySizeHintsContents :: Integral a => SizeHints -> (a, a) -> D
+applySizeHintsContents sh (w, h) =
+    applySizeHints' sh (fromIntegral $ max 1 w, fromIntegral $ max 1 h)
 
 -- | XXX comment me
 applySizeHints' :: SizeHints -> D -> D
