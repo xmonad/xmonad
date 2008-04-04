@@ -16,8 +16,9 @@
 -----------------------------------------------------------------------------
 
 module XMonad.Layout (
-    ChangeLayout(..), Choose, (|||), Resize(..), IncMasterN(..),
-    Full(..), Tall(..), Mirror(..), mirrorRect, splitVertically,
+    Full(..), Tall(..), Mirror(..),
+    Resize(..), IncMasterN(..), Choose, (|||), ChangeLayout(..),
+    mirrorRect, splitVertically,
     splitHorizontally, splitHorizontallyBy, splitVerticallyBy,
 
     tile
@@ -33,30 +34,23 @@ import Control.Monad
 import Data.Maybe (fromMaybe)
 
 ------------------------------------------------------------------------
--- | Builtin basic layout algorithms:
---
--- > fullscreen mode
--- > tall mode
---
--- The latter algorithms support the following operations:
---
--- >    Shrink
--- >    Expand
---
+
+-- | Change the size of the master pane.
 data Resize     = Shrink | Expand   deriving Typeable
 
--- | You can also increase the number of clients in the master pane
+-- | Increase the number of clients in the master pane.
 data IncMasterN = IncMasterN !Int    deriving Typeable
 
 instance Message Resize
 instance Message IncMasterN
 
--- | Simple fullscreen mode, just render all windows fullscreen.
+-- | Simple fullscreen mode. Renders the focused window fullscreen.
 data Full a = Full deriving (Show, Read)
 
 instance LayoutClass Full a
 
--- | The builtin tiling mode of xmonad, and its operations.
+-- | The builtin tiling mode of xmonad. Supports 'Shrink', 'Expand' and
+-- 'IncMasterN'.
 data Tall a = Tall !Int !Rational !Rational deriving (Show, Read)
                         -- TODO should be capped [0..1] ..
 
@@ -76,20 +70,18 @@ instance LayoutClass Tall a where
 
     description _ = "Tall"
 
--- | tile.  Compute the positions for windows using the default 2 pane tiling algorithm.
+-- | Compute the positions for windows using the default two-pane tiling
+-- algorithm.
 --
--- The screen is divided (currently) into two panes. all clients are
--- then partioned between these two panes. one pane, the `master', by
--- convention has the least number of windows in it (by default, 1).
--- the variable `nmaster' controls how many windows are rendered in the
--- master pane.
---
--- `delta' specifies the ratio of the screen to resize by.
---
--- 'frac' specifies what proportion of the screen to devote to the
--- master area.
---
-tile :: Rational -> Rectangle -> Int -> Int -> [Rectangle]
+-- The screen is divided into two panes. All clients are
+-- then partioned between these two panes. One pane, the master, by
+-- convention has the least number of windows in it.
+tile
+    :: Rational  -- ^ @frac@, what proportion of the screen to devote to the master area
+    -> Rectangle -- ^ @r@, the rectangle representing the screen
+    -> Int       -- ^ @nmaster@, the number of windows in the master pane
+    -> Int       -- ^ @n@, the total number of windows to tile
+    -> [Rectangle]
 tile f r nmaster n = if n <= nmaster || nmaster == 0
     then splitVertically n r
     else splitVertically nmaster r1 ++ splitVertically (n-nmaster) r2 -- two columns
@@ -118,7 +110,6 @@ splitHorizontallyBy f (Rectangle sx sy sw sh) =
 splitVerticallyBy f = (mirrorRect *** mirrorRect) . splitHorizontallyBy f . mirrorRect
 
 ------------------------------------------------------------------------
--- | Mirror a layout, compute its 90 degree rotated form.
 
 -- | Mirror a layout, compute its 90 degree rotated form.
 data Mirror l a = Mirror (l a) deriving (Show, Read)
@@ -129,15 +120,13 @@ instance LayoutClass l a => LayoutClass (Mirror l) a where
     handleMessage (Mirror l) = fmap (fmap Mirror) . handleMessage l
     description (Mirror l) = "Mirror "++ description l
 
--- | Mirror a rectangle
+-- | Mirror a rectangle.
 mirrorRect :: Rectangle -> Rectangle
 mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
 
 ------------------------------------------------------------------------
 -- LayoutClass selection manager
 -- Layouts that transition between other layouts
-
--- | A layout that allows users to switch between various layout options.
 
 -- | Messages to change the current layout.
 data ChangeLayout = FirstLayout | NextLayout deriving (Eq, Show, Typeable)
@@ -149,6 +138,7 @@ instance Message ChangeLayout
 (|||) = flip SLeft
 infixr 5 |||
 
+-- | A layout that allows users to switch between various layout options.
 data Choose l r a = SLeft  (r a) (l a)
                   | SRight (l a) (r a) deriving (Read, Show)
 
