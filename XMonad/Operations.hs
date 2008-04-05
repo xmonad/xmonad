@@ -57,7 +57,7 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
     let isFixedSize = sh_min_size sh /= Nothing && sh_min_size sh == sh_max_size sh
     isTransient <- isJust <$> io (getTransientForHint d w)
 
-    (sc, rr) <- floatLocation w
+    rr <- snd `fmap` floatLocation w
     -- ensure that float windows don't go over the edge of the screen
     let adjust (W.RationalRect x y wid h) | x + wid > 1 || y + h > 1 || x < 0 || y < 0
                                               = W.RationalRect (0.5 - wid/2) (0.5 - h/2) wid h
@@ -65,7 +65,7 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
 
         f ws | isFixedSize || isTransient = W.float w (adjust rr) . W.insertUp w . W.view i $ ws
              | otherwise                  = W.insertUp w ws
-            where i = fromMaybe (W.tag . W.workspace . W.current $ ws) $ W.lookupWorkspace sc ws
+            where i = W.tag $ W.workspace $ W.current ws
 
     mh <- asks (manageHook . config)
     g <- fmap appEndo (runQuery mh w) `catchX` return id
