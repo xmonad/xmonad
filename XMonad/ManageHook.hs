@@ -75,12 +75,16 @@ title = ask >>= \w -> liftX $ do
     io $ bracket getProp (xFree . tp_value) extract `catch` \_ -> return ""
 
 -- | Return the application name.
+appName :: Query String
+appName = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resName $ io $ getClassHint d w)
+
+-- | Backwards compatible alias for 'appName'.
 resource :: Query String
-resource  = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resName        $ io $ getClassHint d w)
+resource = appName
 
 -- | Return the resource class.
 className :: Query String
-className = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resClass       $ io $ getClassHint d w)
+className = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resClass $ io $ getClassHint d w)
 
 -- | A query that can return an arbitrary X property of type String,
 --   identified by name.
