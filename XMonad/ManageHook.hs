@@ -18,15 +18,18 @@
 
 module XMonad.ManageHook where
 
+import Prelude hiding (catch)
 import XMonad.Core
 import Graphics.X11.Xlib.Extras
-import Graphics.X11.Xlib (Display,Window)
+import Graphics.X11.Xlib (Display, Window, internAtom, wM_NAME)
+import Control.Exception (bracket, catch)
 import Control.Monad.Reader
 import Data.Maybe
 import Data.Monoid
 import qualified XMonad.StackSet as W
 import XMonad.Operations (floatLocation, reveal)
 
+-- | Lift an 'X' action to a 'Query'.
 liftX :: X a -> Query a
 liftX = Query . lift
 
@@ -34,36 +37,49 @@ liftX = Query . lift
 idHook :: ManageHook
 idHook = doF id
 
--- | Compose two 'ManageHook's
+-- | Compose two 'ManageHook's.
 (<+>) :: ManageHook -> ManageHook -> ManageHook
 (<+>) = mappend
 
--- | Compose the list of 'ManageHook's
+-- | Compose the list of 'ManageHook's.
 composeAll :: [ManageHook] -> ManageHook
 composeAll = mconcat
 
--- | 'p --> x'.  If 'p' returns 'True', execute the 'ManageHook'.
+-- | @p --> x@.  If @p@ returns 'True', execute the 'ManageHook'.
 (-->) :: Query Bool -> ManageHook -> ManageHook
 p --> f = p >>= \b -> if b then f else mempty
 
--- | 'q =? x'. if the result of 'q' equals 'x', return 'True'.
+-- | @q =? x@. if the result of @q@ equals @x@, return 'True'.
 (=?) :: Eq a => Query a -> a -> Query Bool
 q =? x = fmap (== x) q
 
 infixr 3 <&&>, <||>
 
--- | 'p <&&> q'.  '&&' lifted to a Monad.
+-- | '&&' lifted to a Monad.
 (<&&>) :: Monad m => m Bool -> m Bool -> m Bool
 (<&&>) = liftM2 (&&)
 
--- | 'p <||> q'.  '||' lifted to a Monad.
+-- | '||' lifted to a Monad.
 (<||>) :: Monad m => m Bool -> m Bool -> m Bool
 (<||>) = liftM2 (||)
 
--- | Queries that return the window title, resource, or class.
-title, resource, className :: Query String
-title     = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap (fromMaybe "") $ io $ fetchName    d w)
+-- | Return the window title.
+title :: Query String
+title = ask >>= \w -> liftX $ do
+    d <- asks display
+    let
+        getProp =
+            (internAtom d "_NET_WM_NAME" False >>= getTextProperty d w)
+                `catch` \_ -> getTextProperty d w wM_NAME
+        extract = fmap head . wcTextPropertyToTextList d
+    io $ bracket getProp (xFree . tp_value) extract `catch` \_ -> return ""
+
+-- | Return the application name.
+resource :: Query String
 resource  = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resName        $ io $ getClassHint d w)
+
+-- | Return the resource class.
+className :: Query String
 className = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resClass       $ io $ getClassHint d w)
 
 -- | A query that can return an arbitrary X property of type String,
