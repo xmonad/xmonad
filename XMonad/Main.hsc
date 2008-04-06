@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, FlexibleContexts #-}
+{-# LANGUAGE MultiParamTypeClasses, FlexibleContexts, ForeignFunctionInterface #-}
 ----------------------------------------------------------------------------
 -- |
 -- Module      :  XMonad.Main
@@ -23,6 +23,9 @@ import Control.Monad.Reader
 import Control.Monad.State
 import Data.Maybe (fromMaybe)
 
+import Foreign.C
+import Foreign.Ptr
+
 import System.Environment (getArgs)
 import System.Posix.Signals
 
@@ -37,11 +40,18 @@ import XMonad.Operations
 
 import System.IO
 
+#include <locale.h>
+
+foreign import ccall unsafe "locale.h setlocale" c_setlocale :: CInt -> Ptr CChar -> IO (Ptr CChar)
+
 -- |
 -- The main entry point
 --
 xmonad :: (LayoutClass l Window, Read (l Window)) => XConfig l -> IO ()
 xmonad initxmc = do
+    -- setup locale information from environment
+    withCString "" $ \p -> do
+        c_setlocale (#const LC_ALL) p
     -- ignore SIGPIPE
     installHandler openEndedPipe Ignore Nothing
     -- First, wrap the layout in an existential, to keep things pretty:
