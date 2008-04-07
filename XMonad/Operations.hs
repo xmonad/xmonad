@@ -154,6 +154,8 @@ windows f = do
     setTopFocus
     asks (logHook . config) >>= userCode
 
+    mapM_ reveal visible
+
     -- hide every window that was potentially visible before, but is not
     -- given a position by a layout now.
     mapM_ hide (nub (oldvisible ++ newwindows) \\ visible)
@@ -233,7 +235,6 @@ tileWindow w r = withDisplay $ \d -> do
                 | otherwise  = x - bw*2
     io $ moveResizeWindow d w (rect_x r) (rect_y r)
                               (least $ rect_width r) (least $ rect_height r)
-    reveal w
 
 -- ---------------------------------------------------------------------
 
