@@ -151,10 +151,10 @@ windows f = do
         return vs
 
     whenJust (W.peek ws) $ \w -> io $ setWindowBorder d w fbc
-    setTopFocus
     asks (logHook . config) >>= userCode
 
     mapM_ reveal visible
+    setTopFocus
 
     -- hide every window that was potentially visible before, but is not
     -- given a position by a layout now.
