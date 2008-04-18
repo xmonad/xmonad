@@ -40,9 +40,15 @@ import XMonad.Operations
 
 import System.IO
 
+------------------------------------------------------------------------
+-- Locale support
+
 #include <locale.h>
 
-foreign import ccall unsafe "locale.h setlocale" c_setlocale :: CInt -> Ptr CChar -> IO (Ptr CChar)
+foreign import ccall unsafe "locale.h setlocale"
+    c_setlocale :: CInt -> Ptr CChar -> IO (Ptr CChar)
+
+------------------------------------------------------------------------
 
 -- |
 -- The main entry point
@@ -50,8 +56,7 @@ foreign import ccall unsafe "locale.h setlocale" c_setlocale :: CInt -> Ptr CCha
 xmonad :: (LayoutClass l Window, Read (l Window)) => XConfig l -> IO ()
 xmonad initxmc = do
     -- setup locale information from environment
-    withCString "" $ \p -> do
-        c_setlocale (#const LC_ALL) p
+    withCString "" $ c_setlocale (#const LC_ALL)
     -- ignore SIGPIPE
     installHandler openEndedPipe Ignore Nothing
     -- First, wrap the layout in an existential, to keep things pretty:
