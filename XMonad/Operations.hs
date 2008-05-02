@@ -165,7 +165,8 @@ windows f = do
     -- will overwrite withdrawnState with iconicState
     mapM_ (flip setWMState withdrawnState) (W.allWindows old \\ W.allWindows ws)
 
-    clearEvents enterWindowMask
+    isMouseFocused <- asks mouseFocused
+    unless isMouseFocused $ clearEvents enterWindowMask
 
 -- | setWMState.  set the WM_STATE property
 setWMState :: Window -> Int -> X ()
@@ -294,7 +295,9 @@ setTopFocus = withWindowSet $ maybe (setFocusX =<< asks theRoot) setFocusX . W.p
 -- the mouse to a new screen).
 focus :: Window -> X ()
 focus w = withWindowSet $ \s -> do
-    if W.member w s then when (W.peek s /= Just w) $ windows (W.focusWindow w)
+    if W.member w s then when (W.peek s /= Just w) $ do
+                              local (\c -> c { mouseFocused = True }) $ do
+                                  windows (W.focusWindow w)
                     else whenX (isRoot w) $ setFocusX w
 
 -- | Call X to set the keyboard focus details.
