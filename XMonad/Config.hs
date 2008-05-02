@@ -84,8 +84,8 @@ borderWidth = 1
 -- | Border colors for unfocused and focused windows, respectively.
 --
 normalBorderColor, focusedBorderColor :: String
-normalBorderColor  = "#dddddd"
-focusedBorderColor = "#ff0000"
+normalBorderColor  = "gray" -- "#dddddd"
+focusedBorderColor = "red"  -- "#ff0000" don't use hex, not <24 bit safe
 
 ------------------------------------------------------------------------
 -- Window rules
