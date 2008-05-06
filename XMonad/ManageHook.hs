@@ -108,3 +108,7 @@ doFloat = ask >>= \w -> doF . W.float w . snd =<< liftX (floatLocation w)
 -- | Map the window and remove it from the 'WindowSet'.
 doIgnore :: ManageHook
 doIgnore = ask >>= \w -> liftX (reveal w) >> doF (W.delete w)
+
+-- | Move the window to a given workspace
+doShift :: WorkspaceId -> ManageHook
+doShift = doF . W.shift
