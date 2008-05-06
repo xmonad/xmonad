@@ -135,48 +135,69 @@ instance Message ChangeLayout
 
 -- | The layout choice combinator
 (|||) :: (LayoutClass l a, LayoutClass r a) => l a -> r a -> Choose l r a
-(|||) = flip SLeft
+(|||) = Choose L
 infixr 5 |||
 
 -- | A layout that allows users to switch between various layout options.
-data Choose l r a = SLeft  (r a) (l a)
-                  | SRight (l a) (r a) deriving (Read, Show)
+data Choose l r a = Choose LR (l a) (r a) deriving (Read, Show)
+
+data LR = L | R deriving (Read, Show, Eq)
 
 data NextNoWrap = NextNoWrap deriving (Eq, Show, Typeable)
 instance Message NextNoWrap
 
--- This has lots of pseudo duplicated code, we must find a better way
+handle :: (LayoutClass l a, Message m) => l a -> m -> X (Maybe (l a))
+handle l m = handleMessage l (SomeMessage m)
+
+choose :: (LayoutClass l a, LayoutClass r a) => Choose l r a -> LR -> Maybe (l a) -> Maybe (r a) -> X (Maybe (Choose l r a))
+choose (Choose d _ _) d' Nothing Nothing | d == d' = return Nothing
+choose (Choose d l r) d' ml      mr = f lr
+ where
+    (l', r') = (fromMaybe l ml, fromMaybe r mr)
+    lr       = case (d, d') of
+                    (L, R) -> (hide l'  , return r')
+                    (R, L) -> (return l', hide r'  )
+                    (_, _) -> (return l', return r')
+    f (x,y)  = fmap Just $ liftM2 (Choose d') x y
+    hide x   = fmap (fromMaybe x) $ handle x Hide
+
 instance (LayoutClass l a, LayoutClass r a) => LayoutClass (Choose l r) a where
-    runLayout (W.Workspace i (SLeft  r l) ms) =
-        fmap (second . fmap $ SLeft  r) . runLayout (W.Workspace i l ms)
-    runLayout (W.Workspace i (SRight l r) ms) =
-        fmap (second . fmap $ SRight l) . runLayout (W.Workspace i r ms)
+    runLayout (W.Workspace i (Choose L l r) ms) =
+        fmap (second . fmap $ flip (Choose L) $ r) . runLayout (W.Workspace i l ms)
+    runLayout (W.Workspace i (Choose R l r) ms) =
+        fmap (second . fmap $ Choose R l) . runLayout (W.Workspace i r ms)
 
-    description (SLeft _ l)  = description l
-    description (SRight _ r) = description r
-
-    handleMessage lr m | Just FirstLayout <- fromMessage m = case lr of
-        SLeft {}   -> return Nothing
-        SRight l r -> fmap (Just . flip SLeft l . fromMaybe r)
-                        $ handleMessage r (SomeMessage Hide)
+    description (Choose L l _) = description l
+    description (Choose R _ r) = description r
 
     handleMessage lr m | Just NextLayout <- fromMessage m = do
-        mlr <- handleMessage lr $ SomeMessage NextNoWrap
-        maybe (handleMessage lr $ SomeMessage FirstLayout) (return . Just) mlr
+        mlr' <- handle lr NextNoWrap
+        maybe (handle lr FirstLayout) (return . Just) mlr'
 
-    handleMessage (SLeft r l) m | Just NextNoWrap <- fromMessage m = do
-        handleMessage l (SomeMessage Hide)
-        mr <- handleMessage r (SomeMessage FirstLayout)
-        return . Just . SRight l $ fromMaybe r mr
+    handleMessage c@(Choose d l r) m | Just NextNoWrap <- fromMessage m =
+        case d of
+            L -> do
+                ml <- handle l NextNoWrap
+                case ml of
+                    Just _  -> choose c L ml Nothing
+                    Nothing -> choose c R Nothing =<< handle r FirstLayout
 
-    handleMessage lr m | Just ReleaseResources <- fromMessage m =
-        liftM2 ((Just .) . cons)
-                    (fmap (fromMaybe l) $ handleMessage l m)
-                    (fmap (fromMaybe r) $ handleMessage r m)
-     where (cons, l, r) = case lr of
-                            (SLeft  r' l') -> (flip SLeft, l', r')
-                            (SRight l' r') -> (SRight, l', r')
+            R -> choose c R Nothing =<< handle r NextNoWrap
 
-    -- The default cases for left and right:
-    handleMessage (SLeft  r l) m = fmap (fmap $ SLeft  r) $ handleMessage l m
-    handleMessage (SRight l r) m = fmap (fmap $ SRight l) $ handleMessage r m
+    handleMessage c@(Choose _ l _) m | Just FirstLayout <- fromMessage m = do        
+        ml' <- handle l FirstLayout
+        choose c L ml' Nothing
+
+    handleMessage c@(Choose d l r) m | Just ReleaseResources <- fromMessage m = do
+        ml' <- handle l ReleaseResources
+        mr' <- handle r ReleaseResources
+        choose c d ml' mr'
+
+    handleMessage c@(Choose d l r) m = do
+        ml' <- case d of
+                L -> handleMessage l m
+                R -> return Nothing
+        mr' <- case d of
+                L -> return Nothing
+                R -> handleMessage r m
+        choose c d ml' mr'
