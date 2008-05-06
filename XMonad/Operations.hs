@@ -107,7 +107,7 @@ windows f = do
         ws = f old
     XConf { display = d , normalBorder = nbc, focusedBorder = fbc } <- ask
 
-    mapM_ setInitialProperties (W.allWindows ws \\ W.allWindows old)
+    mapM_ setInitialProperties newwindows
 
     whenJust (W.peek old) $ \otherw -> io $ setWindowBorder d otherw nbc
     modify (\s -> s { windowset = ws })
