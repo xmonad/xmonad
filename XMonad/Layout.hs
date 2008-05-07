@@ -141,14 +141,20 @@ infixr 5 |||
 -- | A layout that allows users to switch between various layout options.
 data Choose l r a = Choose LR (l a) (r a) deriving (Read, Show)
 
+-- | Are we on the left or right sub-layout?
 data LR = L | R deriving (Read, Show, Eq)
 
 data NextNoWrap = NextNoWrap deriving (Eq, Show, Typeable)
 instance Message NextNoWrap
 
+-- | A small wrapper around handleMessage, as it is tedious to write
+-- SomeMessage repeatedly.
 handle :: (LayoutClass l a, Message m) => l a -> m -> X (Maybe (l a))
 handle l m = handleMessage l (SomeMessage m)
 
+-- | A smart constructor that takes some potential modifications, returns a
+-- new structure if any fields have changed, and performs any necessary cleanup
+-- on newly non-visible layouts.
 choose :: (LayoutClass l a, LayoutClass r a)
        => Choose l r a-> LR -> Maybe (l a) -> Maybe (r a) -> X (Maybe (Choose l r a))
 choose (Choose d _ _) d' Nothing Nothing | d == d' = return Nothing
