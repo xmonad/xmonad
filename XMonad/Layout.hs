@@ -185,8 +185,7 @@ instance (LayoutClass l a, LayoutClass r a) => LayoutClass (Choose l r) a where
             R -> choose c R Nothing =<< handle r NextNoWrap
 
     handleMessage c@(Choose _ l _) m | Just FirstLayout <- fromMessage m = do        
-        ml' <- handle l FirstLayout
-        choose c L ml' Nothing
+        flip (choose c L) Nothing =<< handle l FirstLayout
 
     handleMessage c@(Choose d l r) m | Just ReleaseResources <- fromMessage m =
         join $ liftM2 (choose c d) (handle l ReleaseResources) (handle r ReleaseResources)
