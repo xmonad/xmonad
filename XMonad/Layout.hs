@@ -149,7 +149,8 @@ instance Message NextNoWrap
 handle :: (LayoutClass l a, Message m) => l a -> m -> X (Maybe (l a))
 handle l m = handleMessage l (SomeMessage m)
 
-choose :: (LayoutClass l a, LayoutClass r a) => Choose l r a -> LR -> Maybe (l a) -> Maybe (r a) -> X (Maybe (Choose l r a))
+choose :: (LayoutClass l a, LayoutClass r a)
+       => Choose l r a-> LR -> Maybe (l a) -> Maybe (r a) -> X (Maybe (Choose l r a))
 choose (Choose d _ _) d' Nothing Nothing | d == d' = return Nothing
 choose (Choose d l r) d' ml      mr = f lr
  where
