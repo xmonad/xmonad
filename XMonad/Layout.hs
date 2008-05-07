@@ -188,10 +188,8 @@ instance (LayoutClass l a, LayoutClass r a) => LayoutClass (Choose l r) a where
         ml' <- handle l FirstLayout
         choose c L ml' Nothing
 
-    handleMessage c@(Choose d l r) m | Just ReleaseResources <- fromMessage m = do
-        ml' <- handle l ReleaseResources
-        mr' <- handle r ReleaseResources
-        choose c d ml' mr'
+    handleMessage c@(Choose d l r) m | Just ReleaseResources <- fromMessage m =
+        join $ liftM2 (choose c d) (handle l ReleaseResources) (handle r ReleaseResources)
 
     handleMessage c@(Choose d l r) m = do
         ml' <- case d of
