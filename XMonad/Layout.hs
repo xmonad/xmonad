@@ -112,7 +112,7 @@ splitVerticallyBy f = (mirrorRect *** mirrorRect) . splitHorizontallyBy f . mirr
 ------------------------------------------------------------------------
 
 -- | Mirror a layout, compute its 90 degree rotated form.
-data Mirror l a = Mirror (l a) deriving (Show, Read)
+newtype Mirror l a = Mirror (l a) deriving (Show, Read)
 
 instance LayoutClass l a => LayoutClass (Mirror l) a where
     runLayout (W.Workspace i (Mirror l) ms) r = (map (second mirrorRect) *** fmap Mirror)
