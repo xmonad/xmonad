@@ -378,6 +378,9 @@ prop_findIndex (x :: T) =
 
 prop_allWindowsMember w (x :: T) = (w `elem` allWindows x) ==> member w x
 
+prop_currentTag (x :: T) =
+    currentTag x == tag (workspace (current x))
+
 -- ---------------------------------------------------------------------
 -- 'insert'
 
@@ -895,6 +898,7 @@ main = do
 
         ,("findTag"           , mytest prop_findIndex)
         ,("allWindows/member"   , mytest prop_allWindowsMember)
+        ,("currentTag"          , mytest prop_currentTag)
 
         ,("insert: invariant"   , mytest prop_insertUp_I)
         ,("insert/new"          , mytest prop_insert_empty)

@@ -31,7 +31,7 @@ module XMonad.StackSet (
         -- * Xinerama operations
         -- $xinerama
         lookupWorkspace,
-        screens, workspaces, allWindows,
+        screens, workspaces, allWindows, currentTag,
         -- *  Operations on the current stack
         -- $stackOperations
         peek, index, integrate, integrate', differentiate,
@@ -210,7 +210,7 @@ new _ _ _ = abort "non-positive argument to StackSet.new"
 
 view :: (Eq s, Eq i) => i -> StackSet i l a s sd -> StackSet i l a s sd
 view i s
-    | i == tag (workspace (current s)) = s  -- current
+    | i == currentTag s = s  -- current
 
     | Just x <- L.find ((i==).tag.workspace) (visible s)
     -- if it is visible, it is just raised
@@ -380,6 +380,10 @@ workspaces s = workspace (current s) : map workspace (visible s) ++ hidden s
 allWindows :: Eq a => StackSet i l a s sd -> [a]
 allWindows = L.nub . concatMap (integrate' . stack) . workspaces
 
+-- | Get the tag of the currently focused workspace.
+currentTag :: StackSet i l a s sd -> i
+currentTag = tag . workspace . current
+
 -- | Is the given tag present in the StackSet?
 tagMember :: Eq i => i -> StackSet i l a s sd -> Bool
 tagMember t = elem t . map tag . workspaces
@@ -520,7 +524,7 @@ shift :: (Ord a, Eq s, Eq i) => i -> StackSet i l a s sd -> StackSet i l a s sd
 shift n s | n `tagMember` s && n /= curtag = maybe s go (peek s)
           | otherwise                      = s
     where go w = view curtag . insertUp w . view n . delete' w $ s
-          curtag = tag (workspace (current s))
+          curtag = currentTag s
 
 -- | /O(n)/. shiftWin. Searches for the specified window 'w' on all workspaces
 -- of the stackSet and moves it to stack 'n', leaving it as the focused
@@ -536,6 +540,5 @@ shiftWin n w s | from == Nothing                     = s -- not found
     where from   = findTag w s
 
           go     = on n (insertUp w) . on (fromJust from) (delete' w) $ s
-          curtag = tag (workspace (current s))
-          on i f = view curtag . f . view i
+          on i f = view (currentTag s) . f . view i
 
