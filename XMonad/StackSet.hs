@@ -459,13 +459,17 @@ insertUp a s = if member a s then s else insert
 -- There are 4 cases to consider:
 --
 --   * delete on an Nothing workspace leaves it Nothing
+--
 --   * otherwise, try to move focus to the down
+--
 --   * otherwise, try to move focus to the up
+--
 --   * otherwise, you've got an empty workspace, becomes Nothing
 --
 -- Behaviour with respect to the master:
 --
 --   * deleting the master window resets it to the newly focused window
+--
 --   * otherwise, delete doesn't affect the master.
 --
 delete :: (Ord a, Eq s) => a -> StackSet i l a s sd -> StackSet i l a s sd

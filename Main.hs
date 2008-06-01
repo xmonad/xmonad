@@ -62,11 +62,17 @@ usage = do
 -- | Build "~/.xmonad/xmonad.hs" with ghc, then execute it.  If there are no
 -- errors, this function does not return.  An exception is raised in any of
 -- these cases:
+--
 --   * ghc missing
+--
 --   * ~/.xmonad/xmonad.hs missing
+--
 --   * xmonad.hs fails to compile
+--
 --      ** wrong ghc in path (fails to compile)
+--
 --      ** type error, syntax error, ..
+--
 --   * Missing xmonad/XMonadContrib modules due to ghc upgrade
 --
 buildLaunch ::  IO ()

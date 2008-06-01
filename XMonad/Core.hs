@@ -367,8 +367,11 @@ getXMonadDir = io $ getAppUserDataDirectory "xmonad"
 
 -- | 'recompile force', recompile @~\/.xmonad\/xmonad.hs@ when any of the
 -- following apply:
+--
 --      * force is True
+--
 --      * the xmonad executable does not exist
+--
 --      * the xmonad executable is older than xmonad.hs
 --
 -- The -i flag is used to restrict recompilation to the xmonad.hs file only.
