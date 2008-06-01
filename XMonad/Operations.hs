@@ -210,7 +210,7 @@ setInitialProperties w = asks normalBorder >>= \nb -> withDisplay $ \d -> do
     io $ setWindowBorder d w nb
 
 -- | refresh. Render the currently visible workspaces, as determined by
--- the StackSet. Also, set focus to the focused window.
+-- the 'StackSet'. Also, set focus to the focused window.
 --
 -- This is our 'view' operation (MVC), in that it pretty prints our model
 -- with X calls.
@@ -239,7 +239,7 @@ tileWindow w r = withDisplay $ \d -> do
 
 -- ---------------------------------------------------------------------
 
--- | Returns True if the first rectangle is contained within, but not equal
+-- | Returns 'True' if the first rectangle is contained within, but not equal
 -- to the second.
 containedIn :: Rectangle -> Rectangle -> Bool
 containedIn r1@(Rectangle x1 y1 w1 h1) r2@(Rectangle x2 y2 w2 h2)
@@ -318,7 +318,7 @@ setFocusX w = withWindowSet $ \ws -> do
 ------------------------------------------------------------------------
 -- Message handling
 
--- | Throw a message to the current LayoutClass possibly modifying how we
+-- | Throw a message to the current 'LayoutClass' possibly modifying how we
 -- layout the windows, then refresh.
 sendMessage :: Message a => a -> X ()
 sendMessage a = do
@@ -358,15 +358,15 @@ setLayout l = do
 ------------------------------------------------------------------------
 -- Utilities
 
--- | Return workspace visible on screen 'sc', or Nothing.
+-- | Return workspace visible on screen 'sc', or 'Nothing'.
 screenWorkspace :: ScreenId -> X (Maybe WorkspaceId)
 screenWorkspace sc = withWindowSet $ return . W.lookupWorkspace sc
 
--- | Apply an X operation to the currently focused window, if there is one.
+-- | Apply an 'X' operation to the currently focused window, if there is one.
 withFocused :: (Window -> X ()) -> X ()
 withFocused f = withWindowSet $ \w -> whenJust (W.peek w) f
 
--- | True if window is under management by us
+-- | 'True' if window is under management by us
 isClient :: Window -> X Bool
 isClient w = withWindowSet $ return . W.member w
 
@@ -383,7 +383,7 @@ cleanMask km = do
     nlm <- asks (numlockMask . config)
     return (complement (nlm .|. lockMask) .&. km)
 
--- | Get the Pixel value for a named color
+-- | Get the 'Pixel' value for a named color
 initColor :: Display -> String -> IO (Maybe Pixel)
 initColor dpy c = C.handle (\_ -> return Nothing) $
     (Just . color_pixel . fst) <$> allocNamedColor dpy colormap c

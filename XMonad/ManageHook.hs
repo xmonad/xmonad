@@ -55,11 +55,11 @@ q =? x = fmap (== x) q
 
 infixr 3 <&&>, <||>
 
--- | '&&' lifted to a Monad.
+-- | '&&' lifted to a 'Monad'.
 (<&&>) :: Monad m => m Bool -> m Bool -> m Bool
 (<&&>) = liftM2 (&&)
 
--- | '||' lifted to a Monad.
+-- | '||' lifted to a 'Monad'.
 (<||>) :: Monad m => m Bool -> m Bool -> m Bool
 (<||>) = liftM2 (||)
 
@@ -86,7 +86,7 @@ resource = appName
 className :: Query String
 className = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resClass $ io $ getClassHint d w)
 
--- | A query that can return an arbitrary X property of type String,
+-- | A query that can return an arbitrary X property of type 'String',
 --   identified by name.
 stringProperty :: String -> Query String
 stringProperty p = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap (fromMaybe "") $ getStringProperty d w p)

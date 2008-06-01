@@ -13,7 +13,7 @@
 -- Stability   :  unstable
 -- Portability :  not portable, uses cunning newtype deriving
 --
--- The X monad, a state monad transformer over IO, for the window
+-- The 'X' monad, a state monad transformer over 'IO', for the window
 -- manager state, and support routines.
 --
 -----------------------------------------------------------------------------
@@ -107,13 +107,13 @@ data ScreenDetail   = SD { screenRect :: !Rectangle } deriving (Eq,Show, Read)
 
 ------------------------------------------------------------------------
 
--- | The X monad, ReaderT and StateT transformers over IO
+-- | The X monad, 'ReaderT' and 'StateT' transformers over 'IO'
 -- encapsulating the window manager configuration and state,
 -- respectively.
 --
 -- Dynamic components may be retrieved with 'get', static components
 -- with 'ask'. With newtype deriving we get readers and state monads
--- instantiated on XConf and XState automatically.
+-- instantiated on 'XConf' and 'XState' automatically.
 --
 newtype X a = X (ReaderT XConf (StateT XState IO) a)
 #ifndef __HADDOCK__
@@ -141,12 +141,12 @@ instance Monoid a => Monoid (Query a) where
     mempty  = return mempty
     mappend = liftM2 mappend
 
--- | Run the X monad, given a chunk of X monad code, and an initial state
+-- | Run the 'X' monad, given a chunk of 'X' monad code, and an initial state
 -- Return the result, and final state
 runX :: XConf -> XState -> X a -> IO (a, XState)
 runX c st (X a) = runStateT (runReaderT a c) st
 
--- | Run in the X monad, and in case of exception, and catch it and log it
+-- | Run in the 'X' monad, and in case of exception, and catch it and log it
 -- to stderr, and run the error case.
 catchX :: X a -> X a -> X a
 catchX job errcase = do
@@ -159,7 +159,7 @@ catchX job errcase = do
     return a
 
 -- | Execute the argument, catching all exceptions.  Either this function or
--- catchX should be used at all callsites of user customized code.
+-- 'catchX' should be used at all callsites of user customized code.
 userCode :: X () -> X ()
 userCode a = catchX (a >> return ()) (return ())
 
@@ -328,11 +328,11 @@ instance Message LayoutMessages
 -- ---------------------------------------------------------------------
 -- | General utilities
 --
--- Lift an IO action into the X monad
+-- Lift an 'IO' action into the 'X' monad
 io :: MonadIO m => IO a -> m a
 io = liftIO
 
--- | Lift an IO action into the X monad.  If the action results in an IO
+-- | Lift an 'IO' action into the 'X' monad.  If the action results in an 'IO'
 -- exception, log the exception to stderr and continue normal execution.
 catchIO :: MonadIO m => IO () -> m ()
 catchIO f = io (f `catch` \e -> hPrint stderr e >> hFlush stderr)
@@ -341,7 +341,7 @@ catchIO f = io (f `catch` \e -> hPrint stderr e >> hFlush stderr)
 spawn :: MonadIO m => String -> m ()
 spawn x = doubleFork $ executeFile "/bin/sh" False ["-c", x] Nothing
 
--- | Double fork and execute an IO action (usually one of the exec family of
+-- | Double fork and execute an 'IO' action (usually one of the exec family of
 -- functions)
 doubleFork :: MonadIO m => IO () -> m ()
 doubleFork m = io $ do
@@ -351,7 +351,7 @@ doubleFork m = io $ do
     getProcessStatus True False pid
     return ()
 
--- | This is basically a map function, running a function in the X monad on
+-- | This is basically a map function, running a function in the 'X' monad on
 -- each workspace with the output of that function being the modified workspace.
 runOnWorkspaces :: (WindowSpace -> X WindowSpace) -> X ()
 runOnWorkspaces job = do
@@ -368,7 +368,7 @@ getXMonadDir = io $ getAppUserDataDirectory "xmonad"
 -- | 'recompile force', recompile @~\/.xmonad\/xmonad.hs@ when any of the
 -- following apply:
 --
---      * force is True
+--      * force is 'True'
 --
 --      * the xmonad executable does not exist
 --
@@ -380,7 +380,7 @@ getXMonadDir = io $ getAppUserDataDirectory "xmonad"
 -- GHC indicates failure with a non-zero exit code, an xmessage displaying
 -- that file is spawned.
 --
--- False is returned if there are compilation errors.
+-- 'False' is returned if there are compilation errors.
 --
 recompile :: MonadIO m => Bool -> m Bool
 recompile force = io $ do
@@ -416,11 +416,11 @@ recompile force = io $ do
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
 whenJust mg f = maybe (return ()) f mg
 
--- | Conditionally run an action, using a X event to decide
+-- | Conditionally run an action, using a 'X' event to decide
 whenX :: X Bool -> X () -> X ()
 whenX a f = a >>= \b -> when b f
 
--- | A 'trace' for the X monad. Logs a string to stderr. The result may
+-- | A 'trace' for the 'X' monad. Logs a string to stderr. The result may
 -- be found in your .xsession-errors file
 trace :: MonadIO m => String -> m ()
 trace = io . hPutStrLn stderr
