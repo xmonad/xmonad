@@ -7,7 +7,7 @@
 -- Copyright   :  (c) Spencer Janssen 2007
 -- License     :  BSD3-style (see LICENSE)
 --
--- Maintainer  :  sjanssen@cse.unl.edu
+-- Maintainer  :  spencerjanssen@gmail.com
 -- Stability   :  unstable
 -- Portability :  not portable, Typeable deriving, mtl, posix
 --
