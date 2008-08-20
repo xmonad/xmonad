@@ -46,7 +46,7 @@ library
         build-depends: base < 3
     build-depends: X11>=1.4.1, mtl, unix
 
-    ghc-options:        -funbox-strict-fields -Wall -optl-Wl,-s
+    ghc-options:        -funbox-strict-fields -Wall
     ghc-prof-options:   -prof -auto-all
     extensions:         CPP
 
