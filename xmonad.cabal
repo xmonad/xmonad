@@ -64,7 +64,7 @@ executable xmonad
                         XMonad.Operations
                         XMonad.StackSet
 
-    ghc-options:        -funbox-strict-fields -Wall -optl-Wl,-s
+    ghc-options:        -funbox-strict-fields -Wall
     ghc-prof-options:   -prof -auto-all
     extensions:         CPP
 
