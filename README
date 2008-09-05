@@ -24,7 +24,7 @@ For the full story, read on.
 
 Building:
 
- Building is quite straightforward, and requries a basic Haskell toolchain.
+ Building is quite straightforward, and requires a basic Haskell toolchain.
  On many systems xmonad is available as a binary package in your
  package system (e.g. on debian or gentoo). If at all possible, use this
  in preference to a source build, as the dependency resolution will be
