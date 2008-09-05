@@ -97,19 +97,6 @@ Building:
 
 ------------------------------------------------------------------------
 
-Notes for using the darcs version
-
-    If you're building the darcs version of xmonad, be sure to also
-    use the darcs version of the X11 library, which is developed
-    concurrently with xmonad.
-
-        darcs get http://darcs.haskell.org/X11
-
-    Not using X11 from darcs is the most common reason for the
-    darcs version of xmonad to fail to build.
-
-------------------------------------------------------------------------
-
 Running xmonad:
 
     Add:
