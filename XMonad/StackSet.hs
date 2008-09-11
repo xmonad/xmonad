@@ -42,7 +42,7 @@ module XMonad.StackSet (
         insertUp, delete, delete', filter,
         -- * Setting the master window
         -- $settingMW
-        swapUp, swapDown, swapMaster, modify, modify', float, sink, -- needed by users
+        swapUp, swapDown, swapMaster, shiftMaster, modify, modify', float, sink, -- needed by users
         -- * Composite operations
         -- $composite
         shift, shiftWin,
@@ -507,6 +507,15 @@ swapMaster = modify' $ \c -> case c of
     Stack t ls rs -> Stack t [] (xs ++ x : rs) where (x:xs) = reverse ls
 
 -- natural! keep focus, move current to the top, move top to current.
+
+-- | /O(s)/. Set the master window to the focused window.
+-- The other windows are kept in order and shifted down on the stack, as if you
+-- just hit mod-shift-k a bunch of times.
+-- Focus stays with the item moved.
+shiftMaster :: StackSet i l a s sd -> StackSet i l a s sd
+shiftMaster = modify' $ \c -> case c of
+    Stack _ [] _ -> c     -- already master.
+    Stack t ls rs -> Stack t [] (reverse ls ++ rs)
 
 -- | /O(s)/. Set focus to the master window.
 focusMaster :: StackSet i l a s sd -> StackSet i l a s sd

@@ -528,6 +528,18 @@ prop_shift_reversible i (x :: T) =
         y = swapMaster x
         n = tag (workspace $ current y)
 
+------------------------------------------------------------------------
+-- shiftMaster
+
+-- focus/local/idempotent same as swapMaster:
+prop_shift_master_focus (x :: T) = peek x == (peek $ shiftMaster x)
+prop_shift_master_local (x :: T) = hidden_spaces x == hidden_spaces (shiftMaster x)
+prop_shift_master_idempotent (x :: T) = shiftMaster (shiftMaster x) == shiftMaster x
+-- ordering is constant modulo the focused window:
+prop_shift_master_ordering (x :: T) = case peek x of
+    Nothing -> True
+    Just m  -> L.delete m (index x) == L.delete m (index $ shiftMaster x)
+
 -- ---------------------------------------------------------------------
 -- shiftWin
 
@@ -932,6 +944,11 @@ main = do
         ,("swapMaster is local" , mytest prop_swap_master_local)
         ,("swapUp is local"   , mytest prop_swap_left_local)
         ,("swapDown is local"  , mytest prop_swap_right_local)
+
+        ,("shiftMaster id on focus", mytest prop_shift_master_focus)
+        ,("shiftMaster is local", mytest prop_shift_master_local)
+        ,("shiftMaster is idempotent", mytest prop_shift_master_idempotent)
+        ,("shiftMaster preserves ordering", mytest prop_shift_master_ordering)
 
         ,("shift: invariant"    , mytest prop_shift_I)
         ,("shift is reversible" , mytest prop_shift_reversible)
