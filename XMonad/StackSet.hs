@@ -35,7 +35,7 @@ module XMonad.StackSet (
         -- *  Operations on the current stack
         -- $stackOperations
         peek, index, integrate, integrate', differentiate,
-        focusUp, focusDown, focusMaster, focusWindow,
+        focusUp, focusDown, focusUp', focusDown', focusMaster, focusWindow,
         tagMember, renameTag, ensureTags, member, findTag, mapWorkspace, mapLayout,
         -- * Modifying the stackset
         -- $modifyStackset
@@ -342,15 +342,19 @@ index = with [] integrate
 --
 focusUp, focusDown, swapUp, swapDown :: StackSet i l a s sd -> StackSet i l a s sd
 focusUp   = modify' focusUp'
-focusDown = modify' (reverseStack . focusUp' . reverseStack)
+focusDown = modify' focusDown'
 
 swapUp    = modify' swapUp'
 swapDown  = modify' (reverseStack . swapUp' . reverseStack)
 
-focusUp', swapUp' :: Stack a -> Stack a
+-- | Variants of 'focusUp' and 'focusDown' that work on a
+-- 'Stack' rather than an entire 'StackSet'.
+focusUp', focusDown' :: Stack a -> Stack a
 focusUp' (Stack t (l:ls) rs) = Stack l ls (t:rs)
 focusUp' (Stack t []     rs) = Stack x xs [] where (x:xs) = reverse (t:rs)
+focusDown'                   = reverseStack . focusUp' . reverseStack
 
+swapUp' :: Stack a -> Stack a
 swapUp'  (Stack t (l:ls) rs) = Stack t ls (l:rs)
 swapUp'  (Stack t []     rs) = Stack t (reverse rs) []
 
