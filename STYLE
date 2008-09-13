@@ -2,7 +2,7 @@
 == Coding guidelines for contributing to
 == xmonad and the xmonad contributed extensions
 
-* Comment every top level function (particularly exported funtions), and 
+* Comment every top level function (particularly exported functions), and
   provide a type signature; use Haddock syntax in the comments.
 
 * Follow the coding style of the other modules.
@@ -15,7 +15,7 @@
 * Tabs are illegal. Use 4 spaces for indenting.
 
 * Any pure function added to the core should have QuickCheck properties
-  precisely defining its behaviour.
+  precisely defining its behavior.
 
 * New modules should identify the author, and be submitted under
   the same license as xmonad (BSD3 license or freer).

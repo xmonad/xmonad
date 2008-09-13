@@ -1,7 +1,7 @@
  - Write down invariants for the window life cycle, especially:
     - When are borders set?  Prove that the current handling is sufficient.
 
- - current floating layer handling is unoptimal. FocusUp should raise,
+ - current floating layer handling is nonoptimal. FocusUp should raise,
    for example
 
  - Issues still with stacking order.
@@ -15,7 +15,7 @@
 * double check README build instructions
 * test core with 6.6 and 6.8
 * bump xmonad.cabal version and X11 version
-* upload X11 and xmonad to hackage
+* upload X11 and xmonad to Hackage
 * check examples/text in user-facing Config.hs
 * check tour.html and intro.html are up to date, and mention all core bindings
 * confirm template config is type correct

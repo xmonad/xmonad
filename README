@@ -26,16 +26,16 @@ Building:
 
  Building is quite straightforward, and requires a basic Haskell toolchain.
  On many systems xmonad is available as a binary package in your
- package system (e.g. on debian or gentoo). If at all possible, use this
+ package system (e.g. on Debian or Gentoo). If at all possible, use this
  in preference to a source build, as the dependency resolution will be
  simpler.
 
  We'll now walk through the complete list of toolchain dependencies.
 
  * GHC: the Glasgow Haskell Compiler
-  
+
     You first need a Haskell compiler. Your distribution's package
-    system will have binaries of GHC (the Glasgow Haskell Compiler), the 
+    system will have binaries of GHC (the Glasgow Haskell Compiler), the
     compiler we use, so install that first. If your operating system's
     package system doesn't provide a binary version of GHC, you can find
     them here:
@@ -46,7 +46,7 @@ Building:
 
         apt-get install ghc6
 
-    It shouldn't be necessary to compile GHC from source -- every common 
+    It shouldn't be necessary to compile GHC from source -- every common
     system has a pre-build binary version.
 
  * X11 libraries:
@@ -60,7 +60,7 @@ Building:
     Typically you need: libXinerama libXext libX11
 
  * Cabal
- 
+
     xmonad requires a recent version of Cabal, >= 1.2.0. If you're using
     GHC 6.8, then it comes bundled with the right version. If you're
     using GHC 6.6.x, you'll need to build and install Cabal from hackage
@@ -84,7 +84,7 @@ Building:
     unix  http://hackage.haskell.org/cgi-bin/hackage-scripts/package/unix
     X11   http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11
 
- * Build xmonad: 
+ * Build xmonad:
 
     Once you've got all the dependencies in place (which should be
     straightforward), build xmonad:
@@ -128,14 +128,14 @@ XMonadContrib
 
 Other useful programs:
 
- A nicer xterm replacment, that supports resizing better:
+ A nicer xterm replacement, that supports resizing better:
 
     urxvt       http://software.schmorp.de/pkg/rxvt-unicode.html
 
  For custom status bars:
 
     dzen        http://gotmor.googlepages.com/dzen
-    xmobar      http://hackage.haskell.org/cgi-bin/hackage-scripts/package/xmobar
+    xmobar http://hackage.haskell.org/cgi-bin/hackage-scripts/package/xmobar
 
  For a program dispatch menu:
 

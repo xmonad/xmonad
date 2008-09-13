@@ -51,9 +51,9 @@ Ok, looks good.
 
 To have xmonad start using your settings, type 'mod-q'.  xmonad will
 then load this new file, and run it.  If it is unable to, the defaults
-are used. 
+are used.
 
-To load succesfully, both 'xmonad' and 'ghc' must be in your $PATH
+To load successfully, both 'xmonad' and 'ghc' must be in your $PATH
 environment variable.  If GHC isn't in your path, for some reason, you
 can compile the xmonad.hs file yourself:
 
