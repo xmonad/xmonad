@@ -340,7 +340,8 @@ io = liftIO
 catchIO :: MonadIO m => IO () -> m ()
 catchIO f = io (f `catch` \e -> hPrint stderr e >> hFlush stderr)
 
--- | spawn. Launch an external application
+-- | spawn. Launch an external application. Specifically, it double-forks and
+-- runs the 'String' you pass as a command to /bin/sh.
 spawn :: MonadIO m => String -> m ()
 spawn x = doubleFork $ executeFile "/bin/sh" False ["-c", x] Nothing
 

@@ -51,7 +51,10 @@ instance LayoutClass Full a
 
 -- | The builtin tiling mode of xmonad. Supports 'Shrink', 'Expand' and
 -- 'IncMasterN'.
-data Tall a = Tall !Int !Rational !Rational deriving (Show, Read)
+data Tall a = Tall !Int      -- ^ The default number of windows in the master pane (default: 1)
+                   !Rational -- ^ Default proportion of screen occupied by master pane (default: 1/2)
+                   !Rational -- ^ Percent of screen to increment by when resizing panes (default: 3/100)
+                deriving (Show, Read)
                         -- TODO should be capped [0..1] ..
 
 -- a nice pure layout, lots of properties for the layout, and its messages, in Properties.hs

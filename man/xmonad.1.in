@@ -36,5 +36,7 @@ xmonad
 to your \fI~/.xinitrc\fR file
 .SH CUSTOMIZATION
 \fBxmonad\fR is customized in ~/.xmonad/xmonad.hs, and then restarting with mod-q.
+.PP
+You can find many extensions to the core feature set in the xmonad-contrib package, available through your package manager or from http://xmonad.org/.
 .SH BUGS
 Probably. If you find any, please report them: http://code.google.com/p/xmonad/issues/list
