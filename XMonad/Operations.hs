@@ -77,14 +77,14 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
 unmanage :: Window -> X ()
 unmanage = windows . W.delete
 
--- | Kill the currently focused client. If we do kill it, we'll get a
+-- | Kill the specified window. If we do kill it, we'll get a
 -- delete notify back from X.
 --
 -- There are two ways to delete a window. Either just kill it, or if it
 -- supports the delete protocol, send a delete event (e.g. firefox)
 --
-kill :: X ()
-kill = withDisplay $ \d -> withFocused $ \w -> do
+killWindow :: Window -> X ()
+killWindow w = withDisplay $ \d -> do
     wmdelt <- atom_WM_DELETE_WINDOW  ;  wmprot <- atom_WM_PROTOCOLS
 
     protocols <- io $ getWMProtocols d w
@@ -94,6 +94,10 @@ kill = withDisplay $ \d -> withFocused $ \w -> do
                 setClientMessageEvent ev w wmprot 32 wmdelt 0
                 sendEvent d w False noEventMask ev
         else killClient d w >> return ()
+
+-- | Kill the currently focused client.
+kill :: X ()
+kill = withFocused killWindow
 
 -- ---------------------------------------------------------------------
 -- Managing windows
