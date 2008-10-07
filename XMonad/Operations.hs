@@ -294,11 +294,17 @@ setTopFocus = withWindowSet $ maybe (setFocusX =<< asks theRoot) setFocusX . W.p
 -- This happens if X notices we've moved the mouse (and perhaps moved
 -- the mouse to a new screen).
 focus :: Window -> X ()
-focus w = withWindowSet $ \s -> do
-    if W.member w s then when (W.peek s /= Just w) $ do
-                              local (\c -> c { mouseFocused = True }) $ do
-                                  windows (W.focusWindow w)
-                    else whenX (isRoot w) $ setFocusX w
+focus w = local (\c -> c { mouseFocused = True }) $ withWindowSet $ \s -> do
+    let stag = W.tag . W.workspace
+        curr = stag $ W.current s
+    mnew <- maybe (return Nothing) (fmap (fmap stag) . uncurry pointScreen)
+            =<< asks mousePosition
+    root <- asks theRoot
+    case () of
+        _ | W.member w s && W.peek s /= Just w -> windows (W.focusWindow w)
+          | Just new <- mnew, w == root && curr /= new
+                                               -> windows (W.view new)
+          | otherwise                          -> return ()
 
 -- | Call X to set the keyboard focus details.
 setFocusX :: Window -> X ()
@@ -311,7 +317,7 @@ setFocusX w = withWindowSet $ \ws -> do
             setButtonGrab True otherw
 
     -- If we ungrab buttons on the root window, we lose our mouse bindings.
-    whenX (not <$> isRoot w) $ setButtonGrab False w
+    whenX (isRoot w) $ setButtonGrab False w
     io $ do setInputFocus dpy w revertToPointerRoot 0
             -- raiseWindow dpy w
 
