@@ -423,11 +423,14 @@ floatLocation w = withDisplay $ \d -> do
 
     return (W.screen $ sc, rr)
   where fi x = fromIntegral x
-        pointWithin :: Integer -> Integer -> Rectangle -> Bool
-        pointWithin x y r = x >= fi (rect_x r) &&
-                            x <  fi (rect_x r) + fi (rect_width r) &&
-                            y >= fi (rect_y r) &&
-                            y <  fi (rect_y r) + fi (rect_height r)
+
+-- | 'pointWithin x y r' returns 'True' if the '(x, y)' co-ordinate is within
+-- the 'Rectangle'.
+pointWithin :: Position -> Position -> Rectangle -> Bool
+pointWithin x y r = x >= rect_x r &&
+                    x <  rect_x r + fromIntegral (rect_width r) &&
+                    y >= rect_y r &&
+                    y <  rect_y r + fromIntegral (rect_height r)
 
 -- | Make a tiled window floating, using its suggested rectangle
 float :: Window -> X ()
