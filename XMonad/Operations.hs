@@ -412,10 +412,9 @@ floatLocation w = withDisplay $ \d -> do
     ws <- gets windowset
     wa <- io $ getWindowAttributes d w
     bw <- fi <$> asks (borderWidth . config)
+    sc <- fromMaybe (W.current ws) <$> pointScreen (fi $ wa_x wa) (fi $ wa_y wa)
 
-    -- XXX horrible
-    let sc = fromMaybe (W.current ws) $ find (pointWithin (fi $ wa_x wa) (fi $ wa_y wa) . screenRect . W.screenDetail) $ W.screens ws
-        sr = screenRect . W.screenDetail $ sc
+    let sr = screenRect . W.screenDetail $ sc
         rr = W.RationalRect ((fi (wa_x wa) - fi (rect_x sr)) % fi (rect_width sr))
                             ((fi (wa_y wa) - fi (rect_y sr)) % fi (rect_height sr))
                             (fi (wa_width  wa + bw*2) % fi (rect_width sr))
@@ -423,6 +422,12 @@ floatLocation w = withDisplay $ \d -> do
 
     return (W.screen $ sc, rr)
   where fi x = fromIntegral x
+
+-- | Given a point, determine the screen (if any) that contains it.
+pointScreen :: Position -> Position
+            -> X (Maybe (W.Screen WorkspaceId (Layout Window) Window ScreenId ScreenDetail))
+pointScreen x y = withWindowSet $ return . find p . W.screens
+  where p = pointWithin x y . screenRect . W.screenDetail
 
 -- | 'pointWithin x y r' returns 'True' if the '(x, y)' co-ordinate is within
 -- the 'Rectangle'.
