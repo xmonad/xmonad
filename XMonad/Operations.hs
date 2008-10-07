@@ -429,8 +429,8 @@ pointScreen :: Position -> Position
 pointScreen x y = withWindowSet $ return . find p . W.screens
   where p = pointWithin x y . screenRect . W.screenDetail
 
--- | 'pointWithin x y r' returns 'True' if the '(x, y)' co-ordinate is within
--- the 'Rectangle'.
+-- | @pointWithin x y r@ returns 'True' if the @(x, y)@ co-ordinate is within
+-- @r@.
 pointWithin :: Position -> Position -> Rectangle -> Bool
 pointWithin x y r = x >= rect_x r &&
                     x <  rect_x r + fromIntegral (rect_width r) &&
