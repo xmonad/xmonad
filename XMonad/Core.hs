@@ -70,6 +70,9 @@ data XConf = XConf
     , buttonActions :: !(M.Map (KeyMask, Button) (Window -> X ()))
                                       -- ^ a mapping of button presses to actions
     , mouseFocused :: !Bool           -- ^ was refocus caused by mouse action?
+    , mousePosition :: !(Maybe (Position, Position))
+                                      -- ^ position of the mouse according to
+                                      -- the event currently being processed
     }
 
 -- todo, better name
