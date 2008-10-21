@@ -65,6 +65,18 @@ xmonad initxmc = do
     let dflt = defaultScreen dpy
 
     rootw  <- rootWindow dpy dflt
+
+    -- If another WM is running, a BadAccess error will be returned.  The
+    -- default error handler will write the exception to stderr and exit with
+    -- an error.
+    selectInput dpy rootw $  substructureRedirectMask .|. substructureNotifyMask
+                         .|. enterWindowMask .|. leaveWindowMask .|. structureNotifyMask
+    sync dpy False -- sync to ensure all outstanding errors are delivered
+
+    -- turn off the default handler in favor of one that ignores all errors
+    -- (ugly, I know)
+    xSetErrorHandler -- in C, I'm too lazy to write the binding: dons
+
     xinesc <- getCleanedScreenInfo dpy
     nbc    <- do v            <- initColor dpy $ normalBorderColor  xmc
                  ~(Just nbc_) <- initColor dpy $ normalBorderColor Default.defaultConfig
@@ -106,13 +118,6 @@ xmonad initxmc = do
             , mapped        = S.empty
             , waitingUnmap  = M.empty
             , dragging      = Nothing }
-
-    xSetErrorHandler -- in C, I'm too lazy to write the binding: dons
-
-    -- setup initial X environment
-    sync dpy False
-    selectInput dpy rootw $  substructureRedirectMask .|. substructureNotifyMask
-                         .|. enterWindowMask .|. leaveWindowMask .|. structureNotifyMask
 
     allocaXEvent $ \e ->
         runX cf st $ do
