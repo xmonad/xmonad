@@ -71,6 +71,7 @@ xmonad initxmc = do
     -- an error.
     selectInput dpy rootw $  substructureRedirectMask .|. substructureNotifyMask
                          .|. enterWindowMask .|. leaveWindowMask .|. structureNotifyMask
+                         .|. buttonPressMask
     sync dpy False -- sync to ensure all outstanding errors are delivered
 
     -- turn off the default handler in favor of one that ignores all errors
@@ -229,9 +230,10 @@ handle e@(ButtonEvent {ev_window = w,ev_event_type = t,ev_button = b })
     -- grabbed in grabButtons. Otherwise, it's click-to-focus.
     isr <- isRoot w
     m <- cleanMask $ ev_state e
-    ba <- asks buttonActions
-    if isr then userCode $ whenJust (M.lookup (m, b) ba) ($ ev_subwindow e)
-           else focus w
+    mact <- asks (M.lookup (m, b) . buttonActions)
+    case mact of
+        (Just act) | isr -> act $ ev_subwindow e
+        _                -> focus w
     broadcastMessage e -- Always send button events.
 
 -- entered a normal window: focus it if focusFollowsMouse is set to
