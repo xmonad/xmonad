@@ -132,7 +132,7 @@ windows f = do
             tiled = (W.stack . W.workspace . W.current $ this)
                     >>= W.filter (`M.notMember` W.floating ws)
                     >>= W.filter (`notElem` vis)
-            viewrect@(Rectangle sx sy sw sh) = screenRect $ W.screenDetail w
+            viewrect = screenRect $ W.screenDetail w
 
         -- just the tiled windows:
         -- now tile the windows on this workspace, modified by the gap
@@ -144,10 +144,7 @@ windows f = do
         -- now the floating windows:
         -- move/resize the floating windows, if there are any
         forM_ flt $ \fw -> whenJust (M.lookup fw (W.floating ws)) $
-          \(W.RationalRect rx ry rw rh) -> do
-            tileWindow fw $ Rectangle
-                (sx + floor (toRational sw*rx)) (sy + floor (toRational sh*ry))
-                (floor (toRational sw*rw)) (floor (toRational sh*rh))
+          \r -> tileWindow fw $ scaleRationalRect viewrect r
 
         let vs = flt ++ map fst rs
         io $ restackWindows d vs
@@ -171,6 +168,12 @@ windows f = do
 
     isMouseFocused <- asks mouseFocused
     unless isMouseFocused $ clearEvents enterWindowMask
+
+-- | Produce the actual rectangle from a screen and a ratio on that screen.
+scaleRationalRect :: Rectangle -> W.RationalRect -> Rectangle
+scaleRationalRect (Rectangle sx sy sw sh) (W.RationalRect rx ry rw rh)
+ = Rectangle (sx + scale sw rx) (sy + scale sh ry) (scale sw rw) (scale sh rh)
+ where scale s r = floor (toRational s * r)
 
 -- | setWMState.  set the WM_STATE property
 setWMState :: Window -> Int -> X ()
