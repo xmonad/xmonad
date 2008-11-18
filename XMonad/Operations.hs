@@ -124,11 +124,10 @@ windows f = do
     -- for each workspace, layout the currently visible workspaces
     let allscreens     = W.screens ws
         summed_visible = scanl (++) [] $ map (W.integrate' . W.stack . W.workspace) allscreens
-    visible <- fmap concat $ forM (zip allscreens summed_visible) $ \ (w, vis) -> do
+    rects <- fmap concat $ forM (zip allscreens summed_visible) $ \ (w, vis) -> do
         let wsp   = W.workspace w
             this  = W.view n ws
             n     = W.tag wsp
-            flt   = filter (flip M.member (W.floating ws)) (W.index this)
             tiled = (W.stack . W.workspace . W.current $ this)
                     >>= W.filter (`M.notMember` W.floating ws)
                     >>= W.filter (`notElem` vis)
@@ -138,18 +137,21 @@ windows f = do
         -- now tile the windows on this workspace, modified by the gap
         (rs, ml') <- runLayout wsp { W.stack = tiled } viewrect `catchX`
                      runLayout wsp { W.stack = tiled, W.layout = Layout Full } viewrect
-        mapM_ (uncurry tileWindow) rs
         updateLayout n ml'
 
-        -- now the floating windows:
-        -- move/resize the floating windows, if there are any
-        forM_ flt $ \fw -> whenJust (M.lookup fw (W.floating ws)) $
-          \r -> tileWindow fw $ scaleRationalRect viewrect r
+        let m   = W.floating ws
+            flt = [(fw, scaleRationalRect viewrect r)
+                    | fw <- filter (flip M.member m) (W.index this)
+                    , Just r <- [M.lookup fw m]]
+            vs = flt ++ rs
 
-        let vs = flt ++ map fst rs
-        io $ restackWindows d vs
+        io $ restackWindows d (map fst vs)
         -- return the visible windows for this workspace:
         return vs
+
+    let visible = map fst rects
+
+    mapM_ (uncurry tileWindow) rects
 
     whenJust (W.peek ws) $ \w -> io $ setWindowBorder d w fbc
     asks (logHook . config) >>= userCode
