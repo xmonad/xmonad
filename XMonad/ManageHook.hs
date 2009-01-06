@@ -71,7 +71,8 @@ title = ask >>= \w -> liftX $ do
         getProp =
             (internAtom d "_NET_WM_NAME" False >>= getTextProperty d w)
                 `catch` \_ -> getTextProperty d w wM_NAME
-        extract = fmap head . wcTextPropertyToTextList d
+        extract prop = do l <- wcTextPropertyToTextList d prop
+		          return $ if null l then "" else head l
     io $ bracket getProp (xFree . tp_value) extract `catch` \_ -> return ""
 
 -- | Return the application name.
