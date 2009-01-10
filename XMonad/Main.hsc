@@ -176,7 +176,7 @@ handle (KeyEvent {ev_event_type = t, ev_state = m, ev_keycode = code})
         s  <- io $ keycodeToKeysym dpy code 0
         mClean <- cleanMask m
         ks <- asks keyActions
-        userCode $ whenJust (M.lookup (mClean, s) ks) id
+        userCodeDef () $ whenJust (M.lookup (mClean, s) ks) id
 
 -- manage a new window
 handle (MapRequestEvent    {ev_window = w}) = withDisplay $ \dpy -> do
@@ -279,7 +279,7 @@ handle (ConfigureEvent {ev_window = w}) = whenX (isRoot w) rescreen
 
 -- property notify
 handle PropertyEvent { ev_event_type = t, ev_atom = a }
-    | t == propertyNotify && a == wM_NAME = userCode =<< asks (logHook . config)
+    | t == propertyNotify && a == wM_NAME = userCodeDef () =<< asks (logHook . config)
 
 handle e = broadcastMessage e -- trace (eventName e) -- ignoring
 

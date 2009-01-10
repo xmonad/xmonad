@@ -24,7 +24,7 @@ module XMonad.Core (
     XConf(..), XConfig(..), LayoutClass(..),
     Layout(..), readsLayout, Typeable, Message,
     SomeMessage(..), fromMessage, LayoutMessages(..),
-    runX, catchX, userCode, io, catchIO, doubleFork,
+    runX, catchX, userCode, userCodeDef, io, catchIO, doubleFork,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
     getAtom, spawn, getXMonadDir, recompile, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, ManageHook, Query(..), runQuery
@@ -47,6 +47,7 @@ import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras (Event)
 import Data.Typeable
 import Data.Monoid
+import Data.Maybe (fromMaybe)
 
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -163,8 +164,13 @@ catchX job errcase = do
 
 -- | Execute the argument, catching all exceptions.  Either this function or
 -- 'catchX' should be used at all callsites of user customized code.
-userCode :: X () -> X ()
-userCode a = catchX (a >> return ()) (return ())
+userCode :: X a -> X (Maybe a)
+userCode a = catchX (Just `liftM` a) (return Nothing)
+
+-- | Same as userCode but with a default argument to return instead of using
+-- Maybe, provided for convenience.
+userCodeDef :: a -> X a -> X a
+userCodeDef def a = fromMaybe def `liftM` userCode a
 
 -- ---------------------------------------------------------------------
 -- Convenient wrappers to state

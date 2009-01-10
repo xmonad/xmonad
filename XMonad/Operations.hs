@@ -23,7 +23,7 @@ import XMonad.Layout (Full(..))
 import qualified XMonad.StackSet as W
 
 import Data.Maybe
-import Data.Monoid          (appEndo)
+import Data.Monoid          (Endo(..))
 import Data.List            (nub, (\\), find)
 import Data.Bits            ((.|.), (.&.), complement)
 import Data.Ratio
@@ -68,7 +68,7 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
             where i = W.tag $ W.workspace $ W.current ws
 
     mh <- asks (manageHook . config)
-    g <- fmap appEndo (runQuery mh w) `catchX` return id
+    g <- fmap appEndo $ userCodeDef (Endo id) (runQuery mh w)
     windows (g . f)
 
 -- | unmanage. A window no longer exists, remove it from the window
@@ -169,7 +169,7 @@ windows f = do
 
     isMouseFocused <- asks mouseFocused
     unless isMouseFocused $ clearEvents enterWindowMask
-    asks (logHook . config) >>= userCode
+    asks (logHook . config) >>= userCodeDef ()
 
 -- | Produce the actual rectangle from a screen and a ratio on that screen.
 scaleRationalRect :: Rectangle -> W.RationalRect -> Rectangle
