@@ -155,12 +155,10 @@ xmonad initxmc = do
             userCode $ startupHook initxmc
 
             -- main loop, for all you HOF/recursion fans out there.
-            forever_ $ prehandle =<< io (nextEvent dpy e >> getEvent e)
+            forever $ prehandle =<< io (nextEvent dpy e >> getEvent e)
 
     return ()
       where
-        forever_ a = a >> forever_ a
-
         -- if the event gives us the position of the pointer, set mousePosition
         prehandle e = let mouse = do guard (ev_event_type e `elem` evs)
                                      return (fromIntegral (ev_x_root e)
