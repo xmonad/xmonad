@@ -27,7 +27,6 @@ import Foreign.C
 import Foreign.Ptr
 
 import System.Environment (getArgs)
-import System.Posix.Signals
 
 import Graphics.X11.Xlib hiding (refreshKeyboardMapping)
 import Graphics.X11.Xlib.Extras
@@ -57,8 +56,8 @@ xmonad :: (LayoutClass l Window, Read (l Window)) => XConfig l -> IO ()
 xmonad initxmc = do
     -- setup locale information from environment
     withCString "" $ c_setlocale (#const LC_ALL)
-    -- ignore SIGPIPE
-    installHandler openEndedPipe Ignore Nothing
+    -- ignore SIGPIPE and SIGCHLD
+    installSignalHandlers
     -- First, wrap the layout in an existential, to keep things pretty:
     let xmc = initxmc { layoutHook = Layout $ layoutHook initxmc }
     dpy   <- openDisplay ""

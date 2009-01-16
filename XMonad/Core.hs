@@ -24,28 +24,31 @@ module XMonad.Core (
     XConf(..), XConfig(..), LayoutClass(..),
     Layout(..), readsLayout, Typeable, Message,
     SomeMessage(..), fromMessage, LayoutMessages(..),
-    runX, catchX, userCode, userCodeDef, io, catchIO, doubleFork,
+    runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
-    getAtom, spawn, getXMonadDir, recompile, trace, whenJust, whenX,
+    getAtom, spawn, spawnPID, getXMonadDir, recompile, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, ManageHook, Query(..), runQuery
   ) where
 
 import XMonad.StackSet hiding (modify)
 
 import Prelude hiding ( catch )
-import Control.Exception (catch, bracket, throw, Exception(ExitException))
+import Control.Exception (catch, try, bracket, throw, Exception(ExitException))
 import Control.Applicative
 import Control.Monad.State
 import Control.Monad.Reader
 import System.IO
 import System.Info
-import System.Posix.Process (executeFile, forkProcess, getProcessStatus, createSession)
+import System.Posix.Process (executeFile, forkProcess, getAnyProcessStatus)
+import System.Posix.Signals
+import System.Posix.Types (ProcessID)
 import System.Process
 import System.Directory
 import System.Exit
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras (Event)
 import Data.Typeable
+import Data.Maybe (isJust)
 import Data.Monoid
 import Data.Maybe (fromMaybe)
 
@@ -349,17 +352,10 @@ catchIO f = io (f `catch` \e -> hPrint stderr e >> hFlush stderr)
 -- | spawn. Launch an external application. Specifically, it double-forks and
 -- runs the 'String' you pass as a command to /bin/sh.
 spawn :: MonadIO m => String -> m ()
-spawn x = doubleFork $ executeFile "/bin/sh" False ["-c", x] Nothing
+spawn x = spawnPID x >> return ()
 
--- | Double fork and execute an 'IO' action (usually one of the exec family of
--- functions)
-doubleFork :: MonadIO m => IO () -> m ()
-doubleFork m = io $ do
-    pid <- forkProcess $ do
-        forkProcess (createSession >> m)
-        exitWith ExitSuccess
-    getProcessStatus True False pid
-    return ()
+spawnPID :: MonadIO m => String -> m ProcessID
+spawnPID x = io $ forkProcess $ executeFile "/bin/sh" False ["-c", x] Nothing
 
 -- | This is basically a map function, running a function in the 'X' monad on
 -- each workspace with the output of that function being the modified workspace.
@@ -404,9 +400,14 @@ recompile force = io $ do
     binT <- getModTime bin
     if (force || srcT > binT)
       then do
+        -- temporarily disable SIGCHLD ignoring:
+        installHandler sigCHLD Default Nothing
         status <- bracket (openFile err WriteMode) hClose $ \h -> do
             waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-no-recomp", "-v0", "-o",binn] (Just dir)
                                     Nothing Nothing Nothing (Just h)
+
+        -- re-enable SIGCHLD:
+        installSignalHandlers
 
         -- now, if it fails, run xmessage to let the user know:
         when (status /= ExitSuccess) $ do
@@ -417,7 +418,8 @@ recompile force = io $ do
             -- nb, the ordering of printing, then forking, is crucial due to
             -- lazy evaluation
             hPutStrLn stderr msg
-            doubleFork $ executeFile "xmessage" True ["-default", "okay", msg] Nothing
+            forkProcess $ executeFile "xmessage" True ["-default", "okay", msg] Nothing
+            return ()
         return (status == ExitSuccess)
       else return True
  where getModTime f = catch (Just <$> getModificationTime f) (const $ return Nothing)
@@ -434,3 +436,14 @@ whenX a f = a >>= \b -> when b f
 -- be found in your .xsession-errors file
 trace :: MonadIO m => String -> m ()
 trace = io . hPutStrLn stderr
+
+-- | Ignore SIGPIPE to avoid termination when a pipe is full, and SIGCHLD to
+-- avoid zombie processes, and clean up any extant zombie processes.
+installSignalHandlers :: MonadIO m => m ()
+installSignalHandlers = io $ do
+    installHandler openEndedPipe Ignore Nothing
+    installHandler sigCHLD Ignore Nothing
+    try $ fix $ \more -> do
+        x <- getAnyProcessStatus False False
+        when (isJust x) more
+    return ()

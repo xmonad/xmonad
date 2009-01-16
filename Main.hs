@@ -32,6 +32,7 @@ import qualified Properties
 -- for xmonad, and if it doesn't find one, just launches the default.
 main :: IO ()
 main = do
+    installSignalHandlers -- important to ignore SIGCHLD to avoid zombies
     args <- getArgs
     let launch = catchIO buildLaunch >> xmonad defaultConfig
     case args of
