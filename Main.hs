@@ -40,6 +40,7 @@ main = do
         ["--resume", _]       -> launch
         ["--help"]            -> usage
         ["--recompile"]       -> recompile True >> return ()
+        ["--restart"]         -> sendRestart >> return ()
         ["--version"]         -> putStrLn ("xmonad " ++ showVersion version)
 #ifdef TESTING
         ("--run-tests":_)     -> Properties.main
@@ -55,6 +56,7 @@ usage = do
         "  --help                       Print this message" :
         "  --version                    Print the version number" :
         "  --recompile                  Recompile your ~/.xmonad/xmonad.hs" :
+        "  --restart                    Request a running xmonad process to restart" :
 #ifdef TESTING
         "  --run-tests                  Run the test suite" :
 #endif
@@ -83,3 +85,14 @@ buildLaunch = do
     args <- getArgs
     executeFile (dir ++ "/xmonad-"++arch++"-"++os) False args Nothing
     return ()
+
+sendRestart :: IO ()
+sendRestart = do
+    dpy <- openDisplay ""
+    rw <- rootWindow dpy $ defaultScreen dpy
+    xmonad_restart <- internAtom dpy "XMONAD_RESTART" False
+    allocaXEvent $ \e -> do
+        setEventType e clientMessage
+        setClientMessageEvent e rw xmonad_restart 32 0 currentTime
+        sendEvent dpy rw False structureNotifyMask e
+    sync dpy False

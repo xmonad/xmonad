@@ -280,6 +280,12 @@ handle (ConfigureEvent {ev_window = w}) = whenX (isRoot w) rescreen
 handle PropertyEvent { ev_event_type = t, ev_atom = a }
     | t == propertyNotify && a == wM_NAME = userCodeDef () =<< asks (logHook . config)
 
+handle e@ClientMessageEvent { ev_message_type = mt } = do
+    a <- getAtom "XMONAD_RESTART"
+    if (mt == a)
+        then restart "xmonad" True
+        else broadcastMessage e
+
 handle e = broadcastMessage e -- trace (eventName e) -- ignoring
 
 

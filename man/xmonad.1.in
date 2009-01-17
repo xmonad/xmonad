@@ -23,6 +23,8 @@ When running with multiple monitors (Xinerama), each screen has exactly 1 worksp
 .TP
 \fB--recompile
 Recompiles your configuration in ~/.xmonad/xmonad.hs
+\fB--restart
+Causes the currently running xmonad process to restart
 .TP
 \fB--version
 Display version of \fBxmonad\fR.
