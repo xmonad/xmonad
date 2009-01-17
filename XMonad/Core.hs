@@ -354,6 +354,7 @@ catchIO f = io (f `catch` \e -> hPrint stderr e >> hFlush stderr)
 spawn :: MonadIO m => String -> m ()
 spawn x = spawnPID x >> return ()
 
+-- | Like 'spawn', but returns the 'ProcessID' of the launched application
 spawnPID :: MonadIO m => String -> m ProcessID
 spawnPID x = io $ forkProcess $ executeFile "/bin/sh" False ["-c", x] Nothing
 
