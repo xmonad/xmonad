@@ -33,7 +33,7 @@ module XMonad.Core (
 import XMonad.StackSet hiding (modify)
 
 import Prelude hiding ( catch )
-import Control.Exception (catch, try, bracket, throw, Exception(ExitException))
+import Control.Exception (catch, try, bracket, throw, finally, Exception(ExitException))
 import Control.Applicative
 import Control.Monad.State
 import Control.Monad.Reader
@@ -41,6 +41,7 @@ import System.IO
 import System.Info
 import System.Posix.Process (executeFile, forkProcess, getAnyProcessStatus)
 import System.Posix.Signals
+import System.Posix.IO
 import System.Posix.Types (ProcessID)
 import System.Process
 import System.Directory
@@ -356,7 +357,13 @@ spawn x = spawnPID x >> return ()
 
 -- | Like 'spawn', but returns the 'ProcessID' of the launched application
 spawnPID :: MonadIO m => String -> m ProcessID
-spawnPID x = io $ forkProcess $ executeFile "/bin/sh" False ["-c", x] Nothing
+spawnPID x = io . forkProcess . finally nullStdin $
+                executeFile "/bin/sh" False ["-c", x] Nothing
+ where
+    nullStdin = do
+        fd <- openFd "/dev/null" ReadOnly Nothing defaultFileFlags
+        dupTo fd stdInput
+        closeFd fd
 
 -- | This is basically a map function, running a function in the 'X' monad on
 -- each workspace with the output of that function being the modified workspace.
