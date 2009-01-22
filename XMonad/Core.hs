@@ -24,7 +24,7 @@ module XMonad.Core (
     XConf(..), XConfig(..), LayoutClass(..),
     Layout(..), readsLayout, Typeable, Message,
     SomeMessage(..), fromMessage, LayoutMessages(..),
-    runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers,
+    runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
     getAtom, spawn, spawnPID, getXMonadDir, recompile, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, ManageHook, Query(..), runQuery
@@ -358,6 +358,7 @@ spawn x = spawnPID x >> return ()
 -- | Like 'spawn', but returns the 'ProcessID' of the launched application
 spawnPID :: MonadIO m => String -> m ProcessID
 spawnPID x = io . forkProcess . finally nullStdin $ do
+                uninstallSignalHandlers
                 createSession
                 executeFile "/bin/sh" False ["-c", x] Nothing
  where
@@ -410,7 +411,7 @@ recompile force = io $ do
     if (force || srcT > binT)
       then do
         -- temporarily disable SIGCHLD ignoring:
-        installHandler sigCHLD Default Nothing
+        uninstallSignalHandlers
         status <- bracket (openFile err WriteMode) hClose $ \h -> do
             waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-no-recomp", "-v0", "-o",binn] (Just dir)
                                     Nothing Nothing Nothing (Just h)
@@ -455,4 +456,9 @@ installSignalHandlers = io $ do
     try $ fix $ \more -> do
         x <- getAnyProcessStatus False False
         when (isJust x) more
+    return ()
+
+uninstallSignalHandlers :: MonadIO m => m ()
+uninstallSignalHandlers = io $ do
+    installHandler sigCHLD Default Nothing
     return ()
