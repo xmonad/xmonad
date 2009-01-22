@@ -39,7 +39,7 @@ import Control.Monad.State
 import Control.Monad.Reader
 import System.IO
 import System.Info
-import System.Posix.Process (executeFile, forkProcess, getAnyProcessStatus)
+import System.Posix.Process (executeFile, forkProcess, getAnyProcessStatus, createSession)
 import System.Posix.Signals
 import System.Posix.IO
 import System.Posix.Types (ProcessID)
@@ -357,7 +357,8 @@ spawn x = spawnPID x >> return ()
 
 -- | Like 'spawn', but returns the 'ProcessID' of the launched application
 spawnPID :: MonadIO m => String -> m ProcessID
-spawnPID x = io . forkProcess . finally nullStdin $
+spawnPID x = io . forkProcess . finally nullStdin $ do
+                createSession
                 executeFile "/bin/sh" False ["-c", x] Nothing
  where
     nullStdin = do
