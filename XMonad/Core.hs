@@ -125,7 +125,7 @@ data ScreenDetail   = SD { screenRect :: !Rectangle } deriving (Eq,Show, Read)
 --
 newtype X a = X (ReaderT XConf (StateT XState IO) a)
 #ifndef __HADDOCK__
-    deriving (Functor, Monad, MonadIO, MonadState XState, MonadReader XConf)
+    deriving (Functor, Monad, MonadIO, MonadState XState, MonadReader XConf, Typeable)
 #endif
 
 instance Applicative X where
