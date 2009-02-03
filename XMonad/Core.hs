@@ -87,6 +87,9 @@ data XConfig l = XConfig
     , terminal           :: !String              -- ^ The preferred terminal application. Default: \"xterm\"
     , layoutHook         :: !(l Window)          -- ^ The available layouts
     , manageHook         :: !ManageHook          -- ^ The action to run when a new window is opened
+    , handleEventHook    :: !(Event -> X All)    -- ^ Handle an X event, returns (All True) if the default handler
+                                                 -- should also be run afterwards. mappend should be used for combining
+                                                 -- event hooks in most cases.
     , workspaces         :: ![String]            -- ^ The list of workspaces' names
     , numlockMask        :: !KeyMask             -- ^ The numlock modifier
     , modMask            :: !KeyMask             -- ^ the mod modifier

@@ -26,19 +26,23 @@ module XMonad.Config (defaultConfig) where
 --
 import XMonad.Core as XMonad hiding
     (workspaces,manageHook,numlockMask,keys,logHook,startupHook,borderWidth,mouseBindings
-    ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse)
+    ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse
+    ,handleEventHook)
 import qualified XMonad.Core as XMonad
     (workspaces,manageHook,numlockMask,keys,logHook,startupHook,borderWidth,mouseBindings
-    ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse)
+    ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse
+    ,handleEventHook)
 
 import XMonad.Layout
 import XMonad.Operations
 import XMonad.ManageHook
 import qualified XMonad.StackSet as W
 import Data.Bits ((.|.))
+import Data.Monoid
 import qualified Data.Map as M
 import System.Exit
 import Graphics.X11.Xlib
+import Graphics.X11.Xlib.Extras
 
 -- | The default number of workspaces (virtual screens) and their names.
 -- By default we use numeric strings, but any string may be used as a
@@ -118,6 +122,14 @@ manageHook = composeAll
 --
 logHook :: X ()
 logHook = return ()
+
+------------------------------------------------------------------------
+-- Event handling
+
+-- | Defines a custom handler function for X Events. The function should
+-- return True if the default handler is to be run afterwards.
+handleEventHook :: Event -> X All
+handleEventHook _ = return (All True)
 
 -- | Perform an arbitrary action at xmonad startup.
 startupHook :: X ()
@@ -250,4 +262,5 @@ defaultConfig = XConfig
     , XMonad.startupHook        = startupHook
     , XMonad.mouseBindings      = mouseBindings
     , XMonad.manageHook         = manageHook
+    , XMonad.handleEventHook    = handleEventHook
     , XMonad.focusFollowsMouse  = focusFollowsMouse }

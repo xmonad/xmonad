@@ -22,6 +22,7 @@ import qualified Data.Set as S
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Maybe (fromMaybe)
+import Data.Monoid (getAll)
 
 import Foreign.C
 import Foreign.Ptr
@@ -152,10 +153,17 @@ xmonad initxmc = do
         prehandle e = let mouse = do guard (ev_event_type e `elem` evs)
                                      return (fromIntegral (ev_x_root e)
                                             ,fromIntegral (ev_y_root e))
-                      in local (\c -> c { mousePosition = mouse }) (handle e)
+                      in local (\c -> c { mousePosition = mouse }) (handleWithHook e)
         evs = [ keyPress, keyRelease, enterNotify, leaveNotify
               , buttonPress, buttonRelease]
 
+
+-- | Runs handleEventHook from the configuration and runs the default handler
+-- function if it returned True.
+handleWithHook :: Event -> X ()
+handleWithHook e = do
+  evHook <- asks (handleEventHook . config)
+  whenX (userCodeDef True $ getAll `fmap` evHook e) (handle e)
 
 -- ---------------------------------------------------------------------
 -- | Event handler. Map X events onto calls into Operations.hs, which
