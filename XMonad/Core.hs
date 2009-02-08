@@ -416,7 +416,7 @@ recompile force = io $ do
         -- temporarily disable SIGCHLD ignoring:
         uninstallSignalHandlers
         status <- bracket (openFile err WriteMode) hClose $ \h -> do
-            waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-no-recomp", "-v0", "-o",binn] (Just dir)
+            waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-fforce-recomp", "-v0", "-o",binn] (Just dir)
                                     Nothing Nothing Nothing (Just h)
 
         -- re-enable SIGCHLD:
