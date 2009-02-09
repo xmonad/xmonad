@@ -18,6 +18,10 @@ import qualified Data.Map        as M
 --
 myTerminal      = "xterm"
 
+-- Whether focus follows the mouse pointer.
+myFocusFollowsMouse :: Bool
+myFocusFollowsMouse = True
+
 -- Width of the window border in pixels.
 --
 myBorderWidth   = 1
@@ -74,7 +78,7 @@ myKeys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     -- launch gmrun
     , ((modMask .|. shiftMask, xK_p     ), spawn "gmrun")
 
-    -- close focused window 
+    -- close focused window
     , ((modMask .|. shiftMask, xK_c     ), kill)
 
      -- Rotate through the available layout algorithms
@@ -216,10 +220,16 @@ myManageHook = composeAll
     , resource  =? "desktop_window" --> doIgnore
     , resource  =? "kdesktop"       --> doIgnore ]
 
--- Whether focus follows the mouse pointer.
-myFocusFollowsMouse :: Bool
-myFocusFollowsMouse = True
+------------------------------------------------------------------------
+-- Event handling
 
+-- * EwmhDesktops users should change this to ewmhDesktopsEventHook
+--
+-- Defines a custom handler function for X Events. The function should
+-- return (All True) if the default handler is to be run afterwards. To
+-- combine event hooks use mappend or mconcat from Data.Monoid.
+--
+myEventHook = handleEventHook
 
 ------------------------------------------------------------------------
 -- Status bars and logging
@@ -251,9 +261,9 @@ myStartupHook = return ()
 main = xmonad defaults
 
 -- A structure containing your configuration settings, overriding
--- fields in the default config. Any you don't override, will 
+-- fields in the default config. Any you don't override, will
 -- use the defaults defined in xmonad/XMonad/Config.hs
--- 
+--
 -- No need to modify this.
 --
 defaults = defaultConfig {
@@ -274,6 +284,7 @@ defaults = defaultConfig {
       -- hooks, layouts
         layoutHook         = myLayout,
         manageHook         = myManageHook,
+        handleEventHook    = myEventHook,
         logHook            = myLogHook,
         startupHook        = myStartupHook
     }

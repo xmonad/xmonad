@@ -127,7 +127,8 @@ logHook = return ()
 -- Event handling
 
 -- | Defines a custom handler function for X Events. The function should
--- return True if the default handler is to be run afterwards.
+-- return (All True) if the default handler is to be run afterwards.
+-- To combine event hooks, use mappend or mconcat from Data.Monoid.
 handleEventHook :: Event -> X All
 handleEventHook _ = return (All True)
 
