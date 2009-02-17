@@ -52,7 +52,7 @@ module XMonad.StackSet (
     ) where
 
 import Prelude hiding (filter)
-import Data.Maybe   (listToMaybe,fromJust,isJust)
+import Data.Maybe   (listToMaybe,isJust)
 import qualified Data.List as L (deleteBy,find,splitAt,filter,nub)
 import Data.List ( (\\) )
 import qualified Data.Map  as M (Map,insert,delete,empty)
@@ -538,10 +538,7 @@ focusMaster = modify' $ \c -> case c of
 -- element on the current stack, the original stackSet is returned.
 --
 shift :: (Ord a, Eq s, Eq i) => i -> StackSet i l a s sd -> StackSet i l a s sd
-shift n s | n `tagMember` s && n /= curtag = maybe s go (peek s)
-          | otherwise                      = s
-    where go w = view curtag . insertUp w . view n . delete' w $ s
-          curtag = currentTag s
+shift n s = maybe s (\w -> shiftWin n w s) (peek s)
 
 -- | /O(n)/. shiftWin. Searches for the specified window 'w' on all workspaces
 -- of the stackSet and moves it to stack 'n', leaving it as the focused
@@ -549,13 +546,12 @@ shift n s | n `tagMember` s && n /= curtag = maybe s go (peek s)
 -- focused element on that workspace.
 -- The actual focused workspace doesn't change. If the window is not
 -- found in the stackSet, the original stackSet is returned.
--- TODO how does this duplicate 'shift's behaviour?
 shiftWin :: (Ord a, Eq a, Eq s, Eq i) => i -> a -> StackSet i l a s sd -> StackSet i l a s sd
-shiftWin n w s | from == Nothing                     = s -- not found
-               | n `tagMember` s && (Just n) /= from = go
-               | otherwise                           = s
-    where from   = findTag w s
+shiftWin n w s = case findTag w s of
+                    Just from | n `tagMember` s && n /= from -> go from s
+                    _                                        -> s
+ where go from = onWorkspace n (insertUp w) . onWorkspace from (delete' w)
 
-          go     = on n (insertUp w) . on (fromJust from) (delete' w) $ s
-          on i f = view (currentTag s) . f . view i
-
+onWorkspace :: (Eq i, Eq s) => i -> (StackSet i l a s sd -> StackSet i l a s sd)
+            -> (StackSet i l a s sd -> StackSet i l a s sd)
+onWorkspace n f s = view (currentTag s) . f . view n $ s
