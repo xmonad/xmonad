@@ -111,4 +111,4 @@ doIgnore = ask >>= \w -> liftX (reveal w) >> doF (W.delete w)
 
 -- | Move the window to a given workspace
 doShift :: WorkspaceId -> ManageHook
-doShift = doF . W.shift
+doShift i = doF . W.shiftWin i =<< ask
