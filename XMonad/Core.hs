@@ -37,6 +37,7 @@ import Control.Exception (catch, try, bracket, throw, finally, Exception(ExitExc
 import Control.Applicative
 import Control.Monad.State
 import Control.Monad.Reader
+import System.FilePath
 import System.IO
 import System.Info
 import System.Posix.Process (executeFile, forkProcess, getAnyProcessStatus, createSession)
@@ -49,6 +50,7 @@ import System.Exit
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras (Event)
 import Data.Typeable
+import Data.List ((\\))
 import Data.Maybe (isJust)
 import Data.Monoid
 import Data.Maybe (fromMaybe)
@@ -405,18 +407,20 @@ recompile :: MonadIO m => Bool -> m Bool
 recompile force = io $ do
     dir <- getXMonadDir
     let binn = "xmonad-"++arch++"-"++os
-        bin  = dir ++ "/" ++ binn
-        base = dir ++ "/" ++ "xmonad"
+        bin  = dir </> binn
+        base = dir </> "xmonad"
         err  = base ++ ".errors"
         src  = base ++ ".hs"
+        lib  = dir </> "lib"
+    libTs <- mapM getModTime =<< allFiles lib
     srcT <- getModTime src
     binT <- getModTime bin
-    if (force || srcT > binT)
+    if (force || srcT > binT || any (binT<) libTs)
       then do
         -- temporarily disable SIGCHLD ignoring:
         uninstallSignalHandlers
         status <- bracket (openFile err WriteMode) hClose $ \h -> do
-            waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-fforce-recomp", "-v0", "-o",binn] (Just dir)
+            waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-ilib", "-fforce-recomp", "-v0", "-o",binn] (Just dir)
                                     Nothing Nothing Nothing (Just h)
 
         -- re-enable SIGCHLD:
@@ -436,6 +440,11 @@ recompile force = io $ do
         return (status == ExitSuccess)
       else return True
  where getModTime f = catch (Just <$> getModificationTime f) (const $ return Nothing)
+       allFiles t = do
+            let prep = map (t</>) . Prelude.filter (`notElem` [".",".."])
+            cs <- prep <$> catch (getDirectoryContents t) (\_ -> return [])
+            ds <- filterM doesDirectoryExist cs
+            concat . ((cs \\ ds):) <$> mapM allFiles ds
 
 -- | Conditionally run an action, using a @Maybe a@ to decide.
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
