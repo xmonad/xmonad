@@ -16,10 +16,12 @@ module Main (main) where
 
 import XMonad
 
+import Control.Monad (unless)
 import System.IO
 import System.Info
 import System.Environment
 import System.Posix.Process (executeFile)
+import System.Exit (exitFailure)
 
 import Paths_xmonad (version)
 import Data.Version (showVersion)
@@ -39,7 +41,7 @@ main = do
         []                    -> launch
         ["--resume", _]       -> launch
         ["--help"]            -> usage
-        ["--recompile"]       -> recompile True >> return ()
+        ["--recompile"]       -> recompile True >>= flip unless exitFailure
         ["--restart"]         -> sendRestart >> return ()
         ["--version"]         -> putStrLn ("xmonad " ++ showVersion version)
 #ifdef TESTING
