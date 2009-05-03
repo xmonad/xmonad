@@ -412,7 +412,7 @@ recompile force = io $ do
         err  = base ++ ".errors"
         src  = base ++ ".hs"
         lib  = dir </> "lib"
-    libTs <- mapM getModTime =<< allFiles lib
+    libTs <- mapM getModTime . Prelude.filter isSource =<< allFiles lib
     srcT <- getModTime src
     binT <- getModTime bin
     if (force || srcT > binT || any (binT<) libTs)
@@ -440,6 +440,7 @@ recompile force = io $ do
         return (status == ExitSuccess)
       else return True
  where getModTime f = catch (Just <$> getModificationTime f) (const $ return Nothing)
+       isSource = flip elem [".hs",".lhs",".hsc"]
        allFiles t = do
             let prep = map (t</>) . Prelude.filter (`notElem` [".",".."])
             cs <- prep <$> catch (getDirectoryContents t) (\_ -> return [])
