@@ -194,7 +194,8 @@ abort x = error $ "xmonad: StackSet: " ++ x
 -- Xinerama: Virtual workspaces are assigned to physical screens, starting at 0.
 --
 new :: (Integral s) => l -> [i] -> [sd] -> StackSet i l a s sd
-new l wids m | not (null wids) && length m <= length wids = StackSet cur visi unseen M.empty
+new l wids m | not (null wids) && length m <= length wids && not (null m)
+  = StackSet cur visi unseen M.empty
   where (seen,unseen) = L.splitAt (length m) $ map (\i -> Workspace i l Nothing) wids
         (cur:visi)    = [ Screen i s sd |  (i, s, sd) <- zip3 seen [0..] m ]
                 -- now zip up visibles with their screen id
