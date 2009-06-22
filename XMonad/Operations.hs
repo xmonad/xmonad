@@ -325,7 +325,8 @@ setFocusX w = withWindowSet $ \ws -> do
 
     -- If we ungrab buttons on the root window, we lose our mouse bindings.
     whenX (not <$> isRoot w) $ setButtonGrab False w
-    io $ setInputFocus dpy w revertToPointerRoot 0
+    io $ do setInputFocus dpy w revertToPointerRoot 0
+            -- raiseWindow dpy w
 
 ------------------------------------------------------------------------
 -- Message handling

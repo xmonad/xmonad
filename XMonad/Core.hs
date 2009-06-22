@@ -26,7 +26,7 @@ module XMonad.Core (
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
     getAtom, spawn, spawnPID, xfork, getXMonadDir, recompile, trace, whenJust, whenX,
-    atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, ManageHook, Query(..), runQuery
+    atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, atom_WM_TAKE_FOCUS, ManageHook, Query(..), runQuery
   ) where
 
 import XMonad.StackSet hiding (modify)
@@ -204,10 +204,11 @@ getAtom :: String -> X Atom
 getAtom str = withDisplay $ \dpy -> io $ internAtom dpy str False
 
 -- | Common non-predefined atoms
-atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, atom_WM_STATE :: X Atom
+atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, atom_WM_STATE, atom_WM_TAKE_FOCUS :: X Atom
 atom_WM_PROTOCOLS       = getAtom "WM_PROTOCOLS"
 atom_WM_DELETE_WINDOW   = getAtom "WM_DELETE_WINDOW"
 atom_WM_STATE           = getAtom "WM_STATE"
+atom_WM_TAKE_FOCUS      = getAtom "WM_TAKE_FOCUS"
 
 ------------------------------------------------------------------------
 -- LayoutClass handling. See particular instances in Operations.hs
