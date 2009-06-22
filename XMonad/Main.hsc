@@ -122,6 +122,11 @@ xmonad initxmc = do
             , buttonActions = mouseBindings xmc xmc
             , mouseFocused  = False
             , mousePosition = Nothing }
+        st = XState
+            { windowset     = initialWinset
+            , mapped        = S.empty
+            , waitingUnmap  = M.empty
+            , dragging      = Nothing }
 
         st = XState
             { windowset       = initialWinset
@@ -163,7 +168,7 @@ xmonad initxmc = do
         prehandle e = let mouse = do guard (ev_event_type e `elem` evs)
                                      return (fromIntegral (ev_x_root e)
                                             ,fromIntegral (ev_y_root e))
-                      in local (\c -> c { mousePosition = mouse }) (handleWithHook e)
+                      in local (\c -> c { mousePosition = mouse, currentEvent = Just e }) (handleWithHook e)
         evs = [ keyPress, keyRelease, enterNotify, leaveNotify
               , buttonPress, buttonRelease]
 

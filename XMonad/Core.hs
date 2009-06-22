@@ -86,6 +86,8 @@ data XConf = XConf
     , mousePosition :: !(Maybe (Position, Position))
                                       -- ^ position of the mouse according to
                                       -- the event currently being processed
+    , currentEvent :: !(Maybe Event)
+                                      -- ^ event currently being processed
     }
 
 -- todo, better name
