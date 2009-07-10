@@ -45,6 +45,8 @@ idHook = doF id
 composeAll :: [ManageHook] -> ManageHook
 composeAll = mconcat
 
+infix 0 -->
+
 -- | @p --> x@.  If @p@ returns 'True', execute the 'ManageHook'.
 (-->) :: Query Bool -> ManageHook -> ManageHook
 p --> f = p >>= \b -> if b then f else mempty
