@@ -70,7 +70,7 @@ usage = do
 --
 --   * ghc missing
 --
---   * "~\/.xmonad\/xmonad.hs" missing
+--   * both "~\/.xmonad\/xmonad.hs" and "~\/.xmonad\/xmonad-$arch-$os" missing
 --
 --   * xmonad.hs fails to compile
 --
