@@ -33,7 +33,7 @@ ___KEYBINDINGS___
 .SH EXAMPLES
 To use \fBxmonad\fR as your window manager add:
 .RS
-xmonad
+exec xmonad
 .RE
 to your \fI~/.xinitrc\fR file
 .SH CUSTOMIZATION
