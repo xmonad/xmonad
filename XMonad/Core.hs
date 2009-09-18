@@ -415,7 +415,7 @@ recompile force = io $ do
     libTs <- mapM getModTime . Prelude.filter isSource =<< allFiles lib
     srcT <- getModTime src
     binT <- getModTime bin
-    if (force || srcT > binT || any (binT<) libTs)
+    if force || any (binT <) (srcT : libTs)
       then do
         -- temporarily disable SIGCHLD ignoring:
         uninstallSignalHandlers
