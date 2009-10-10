@@ -24,7 +24,7 @@ import qualified XMonad.StackSet as W
 import Data.Maybe
 import Data.Monoid          (Endo(..))
 import Data.List            (nub, (\\), find)
-import Data.Bits            ((.|.), (.&.), complement)
+import Data.Bits            ((.|.), (.&.), complement, testBit)
 import Data.Ratio
 import qualified Data.Map as M
 import qualified Data.Set as S
