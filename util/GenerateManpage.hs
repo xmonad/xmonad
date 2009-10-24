@@ -20,6 +20,13 @@ import Text.Regex.Posix
 import Data.Char
 import Data.List
 
+import Distribution.PackageDescription.Parse
+import Distribution.Verbosity
+import Distribution.Package
+import Distribution.PackageDescription
+import Text.PrettyPrint.HughesPJ
+import Distribution.Text
+
 trim :: String -> String
 trim = reverse . dropWhile isSpace . reverse . dropWhile isSpace
 
@@ -42,6 +49,9 @@ replace :: Eq a => a -> a -> [a] -> [a]
 replace x y = map (\a -> if a == x then y else a)
 
 main = do
+    releaseName <- ((' ':) . (++" \\") . show . disp . package . packageDescription) `liftM` readPackageDescription normal "xmonad.cabal"
+
     troffBindings <- (concatMap troff . allBindings) `liftM` readFile "./XMonad/Config.hs"
-    let sed = unlines . replace "___KEYBINDINGS___" troffBindings . lines
+
+    let sed = unlines . replace "___RELEASE___\\" releaseName . replace "___KEYBINDINGS___" troffBindings . lines
     readFile "./man/xmonad.1.in" >>= return . sed >>= writeFile "./man/xmonad.1"

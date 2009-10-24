@@ -1,6 +1,8 @@
 ./" man page created by David Lazar on April 24, 2007
 ./" uses ``tmac.an'' macro set
-.TH xmonad 1 "18 April 07" xmonad\-1.0 "xmonad manual"
+.TH xmonad 1 "8 September 09"\
+___RELEASE___\
+"xmonad manual"
 .SH NAME
 xmonad \- a tiling window manager
 .SH DESCRIPTION
