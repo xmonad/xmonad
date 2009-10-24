@@ -42,10 +42,13 @@ to your \fI~/.xinitrc\fR file
 You can find many extensions to the core feature set in the xmonad-contrib package, available through your package manager or from http://xmonad.org/.
 .SS "Modular Configuration"
 As of \fBxmonad-0.9\fR, any additional Haskell modules may be placed in \fI~/.xmonad/lib/\fR are available in GHC's searchpath. Hierarchical modules are supported: for example, the file \fI~/.xmonad/lib/XMonad/Stack/MyAdditions.hs\fR could contain:
-.IP
+.RS
 .nf
+
 module XMonad.Stack.MyAdditions (function1) where
 function1 = error "function1: Not implemented yet!"
+.fi
+.RE
 .PP
 Your xmonad.hs may then \fBimport XMonad.Stack.MyAdditions\fR as if that module was contained within \fBxmonad\fR or \fBxmonad-contrib\fR.
 .SH BUGS
