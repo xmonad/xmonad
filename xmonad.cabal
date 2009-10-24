@@ -46,7 +46,7 @@ library
         build-depends: base < 4 && >=3, containers, directory, process, filepath
     else
         build-depends: base < 3
-    build-depends: X11>=1.4.3, mtl, unix
+    build-depends: X11>=1.4.6.1, mtl, unix
 
     ghc-options:        -funbox-strict-fields -Wall
     ghc-prof-options:   -prof -auto-all
