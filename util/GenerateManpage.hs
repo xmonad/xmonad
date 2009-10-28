@@ -33,7 +33,7 @@ import Distribution.Text
 
 import Text.Pandoc
 
-releaseDate = "\"8 September 09\""
+releaseDate = "25 October 09"
 
 trim :: String -> String
 trim = reverse . dropWhile isSpace . reverse . dropWhile isSpace
@@ -64,7 +64,7 @@ main = do
     keybindings <- (intercalate "\n\n" . map markdownDefn . allBindings)
                     `liftM` readFile "./XMonad/Config.hs"
 
-    let manHeader = unwords [".TH xmonad 1",releaseDate,releaseName,"\"xmonad manual\""]
+    let manHeader = unwords [".TH xmonad 1","\""++releaseDate++"\"",releaseName,"\"xmonad manual\""]
         writeOpts = defaultWriterOptions -- { writerLiterateHaskell = True }
 
     parsed <- readMarkdown defaultParserState { stateLiterateHaskell = True }
@@ -80,6 +80,12 @@ main = do
     putStrLn "Documentation created: man/xmonad.1"
 
     writeFile "./man/xmonad.1.html"
-        . writeHtmlString writeOpts { writerStandalone = True }
+        . writeHtmlString writeOpts
+            { writerHeader = "<h1>"++releaseName++"</h1>"++
+                             "<p>Section: xmonad manual (1)<br>"++
+                             "Updated: "++releaseDate++"</p>"++
+                             "<hr>"
+            , writerStandalone = True
+            , writerTableOfContents = True }
         $ parsed
     putStrLn "Documentation created: man/xmonad.1.html"
