@@ -2,6 +2,10 @@
 -- Generates man/xmonad.1 from man/xmonad.1.in by filling the list of
 -- keybindings with values scraped from Config.hs
 --
+-- Uses cabal to grab the xmonad version from xmonad.cabal
+--
+-- Uses pandoc to convert the "xmonad.1.markdown" to "xmonad.1"
+--
 -- Format for the docstrings in Config.hs takes the following form:
 --
 -- -- mod-x %! Frob the whatsit
@@ -14,8 +18,8 @@
 -- [ ((modMask .|. shiftMask, xK_Return), spawn "xterm") -- %! Launch an xterm
 --
 -- Here, mod-shift-return will be used as the keybinding name.
---
 import Control.Monad
+import Control.Applicative
 import Text.Regex.Posix
 import Data.Char
 import Data.List
@@ -26,6 +30,10 @@ import Distribution.Package
 import Distribution.PackageDescription
 import Text.PrettyPrint.HughesPJ
 import Distribution.Text
+
+import Text.Pandoc
+
+releaseDate = "\"8 September 09\""
 
 trim :: String -> String
 trim = reverse . dropWhile isSpace . reverse . dropWhile isSpace
@@ -42,16 +50,36 @@ allBindings :: String -> [(String, String)]
 allBindings xs = map (binding . map trim) (xs =~ "(.*)--(.*)%!(.*)")
 
 -- FIXME: What escaping should we be doing on these strings?
-troff :: (String, String) -> String
-troff (key, desc) = ".IP\n \\fB" ++ key ++ "\\fR\n" ++ desc ++ "\n"
+markdownDefn :: (String, String) -> String
+markdownDefn (key, desc) = key ++ "\n:     " ++ desc
 
 replace :: Eq a => a -> a -> [a] -> [a]
 replace x y = map (\a -> if a == x then y else a)
 
+-- rawSystem "pandoc" ["--read=markdown","--write=man","man/xmonad.1.markdown"]
+
 main = do
-    releaseName <- ((' ':) . (++" \\") . show . disp . package . packageDescription) `liftM` readPackageDescription normal "xmonad.cabal"
+    releaseName <- (show . disp . package . packageDescription)
+                    `liftM`readPackageDescription normal "xmonad.cabal"
+    keybindings <- (intercalate "\n\n" . map markdownDefn . allBindings)
+                    `liftM` readFile "./XMonad/Config.hs"
 
-    troffBindings <- (concatMap troff . allBindings) `liftM` readFile "./XMonad/Config.hs"
+    let manHeader = unwords [".TH xmonad 1",releaseDate,releaseName,"\"xmonad manual\""]
+        writeOpts = defaultWriterOptions -- { writerLiterateHaskell = True }
 
-    let sed = unlines . replace "___RELEASE___\\" releaseName . replace "___KEYBINDINGS___" troffBindings . lines
-    readFile "./man/xmonad.1.in" >>= return . sed >>= writeFile "./man/xmonad.1"
+    parsed <- readMarkdown defaultParserState { stateLiterateHaskell = True }
+        . unlines
+        . replace "___KEYBINDINGS___" keybindings
+        . lines
+        <$> readFile "./man/xmonad.1.markdown"
+
+    writeFile "./man/xmonad.1"
+        . (manHeader ++)
+        . writeMan writeOpts
+        $ parsed
+    putStrLn "Documentation created: man/xmonad.1"
+
+    writeFile "./man/xmonad.1.html"
+        . writeHtmlString writeOpts { writerStandalone = True }
+        $ parsed
+    putStrLn "Documentation created: man/xmonad.1.html"

@@ -1,0 +1,96 @@
+#Name
+xmonad - a tiling window manager
+
+#Description
+
+_xmonad_ is a minimalist tiling window manager for X, written in Haskell.
+Windows are managed using automatic layout algorithms, which can be
+dynamically reconfigured. At any time windows are arranged so as to
+maximize the use of screen real estate. All features of the window manager
+are accessible purely from the keyboard: a mouse is entirely optional.
+_xmonad_ is configured in Haskell, and custom layout algorithms may be
+implemented by the user in config files. A principle of _xmonad_ is
+predictability: the user should know in advance precisely the window
+arrangement that will result from any action.
+
+By default, _xmonad_ provides three layout algorithms: tall, wide and
+fullscreen. In tall or wide mode, windows are tiled and arranged to prevent
+overlap and maximize screen use. Sets of windows are grouped together on
+virtual screens, and each screen retains its own layout, which may be
+reconfigured dynamically. Multiple physical monitors are supported via
+Xinerama, allowing simultaneous display of a number of screens.
+
+By utilizing the expressivity of a modern functional language with a rich
+static type system, _xmonad_ provides a complete, featureful window manager
+in less than 1200 lines of code, with an emphasis on correctness and
+robustness. Internal properties of the window manager are checked using a
+combination of static guarantees provided by the type system, and
+type-based automated testing. A benefit of this is that the code is simple
+to understand, and easy to modify.
+
+#Usage
+
+_xmonad_ places each window into a "workspace". Each workspace can have
+any number of windows, which you can cycle though with mod-j and mod-k.
+Windows are either displayed full screen, tiled horizontally, or tiled
+vertically. You can toggle the layout mode with mod-space, which will cycle
+through the available modes.
+
+You can switch to workspace N with mod-N. For example, to switch to
+workspace 5, you would press mod-5. Similarly, you can move the current
+window to another workspace with mod-shift-N.
+
+When running with multiple monitors (Xinerama), each screen has exactly 1
+workspace visible. mod-{w,e,r} switch the focus between screens, while
+shift-mod-{w,e,r} move the current window to that screen. When _xmonad_
+starts, workspace 1 is on screen 1, workspace 2 is on screen 2, etc. When
+switching workspaces to one that is already visible, the current and
+visible workspaces are swapped.
+
+##Flags
+xmonad  has  several flags which  you may pass to the executable.
+These flags are:
+
+--recompile
+:   Recompiles your configuration in _~/.xmonad/xmonad.hs_
+
+--restart
+:   Causes the currently running _xmonad_ process to restart
+
+--version
+:   Display version of _xmonad_
+
+##Default keyboard bindings
+
+___KEYBINDINGS___
+
+#Examples
+To use xmonad as your window manager add to your _~/.xinitrc_ file:
+
+> exec xmonad
+
+#Customization
+xmonad is customized in ~/.xmonad/xmonad.hs,  and  then  restarting
+with mod-q.
+
+You can find many extensions to the core feature set in the xmonad-
+contrib package, available through your  package  manager  or  from
+[xmonad.org].
+
+##Modular Configuration
+As of _xmonad-0.9_, any additional Haskell modules may be placed in
+_~/.xmonad/lib/_ are available in GHC's searchpath. Hierarchical modules
+are supported: for example, the file
+_~/.xmonad/lib/XMonad/Stack/MyAdditions.hs_ could contain:
+
+> module XMonad.Stack.MyAdditions (function1) where
+>     function1 = error "function1: Not implemented yet!"
+
+Your xmonad.hs may then import XMonad.Stack.MyAdditions as if that
+module was contained within xmonad or xmonad-contrib.
+
+#Bugs
+Probably. If you find any, please report them to the [bugtracker]
+
+[xmonad.org]: http://xmonad.org
+[bugtracker]: http://code.google.com/p/xmonad/issues/list
