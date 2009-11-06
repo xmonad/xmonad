@@ -24,6 +24,7 @@ module XMonad.Core (
     XConf(..), XConfig(..), LayoutClass(..),
     Layout(..), readsLayout, Typeable, Message,
     SomeMessage(..), fromMessage, LayoutMessages(..),
+    StateExtension(..), ExtensionClass(..),
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
     getAtom, spawn, spawnPID, getXMonadDir, recompile, trace, whenJust, whenX,
@@ -51,20 +52,24 @@ import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras (Event)
 import Data.Typeable
 import Data.List ((\\))
-import Data.Maybe (isJust)
+import Data.Maybe (isJust,fromMaybe)
 import Data.Monoid
-import Data.Maybe (fromMaybe)
 
 import qualified Data.Map as M
 import qualified Data.Set as S
 
 -- | XState, the (mutable) window manager state.
 data XState = XState
-    { windowset    :: !WindowSet           -- ^ workspace list
-    , mapped       :: !(S.Set Window)      -- ^ the Set of mapped windows
-    , waitingUnmap :: !(M.Map Window Int)  -- ^ the number of expected UnmapEvents
-    , dragging     :: !(Maybe (Position -> Position -> X (), X ())) }
-
+    { windowset        :: !WindowSet                     -- ^ workspace list
+    , mapped           :: !(S.Set Window)                -- ^ the Set of mapped windows
+    , waitingUnmap     :: !(M.Map Window Int)            -- ^ the number of expected UnmapEvents
+    , dragging         :: !(Maybe (Position -> Position -> X (), X ()))
+    , extensibleState  :: !(M.Map String (Either String StateExtension))
+    -- ^ stores custom state information.
+    --
+    -- The module XMonad.Utils.ExtensibleState in xmonad-contrib
+    -- provides additional information and a simple interface for using this.
+    }
 -- | XConf, the (read-only) window manager configuration.
 data XConf = XConf
     { display       :: Display        -- ^ the X11 display
@@ -342,6 +347,33 @@ data LayoutMessages = Hide              -- ^ sent when a layout becomes non-visi
     deriving (Typeable, Eq)
 
 instance Message LayoutMessages
+
+-- ---------------------------------------------------------------------
+-- Extensible state
+--
+
+-- | Every module must make the data it wants to store
+-- an instance of this class.
+--
+-- Minimal complete definition: initialValue
+class Typeable a => ExtensionClass a where
+    -- | Defines an initial value for the state extension
+    initialValue :: a
+    -- | Specifies whether the state extension should be
+    -- persistent. Setting this method to 'PersistentExtension'
+    -- will make the stored data survive restarts, but
+    -- requires a to be an instance of Read and Show.
+    --
+    -- It defaults to 'StateExtension', i.e. no persistence.
+    extensionType :: a -> StateExtension
+    extensionType = StateExtension
+
+-- | Existential type to store a state extension.
+data StateExtension =
+    forall a. ExtensionClass a => StateExtension a
+    -- ^ Non-persistent state extension
+  | forall a. (Read a, Show a, ExtensionClass a) => PersistentExtension a
+    -- ^ Persistent extension
 
 -- ---------------------------------------------------------------------
 -- | General utilities

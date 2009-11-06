@@ -68,7 +68,7 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
             where i = W.tag $ W.workspace $ W.current ws
 
     mh <- asks (manageHook . config)
-    g <- fmap appEndo $ userCodeDef (Endo id) (runQuery mh w)
+    g <- appEndo <$> userCodeDef (Endo id) (runQuery mh w)
     windows (g . f)
 
 -- | unmanage. A window no longer exists, remove it from the window
@@ -413,9 +413,13 @@ restart :: String -> Bool -> X ()
 restart prog resume = do
     broadcastMessage ReleaseResources
     io . flush =<< asks display
-    args <- if resume then gets (("--resume":) . return . showWs . windowset) else return []
+    let wsData = show . W.mapLayout show . windowset
+        maybeShow (t, Right (PersistentExtension ext)) = Just (t, show ext)
+        maybeShow (t, Left str) = Just (t, str)
+        maybeShow _ = Nothing
+        extState = return . show . catMaybes . map maybeShow . M.toList . extensibleState
+    args <- if resume then gets (\s -> "--resume":wsData s:extState s) else return []
     catchIO (executeFile prog True args Nothing)
- where showWs = show . W.mapLayout show
 
 ------------------------------------------------------------------------
 -- | Floating layer support

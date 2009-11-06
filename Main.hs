@@ -39,7 +39,7 @@ main = do
     let launch = catchIO buildLaunch >> xmonad defaultConfig
     case args of
         []                    -> launch
-        ["--resume", _]       -> launch
+        ("--resume":_)        -> launch
         ["--help"]            -> usage
         ["--recompile"]       -> recompile True >>= flip unless exitFailure
         ["--restart"]         -> sendRestart >> return ()

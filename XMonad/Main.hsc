@@ -15,6 +15,7 @@
 
 module XMonad.Main (xmonad) where
 
+import Control.Arrow (second)
 import Data.Bits
 import Data.List ((\\))
 import qualified Data.Map as M
@@ -93,7 +94,6 @@ xmonad initxmc = do
     let layout = layoutHook xmc
         lreads = readsLayout layout
         initialWinset = new layout (workspaces xmc) $ map SD xinesc
-
         maybeRead reads' s = case reads' s of
                                 [(x, "")] -> Just x
                                 _         -> Nothing
@@ -103,6 +103,10 @@ xmonad initxmc = do
                     ws                   <- maybeRead reads s
                     return . W.ensureTags layout (workspaces xmc)
                            $ W.mapLayout (fromMaybe layout . maybeRead lreads) ws
+        extState = fromMaybe M.empty $ do
+                     ("--resume" : _ : dyns : _) <- return args
+                     vals                        <- maybeRead reads dyns
+                     return . M.fromList . map (second Left) $ vals
 
         cf = XConf
             { display       = dpy
@@ -114,12 +118,14 @@ xmonad initxmc = do
             , buttonActions = mouseBindings xmc xmc
             , mouseFocused  = False
             , mousePosition = Nothing }
-        st = XState
-            { windowset     = initialWinset
-            , mapped        = S.empty
-            , waitingUnmap  = M.empty
-            , dragging      = Nothing }
 
+        st = XState
+            { windowset       = initialWinset
+            , mapped          = S.empty
+            , waitingUnmap    = M.empty
+            , dragging        = Nothing
+            , extensibleState = extState
+            }
     allocaXEvent $ \e ->
         runX cf st $ do
 

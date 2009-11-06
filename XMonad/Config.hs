@@ -264,4 +264,5 @@ defaultConfig = XConfig
     , XMonad.mouseBindings      = mouseBindings
     , XMonad.manageHook         = manageHook
     , XMonad.handleEventHook    = handleEventHook
-    , XMonad.focusFollowsMouse  = focusFollowsMouse }
+    , XMonad.focusFollowsMouse  = focusFollowsMouse
+    }
