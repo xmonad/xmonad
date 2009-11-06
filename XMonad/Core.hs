@@ -473,5 +473,6 @@ installSignalHandlers = io $ do
 
 uninstallSignalHandlers :: MonadIO m => m ()
 uninstallSignalHandlers = io $ do
+    installHandler openEndedPipe Default Nothing
     installHandler sigCHLD Default Nothing
     return ()
