@@ -1,3 +1,6 @@
+-- Unlike the rest of xmonad, this file is copyright under the terms of the
+-- GPL.
+
 --
 -- Generates man/xmonad.1 from man/xmonad.1.in by filling the list of
 -- keybindings with values scraped from Config.hs
