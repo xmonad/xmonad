@@ -155,12 +155,12 @@ windows f = do
 
     whenJust (W.peek ws) $ \w -> io $ setWindowBorder d w fbc
 
+    mapM_ reveal visible
+    setTopFocus
+
     -- hide every window that was potentially visible before, but is not
     -- given a position by a layout now.
     mapM_ hide (nub (oldvisible ++ newwindows) \\ visible)
-
-    mapM_ reveal visible
-    setTopFocus
 
     -- all windows that are no longer in the windowset are marked as
     -- withdrawn, it is important to do this after the above, otherwise 'hide'
