@@ -239,11 +239,7 @@ myEventHook = mempty
 -- Status bars and logging
 
 -- Perform an arbitrary action on each internal state change or X event.
--- See the 'DynamicLog' extension for examples.
---
--- To emulate dwm's status bar
---
--- > logHook = dynamicLogDzen
+-- See the 'XMonad.Hooks.DynamicLog' extension for examples.
 --
 myLogHook = return ()
 
