@@ -44,6 +44,8 @@ main = do
         ["--recompile"]       -> recompile True >>= flip unless exitFailure
         ["--restart"]         -> sendRestart >> return ()
         ["--version"]         -> putStrLn ("xmonad " ++ showVersion version)
+        ["--verbose-version"] -> putStrLn ("xmonad " ++ showVersion version ++ " compiled by " ++ compilerName 
+                                           ++ " " ++ showVersion compilerVersion ++ " for " ++ os ++ "/" ++ arch)
 #ifdef TESTING
         ("--run-tests":_)     -> Properties.main
 #endif
