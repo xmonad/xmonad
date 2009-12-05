@@ -37,8 +37,8 @@ liftX = Query . lift
 idHook :: ManageHook
 idHook = doF id
 
--- | Compose two 'ManageHook's.
-(<+>) :: ManageHook -> ManageHook -> ManageHook
+-- | Infix 'mappend'. Compose two 'ManageHook' from right to left.
+(<+>) :: Monoid m => m -> m -> m
 (<+>) = mappend
 
 -- | Compose the list of 'ManageHook's.
