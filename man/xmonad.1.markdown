@@ -60,6 +60,9 @@ These flags are:
 --version
 :   Display version of _xmonad_
 
+--verbose-version
+:   Display detailed version of _xmonad_
+
 ##Default keyboard bindings
 
 ___KEYBINDINGS___

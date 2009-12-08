@@ -26,6 +26,8 @@ import System.Exit (exitFailure)
 import Paths_xmonad (version)
 import Data.Version (showVersion)
 
+import Graphics.X11.Xinerama (compiledWithXinerama)
+
 #ifdef TESTING
 import qualified Properties
 #endif
@@ -43,13 +45,17 @@ main = do
         ["--help"]            -> usage
         ["--recompile"]       -> recompile True >>= flip unless exitFailure
         ["--restart"]         -> sendRestart >> return ()
-        ["--version"]         -> putStrLn ("xmonad " ++ showVersion version)
-        ["--verbose-version"] -> putStrLn ("xmonad " ++ showVersion version ++ " compiled by " ++ compilerName 
-                                           ++ " " ++ showVersion compilerVersion ++ " for " ++ os ++ "/" ++ arch)
+        ["--version"]         -> putStrLn $ unwords shortVersion
+        ["--verbose-version"] -> putStrLn . unwords $ shortVersion ++ longVersion
 #ifdef TESTING
         ("--run-tests":_)     -> Properties.main
 #endif
         _                     -> fail "unrecognized flags"
+ where
+    shortVersion = ["xmonad", showVersion version]
+    longVersion  = [ "compiled by", compilerName, showVersion compilerVersion
+                   , "for",  arch ++ "-" ++ os
+                   , "\nXinerama:", show compiledWithXinerama ]
 
 usage :: IO ()
 usage = do
