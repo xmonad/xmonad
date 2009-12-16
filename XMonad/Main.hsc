@@ -335,7 +335,7 @@ grabKeys = do
          kc <- io $ keysymToKeycode dpy sym
          -- "If the specified KeySym is not defined for any KeyCode,
          -- XKeysymToKeycode() returns zero."
-         when (kc /= '\0') $ mapM_ (grab kc . (mask .|.)) =<< extraModifiers
+         when (kc /= 0) $ mapM_ (grab kc . (mask .|.)) =<< extraModifiers
 
 -- | XXX comment me
 grabButtons :: X ()
