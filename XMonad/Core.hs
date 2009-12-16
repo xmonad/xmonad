@@ -64,12 +64,14 @@ data XState = XState
     , mapped           :: !(S.Set Window)                -- ^ the Set of mapped windows
     , waitingUnmap     :: !(M.Map Window Int)            -- ^ the number of expected UnmapEvents
     , dragging         :: !(Maybe (Position -> Position -> X (), X ()))
+    , numlockMask  :: !KeyMask                           -- ^ The numlock modifier
     , extensibleState  :: !(M.Map String (Either String StateExtension))
     -- ^ stores custom state information.
     --
     -- The module XMonad.Utils.ExtensibleState in xmonad-contrib
     -- provides additional information and a simple interface for using this.
     }
+
 -- | XConf, the (read-only) window manager configuration.
 data XConf = XConf
     { display       :: Display        -- ^ the X11 display
@@ -98,7 +100,6 @@ data XConfig l = XConfig
                                                  -- should also be run afterwards. mappend should be used for combining
                                                  -- event hooks in most cases.
     , workspaces         :: ![String]            -- ^ The list of workspaces' names
-    , numlockMask        :: !KeyMask             -- ^ The numlock modifier
     , modMask            :: !KeyMask             -- ^ the mod modifier
     , keys               :: !(XConfig Layout -> M.Map (ButtonMask,KeySym) (X ()))
                                                  -- ^ The key binding: a map from key presses and actions

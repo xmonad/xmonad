@@ -121,6 +121,7 @@ xmonad initxmc = do
 
         st = XState
             { windowset       = initialWinset
+            , numlockMask   = 0
             , mapped          = S.empty
             , waitingUnmap    = M.empty
             , dragging        = Nothing
@@ -129,6 +130,7 @@ xmonad initxmc = do
     allocaXEvent $ \e ->
         runX cf st $ do
 
+            setNumlockMask
             grabKeys
             grabButtons
 
@@ -218,7 +220,9 @@ handle (UnmapEvent {ev_window = w, ev_send_event = synthetic}) = whenX (isClient
 -- set keyboard mapping
 handle e@(MappingNotifyEvent {}) = do
     io $ refreshKeyboardMapping e
-    when (ev_request e == mappingKeyboard) grabKeys
+    when (ev_request e `elem` [mappingKeyboard, mappingModifier]) $ do
+        setNumlockMask
+        grabKeys
 
 -- handle button release, which may finish dragging.
 handle e@(ButtonEvent {ev_event_type = t})
@@ -323,6 +327,18 @@ scan dpy rootw = do
                             _          -> False
                   return $ not (wa_override_redirect wa)
                          && (wa_map_state wa == waIsViewable || ic)
+
+setNumlockMask :: X ()
+setNumlockMask = do
+    dpy <- asks display
+    ms <- io $ getModifierMapping dpy
+    xs <- sequence [ do
+                        ks <- io $ keycodeToKeysym dpy kc 0
+                        if ks == xK_Num_Lock
+                            then return (setBit 0 (fromIntegral m))
+                            else return (0 :: KeyMask)
+                        | (m, kcs) <- ms, kc <- kcs, kc /= 0]
+    modify (\s -> s { numlockMask = foldr (.|.) 0 xs })
 
 -- | Grab the keys back
 grabKeys :: X ()

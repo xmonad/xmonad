@@ -389,13 +389,13 @@ isClient w = withWindowSet $ return . W.member w
 -- (numlock and capslock)
 extraModifiers :: X [KeyMask]
 extraModifiers = do
-    nlm <- asks (numlockMask . config)
+    nlm <- gets numlockMask
     return [0, nlm, lockMask, nlm .|. lockMask ]
 
 -- | Strip numlock\/capslock from a mask
 cleanMask :: KeyMask -> X KeyMask
 cleanMask km = do
-    nlm <- asks (numlockMask . config)
+    nlm <- gets numlockMask
     return (complement (nlm .|. lockMask) .&. km)
 
 -- | Get the 'Pixel' value for a named color

@@ -25,11 +25,11 @@ module XMonad.Config (defaultConfig) where
 -- Useful imports
 --
 import XMonad.Core as XMonad hiding
-    (workspaces,manageHook,numlockMask,keys,logHook,startupHook,borderWidth,mouseBindings
+    (workspaces,manageHook,keys,logHook,startupHook,borderWidth,mouseBindings
     ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse
     ,handleEventHook)
 import qualified XMonad.Core as XMonad
-    (workspaces,manageHook,numlockMask,keys,logHook,startupHook,borderWidth,mouseBindings
+    (workspaces,manageHook,keys,logHook,startupHook,borderWidth,mouseBindings
     ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse
     ,handleEventHook)
 
@@ -63,22 +63,6 @@ workspaces = map show [1 .. 9 :: Int]
 --
 defaultModMask :: KeyMask
 defaultModMask = mod1Mask
-
--- | The mask for the numlock key. Numlock status is "masked" from the
--- current modifier status, so the keybindings will work with numlock on or
--- off. You may need to change this on some systems.
---
--- You can find the numlock modifier by running "xmodmap" and looking for a
--- modifier with Num_Lock bound to it:
---
--- > $ xmodmap | grep Num
--- > mod2        Num_Lock (0x4d)
---
--- Set numlockMask = 0 if you don't have a numlock key, or want to treat
--- numlock status separately.
---
-numlockMask :: KeyMask
-numlockMask = mod2Mask
 
 -- | Width of the window border in pixels.
 --
@@ -256,7 +240,6 @@ defaultConfig = XConfig
     , XMonad.terminal           = terminal
     , XMonad.normalBorderColor  = normalBorderColor
     , XMonad.focusedBorderColor = focusedBorderColor
-    , XMonad.numlockMask        = numlockMask
     , XMonad.modMask            = defaultModMask
     , XMonad.keys               = keys
     , XMonad.logHook            = logHook
