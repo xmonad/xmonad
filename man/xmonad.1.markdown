@@ -57,6 +57,9 @@ These flags are:
 --restart
 :   Causes the currently running _xmonad_ process to restart
 
+--replace
+:   Replace an existing window manager
+
 --version
 :   Display version of _xmonad_
 

@@ -18,6 +18,7 @@ module XMonad.Main (xmonad) where
 import Control.Arrow (second)
 import Data.Bits
 import Data.List ((\\))
+import Data.Function
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Control.Monad.Reader
@@ -67,6 +68,10 @@ xmonad initxmc = do
 
     rootw  <- rootWindow dpy dflt
 
+    args <- getArgs
+
+    when ("--replace" `elem` args) $ replace dpy dflt rootw
+
     -- If another WM is running, a BadAccess error will be returned.  The
     -- default error handler will write the exception to stderr and exit with
     -- an error.
@@ -89,7 +94,6 @@ xmonad initxmc = do
                  return (fromMaybe fbc_ v)
 
     hSetBuffering stdout NoBuffering
-    args <- getArgs
 
     let layout = layoutHook xmc
         lreads = readsLayout layout
@@ -364,3 +368,36 @@ grabButtons = do
     ems <- extraModifiers
     ba <- asks buttonActions
     mapM_ (\(m,b) -> mapM_ (grab b . (m .|.)) ems) (M.keys $ ba)
+
+-- | @replace@ to signals compliant window managers to exit.
+replace :: Display -> ScreenNumber -> Window -> IO ()
+replace dpy dflt rootw = do
+    -- check for other WM
+    wmSnAtom <- internAtom dpy ("WM_S" ++ show dflt) False
+    currentWmSnOwner <- xGetSelectionOwner dpy wmSnAtom
+    when (currentWmSnOwner /= 0) $ do
+        -- prepare to receive destroyNotify for old WM
+        selectInput dpy currentWmSnOwner structureNotifyMask
+
+        -- create off-screen window
+        netWmSnOwner <- allocaSetWindowAttributes $ \attributes -> do
+            set_override_redirect attributes True
+            set_event_mask attributes propertyChangeMask
+            let screen = defaultScreenOfDisplay dpy
+                visual = defaultVisualOfScreen screen
+                attrmask = cWOverrideRedirect .|. cWEventMask
+            createWindow dpy rootw (-100) (-100) 1 1 0 copyFromParent copyFromParent visual attrmask attributes
+
+        -- try to acquire wmSnAtom, this should signal the old WM to terminate
+        xSetSelectionOwner dpy wmSnAtom netWmSnOwner currentTime
+
+        -- SKIPPED: check if we acquired the selection
+        -- SKIPPED: send client message indicating that we are now the WM
+
+        -- wait for old WM to go away
+        fix $ \again -> do
+            evt <- allocaXEvent $ \event -> do
+                windowEvent dpy currentWmSnOwner structureNotifyMask event
+                get_EventType event
+
+            when (evt /= destroyNotify) again
