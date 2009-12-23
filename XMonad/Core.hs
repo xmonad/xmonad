@@ -27,7 +27,7 @@ module XMonad.Core (
     StateExtension(..), ExtensionClass(..),
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
-    getAtom, spawn, spawnPID, getXMonadDir, recompile, trace, whenJust, whenX,
+    getAtom, spawn, spawnPID, xfork, getXMonadDir, recompile, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, ManageHook, Query(..), runQuery
   ) where
 
@@ -395,10 +395,14 @@ spawn x = spawnPID x >> return ()
 
 -- | Like 'spawn', but returns the 'ProcessID' of the launched application
 spawnPID :: MonadIO m => String -> m ProcessID
-spawnPID x = io . forkProcess . finally nullStdin $ do
+spawnPID x = xfork $ executeFile "/bin/sh" False ["-c", x] Nothing
+
+-- | A replacement for 'forkProcess' which resets default signal handlers.
+xfork :: MonadIO m => IO () -> m ProcessID
+xfork x = io . forkProcess . finally nullStdin $ do
                 uninstallSignalHandlers
                 createSession
-                executeFile "/bin/sh" False ["-c", x] Nothing
+                x
  where
     nullStdin = do
         fd <- openFd "/dev/null" ReadOnly Nothing defaultFileFlags
