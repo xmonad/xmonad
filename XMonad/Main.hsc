@@ -295,8 +295,9 @@ handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
 handle (ConfigureEvent {ev_window = w}) = whenX (isRoot w) rescreen
 
 -- property notify
-handle PropertyEvent { ev_event_type = t, ev_atom = a }
-    | t == propertyNotify && a == wM_NAME = userCodeDef () =<< asks (logHook . config)
+handle event@(PropertyEvent { ev_event_type = t, ev_atom = a })
+    | t == propertyNotify && a == wM_NAME = asks (logHook . config) >>= userCodeDef () >>
+                                         broadcastMessage event
 
 handle e@ClientMessageEvent { ev_message_type = mt } = do
     a <- getAtom "XMONAD_RESTART"
