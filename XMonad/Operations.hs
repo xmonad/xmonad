@@ -33,9 +33,8 @@ import qualified Data.Set as S
 import Control.Applicative
 import Control.Monad.Reader
 import Control.Monad.State
-import qualified Control.Exception as C
+import qualified Control.Exception.Extensible as C
 
-import System.IO
 import System.Posix.Process (executeFile)
 import Graphics.X11.Xlib
 import Graphics.X11.Xinerama (getScreenInfo)
@@ -400,7 +399,7 @@ cleanMask km = do
 
 -- | Get the 'Pixel' value for a named color
 initColor :: Display -> String -> IO (Maybe Pixel)
-initColor dpy c = C.handle (\_ -> return Nothing) $
+initColor dpy c = C.handle (\(C.SomeException _) -> return Nothing) $
     (Just . color_pixel . fst) <$> allocNamedColor dpy colormap c
     where colormap = defaultColormap dpy (defaultScreen dpy)
 

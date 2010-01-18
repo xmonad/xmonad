@@ -34,7 +34,7 @@ module XMonad.Core (
 import XMonad.StackSet hiding (modify)
 
 import Prelude hiding ( catch )
-import Control.Exception (catch, try, bracket, throw, finally, Exception(ExitException))
+import Control.Exception.Extensible (catch, fromException, try, bracket, throw, finally, SomeException(..))
 import Control.Applicative
 import Control.Monad.State
 import Control.Monad.Reader
@@ -171,9 +171,9 @@ catchX :: X a -> X a -> X a
 catchX job errcase = do
     st <- get
     c <- ask
-    (a, s') <- io $ runX c st job `catch` \e -> case e of
-                            ExitException {} -> throw e
-                            _ -> do hPrint stderr e; runX c st errcase
+    (a, s') <- io $ runX c st job `catch` \e -> case fromException e of
+                        Just x -> throw e `const` (x `asTypeOf` ExitSuccess)
+                        _ -> do hPrint stderr e; runX c st errcase
     put s'
     return a
 
@@ -386,7 +386,7 @@ io = liftIO
 -- | Lift an 'IO' action into the 'X' monad.  If the action results in an 'IO'
 -- exception, log the exception to stderr and continue normal execution.
 catchIO :: MonadIO m => IO () -> m ()
-catchIO f = io (f `catch` \e -> hPrint stderr e >> hFlush stderr)
+catchIO f = io (f `catch` \(SomeException e) -> hPrint stderr e >> hFlush stderr)
 
 -- | spawn. Launch an external application. Specifically, it double-forks and
 -- runs the 'String' you pass as a command to /bin/sh.
@@ -476,11 +476,11 @@ recompile force = io $ do
             return ()
         return (status == ExitSuccess)
       else return True
- where getModTime f = catch (Just <$> getModificationTime f) (const $ return Nothing)
+ where getModTime f = catch (Just <$> getModificationTime f) (\(SomeException _) -> return Nothing)
        isSource = flip elem [".hs",".lhs",".hsc"]
        allFiles t = do
             let prep = map (t</>) . Prelude.filter (`notElem` [".",".."])
-            cs <- prep <$> catch (getDirectoryContents t) (\_ -> return [])
+            cs <- prep <$> catch (getDirectoryContents t) (\(SomeException _) -> return [])
             ds <- filterM doesDirectoryExist cs
             concat . ((cs \\ ds):) <$> mapM allFiles ds
 
@@ -503,7 +503,8 @@ installSignalHandlers :: MonadIO m => m ()
 installSignalHandlers = io $ do
     installHandler openEndedPipe Ignore Nothing
     installHandler sigCHLD Ignore Nothing
-    try $ fix $ \more -> do
+    (try :: IO a -> IO (Either SomeException a))
+      $ fix $ \more -> do
         x <- getAnyProcessStatus False False
         when (isJust x) more
     return ()

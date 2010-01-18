@@ -14,7 +14,7 @@ import Data.Ratio
 import Data.Maybe
 import System.Environment
 import Control.Exception    (assert)
-import qualified Control.Exception as C
+import qualified Control.Exception.Extensible as C
 import Control.Monad
 import Test.QuickCheck hiding (promote)
 import System.IO.Unsafe
@@ -613,13 +613,13 @@ prop_lookup_visible (x :: T) =
 
 -- and help out hpc
 prop_abort x = unsafePerformIO $ C.catch (abort "fail")
-                                         (\e -> return $  show e == "xmonad: StackSet: fail" )
+                                         (\(C.SomeException e) -> return $  show e == "xmonad: StackSet: fail" )
    where
      _ = x :: Int
 
 -- new should fail with an abort
 prop_new_abort x = unsafePerformIO $ C.catch f
-                                         (\e -> return $ show e == "xmonad: StackSet: non-positive argument to StackSet.new" )
+                                         (\(C.SomeException e) -> return $ show e == "xmonad: StackSet: non-positive argument to StackSet.new" )
    where
      f = new undefined{-layout-} [] [] `seq` return False
 

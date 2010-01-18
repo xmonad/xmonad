@@ -17,7 +17,6 @@ module Main (main) where
 import XMonad
 
 import Control.Monad (unless)
-import System.IO
 import System.Info
 import System.Environment
 import System.Posix.Process (executeFile)

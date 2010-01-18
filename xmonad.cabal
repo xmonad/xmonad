@@ -43,12 +43,17 @@ library
                         XMonad.StackSet
 
     if flag(small_base)
-        build-depends: base < 4 && >=3, containers, directory, process, filepath
+        build-depends: base < 5 && >=3, containers, directory, process, filepath, extensible-exceptions
     else
         build-depends: base < 3
     build-depends: X11>=1.5.0.0 && < 1.6, mtl, unix
 
-    ghc-options:        -funbox-strict-fields -Wall
+    if true
+        ghc-options:        -funbox-strict-fields -Wall
+
+    if impl(ghc >= 6.12.1)
+        ghc-options:        -fno-warn-unused-do-bind
+
     ghc-prof-options:   -prof -auto-all
     extensions:         CPP
 
@@ -66,7 +71,12 @@ executable xmonad
                         XMonad.Operations
                         XMonad.StackSet
 
-    ghc-options:        -funbox-strict-fields -Wall
+    if true 
+        ghc-options:    -funbox-strict-fields -Wall
+
+    if impl(ghc >= 6.12.1)
+        ghc-options:    -fno-warn-unused-do-bind
+
     ghc-prof-options:   -prof -auto-all
     extensions:         CPP
 
@@ -76,4 +86,4 @@ executable xmonad
         build-depends:  QuickCheck < 2
         ghc-options:    -Werror
     if flag(testing) && flag(small_base)
-        build-depends:  random
+        build-depends:  filepath, process, directory, mtl, unix, X11, base, containers, random, extensible-exceptions
