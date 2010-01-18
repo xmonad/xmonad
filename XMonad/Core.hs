@@ -64,7 +64,7 @@ data XState = XState
     , mapped           :: !(S.Set Window)                -- ^ the Set of mapped windows
     , waitingUnmap     :: !(M.Map Window Int)            -- ^ the number of expected UnmapEvents
     , dragging         :: !(Maybe (Position -> Position -> X (), X ()))
-    , numlockMask  :: !KeyMask                           -- ^ The numlock modifier
+    , numberlockMask   :: !KeyMask                       -- ^ The numlock modifier
     , extensibleState  :: !(M.Map String (Either String StateExtension))
     -- ^ stores custom state information.
     --

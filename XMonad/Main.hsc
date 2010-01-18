@@ -121,7 +121,7 @@ xmonad initxmc = do
 
         st = XState
             { windowset       = initialWinset
-            , numlockMask   = 0
+            , numberlockMask   = 0
             , mapped          = S.empty
             , waitingUnmap    = M.empty
             , dragging        = Nothing
@@ -338,7 +338,7 @@ setNumlockMask = do
                             then return (setBit 0 (fromIntegral m))
                             else return (0 :: KeyMask)
                         | (m, kcs) <- ms, kc <- kcs, kc /= 0]
-    modify (\s -> s { numlockMask = foldr (.|.) 0 xs })
+    modify (\s -> s { numberlockMask = foldr (.|.) 0 xs })
 
 -- | Grab the keys back
 grabKeys :: X ()
