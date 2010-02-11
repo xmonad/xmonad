@@ -22,7 +22,7 @@ import Prelude hiding (catch)
 import XMonad.Core
 import Graphics.X11.Xlib.Extras
 import Graphics.X11.Xlib (Display, Window, internAtom, wM_NAME)
-import Control.Exception (bracket, catch, SomeException(..))
+import Control.Exception.Extensible (bracket, catch, SomeException(..))
 import Control.Monad.Reader
 import Data.Maybe
 import Data.Monoid
