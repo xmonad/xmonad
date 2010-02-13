@@ -5,9 +5,9 @@ main = do foo <- getContents
           let actual_loc = filter (not.null) $ filter isntcomment $
                            map (dropWhile (==' ')) $ lines foo
               loc = length actual_loc
-          putStrLn $ show loc
+          print loc
           -- uncomment the following to check for mistakes in isntcomment
-          -- putStr $ unlines $ actual_loc
+          -- print actual_loc
 
 isntcomment ('-':'-':_) = False
 isntcomment ('{':'-':_) = False -- pragmas
