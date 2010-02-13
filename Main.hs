@@ -65,7 +65,7 @@ usage = do
         "  --help                       Print this message" :
         "  --version                    Print the version number" :
         "  --recompile                  Recompile your ~/.xmonad/xmonad.hs" :
-        "  --replace                    Request the running window manage to exit" :
+        "  --replace                    Replace the running window manager with xmonad" :
         "  --restart                    Request a running xmonad process to restart" :
 #ifdef TESTING
         "  --run-tests                  Run the test suite" :
