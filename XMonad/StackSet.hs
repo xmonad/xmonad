@@ -52,7 +52,7 @@ module XMonad.StackSet (
     ) where
 
 import Prelude hiding (filter)
-import Data.Maybe   (listToMaybe,isJust)
+import Data.Maybe   (listToMaybe,isJust,fromMaybe)
 import qualified Data.List as L (deleteBy,find,splitAt,filter,nub)
 import Data.List ( (\\) )
 import qualified Data.Map  as M (Map,insert,delete,empty)
@@ -369,7 +369,7 @@ reverseStack (Stack t ls rs) = Stack t rs ls
 --
 focusWindow :: (Eq s, Eq a, Eq i) => a -> StackSet i l a s sd -> StackSet i l a s sd
 focusWindow w s | Just w == peek s = s
-                | otherwise        = maybe s id $ do
+                | otherwise        = fromMaybe s $ do
                     n <- findTag w s
                     return $ until ((Just w ==) . peek) focusUp (view n s)
 

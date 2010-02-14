@@ -210,7 +210,7 @@ clientMask = structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
 setInitialProperties :: Window -> X ()
 setInitialProperties w = asks normalBorder >>= \nb -> withDisplay $ \d -> do
     setWMState w iconicState
-    io $ selectInput d w $ clientMask
+    io $ selectInput d w clientMask
     bw <- asks (borderWidth . config)
     io $ setWindowBorderWidth d w bw
     -- we must initially set the color of new windows, to maintain invariants
@@ -320,14 +320,13 @@ setFocusX w = withWindowSet $ \ws -> do
     dpy <- asks display
 
     -- clear mouse button grab and border on other windows
-    forM_ (W.current ws : W.visible ws) $ \wk -> do
-        forM_ (W.index (W.view (W.tag (W.workspace wk)) ws)) $ \otherw -> do
+    forM_ (W.current ws : W.visible ws) $ \wk ->
+        forM_ (W.index (W.view (W.tag (W.workspace wk)) ws)) $ \otherw ->
             setButtonGrab True otherw
 
     -- If we ungrab buttons on the root window, we lose our mouse bindings.
     whenX (not <$> isRoot w) $ setButtonGrab False w
-    io $ do setInputFocus dpy w revertToPointerRoot 0
-            -- raiseWindow dpy w
+    io $ setInputFocus dpy w revertToPointerRoot 0
 
 ------------------------------------------------------------------------
 -- Message handling
@@ -338,7 +337,7 @@ sendMessage :: Message a => a -> X ()
 sendMessage a = do
     w <- W.workspace . W.current <$> gets windowset
     ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
-    whenJust ml' $ \l' -> do
+    whenJust ml' $ \l' ->
         windows $ \ws -> ws { W.current = (W.current ws)
                                 { W.workspace = (W.workspace $ W.current ws)
                                   { W.layout = l' }}}
@@ -438,7 +437,7 @@ floatLocation w = withDisplay $ \d -> do
                             (fi (wa_width  wa + bw*2) % fi (rect_width sr))
                             (fi (wa_height wa + bw*2) % fi (rect_height sr))
 
-    return (W.screen $ sc, rr)
+    return (W.screen sc, rr)
   where fi x = fromIntegral x
 
 -- | Given a point, determine the screen (if any) that contains it.
@@ -508,7 +507,7 @@ mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     wa <- io $ getWindowAttributes d w
     sh <- io $ getWMNormalHints d w
     io $ warpPointer d none w 0 0 0 0 (fromIntegral (wa_width wa)) (fromIntegral (wa_height wa))
-    mouseDrag (\ex ey -> do
+    mouseDrag (\ex ey ->
                  io $ resizeWindow d w `uncurry`
                     applySizeHintsContents sh (ex - fromIntegral (wa_x wa),
                                                ey - fromIntegral (wa_y wa)))

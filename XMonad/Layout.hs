@@ -125,7 +125,7 @@ instance LayoutClass l a => LayoutClass (Mirror l) a where
 
 -- | Mirror a rectangle.
 mirrorRect :: Rectangle -> Rectangle
-mirrorRect (Rectangle rx ry rw rh) = (Rectangle ry rx rh rw)
+mirrorRect (Rectangle rx ry rw rh) = Rectangle ry rx rh rw
 
 ------------------------------------------------------------------------
 -- LayoutClass selection manager
@@ -173,7 +173,7 @@ choose (Choose d l r) d' ml      mr = f lr
 
 instance (LayoutClass l a, LayoutClass r a) => LayoutClass (Choose l r) a where
     runLayout (W.Workspace i (Choose L l r) ms) =
-        fmap (second . fmap $ flip (Choose L) $ r) . runLayout (W.Workspace i l ms)
+        fmap (second . fmap $ flip (Choose L) r) . runLayout (W.Workspace i l ms)
     runLayout (W.Workspace i (Choose R l r) ms) =
         fmap (second . fmap $ Choose R l) . runLayout (W.Workspace i r ms)
 
@@ -194,7 +194,7 @@ instance (LayoutClass l a, LayoutClass r a) => LayoutClass (Choose l r) a where
 
             R -> choose c R Nothing =<< handle r NextNoWrap
 
-    handleMessage c@(Choose _ l _) m | Just FirstLayout <- fromMessage m = do        
+    handleMessage c@(Choose _ l _) m | Just FirstLayout <- fromMessage m =
         flip (choose c L) Nothing =<< handle l FirstLayout
 
     handleMessage c@(Choose d l r) m | Just ReleaseResources <- fromMessage m =
