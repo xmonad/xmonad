@@ -121,12 +121,8 @@ xmonad initxmc = do
             , keyActions    = keys xmc xmc
             , buttonActions = mouseBindings xmc xmc
             , mouseFocused  = False
-            , mousePosition = Nothing }
-        st = XState
-            { windowset     = initialWinset
-            , mapped        = S.empty
-            , waitingUnmap  = M.empty
-            , dragging      = Nothing }
+            , mousePosition = Nothing
+            , currentEvent  = Nothing }
 
         st = XState
             { windowset       = initialWinset
