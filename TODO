@@ -16,6 +16,8 @@
 * test core with 6.6 and 6.8
 * bump xmonad.cabal version and X11 version
 * upload X11 and xmonad to Hackage
+* update links to hackage in download.html
+* update #xmonad topic
 * check examples/text in user-facing Config.hs
 * check tour.html and intro.html are up to date, and mention all core bindings
 * confirm template config is type correct
