@@ -200,7 +200,7 @@ reveal :: Window -> X ()
 reveal w = withDisplay $ \d -> do
     setWMState w normalState
     io $ mapWindow d w
-    modify (\s -> s { mapped = S.insert w (mapped s) })
+    whenX (isClient w) $ modify (\s -> s { mapped = S.insert w (mapped s) })
 
 -- | The client events that xmonad is interested in
 clientMask :: EventMask
