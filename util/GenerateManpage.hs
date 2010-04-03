@@ -76,19 +76,23 @@ main = do
         . lines
         <$> readFile "./man/xmonad.1.markdown"
 
+    Right template <- getDefaultTemplate "man"
     writeFile "./man/xmonad.1"
         . (manHeader ++)
-        . writeMan writeOpts
+        . writeMan writeOpts{ writerStandalone = True, writerTemplate = template }
         $ parsed
     putStrLn "Documentation created: man/xmonad.1"
 
+    Right template <- getDefaultTemplate "html"
     writeFile "./man/xmonad.1.html"
         . writeHtmlString writeOpts
-            { writerHeader = "<h1>"++releaseName++"</h1>"++
-                             "<p>Section: xmonad manual (1)<br>"++
+            { writerIncludeBefore =
+                             "<h1>"++releaseName++"</h1>"++
+                             "<p>Section: xmonad manual (1)<br/>"++
                              "Updated: "++releaseDate++"</p>"++
-                             "<hr>"
+                             "<hr/>"
             , writerStandalone = True
+            , writerTemplate = template
             , writerTableOfContents = True }
         $ parsed
     putStrLn "Documentation created: man/xmonad.1.html"
