@@ -430,9 +430,11 @@ getXMonadDir = io $ getAppUserDataDirectory "xmonad"
 --
 --      * the xmonad executable does not exist
 --
---      * the xmonad executable is older than xmonad.hs
+--      * the xmonad executable is older than xmonad.hs or any file in
+--        ~\/.xmonad\/lib
 --
--- The -i flag is used to restrict recompilation to the xmonad.hs file only.
+-- The -i flag is used to restrict recompilation to the xmonad.hs file only,
+-- and any files in the ~\/.xmonad\/lib directory.
 --
 -- Compilation errors (if any) are logged to ~\/.xmonad\/xmonad.errors.  If
 -- GHC indicates failure with a non-zero exit code, an xmessage displaying
