@@ -1,22 +1,53 @@
 \begin{hcarentry}{xmonad}
 \label{xmonad}
-\report{Don Stewart}%05/08
+\report{Don Stewart}%05/10
 \status{active development}
 \makeheader
 
-xmonad is a tiling window manager for X. Windows are arranged
+XMonad is a tiling window manager for X. Windows are arranged
 automatically to tile the screen without gaps or overlap, maximizing
-screen use. Window manager features are accessible from the keyboard: a
-mouse is optional. xmonad is written, configured, and extensible in
+screen use. Window manager features are accessible from the keyboard; a
+mouse is optional. XMonad is written, configured, and extensible in
 Haskell. Custom layout algorithms, key bindings, and other extensions may
 be written by the user in config files. Layouts are applied
 dynamically, and different layouts may be used on each workspace.
 Xinerama is fully supported, allowing windows to be tiled on several
 physical screens.
 
-The new release 0.7 of xmonad added full support for the GNOME and KDE
-desktops, and adoption continues to grow, with binary packages of xmonad
-available for all major distributions.
+Development since the last report has continued apace, with versions
+0.8, 0.8.1, 0.9 and 0.9.1 released, with simultaneous releases of the
+XMonadContrib library of customizations and extensions, which has now
+grown to no less than 205 modules encompassing a dizzying array of features.
+
+Details of changes between releases can be found in the release notes:
+
+\item \url{http://haskell.org/haskellwiki/Xmonad/Notable_changes_since_0.7}
+\item \url{http://haskell.org/haskellwiki/Xmonad/Notable_changes_since_0.8}
+\item \url{http://haskell.org/haskellwiki/Xmonad/Notable_changes_since_0.9}
+
+
+\item XMonad.Config.PlainConfig allows writing configs in a more 'normal' style, and not raw Haskell
+\item Supports using local modules in xmonad.hs; for example: to use definitions from \~/.xmonad/lib/XMonad/Stack/MyAdditions.hs
+\item xmonad --restart CLI option
+\item xmonad --replace CLI option
+\item XMonad.Prompt now has customizable keymaps
+\item Actions.GridSelect - a GUI menu for selecting windows or workspaces
+\item Actions.OnScreen
+\item Extensions now can have state
+\item Actions.SpawnOn - uses state to spawn applications on the workspace the user was originally on,
+  and not where the user happens to be
+\item Markdown manpages and not man/troff
+\item  XMonad.Layout.ImageButtonDecoration & XMonad.Util.Image
+\item XMonad.Layout.Groups
+\item XMonad.Layout.ZoomRow
+\item XMonad.Layout.Renamed
+\item XMonad.Layout.Drawer
+\item XMonad.Hooks.ScreenCorners
+\item XMonad.Actions.DynamicWorkspaceOrder
+\item XMonad.Actions.WorkspaceNames
+\item XMonad.Actions.DynamicWorkspaceGroups
+
+Binary packages of XMonad and XMonadContrib are available for all major Linux distributions.
 
 \FurtherReading
 \begin{compactitem}
