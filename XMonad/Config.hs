@@ -225,7 +225,7 @@ mouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList
     [ ((modMask, button1), \w -> focus w >> mouseMoveWindow w
                                           >> windows W.shiftMaster)
     -- mod-button2 %! Raise the window to the top of the stack
-    , ((modMask, button2), \w -> focus w >> windows W.shiftMaster)
+    , ((modMask, button2), windows . (W.shiftMaster .) . W.focusWindow)
     -- mod-button3 %! Set the window to floating mode and resize by dragging
     , ((modMask, button3), \w -> focus w >> mouseResizeWindow w
                                          >> windows W.shiftMaster)
