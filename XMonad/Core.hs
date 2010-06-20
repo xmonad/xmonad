@@ -68,7 +68,7 @@ data XState = XState
     , extensibleState  :: !(M.Map String (Either String StateExtension))
     -- ^ stores custom state information.
     --
-    -- The module XMonad.Utils.ExtensibleState in xmonad-contrib
+    -- The module "XMonad.Utils.ExtensibleState" in xmonad-contrib
     -- provides additional information and a simple interface for using this.
     }
 
@@ -389,7 +389,7 @@ catchIO :: MonadIO m => IO () -> m ()
 catchIO f = io (f `catch` \(SomeException e) -> hPrint stderr e >> hFlush stderr)
 
 -- | spawn. Launch an external application. Specifically, it double-forks and
--- runs the 'String' you pass as a command to /bin/sh.
+-- runs the 'String' you pass as a command to \/bin\/sh.
 spawn :: MonadIO m => String -> m ()
 spawn x = spawnPID x >> return ()
 
