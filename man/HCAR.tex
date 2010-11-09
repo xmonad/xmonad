@@ -1,6 +1,7 @@
+% xmonad-Gx.tex
 \begin{hcarentry}{xmonad}
 \label{xmonad}
-\report{Don Stewart}%05/10
+\report{Gwern Branwen}%05/10
 \status{active development}
 \makeheader
 
@@ -20,12 +21,10 @@ XMonadContrib library of customizations and extensions, which has now
 grown to no less than 205 modules encompassing a dizzying array of features.
 
 Details of changes between releases can be found in the release notes:
-
+\begin{compactitem}
 \item \url{http://haskell.org/haskellwiki/Xmonad/Notable_changes_since_0.7}
 \item \url{http://haskell.org/haskellwiki/Xmonad/Notable_changes_since_0.8}
 \item \url{http://haskell.org/haskellwiki/Xmonad/Notable_changes_since_0.9}
-
-
 \item XMonad.Config.PlainConfig allows writing configs in a more 'normal' style, and not raw Haskell
 \item Supports using local modules in xmonad.hs; for example: to use definitions from \~/.xmonad/lib/XMonad/Stack/MyAdditions.hs
 \item xmonad --restart CLI option
@@ -37,7 +36,7 @@ Details of changes between releases can be found in the release notes:
 \item Actions.SpawnOn - uses state to spawn applications on the workspace the user was originally on,
   and not where the user happens to be
 \item Markdown manpages and not man/troff
-\item  XMonad.Layout.ImageButtonDecoration & XMonad.Util.Image
+\item  XMonad.Layout.ImageButtonDecoration \& XMonad.Util.Image
 \item XMonad.Layout.Groups
 \item XMonad.Layout.ZoomRow
 \item XMonad.Layout.Renamed
@@ -46,9 +45,7 @@ Details of changes between releases can be found in the release notes:
 \item XMonad.Actions.DynamicWorkspaceOrder
 \item XMonad.Actions.WorkspaceNames
 \item XMonad.Actions.DynamicWorkspaceGroups
-\item XMonad.Hooks.Minimize - a hook to handle minimize/restore window manager hints
-\item XMonad.Actions.GroupNavigation - allows cycling through; can also keeps track of the
-  history of focused windows and allows returning to the most recently focused
+\end{compactitem}
 
 Binary packages of XMonad and XMonadContrib are available for all major Linux distributions.
 
@@ -62,9 +59,9 @@ Binary packages of XMonad and XMonadContrib are available for all major Linux di
  \texttt{darcs get} \url{http://code.haskell.org/xmonad}
 
 \item IRC channel:
- \verb+#xmonad @ irc.freenode.org+
+ \verb+#xmonad @@ irc.freenode.org+
 
 \item Mailing list:
- \email{xmonad@haskell.org}
+ \email{xmonad@@haskell.org}
 \end{compactitem}
 \end{hcarentry}
