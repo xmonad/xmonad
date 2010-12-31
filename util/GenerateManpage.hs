@@ -34,7 +34,7 @@ import Distribution.PackageDescription
 import Text.PrettyPrint.HughesPJ
 import Distribution.Text
 
-import Text.Pandoc
+import Text.Pandoc -- works with 1.6
 
 releaseDate = "25 October 09"
 
@@ -76,21 +76,22 @@ main = do
         . lines
         <$> readFile "./man/xmonad.1.markdown"
 
-    Right template <- getDefaultTemplate "man"
+    Right template <- getDefaultTemplate Nothing "man"
     writeFile "./man/xmonad.1"
         . (manHeader ++)
         . writeMan writeOpts{ writerStandalone = True, writerTemplate = template }
         $ parsed
     putStrLn "Documentation created: man/xmonad.1"
 
-    Right template <- getDefaultTemplate "html"
+    Right template <- getDefaultTemplate Nothing "html"
     writeFile "./man/xmonad.1.html"
         . writeHtmlString writeOpts
-            { writerIncludeBefore =
-                             "<h1>"++releaseName++"</h1>"++
+            { writerVariables =
+                        [("include-before"
+                            ,"<h1>"++releaseName++"</h1>"++
                              "<p>Section: xmonad manual (1)<br/>"++
                              "Updated: "++releaseDate++"</p>"++
-                             "<hr/>"
+                             "<hr/>")]
             , writerStandalone = True
             , writerTemplate = template
             , writerTableOfContents = True }
