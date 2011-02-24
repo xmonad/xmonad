@@ -34,22 +34,23 @@ liftX :: X a -> Query a
 liftX = Query . lift
 
 -- | The identity hook that returns the WindowSet unchanged.
-idHook :: ManageHook
-idHook = doF id
+idHook :: Monoid m => m
+idHook = mempty
 
 -- | Infix 'mappend'. Compose two 'ManageHook' from right to left.
 (<+>) :: Monoid m => m -> m -> m
 (<+>) = mappend
 
 -- | Compose the list of 'ManageHook's.
-composeAll :: [ManageHook] -> ManageHook
+composeAll :: Monoid m => [m] -> m
 composeAll = mconcat
 
 infix 0 -->
 
 -- | @p --> x@.  If @p@ returns 'True', execute the 'ManageHook'.
-(-->) :: Query Bool -> ManageHook -> ManageHook
-p --> f = p >>= \b -> if b then f else mempty
+-- (-->) :: Monoid m => Query Bool -> Query m -> Query m
+(-->) :: (Monad m, Monoid a) => m Bool -> m a -> m a
+p --> f = p >>= \b -> if b then f else return mempty
 
 -- | @q =? x@. if the result of @q@ equals @x@, return 'True'.
 (=?) :: Eq a => Query a -> a -> Query Bool
@@ -101,7 +102,7 @@ getStringProperty d w p = do
   return $ fmap (map (toEnum . fromIntegral)) md
 
 -- | Modify the 'WindowSet' with a pure function.
-doF :: (WindowSet -> WindowSet) -> ManageHook
+doF :: (s -> s) -> Query (Endo s)
 doF = return . Endo
 
 -- | Move the window to the floating layer.
