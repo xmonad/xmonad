@@ -155,7 +155,7 @@ data RationalRect = RationalRect Rational Rational Rational Rational
     deriving (Show, Read, Eq)
 
 -- |
--- A stack is a cursor onto a (possibly empty) window list.
+-- A stack is a cursor onto a window list.
 -- The data structure tracks focus by construction, and
 -- the master window is by convention the top-most item.
 -- Focus operations will not reorder the list that results from
