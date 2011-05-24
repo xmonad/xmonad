@@ -48,7 +48,8 @@ composeAll = mconcat
 infix 0 -->
 
 -- | @p --> x@.  If @p@ returns 'True', execute the 'ManageHook'.
--- (-->) :: Monoid m => Query Bool -> Query m -> Query m
+--
+-- > (-->) :: Monoid m => Query Bool -> Query m -> Query m -- a simpler type
 (-->) :: (Monad m, Monoid a) => m Bool -> m a -> m a
 p --> f = p >>= \b -> if b then f else return mempty
 
