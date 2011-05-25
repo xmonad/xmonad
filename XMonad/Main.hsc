@@ -248,12 +248,13 @@ handle e@(ButtonEvent {ev_window = w,ev_event_type = t,ev_button = b })
     | t == buttonPress = do
     -- If it's the root window, then it's something we
     -- grabbed in grabButtons. Otherwise, it's click-to-focus.
+    dpy <- asks display
     isr <- isRoot w
     m <- cleanMask $ ev_state e
     mact <- asks (M.lookup (m, b) . buttonActions)
     case mact of
         (Just act) | isr -> act $ ev_subwindow e
-        _                -> focus w
+        _                -> focus w >> io (allowEvents dpy replayPointer currentTime)
     broadcastMessage e -- Always send button events.
 
 -- entered a normal window: focus it if focusFollowsMouse is set to

@@ -287,7 +287,7 @@ setButtonGrab grab w = withDisplay $ \d -> io $
     if grab
         then forM_ [button1, button2, button3] $ \b ->
             grabButton d b anyModifier w False buttonPressMask
-                       grabModeAsync grabModeSync none none
+                       grabModeSync grabModeSync none none
         else ungrabButton d anyButton anyModifier w
 
 -- ---------------------------------------------------------------------
