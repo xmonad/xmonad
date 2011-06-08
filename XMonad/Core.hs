@@ -135,9 +135,7 @@ data ScreenDetail   = SD { screenRect :: !Rectangle } deriving (Eq,Show, Read)
 -- instantiated on 'XConf' and 'XState' automatically.
 --
 newtype X a = X (ReaderT XConf (StateT XState IO) a)
-#ifndef __HADDOCK__
     deriving (Functor, Monad, MonadIO, MonadState XState, MonadReader XConf, Typeable)
-#endif
 
 instance Applicative X where
   pure = return
@@ -149,9 +147,7 @@ instance (Monoid a) => Monoid (X a) where
 
 type ManageHook = Query (Endo WindowSet)
 newtype Query a = Query (ReaderT Window X a)
-#ifndef __HADDOCK__
     deriving (Functor, Monad, MonadReader Window, MonadIO)
-#endif
 
 runQuery :: Query a -> Window -> X a
 runQuery (Query m) w = runReaderT m w
