@@ -464,7 +464,8 @@ recompile force = io $ do
             ghcErr <- readFile err
             let msg = unlines $
                     ["Error detected while loading xmonad configuration file: " ++ src]
-                    ++ lines (if (null ghcErr) then show status else ghcErr) ++ ["","Please check the file for errors."]
+                    ++ lines (if null ghcErr then show status else ghcErr)
+                    ++ ["","Please check the file for errors."]
             -- nb, the ordering of printing, then forking, is crucial due to
             -- lazy evaluation
             hPutStrLn stderr msg
