@@ -43,6 +43,7 @@ main = do
         ("--resume":_)        -> launch
         ["--help"]            -> usage
         ["--recompile"]       -> recompile True >>= flip unless exitFailure
+        ["--replace"]         -> launch
         ["--restart"]         -> sendRestart >> return ()
         ["--version"]         -> putStrLn $ unwords shortVersion
         ["--verbose-version"] -> putStrLn . unwords $ shortVersion ++ longVersion
