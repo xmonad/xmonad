@@ -46,7 +46,8 @@ library
         build-depends: base < 5 && >=3, containers, directory, process, filepath, extensible-exceptions
     else
         build-depends: base < 3
-    build-depends: X11>=1.5.0.0 && < 1.6, mtl, unix
+    build-depends: X11>=1.5.0.0 && < 1.6, mtl, unix,
+                   utf8-string >= 0.3 && < 0.4
 
     if true
         ghc-options:        -funbox-strict-fields -Wall
