@@ -36,7 +36,7 @@ import Distribution.Text
 
 import Text.Pandoc -- works with 1.6
 
-releaseDate = "25 October 09"
+releaseDate = "18 November 2011"
 
 trim :: String -> String
 trim = reverse . dropWhile isSpace . reverse . dropWhile isSpace
