@@ -1,7 +1,7 @@
 % xmonad-Gx.tex
-\begin{hcarentry}{xmonad}
+\begin{hcarentry}[updated]{xmonad}
 \label{xmonad}
-\report{Gwern Branwen}%05/10
+\report{Gwern Branwen}%11/11
 \status{active development}
 \makeheader
 
@@ -15,16 +15,19 @@ dynamically, and different layouts may be used on each workspace.
 Xinerama is fully supported, allowing windows to be tiled on several
 physical screens.
 
-Development since the last report has continued apace, with versions
-0.8, 0.8.1, 0.9 and 0.9.1 released, with simultaneous releases of the
-XMonadContrib library of customizations and extensions, which has now
-grown to no less than 205 modules encompassing a dizzying array of features.
+Development since the last report has continued; XMonad founder Don Stewart
+has stepped down and Adam Vogt is the new maintainer.
+After gestating for 2 years, version 0.10 has been released, with simultaneous
+releases of the XMonadContrib library of customizations (which has now grown to
+no less than 216 modules encompassing a dizzying array of features) and the
+xmonad-extras package of extensions,
 
 Details of changes between releases can be found in the release notes:
 \begin{compactitem}
-\item \url{http://haskell.org/haskellwiki/Xmonad/Notable_changes_since_0.7}
 \item \url{http://haskell.org/haskellwiki/Xmonad/Notable_changes_since_0.8}
 \item \url{http://haskell.org/haskellwiki/Xmonad/Notable_changes_since_0.9}
+% \item \url{http://haskell.org/haskellwiki/Xmonad/Notable_changes_since_0.10}
+\item the Darcs repositories have been upgraded to the hashed format
 \item XMonad.Config.PlainConfig allows writing configs in a more 'normal' style, and not raw Haskell
 \item Supports using local modules in xmonad.hs; for example: to use definitions from \~/.xmonad/lib/XMonad/Stack/MyAdditions.hs
 \item xmonad --restart CLI option
