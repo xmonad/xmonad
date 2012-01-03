@@ -283,11 +283,14 @@ rescreen = do
 
 -- | setButtonGrab. Tell whether or not to intercept clicks on a given window
 setButtonGrab :: Bool -> Window -> X ()
-setButtonGrab grab w = withDisplay $ \d -> io $
-    if grab
+setButtonGrab grab w = do
+    pointerMode <- asks $ \c -> if clickJustFocuses (config c)
+                                    then grabModeAsync
+                                    else grabModeSync
+    withDisplay $ \d -> io $ if grab
         then forM_ [button1, button2, button3] $ \b ->
             grabButton d b anyModifier w False buttonPressMask
-                       grabModeSync grabModeSync none none
+                       pointerMode grabModeSync none none
         else ungrabButton d anyButton anyModifier w
 
 -- ---------------------------------------------------------------------

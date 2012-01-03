@@ -27,11 +27,11 @@ module XMonad.Config (defaultConfig) where
 import XMonad.Core as XMonad hiding
     (workspaces,manageHook,keys,logHook,startupHook,borderWidth,mouseBindings
     ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse
-    ,handleEventHook)
+    ,handleEventHook,clickJustFocuses)
 import qualified XMonad.Core as XMonad
     (workspaces,manageHook,keys,logHook,startupHook,borderWidth,mouseBindings
     ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse
-    ,handleEventHook)
+    ,handleEventHook,clickJustFocuses)
 
 import XMonad.Layout
 import XMonad.Operations
@@ -157,6 +157,11 @@ terminal = "xterm"
 focusFollowsMouse :: Bool
 focusFollowsMouse = True
 
+-- | Whether a mouse click select the focus or is just passed to the window
+clickJustFocuses :: Bool
+clickJustFocuses = True
+
+
 -- | The xmonad key bindings. Add, modify or remove key bindings here.
 --
 -- (The comment formatting character is used when generating the manpage)
@@ -248,6 +253,7 @@ defaultConfig = XConfig
     , XMonad.manageHook         = manageHook
     , XMonad.handleEventHook    = handleEventHook
     , XMonad.focusFollowsMouse  = focusFollowsMouse
+    , XMonad.clickJustFocuses       = clickJustFocuses
     }
 
 -- | Finally, a copy of the default bindings in simple textual tabular format.

@@ -253,8 +253,11 @@ handle e@(ButtonEvent {ev_window = w,ev_event_type = t,ev_button = b })
     m <- cleanMask $ ev_state e
     mact <- asks (M.lookup (m, b) . buttonActions)
     case mact of
-        (Just act) | isr -> act $ ev_subwindow e
-        _                -> focus w >> io (allowEvents dpy replayPointer currentTime)
+        Just act | isr -> act $ ev_subwindow e
+        _              -> do
+            focus w
+            ctf <- asks (clickJustFocuses . config)
+            unless ctf $ io (allowEvents dpy replayPointer currentTime)
     broadcastMessage e -- Always send button events.
 
 -- entered a normal window: focus it if focusFollowsMouse is set to
