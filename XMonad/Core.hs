@@ -477,7 +477,7 @@ recompile force = io $ do
         return (status == ExitSuccess)
       else return True
  where getModTime f = catch (Just <$> getModificationTime f) (\(SomeException _) -> return Nothing)
-       isSource = flip elem [".hs",".lhs",".hsc"]
+       isSource = flip elem [".hs",".lhs",".hsc"] . takeExtension
        allFiles t = do
             let prep = map (t</>) . Prelude.filter (`notElem` [".",".."])
             cs <- prep <$> catch (getDirectoryContents t) (\(SomeException _) -> return [])
