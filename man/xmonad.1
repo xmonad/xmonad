@@ -1,0 +1,280 @@
+.TH xmonad 1 "18 November 2011" xmonad-0.10 "xmonad manual".TH  "" "" 
+.SH Name
+.PP
+xmonad - a tiling window manager
+.SH Description
+.PP
+\f[I]xmonad\f[] is a minimalist tiling window manager for X, written in
+Haskell.
+Windows are managed using automatic layout algorithms, which can be
+dynamically reconfigured.
+At any time windows are arranged so as to maximize the use of screen
+real estate.
+All features of the window manager are accessible purely from the
+keyboard: a mouse is entirely optional.
+\f[I]xmonad\f[] is configured in Haskell, and custom layout algorithms
+may be implemented by the user in config files.
+A principle of \f[I]xmonad\f[] is predictability: the user should know
+in advance precisely the window arrangement that will result from any
+action.
+.PP
+By default, \f[I]xmonad\f[] provides three layout algorithms: tall, wide
+and fullscreen.
+In tall or wide mode, windows are tiled and arranged to prevent overlap
+and maximize screen use.
+Sets of windows are grouped together on virtual screens, and each screen
+retains its own layout, which may be reconfigured dynamically.
+Multiple physical monitors are supported via Xinerama, allowing
+simultaneous display of a number of screens.
+.PP
+By utilizing the expressivity of a modern functional language with a
+rich static type system, \f[I]xmonad\f[] provides a complete, featureful
+window manager in less than 1200 lines of code, with an emphasis on
+correctness and robustness.
+Internal properties of the window manager are checked using a
+combination of static guarantees provided by the type system, and
+type-based automated testing.
+A benefit of this is that the code is simple to understand, and easy to
+modify.
+.SH Usage
+.PP
+\f[I]xmonad\f[] places each window into a "workspace".
+Each workspace can have any number of windows, which you can cycle
+though with mod-j and mod-k.
+Windows are either displayed full screen, tiled horizontally, or tiled
+vertically.
+You can toggle the layout mode with mod-space, which will cycle through
+the available modes.
+.PP
+You can switch to workspace N with mod-N.
+For example, to switch to workspace 5, you would press mod-5.
+Similarly, you can move the current window to another workspace with
+mod-shift-N.
+.PP
+When running with multiple monitors (Xinerama), each screen has exactly
+1 workspace visible.
+mod-{w,e,r} switch the focus between screens, while shift-mod-{w,e,r}
+move the current window to that screen.
+When \f[I]xmonad\f[] starts, workspace 1 is on screen 1, workspace 2 is
+on screen 2, etc.
+When switching workspaces to one that is already visible, the current
+and visible workspaces are swapped.
+.SS Flags
+.PP
+xmonad has several flags which you may pass to the executable.
+These flags are:
+.TP
+.B --recompile
+Recompiles your configuration in \f[I]~/.xmonad/xmonad.hs\f[]
+.RS
+.RE
+.TP
+.B --restart
+Causes the currently running \f[I]xmonad\f[] process to restart
+.RS
+.RE
+.TP
+.B --replace
+Replace the current window manager with xmonad
+.RS
+.RE
+.TP
+.B --version
+Display version of \f[I]xmonad\f[]
+.RS
+.RE
+.TP
+.B --verbose-version
+Display detailed version of \f[I]xmonad\f[]
+.RS
+.RE
+.SS Default keyboard bindings
+.TP
+.B mod-shift-return
+Launch terminal
+.RS
+.RE
+.TP
+.B mod-p
+Launch dmenu
+.RS
+.RE
+.TP
+.B mod-shift-p
+Launch gmrun
+.RS
+.RE
+.TP
+.B mod-shift-c
+Close the focused window
+.RS
+.RE
+.TP
+.B mod-space
+Rotate through the available layout algorithms
+.RS
+.RE
+.TP
+.B mod-shift-space
+Reset the layouts on the current workspace to default
+.RS
+.RE
+.TP
+.B mod-n
+Resize viewed windows to the correct size
+.RS
+.RE
+.TP
+.B mod-tab
+Move focus to the next window
+.RS
+.RE
+.TP
+.B mod-shift-tab
+Move focus to the previous window
+.RS
+.RE
+.TP
+.B mod-j
+Move focus to the next window
+.RS
+.RE
+.TP
+.B mod-k
+Move focus to the previous window
+.RS
+.RE
+.TP
+.B mod-m
+Move focus to the master window
+.RS
+.RE
+.TP
+.B mod-return
+Swap the focused window and the master window
+.RS
+.RE
+.TP
+.B mod-shift-j
+Swap the focused window with the next window
+.RS
+.RE
+.TP
+.B mod-shift-k
+Swap the focused window with the previous window
+.RS
+.RE
+.TP
+.B mod-h
+Shrink the master area
+.RS
+.RE
+.TP
+.B mod-l
+Expand the master area
+.RS
+.RE
+.TP
+.B mod-t
+Push window back into tiling
+.RS
+.RE
+.TP
+.B mod-comma
+Increment the number of windows in the master area
+.RS
+.RE
+.TP
+.B mod-period
+Deincrement the number of windows in the master area
+.RS
+.RE
+.TP
+.B mod-b
+Toggle the status bar gap
+.RS
+.RE
+.TP
+.B mod-shift-q
+Quit xmonad
+.RS
+.RE
+.TP
+.B mod-q
+Restart xmonad
+.RS
+.RE
+.TP
+.B mod-[1..9]
+Switch to workspace N
+.RS
+.RE
+.TP
+.B mod-shift-[1..9]
+Move client to workspace N
+.RS
+.RE
+.TP
+.B mod-{w,e,r}
+Switch to physical/Xinerama screens 1, 2, or 3
+.RS
+.RE
+.TP
+.B mod-shift-{w,e,r}
+Move client to screen 1, 2, or 3
+.RS
+.RE
+.TP
+.B mod-button1
+Set the window to floating mode and move by dragging
+.RS
+.RE
+.TP
+.B mod-button2
+Raise the window to the top of the stack
+.RS
+.RE
+.TP
+.B mod-button3
+Set the window to floating mode and resize by dragging
+.RS
+.RE
+.SH Examples
+.PP
+To use xmonad as your window manager add to your \f[I]~/.xinitrc\f[]
+file:
+.IP
+.nf
+\f[C]
+exec\ xmonad
+\f[]
+.fi
+.SH Customization
+.PP
+xmonad is customized in ~/.xmonad/xmonad.hs, and then restarting with
+mod-q.
+.PP
+You can find many extensions to the core feature set in the xmonad-
+contrib package, available through your package manager or from
+xmonad.org (http://xmonad.org).
+.SS Modular Configuration
+.PP
+As of \f[I]xmonad-0.9\f[], any additional Haskell modules may be placed
+in \f[I]~/.xmonad/lib/\f[] are available in GHC\[aq]s searchpath.
+Hierarchical modules are supported: for example, the file
+\f[I]~/.xmonad/lib/XMonad/Stack/MyAdditions.hs\f[] could contain:
+.IP
+.nf
+\f[C]
+module\ XMonad.Stack.MyAdditions\ (function1)\ where
+\ \ \ \ function1\ =\ error\ "function1:\ Not\ implemented\ yet!"
+\f[]
+.fi
+.PP
+Your xmonad.hs may then import XMonad.Stack.MyAdditions as if that
+module was contained within xmonad or xmonad-contrib.
+.SH Bugs
+.PP
+Probably.
+If you find any, please report them to the
+bugtracker (http://code.google.com/p/xmonad/issues/list)
