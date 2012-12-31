@@ -21,9 +21,20 @@ extra-source-files: README TODO CONFIG STYLE tests/loc.hs tests/Properties.hs
                     man/xmonad.1.markdown man/xmonad.1 man/xmonad.1.html
                     util/GenerateManpage.hs
 cabal-version:      >= 1.2
+bug-reports:        http://code.google.com/p/xmonad/issues/list
 build-type:         Simple
 
+tested-with:        GHC==7.6.1,
+                    GHC==7.4.1,
+                    GHC==7.2.1,
+                    GHC==6.12.3,
+                    GHC==6.10.4
+
 data-files:         man/xmonad.hs, man/xmonad.1, man/xmonad.1.html
+
+source-repository head
+  type:     darcs
+  location: http://code.haskell.org/xmonad
 
 flag small_base
     description: Choose the new smaller, split-up base package.
