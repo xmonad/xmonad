@@ -2,11 +2,31 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
   <meta name="generator" content="pandoc" />
   <title></title>
+  <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+  </style>
 </head>
 <body>
-<h1>xmonad-0.10</h1><p>Section: xmonad manual (1)<br/>Updated: 18 November 2011</p><hr/>
+<h1>xmonad-0.11</h1><p>Section: xmonad manual (1)<br/>Updated: 31 December 2012</p><hr/>
 <div id="TOC">
 <ul>
 <li><a href="#name">Name</a></li>
@@ -113,14 +133,14 @@
 <dt>mod-period</dt>
 <dd><p>Deincrement the number of windows in the master area</p>
 </dd>
-<dt>mod-b</dt>
-<dd><p>Toggle the status bar gap</p>
-</dd>
 <dt>mod-shift-q</dt>
 <dd><p>Quit xmonad</p>
 </dd>
 <dt>mod-q</dt>
 <dd><p>Restart xmonad</p>
+</dd>
+<dt>mod-shift-slash</dt>
+<dd><p>Run xmessage with a summary of the default keybindings (useful for beginners)</p>
 </dd>
 <dt>mod-[1..9]</dt>
 <dd><p>Switch to workspace N</p>
@@ -146,16 +166,14 @@
 </dl>
 <h1 id="examples"><a href="#TOC">Examples</a></h1>
 <p>To use xmonad as your window manager add to your <em>~/.xinitrc</em> file:</p>
-<pre class="sourceCode haskell"><code>exec xmonad
-</code></pre>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell">exec xmonad</code></pre>
 <h1 id="customization"><a href="#TOC">Customization</a></h1>
 <p>xmonad is customized in ~/.xmonad/xmonad.hs, and then restarting with mod-q.</p>
 <p>You can find many extensions to the core feature set in the xmonad- contrib package, available through your package manager or from <a href="http://xmonad.org">xmonad.org</a>.</p>
 <h2 id="modular-configuration"><a href="#TOC">Modular Configuration</a></h2>
 <p>As of <em>xmonad-0.9</em>, any additional Haskell modules may be placed in <em>~/.xmonad/lib/</em> are available in GHC's searchpath. Hierarchical modules are supported: for example, the file <em>~/.xmonad/lib/XMonad/Stack/MyAdditions.hs</em> could contain:</p>
-<pre class="sourceCode haskell"><code>module XMonad.Stack.MyAdditions (function1) where
-    function1 = error &quot;function1: Not implemented yet!&quot;
-</code></pre>
+<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">module</span> <span class="dt">XMonad.Stack.MyAdditions</span> (function1) <span class="kw">where</span>
+    function1 <span class="fu">=</span> <span class="fu">error</span> <span class="st">&quot;function1: Not implemented yet!&quot;</span></code></pre>
 <p>Your xmonad.hs may then import XMonad.Stack.MyAdditions as if that module was contained within xmonad or xmonad-contrib.</p>
 <h1 id="bugs"><a href="#TOC">Bugs</a></h1>
 <p>Probably. If you find any, please report them to the <a href="http://code.google.com/p/xmonad/issues/list">bugtracker</a></p>
