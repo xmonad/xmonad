@@ -23,6 +23,10 @@ myTerminal      = "xterm"
 myFocusFollowsMouse :: Bool
 myFocusFollowsMouse = True
 
+-- Whether clicking on a window to focus also passes the click to the window
+myClickJustFocuses :: Bool
+myClickJustFocuses = False
+
 -- Width of the window border in pixels.
 --
 myBorderWidth   = 1
@@ -255,6 +259,7 @@ defaults = defaultConfig {
       -- simple stuff
         terminal           = myTerminal,
         focusFollowsMouse  = myFocusFollowsMouse,
+        clickJustFocuses   = myClickJustFocuses,
         borderWidth        = myBorderWidth,
         modMask            = myModMask,
         workspaces         = myWorkspaces,
