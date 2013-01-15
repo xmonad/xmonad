@@ -450,7 +450,7 @@ floatLocation :: Window -> X (ScreenId, W.RationalRect)
 floatLocation w = withDisplay $ \d -> do
     ws <- gets windowset
     wa <- io $ getWindowAttributes d w
-    bw <- fi <$> asks (borderWidth . config)
+    let bw = (fromIntegral . wa_border_width) wa
     sc <- fromMaybe (W.current ws) <$> pointScreen (fi $ wa_x wa) (fi $ wa_y wa)
 
     let sr = screenRect . W.screenDetail $ sc
