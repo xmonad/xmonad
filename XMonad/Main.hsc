@@ -353,13 +353,18 @@ grabKeys :: X ()
 grabKeys = do
     XConf { display = dpy, theRoot = rootw } <- ask
     let grab kc m = io $ grabKey dpy kc m rootw True grabModeAsync grabModeAsync
+        (minCode, maxCode) = displayKeycodes dpy
+        allCodes = [fromIntegral minCode .. fromIntegral maxCode]
     io $ ungrabKey dpy anyKey anyModifier rootw
     ks <- asks keyActions
-    forM_ (M.keys ks) $ \(mask,sym) -> do
-         kc <- io $ keysymToKeycode dpy sym
-         -- "If the specified KeySym is not defined for any KeyCode,
-         -- XKeysymToKeycode() returns zero."
-         when (kc /= 0) $ mapM_ (grab kc . (mask .|.)) =<< extraModifiers
+    -- build a map from keysyms to lists of keysyms (doing what
+    -- XGetKeyboardMapping would do if the X11 package bound it)
+    syms <- forM allCodes $ \code -> io (keycodeToKeysym dpy code 0)
+    let keysymMap = M.fromListWith (++) (zip syms [[code] | code <- allCodes])
+        keysymToKeycodes sym = M.findWithDefault [] sym keysymMap
+    forM_ (M.keys ks) $ \(mask,sym) ->
+         forM_ (keysymToKeycodes sym) $ \kc ->
+              mapM_ (grab kc . (mask .|.)) =<< extraModifiers
 
 -- | XXX comment me
 grabButtons :: X ()
