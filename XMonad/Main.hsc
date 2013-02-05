@@ -75,9 +75,8 @@ xmonad initxmc = do
     -- If another WM is running, a BadAccess error will be returned.  The
     -- default error handler will write the exception to stderr and exit with
     -- an error.
-    selectInput dpy rootw $  substructureRedirectMask .|. substructureNotifyMask
-                         .|. enterWindowMask .|. leaveWindowMask .|. structureNotifyMask
-                         .|. buttonPressMask
+    selectInput dpy rootw $ rootMask initxmc
+
     sync dpy False -- sync to ensure all outstanding errors are delivered
 
     -- turn off the default handler in favor of one that ignores all errors

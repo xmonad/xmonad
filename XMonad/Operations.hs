@@ -184,9 +184,10 @@ setWMState w v = withDisplay $ \dpy -> do
 -- | hide. Hide a window by unmapping it, and setting Iconified.
 hide :: Window -> X ()
 hide w = whenX (gets (S.member w . mapped)) $ withDisplay $ \d -> do
-    io $ do selectInput d w (clientMask .&. complement structureNotifyMask)
+    cMask <- asks $ clientMask . config
+    io $ do selectInput d w (cMask .&. complement structureNotifyMask)
             unmapWindow d w
-            selectInput d w clientMask
+            selectInput d w cMask
     setWMState w iconicState
     -- this part is key: we increment the waitingUnmap counter to distinguish
     -- between client and xmonad initiated unmaps.
@@ -201,15 +202,11 @@ reveal w = withDisplay $ \d -> do
     io $ mapWindow d w
     whenX (isClient w) $ modify (\s -> s { mapped = S.insert w (mapped s) })
 
--- | The client events that xmonad is interested in
-clientMask :: EventMask
-clientMask = structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
-
 -- | Set some properties when we initially gain control of a window
 setInitialProperties :: Window -> X ()
 setInitialProperties w = asks normalBorder >>= \nb -> withDisplay $ \d -> do
     setWMState w iconicState
-    io $ selectInput d w clientMask
+    asks (clientMask . config) >>= io . selectInput d w
     bw <- asks (borderWidth . config)
     io $ setWindowBorderWidth d w bw
     -- we must initially set the color of new windows, to maintain invariants

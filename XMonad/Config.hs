@@ -27,11 +27,11 @@ module XMonad.Config (defaultConfig) where
 import XMonad.Core as XMonad hiding
     (workspaces,manageHook,keys,logHook,startupHook,borderWidth,mouseBindings
     ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse
-    ,handleEventHook,clickJustFocuses)
+    ,handleEventHook,clickJustFocuses,rootMask,clientMask)
 import qualified XMonad.Core as XMonad
     (workspaces,manageHook,keys,logHook,startupHook,borderWidth,mouseBindings
     ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse
-    ,handleEventHook,clickJustFocuses)
+    ,handleEventHook,clickJustFocuses,rootMask,clientMask)
 
 import XMonad.Layout
 import XMonad.Operations
@@ -146,6 +146,19 @@ layout = tiled ||| Mirror tiled ||| Full
      delta   = 3/100
 
 ------------------------------------------------------------------------
+-- Event Masks:
+
+-- | The client events that xmonad is interested in
+clientMask :: EventMask
+clientMask = structureNotifyMask .|. enterWindowMask .|. propertyChangeMask
+
+-- | The root events that xmonad is interested in
+rootMask :: EventMask
+rootMask =  substructureRedirectMask .|. substructureNotifyMask
+        .|. enterWindowMask .|. leaveWindowMask .|. structureNotifyMask
+        .|. buttonPressMask
+
+------------------------------------------------------------------------
 -- Key bindings:
 
 -- | The preferred terminal program, which is used in a binding below and by
@@ -254,6 +267,8 @@ defaultConfig = XConfig
     , XMonad.handleEventHook    = handleEventHook
     , XMonad.focusFollowsMouse  = focusFollowsMouse
     , XMonad.clickJustFocuses       = clickJustFocuses
+    , XMonad.clientMask         = clientMask
+    , XMonad.rootMask           = rootMask
     }
 
 -- | Finally, a copy of the default bindings in simple textual tabular format.
