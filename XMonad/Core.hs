@@ -192,7 +192,7 @@ userCode a = catchX (Just `liftM` a) (return Nothing)
 -- | Same as userCode but with a default argument to return instead of using
 -- Maybe, provided for convenience.
 userCodeDef :: a -> X a -> X a
-userCodeDef def a = fromMaybe def `liftM` userCode a
+userCodeDef defValue a = fromMaybe defValue `liftM` userCode a
 
 -- ---------------------------------------------------------------------
 -- Convenient wrappers to state
