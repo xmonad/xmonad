@@ -37,6 +37,7 @@ import Control.Exception.Extensible (catch, fromException, try, bracket, throw, 
 import Control.Applicative
 import Control.Monad.State
 import Control.Monad.Reader
+import Data.Default
 import System.FilePath
 import System.IO
 import System.Info
@@ -149,6 +150,9 @@ instance (Monoid a) => Monoid (X a) where
     mempty  = return mempty
     mappend = liftM2 mappend
 
+instance Default a => Default (X a) where
+    def = return def
+
 type ManageHook = Query (Endo WindowSet)
 newtype Query a = Query (ReaderT Window X a)
     deriving (Functor, Monad, MonadReader Window, MonadIO)
@@ -159,6 +163,9 @@ runQuery (Query m) w = runReaderT m w
 instance Monoid a => Monoid (Query a) where
     mempty  = return mempty
     mappend = liftM2 mappend
+
+instance Default a => Default (Query a) where
+    def = return def
 
 -- | Run the 'X' monad, given a chunk of 'X' monad code, and an initial state
 -- Return the result, and final state

@@ -37,7 +37,7 @@ main :: IO ()
 main = do
     installSignalHandlers -- important to ignore SIGCHLD to avoid zombies
     args <- getArgs
-    let launch = catchIO buildLaunch >> xmonad defaultConfig
+    let launch = catchIO buildLaunch >> xmonad def
     case args of
         []                    -> launch
         ("--resume":_)        -> launch

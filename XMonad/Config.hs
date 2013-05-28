@@ -1,4 +1,5 @@
-{-# OPTIONS -fno-warn-missing-signatures #-}
+{-# OPTIONS -fno-warn-missing-signatures -fno-warn-orphans #-}
+{-# LANGUAGE TypeFamilies #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  XMonad.Config
@@ -13,13 +14,13 @@
 --
 -- DO NOT MODIFY THIS FILE!  It won't work.  You may configure xmonad
 -- by providing your own @~\/.xmonad\/xmonad.hs@ that overrides
--- specific fields in 'defaultConfig'.  For a starting point, you can
+-- specific fields in the default config, 'def'.  For a starting point, you can
 -- copy the @xmonad.hs@ found in the @man@ directory, or look at
 -- examples on the xmonad wiki.
 --
 ------------------------------------------------------------------------
 
-module XMonad.Config (defaultConfig) where
+module XMonad.Config (defaultConfig, Default(..)) where
 
 --
 -- Useful imports
@@ -38,6 +39,7 @@ import XMonad.Operations
 import XMonad.ManageHook
 import qualified XMonad.StackSet as W
 import Data.Bits ((.|.))
+import Data.Default
 import Data.Monoid
 import qualified Data.Map as M
 import System.Exit
@@ -250,8 +252,8 @@ mouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList
     -- you may also bind events to the mouse scroll wheel (button4 and button5)
     ]
 
--- | The default set of configuration values itself
-defaultConfig = XConfig
+instance (a ~ Choose Tall (Choose (Mirror Tall) Full)) => Default (XConfig a) where
+  def = XConfig
     { XMonad.borderWidth        = borderWidth
     , XMonad.workspaces         = workspaces
     , XMonad.layoutHook         = layout
@@ -270,6 +272,11 @@ defaultConfig = XConfig
     , XMonad.clientMask         = clientMask
     , XMonad.rootMask           = rootMask
     }
+
+-- | The default set of configuration values itself
+{-# DEPRECATED defaultConfig "Use def (from Data.Default, and re-exported by XMonad and XMonad.Config) instead." #-}
+defaultConfig :: XConfig (Choose Tall (Choose (Mirror Tall) Full))
+defaultConfig = def
 
 -- | Finally, a copy of the default bindings in simple textual tabular format.
 help :: String
