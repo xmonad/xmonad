@@ -18,11 +18,11 @@
 
 module XMonad.ManageHook where
 
-import Prelude hiding (catch)
 import XMonad.Core
 import Graphics.X11.Xlib.Extras
 import Graphics.X11.Xlib (Display, Window, internAtom, wM_NAME)
-import Control.Exception.Extensible (bracket, catch, SomeException(..))
+import Control.Exception.Extensible (bracket, SomeException(..))
+import qualified Control.Exception.Extensible as E
 import Control.Monad.Reader
 import Data.Maybe
 import Data.Monoid
@@ -74,10 +74,10 @@ title = ask >>= \w -> liftX $ do
     let
         getProp =
             (internAtom d "_NET_WM_NAME" False >>= getTextProperty d w)
-                `catch` \(SomeException _) -> getTextProperty d w wM_NAME
+                `E.catch` \(SomeException _) -> getTextProperty d w wM_NAME
         extract prop = do l <- wcTextPropertyToTextList d prop
                           return $ if null l then "" else head l
-    io $ bracket getProp (xFree . tp_value) extract `catch` \(SomeException _) -> return ""
+    io $ bracket getProp (xFree . tp_value) extract `E.catch` \(SomeException _) -> return ""
 
 -- | Return the application name.
 appName :: Query String

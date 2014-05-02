@@ -31,9 +31,10 @@ module XMonad.Core (
 
 import XMonad.StackSet hiding (modify)
 
-import Prelude hiding ( catch )
+import Prelude
 import Codec.Binary.UTF8.String (encodeString)
-import Control.Exception.Extensible (catch, fromException, try, bracket, throw, finally, SomeException(..))
+import Control.Exception.Extensible (fromException, try, bracket, throw, finally, SomeException(..))
+import qualified Control.Exception.Extensible as E
 import Control.Applicative
 import Control.Monad.State
 import Control.Monad.Reader
@@ -178,7 +179,7 @@ catchX :: X a -> X a -> X a
 catchX job errcase = do
     st <- get
     c <- ask
-    (a, s') <- io $ runX c st job `catch` \e -> case fromException e of
+    (a, s') <- io $ runX c st job `E.catch` \e -> case fromException e of
                         Just x -> throw e `const` (x `asTypeOf` ExitSuccess)
                         _ -> do hPrint stderr e; runX c st errcase
     put s'
@@ -394,7 +395,7 @@ io = liftIO
 -- | Lift an 'IO' action into the 'X' monad.  If the action results in an 'IO'
 -- exception, log the exception to stderr and continue normal execution.
 catchIO :: MonadIO m => IO () -> m ()
-catchIO f = io (f `catch` \(SomeException e) -> hPrint stderr e >> hFlush stderr)
+catchIO f = io (f `E.catch` \(SomeException e) -> hPrint stderr e >> hFlush stderr)
 
 -- | spawn. Launch an external application. Specifically, it double-forks and
 -- runs the 'String' you pass as a command to \/bin\/sh.
@@ -489,11 +490,11 @@ recompile force = io $ do
             return ()
         return (status == ExitSuccess)
       else return True
- where getModTime f = catch (Just <$> getModificationTime f) (\(SomeException _) -> return Nothing)
+ where getModTime f = E.catch (Just <$> getModificationTime f) (\(SomeException _) -> return Nothing)
        isSource = flip elem [".hs",".lhs",".hsc"] . takeExtension
        allFiles t = do
             let prep = map (t</>) . Prelude.filter (`notElem` [".",".."])
-            cs <- prep <$> catch (getDirectoryContents t) (\(SomeException _) -> return [])
+            cs <- prep <$> E.catch (getDirectoryContents t) (\(SomeException _) -> return [])
             ds <- filterM doesDirectoryExist cs
             concat . ((cs \\ ds):) <$> mapM allFiles ds
 
