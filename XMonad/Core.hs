@@ -155,7 +155,7 @@ instance Default a => Default (X a) where
 
 type ManageHook = Query (Endo WindowSet)
 newtype Query a = Query (ReaderT Window X a)
-    deriving (Functor, Monad, MonadReader Window, MonadIO)
+    deriving (Functor, Applicative, Monad, MonadReader Window, MonadIO)
 
 runQuery :: Query a -> Window -> X a
 runQuery (Query m) w = runReaderT m w
