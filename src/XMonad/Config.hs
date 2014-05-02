@@ -1,4 +1,4 @@
-{-# OPTIONS -fno-warn-missing-signatures -fno-warn-orphans #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures -fno-warn-orphans #-}
 {-# LANGUAGE TypeFamilies #-}
 -----------------------------------------------------------------------------
 -- |
