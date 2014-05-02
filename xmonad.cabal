@@ -26,20 +26,15 @@ cabal-version:      >= 1.8
 bug-reports:        http://code.google.com/p/xmonad/issues/list
 build-type:         Simple
 
-tested-with:        GHC==7.6.1,
-                    GHC==7.4.1,
-                    GHC==7.2.1,
-                    GHC==6.12.3,
-                    GHC==6.10.4
+tested-with:
+                    GHC==7.6.2,
+                    GHC==7.8.2
 
 data-files:         man/xmonad.hs, man/xmonad.1, man/xmonad.1.html
 
 source-repository head
   type:     darcs
   location: http://code.haskell.org/xmonad
-
-flag small_base
-    description: Choose the new smaller, split-up base package.
 
 flag testing
     description: Testing mode, only build minimal components
@@ -56,13 +51,17 @@ library
                         XMonad.Operations
                         XMonad.StackSet
 
-    if flag(small_base)
-        build-depends: base < 5 && >=3, containers, directory, process, filepath, extensible-exceptions
-    else
-        build-depends: base < 3
-    build-depends: X11>=1.5 && < 1.7, mtl, unix,
+    build-depends: base < 5 && >=3,
+                   containers,
+                   data-default,
+                   directory,
+                   extensible-exceptions,
+                   filepath,
+                   mtl,
+                   process,
+                   unix,
                    utf8-string >= 0.3 && < 0.4,
-                   data-default
+                   X11>=1.5 && < 1.7
 
     if true
         ghc-options:        -funbox-strict-fields -Wall
@@ -79,24 +78,21 @@ library
 executable xmonad
     main-is:        Main.hs
     build-depends:  base,
-                    X11,
-                    unix,
                     mtl,
+                    unix,
+                    X11,
                     xmonad
     ghc-options:    -Wall
     if impl(ghc >= 6.12.1)
-        ghc-options:    -fno-warn-unused-do-bind
-
-    ghc-prof-options:   -prof -auto-all
-    extensions:         CPP
+        ghc-options:  -Wall -fno-warn-unused-do-bind
 
 test-suite properties
     type: exitcode-stdio-1.0
     hs-source-dirs: tests
     build-depends:  base,
-                    QuickCheck >= 2,
-                    X11,
                     containers,
                     extensible-exceptions,
+                    QuickCheck >= 2,
+                    X11,
                     xmonad
     main-is: Properties.hs
