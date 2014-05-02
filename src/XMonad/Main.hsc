@@ -96,7 +96,8 @@ xmonad initxmc = do
 
     let layout = layoutHook xmc
         lreads = readsLayout layout
-        initialWinset = new layout (workspaces xmc) $ map SD xinesc
+        initialWinset = let padToLen n xs = take (max n (length xs)) $ xs ++ repeat ""
+            in new layout (padToLen (length xinesc) (workspaces xmc)) $ map SD xinesc
         maybeRead reads' s = case reads' s of
                                 [(x, "")] -> Just x
                                 _         -> Nothing
