@@ -142,6 +142,13 @@ tests =
 
   ,("mapWorkspace id",      property prop_mapWorkspaceId)
   ,("mapWorkspace inverse", property prop_mapWorkspaceInverse)
+
+  ,("mapLayout id",      property prop_mapLayoutId)
+  ,("mapLayout inverse", property prop_mapLayoutId)
+
+  ,("abort fails",            property prop_abort)
+  ,("new fails with abort",   property prop_new_abort)
+
   ]
 
 
