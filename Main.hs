@@ -27,10 +27,6 @@ import Data.Version (showVersion)
 
 import Graphics.X11.Xinerama (compiledWithXinerama)
 
-#ifdef TESTING
-import qualified Properties
-#endif
-
 -- | The entry point into xmonad. Attempts to compile any custom main
 -- for xmonad, and if it doesn't find one, just launches the default.
 main :: IO ()
@@ -47,9 +43,6 @@ main = do
         ["--restart"]         -> sendRestart >> return ()
         ["--version"]         -> putStrLn $ unwords shortVersion
         ["--verbose-version"] -> putStrLn . unwords $ shortVersion ++ longVersion
-#ifdef TESTING
-        ("--run-tests":_)     -> Properties.main
-#endif
         _                     -> fail "unrecognized flags"
  where
     shortVersion = ["xmonad", showVersion version]
@@ -68,9 +61,6 @@ usage = do
         "  --recompile                  Recompile your ~/.xmonad/xmonad.hs" :
         "  --replace                    Replace the running window manager with xmonad" :
         "  --restart                    Request a running xmonad process to restart" :
-#ifdef TESTING
-        "  --run-tests                  Run the test suite" :
-#endif
         []
 
 -- | Build "~\/.xmonad\/xmonad.hs" with ghc, then execute it.  If there are no

@@ -17,7 +17,9 @@ license:            BSD3
 license-file:       LICENSE
 author:             Spencer Janssen
 maintainer:         xmonad@haskell.org
-extra-source-files: README TODO CONFIG STYLE tests/loc.hs tests/Properties.hs
+extra-source-files: README TODO CONFIG STYLE tests/loc.hs
+                    tests/Properties.hs tests/Properties/*.hs
+                    tests/Properties/Layout*.hs
                     man/xmonad.1.markdown man/xmonad.1 man/xmonad.1.html
                     util/GenerateManpage.hs
 cabal-version:      >= 1.8
@@ -88,10 +90,13 @@ executable xmonad
     ghc-prof-options:   -prof -auto-all
     extensions:         CPP
 
-    if flag(testing)
-        cpp-options:    -DTESTING
-        hs-source-dirs: . tests/
-        build-depends:  QuickCheck < 2
-        ghc-options:    -Werror
-    if flag(testing) && flag(small_base)
-        build-depends:  filepath, process, directory, mtl, unix, X11, base, containers, random, extensible-exceptions
+test-suite properties
+    type: exitcode-stdio-1.0
+    hs-source-dirs: tests
+    build-depends:  base,
+                    QuickCheck >= 2,
+                    X11,
+                    containers,
+                    extensible-exceptions,
+                    xmonad
+    main-is: Properties.hs
