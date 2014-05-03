@@ -11,6 +11,9 @@ import Data.List (nub, genericLength)
 
 import Debug.Trace
 
+import Graphics.X11 (Rectangle(Rectangle))
+import Control.Applicative
+
 --
 -- The all important Arbitrary instance for StackSet.
 --
@@ -79,6 +82,8 @@ instance Arbitrary NonEmptyWindowsStackSet where
   arbitrary =
     NonEmptyWindowsStackSet `fmap` (arbitrary `suchThat` (not . null . allWindows))
 
+instance Arbitrary Rectangle where
+    arbitrary = Rectangle <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
 
 
 newtype SizedPositive = SizedPositive Int

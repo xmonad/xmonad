@@ -126,6 +126,7 @@ tests =
   ,("shiftWin: invariant" ,       property prop_shift_win_I)
   ,("shiftWin is shift on focus", property prop_shift_win_focus)
   ,("shiftWin fix current" ,      property prop_shift_win_fix_current)
+  ,("shiftWin identity",          property prop_shift_win_indentity)
 
   ,("floating is reversible" ,  property prop_float_reversible)
   ,("floating sets geometry" ,  property prop_float_geometry)
@@ -148,6 +149,40 @@ tests =
 
   ,("abort fails",            property prop_abort)
   ,("new fails with abort",   property prop_new_abort)
+
+  ,("point within",           property prop_point_within)
+
+  -- tall layout
+
+  ,("tile 1 window fullsize", property prop_tile_fullscreen)
+  ,("tiles never overlap",    property prop_tile_non_overlap)
+  ,("split hozizontally",     property prop_split_hoziontal)
+  ,("split verticalBy",       property prop_splitVertically)
+
+  ,("pure layout tall",       property prop_purelayout_tall)
+  ,("send shrink    tall",    property prop_shrink_tall)
+  ,("send expand    tall",    property prop_expand_tall)
+  ,("send incmaster tall",    property prop_incmaster_tall)
+
+  -- full layout
+
+  ,("pure layout full",       property prop_purelayout_full)
+  ,("send message full",      property prop_sendmsg_full)
+  ,("describe full",          property prop_desc_full)
+
+  ,("describe mirror",        property prop_desc_mirror)
+
+  -- resize hints
+  ,("window resize hints: inc",      property prop_resize_inc)
+  ,("window resize hints: inc all",  property prop_resize_inc_extra)
+  ,("window resize hints: max",      property prop_resize_max)
+  ,("window resize hints: max all ", property prop_resize_max_extra)
+
+  ,("window hints fits", property prop_aspect_fits)
+
+
+  ,("pointWithin",        property prop_point_within)
+  ,("pointWithin mirror", property prop_point_within_mirror)
 
   ]
 
