@@ -103,6 +103,9 @@ tests =
 
   ,("filter preserves order", property prop_filter_order)
 
+  ,("swapLeft",  property prop_swap_left)
+  ,("swapRight", property prop_swap_right)
+
   ,("swapMaster: invariant",    property prop_swap_master_I)
   ,("swapUp: invariant" ,       property prop_swap_left_I)
   ,("swapDown: invariant",      property prop_swap_right_I)
@@ -145,7 +148,7 @@ tests =
   ,("mapWorkspace inverse", property prop_mapWorkspaceInverse)
 
   ,("mapLayout id",      property prop_mapLayoutId)
-  ,("mapLayout inverse", property prop_mapLayoutId)
+  ,("mapLayout inverse", property prop_mapLayoutInverse)
 
   ,("abort fails",            property prop_abort)
   ,("new fails with abort",   property prop_new_abort)
@@ -178,7 +181,8 @@ tests =
   ,("window resize hints: max",      property prop_resize_max)
   ,("window resize hints: max all ", property prop_resize_max_extra)
 
-  ,("window hints fits", property prop_aspect_fits)
+  ,("window aspect hints: fits", property prop_aspect_fits)
+  ,("window aspect hints: shrinks ", property prop_aspect_hint_shrink)
 
 
   ,("pointWithin",        property prop_point_within)
