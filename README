@@ -14,11 +14,15 @@
 
 Quick start:
 
-Obtain the dependent libraries, then build with:
+  From hackage:
 
-        runhaskell Setup.lhs configure --user --prefix=$HOME
-        runhaskell Setup.lhs build
-        runhaskell Setup.lhs install --user
+    cabal update
+    cabal install xmonad xmonad-contrib
+
+  Alternatively install development snapshots (from darcs):
+
+    cabal install http://code.haskell.org/xmonad/xmonad.tar.gz \
+        http://code.haskell.org/XMonadContrib/xmc.tar.gz
 
 For the full story, read on.
 
@@ -37,17 +41,18 @@ Building:
     You first need a Haskell compiler. Your distribution's package
     system will have binaries of GHC (the Glasgow Haskell Compiler), the
     compiler we use, so install that first. If your operating system's
-    package system doesn't provide a binary version of GHC, you can find
-    them here:
+    package system doesn't provide a binary version of GHC and the
+    cabal-install tool, you can find an installer for both here:
 
-        http://haskell.org/ghc
-
-    For example, in Debian you would install GHC with:
-
-        apt-get install ghc6
+        http://haskell.org/platform/
 
     It shouldn't be necessary to compile GHC from source -- every common
     system has a pre-build binary version.
+
+    Alternatively you can install from hackage
+
+        http://haskell.org/ghc/
+        http://haskell.org/cabal/download.html
 
  * X11 libraries:
 
@@ -55,45 +60,7 @@ Building:
     library headers. On many platforms, these come pre-installed. For
     others, such as Debian, you can get them from your package manager:
 
-        apt-get install libx11-dev
-
-    Typically you need: libXinerama libXext libX11
-
- * Cabal
-
-    xmonad requires a recent version of Cabal, >= 1.2.0. If you're using
-    GHC 6.8, then it comes bundled with the right version. If you're
-    using GHC 6.6.x, you'll need to build and install Cabal from hackage
-    first:
-
-          http://hackage.haskell.org/package/Cabal
-
-    You can check which version you have with the command:
-
-        $ ghc-pkg list Cabal
-        Cabal-1.2.2.0
-
- * Haskell libraries: mtl, unix, X11
-
-    Finally, you need the Haskell libraries xmonad depends on. Since
-    you've a working GHC installation now, most of these will be
-    provided. To check whether you've got a package run 'ghc-pkg list
-    some_package_name'. You will need the following packages:
-
-    mtl   http://hackage.haskell.org/package/mtl
-    unix  http://hackage.haskell.org/package/unix
-    X11   http://hackage.haskell.org/package/X11
-
- * Build xmonad:
-
-    Once you've got all the dependencies in place (which should be
-    straightforward), build xmonad:
-
-        runhaskell Setup.lhs configure --user --prefix=$HOME
-        runhaskell Setup.lhs build
-        runhaskell Setup.lhs install --user
-
-    And you're done!
+        apt-get install libx11-dev libxinerama-dev libxext-dev
 
 ------------------------------------------------------------------------
 
@@ -101,7 +68,7 @@ Running xmonad:
 
     Add:
 
-         $HOME/bin/xmonad
+         exec $HOME/.cabal/bin/xmonad
 
     to the last line of your .xsession or .xinitrc file.
 
