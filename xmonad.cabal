@@ -17,11 +17,13 @@ license:            BSD3
 license-file:       LICENSE
 author:             Spencer Janssen
 maintainer:         xmonad@haskell.org
-extra-source-files: README TODO CONFIG STYLE tests/loc.hs
-                    tests/Properties.hs tests/Properties/*.hs
-                    tests/Properties/Layout*.hs
+extra-source-files: README TODO CONFIG STYLE
+                    tests/*.hs
+                    tests/Properties/*.hs
+                    tests/Properties/Layout/*.hs
                     man/xmonad.1.markdown man/xmonad.1 man/xmonad.1.html
                     util/GenerateManpage.hs
+                    util/hpcReport.sh
 cabal-version:      >= 1.8
 bug-reports:        http://code.google.com/p/xmonad/issues/list
 build-type:         Simple
@@ -86,6 +88,7 @@ executable xmonad
     if impl(ghc >= 6.12.1)
         ghc-options:  -Wall -fno-warn-unused-do-bind
 
+-- note util/hpcReport.sh
 test-suite properties
     type: exitcode-stdio-1.0
     hs-source-dirs: tests
