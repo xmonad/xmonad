@@ -72,7 +72,6 @@ library
         ghc-options:        -fno-warn-unused-do-bind
 
     ghc-prof-options:   -prof -auto-all
-    extensions:         CPP
 
     if flag(testing)
         buildable: False
