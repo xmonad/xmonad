@@ -21,15 +21,23 @@ import Properties.Layout.Tall
 import System.Environment
 import Text.Printf
 
+import Control.Monad
+import Control.Applicative
 
 main :: IO ()
 main = do
   arg <- fmap (drop 1) getArgs
   let n = if null arg then 100 else read $ head arg
       args = stdArgs { maxSuccess = n, maxSize = 100 }
-      qc   = quickCheckWithResult args
+      qc t = do
+          c <- quickCheckWithResult args t
+          case c of
+            Success {} -> return True
+            _ -> return False
       perform (s, t) = printf "%-35s: " s >> qc t
-  mapM_ perform tests
+  n <- length . filter not ok <$> mapM perform tests
+  unless (n == 0) (error (show n ++ " test(s) failed"))
+
 
 
 tests =
