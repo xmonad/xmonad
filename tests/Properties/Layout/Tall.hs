@@ -28,7 +28,8 @@ prop_tile_non_overlap rect windows nmaster = noOverlaps (tile pct rect nmaster w
         pct = 3 % 100
 
 -- splitting horizontally yields sensible results
-prop_split_hoziontal (NonNegative n) x =
+prop_split_horizontal (NonNegative n) x =
+      (noOverflows (+) (rect_x x) (rect_width x)) ==>
         sum (map rect_width xs) == rect_width x
      &&
         all (== rect_height x) (map rect_height xs)
@@ -38,9 +39,8 @@ prop_split_hoziontal (NonNegative n) x =
     where
         xs = splitHorizontally n x
 
--- splitting horizontally yields sensible results
-prop_splitVertically (r :: Rational) x =
-
+-- splitting vertically yields sensible results
+prop_split_vertical (r :: Rational) x =
         rect_x x == rect_x a && rect_x x == rect_x b
       &&
         rect_width x == rect_width a && rect_width x == rect_width b

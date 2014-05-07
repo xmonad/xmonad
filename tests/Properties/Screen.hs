@@ -1,6 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Properties.Screen where
 
+import Utils
 import Test.QuickCheck
 import Instances
 
@@ -53,8 +54,8 @@ prop_aspect_hint_shrink hint (w,h) = case applyAspectHint hint (w,h) of
 prop_aspect_fits =
     forAll ((,,,) <$> pos <*> pos <*> pos <*> pos) $ \ (x,y,a,b) -> 
     let f v = applyAspectHint ((x, y+a), (x+b, y)) v
-        overflow = or [ mul x (y+a), mul (x+b) y ]
-    in  not overflow ==> f (x,y) == (x,y)
+    in  and [ noOverflows (*) x (y+a), noOverflows (*) (x+b) y ]
+            ==> f (x,y) == (x,y)
 
   where pos = choose (0, 65535)
         mul a b = toInteger (a*b) /= toInteger a * toInteger b
@@ -65,10 +66,8 @@ prop_point_within r @ (Rectangle x y w h) =
               choose (0, fromIntegral h - 1)) $
         \(dx,dy) ->
     and [ dx > 0, dy > 0,
-         noOverflow x w,
-         noOverflow y h ]
+         noOverflows (\ a b -> a + abs b) x w,
+         noOverflows (\ a b -> a + abs b) y h ]
       ==> pointWithin (x+dx) (y+dy) r
-  where
-    noOverflow a b = (a + fromIntegral (abs b)) > a
 
 prop_point_within_mirror r (x,y) = pointWithin x y r == pointWithin y x (mirrorRect r)

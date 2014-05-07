@@ -35,7 +35,7 @@ main = do
             Success {} -> return True
             _ -> return False
       perform (s, t) = printf "%-35s: " s >> qc t
-  n <- length . filter not ok <$> mapM perform tests
+  n <- length . filter not <$> mapM perform tests
   unless (n == 0) (error (show n ++ " test(s) failed"))
 
 
@@ -167,8 +167,8 @@ tests =
 
   ,("tile 1 window fullsize", property prop_tile_fullscreen)
   ,("tiles never overlap",    property prop_tile_non_overlap)
-  ,("split hozizontally",     property prop_split_hoziontal)
-  ,("split verticalBy",       property prop_splitVertically)
+  ,("split horizontal",       property prop_split_horizontal)
+  ,("split vertical",         property prop_split_vertical)
 
   ,("pure layout tall",       property prop_purelayout_tall)
   ,("send shrink    tall",    property prop_shrink_tall)

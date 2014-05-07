@@ -1,3 +1,4 @@
+{-# LANGUAGE RankNTypes #-}
 module Utils where
 
 import XMonad.StackSet hiding (filter)
@@ -35,5 +36,12 @@ applyN Nothing f v = v
 applyN (Just 0) f v = v
 applyN (Just n) f v = applyN (Just $ n-1) f (f v)
 
-
 tags x = map tag $ workspaces x
+
+
+-- | noOverflows op a b is True if @a `op` fromIntegral b@ overflows (or
+-- otherwise gives the same answer when done using Integer
+noOverflows :: (Integral b, Integral c) =>
+  (forall a. Integral a => a -> a -> a) -> b -> c -> Bool
+noOverflows op a b = toInteger (a `op` fromIntegral b) == toInteger a `op` toInteger b
+
