@@ -34,7 +34,7 @@ import Distribution.PackageDescription
 import Text.PrettyPrint.HughesPJ
 import Distribution.Text
 
-import Text.Pandoc -- works with 1.6
+import Text.Pandoc -- works with 1.12.4
 
 releaseDate = "31 December 2012"
 
@@ -68,9 +68,8 @@ main = do
                     `liftM` readFile "./src/XMonad/Config.hs"
 
     let manHeader = unwords [".TH xmonad 1","\""++releaseDate++"\"",releaseName,"\"xmonad manual\""]
-        writeOpts = defaultWriterOptions -- { writerLiterateHaskell = True }
 
-    parsed <- readMarkdown defaultParserState { stateLiterateHaskell = True }
+    parsed <- readMarkdown def
         . unlines
         . replace "___KEYBINDINGS___" keybindings
         . lines
@@ -79,13 +78,13 @@ main = do
     Right template <- getDefaultTemplate Nothing "man"
     writeFile "./man/xmonad.1"
         . (manHeader ++)
-        . writeMan writeOpts{ writerStandalone = True, writerTemplate = template }
+        . writeMan def{ writerStandalone = True, writerTemplate = template }
         $ parsed
     putStrLn "Documentation created: man/xmonad.1"
 
     Right template <- getDefaultTemplate Nothing "html"
     writeFile "./man/xmonad.1.html"
-        . writeHtmlString writeOpts
+        . writeHtmlString def
             { writerVariables =
                         [("include-before"
                             ,"<h1>"++releaseName++"</h1>"++
