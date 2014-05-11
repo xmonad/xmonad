@@ -76,7 +76,7 @@ To use xmonad as your window manager add to your _~/.xinitrc_ file:
 > exec xmonad
 
 #Customization
-xmonad is customized in ~/.xmonad/xmonad.hs,  and  then  restarting
+xmonad is customized in ~/.xmonad/xmonad.hs, and then restarted
 with mod-q.
 
 You can find many extensions to the core feature set in the xmonad-
@@ -89,8 +89,10 @@ _~/.xmonad/lib/_ are available in GHC's searchpath. Hierarchical modules
 are supported: for example, the file
 _~/.xmonad/lib/XMonad/Stack/MyAdditions.hs_ could contain:
 
-> module XMonad.Stack.MyAdditions (function1) where
->     function1 = error "function1: Not implemented yet!"
+```haskell
+module XMonad.Stack.MyAdditions (function1) where
+  function1 = error "function1: Not implemented yet!"
+```
 
 Your xmonad.hs may then import XMonad.Stack.MyAdditions as if that
 module was contained within xmonad or xmonad-contrib.
