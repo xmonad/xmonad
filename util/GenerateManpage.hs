@@ -43,7 +43,7 @@ trim = reverse . dropWhile isSpace . reverse . dropWhile isSpace
 
 guessKeys line = concat $ intersperse "-" (modifiers ++ [map toLower key])
     where modifiers = map (!!1) (line =~ "(mod|shift|control)Mask")
-          (_, _, _, [key]) = line =~ "xK_(\\w+)" :: (String, String, String, [String])
+          (_, _, _, [key]) = line =~ "xK_([_[:alnum:]]+)" :: (String, String, String, [String])
 
 binding :: [String] -> (String, String)
 binding [ _, bindingLine, "", desc ] = (guessKeys bindingLine, desc)
