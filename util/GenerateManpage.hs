@@ -65,7 +65,7 @@ main = do
     releaseName <- (show . disp . package . packageDescription)
                     `liftM`readPackageDescription normal "xmonad.cabal"
     keybindings <- (intercalate "\n\n" . map markdownDefn . allBindings)
-                    `liftM` readFile "./XMonad/Config.hs"
+                    `liftM` readFile "./src/XMonad/Config.hs"
 
     let manHeader = unwords [".TH xmonad 1","\""++releaseDate++"\"",releaseName,"\"xmonad manual\""]
         writeOpts = defaultWriterOptions -- { writerLiterateHaskell = True }
