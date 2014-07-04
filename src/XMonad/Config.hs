@@ -92,8 +92,7 @@ focusedBorderColor = "red"  -- "#ff0000" don't use hex, not <24 bit safe
 manageHook :: ManageHook
 manageHook = composeAll
                 [ className =? "MPlayer"        --> doFloat
-                , className =? "mplayer2"       --> doFloat
-                , className =? "Gimp"           --> doFloat ]
+                , className =? "mplayer2"       --> doFloat ]
 
 ------------------------------------------------------------------------
 -- Logging
