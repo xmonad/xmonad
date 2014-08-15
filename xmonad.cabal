@@ -71,6 +71,10 @@ library
 
     if impl(ghc >= 6.12.1)
         ghc-options:        -fno-warn-unused-do-bind
+    if impl(ghc < 7.0.0)
+        extensions: UndecidableInstances
+        -- needed for XMonad.Config's instance Default (XConfig a)
+
 
     ghc-prof-options:   -prof -auto-all
 
