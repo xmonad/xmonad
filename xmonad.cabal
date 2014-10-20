@@ -59,6 +59,7 @@ library
                    directory,
                    extensible-exceptions,
                    filepath,
+                   setlocale,
                    mtl,
                    process,
                    unix,

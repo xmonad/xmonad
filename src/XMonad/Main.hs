@@ -15,6 +15,7 @@
 
 module XMonad.Main (xmonad) where
 
+import System.Locale.SetLocale
 import Control.Arrow (second)
 import Data.Bits
 import Data.List ((\\))
@@ -25,9 +26,6 @@ import Control.Monad.Reader
 import Control.Monad.State
 import Data.Maybe (fromMaybe)
 import Data.Monoid (getAll)
-
-import Foreign.C
-import Foreign.Ptr
 
 import System.Environment (getArgs)
 
@@ -43,14 +41,6 @@ import XMonad.Operations
 import System.IO
 
 ------------------------------------------------------------------------
--- Locale support
-
-#include <locale.h>
-
-foreign import ccall unsafe "locale.h setlocale"
-    c_setlocale :: CInt -> Ptr CChar -> IO (Ptr CChar)
-
-------------------------------------------------------------------------
 
 -- |
 -- The main entry point
@@ -58,7 +48,7 @@ foreign import ccall unsafe "locale.h setlocale"
 xmonad :: (LayoutClass l Window, Read (l Window)) => XConfig l -> IO ()
 xmonad initxmc = do
     -- setup locale information from environment
-    withCString "" $ c_setlocale (#const LC_ALL)
+    setLocale LC_ALL Nothing
     -- ignore SIGPIPE and SIGCHLD
     installSignalHandlers
     -- First, wrap the layout in an existential, to keep things pretty:
