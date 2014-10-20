@@ -32,7 +32,6 @@ module XMonad.Core (
 import XMonad.StackSet hiding (modify)
 
 import Prelude
-import Codec.Binary.UTF8.String (encodeString)
 import Control.Exception.Extensible (fromException, try, bracket, throw, finally, SomeException(..))
 import qualified Control.Exception.Extensible as E
 import Control.Applicative
@@ -406,7 +405,7 @@ spawn x = spawnPID x >> return ()
 
 -- | Like 'spawn', but returns the 'ProcessID' of the launched application
 spawnPID :: MonadIO m => String -> m ProcessID
-spawnPID x = xfork $ executeFile "/bin/sh" False ["-c", encodeString x] Nothing
+spawnPID x = xfork $ executeFile "/bin/sh" False ["-c", x] Nothing
 
 -- | A replacement for 'forkProcess' which resets default signal handlers.
 xfork :: MonadIO m => IO () -> m ProcessID
