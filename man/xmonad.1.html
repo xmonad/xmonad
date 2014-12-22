@@ -5,28 +5,10 @@
   <meta http-equiv="Content-Style-Type" content="text/css" />
   <meta name="generator" content="pandoc" />
   <title></title>
-  <style type="text/css">
-table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
-  margin: 0; padding: 0; vertical-align: baseline; border: none; }
-table.sourceCode { width: 100%; }
-td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
-td.sourceCode { padding-left: 5px; }
-code > span.kw { color: #007020; font-weight: bold; }
-code > span.dt { color: #902000; }
-code > span.dv { color: #40a070; }
-code > span.bn { color: #40a070; }
-code > span.fl { color: #40a070; }
-code > span.ch { color: #4070a0; }
-code > span.st { color: #4070a0; }
-code > span.co { color: #60a0b0; font-style: italic; }
-code > span.ot { color: #007020; }
-code > span.al { color: #ff0000; font-weight: bold; }
-code > span.fu { color: #06287e; }
-code > span.er { color: #ff0000; font-weight: bold; }
-  </style>
+  <style type="text/css">code{white-space: pre;}</style>
 </head>
 <body>
-<h1>xmonad-0.11</h1><p>Section: xmonad manual (1)<br/>Updated: 31 December 2012</p><hr/>
+<h1>xmonad-0.12</h1><p>Section: xmonad manual (1)<br/>Updated: 31 December 2012</p><hr/>
 <div id="TOC">
 <ul>
 <li><a href="#name">Name</a></li>
@@ -42,140 +24,142 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <li><a href="#bugs">Bugs</a></li>
 </ul>
 </div>
-<h1 id="name"><a href="#TOC">Name</a></h1>
+<h1 id="name">Name</h1>
 <p>xmonad - a tiling window manager</p>
-<h1 id="description"><a href="#TOC">Description</a></h1>
+<h1 id="description">Description</h1>
 <p><em>xmonad</em> is a minimalist tiling window manager for X, written in Haskell. Windows are managed using automatic layout algorithms, which can be dynamically reconfigured. At any time windows are arranged so as to maximize the use of screen real estate. All features of the window manager are accessible purely from the keyboard: a mouse is entirely optional. <em>xmonad</em> is configured in Haskell, and custom layout algorithms may be implemented by the user in config files. A principle of <em>xmonad</em> is predictability: the user should know in advance precisely the window arrangement that will result from any action.</p>
 <p>By default, <em>xmonad</em> provides three layout algorithms: tall, wide and fullscreen. In tall or wide mode, windows are tiled and arranged to prevent overlap and maximize screen use. Sets of windows are grouped together on virtual screens, and each screen retains its own layout, which may be reconfigured dynamically. Multiple physical monitors are supported via Xinerama, allowing simultaneous display of a number of screens.</p>
 <p>By utilizing the expressivity of a modern functional language with a rich static type system, <em>xmonad</em> provides a complete, featureful window manager in less than 1200 lines of code, with an emphasis on correctness and robustness. Internal properties of the window manager are checked using a combination of static guarantees provided by the type system, and type-based automated testing. A benefit of this is that the code is simple to understand, and easy to modify.</p>
-<h1 id="usage"><a href="#TOC">Usage</a></h1>
+<h1 id="usage">Usage</h1>
 <p><em>xmonad</em> places each window into a &quot;workspace&quot;. Each workspace can have any number of windows, which you can cycle though with mod-j and mod-k. Windows are either displayed full screen, tiled horizontally, or tiled vertically. You can toggle the layout mode with mod-space, which will cycle through the available modes.</p>
 <p>You can switch to workspace N with mod-N. For example, to switch to workspace 5, you would press mod-5. Similarly, you can move the current window to another workspace with mod-shift-N.</p>
 <p>When running with multiple monitors (Xinerama), each screen has exactly 1 workspace visible. mod-{w,e,r} switch the focus between screens, while shift-mod-{w,e,r} move the current window to that screen. When <em>xmonad</em> starts, workspace 1 is on screen 1, workspace 2 is on screen 2, etc. When switching workspaces to one that is already visible, the current and visible workspaces are swapped.</p>
-<h2 id="flags"><a href="#TOC">Flags</a></h2>
+<h2 id="flags">Flags</h2>
 <p>xmonad has several flags which you may pass to the executable. These flags are:</p>
 <dl>
 <dt>--recompile</dt>
-<dd><p>Recompiles your configuration in <em>~/.xmonad/xmonad.hs</em></p>
+<dd>Recompiles your configuration in <em>~/.xmonad/xmonad.hs</em>
 </dd>
 <dt>--restart</dt>
-<dd><p>Causes the currently running <em>xmonad</em> process to restart</p>
+<dd>Causes the currently running <em>xmonad</em> process to restart
 </dd>
 <dt>--replace</dt>
-<dd><p>Replace the current window manager with xmonad</p>
+<dd>Replace the current window manager with xmonad
 </dd>
 <dt>--version</dt>
-<dd><p>Display version of <em>xmonad</em></p>
+<dd>Display version of <em>xmonad</em>
 </dd>
 <dt>--verbose-version</dt>
-<dd><p>Display detailed version of <em>xmonad</em></p>
+<dd>Display detailed version of <em>xmonad</em>
 </dd>
 </dl>
-<h2 id="default-keyboard-bindings"><a href="#TOC">Default keyboard bindings</a></h2>
+<h2 id="default-keyboard-bindings">Default keyboard bindings</h2>
 <dl>
 <dt>mod-shift-return</dt>
-<dd><p>Launch terminal</p>
+<dd>Launch terminal
 </dd>
 <dt>mod-p</dt>
-<dd><p>Launch dmenu</p>
+<dd>Launch dmenu
 </dd>
 <dt>mod-shift-p</dt>
-<dd><p>Launch gmrun</p>
+<dd>Launch gmrun
 </dd>
 <dt>mod-shift-c</dt>
-<dd><p>Close the focused window</p>
+<dd>Close the focused window
 </dd>
 <dt>mod-space</dt>
-<dd><p>Rotate through the available layout algorithms</p>
+<dd>Rotate through the available layout algorithms
 </dd>
 <dt>mod-shift-space</dt>
-<dd><p>Reset the layouts on the current workspace to default</p>
+<dd>Reset the layouts on the current workspace to default
 </dd>
 <dt>mod-n</dt>
-<dd><p>Resize viewed windows to the correct size</p>
+<dd>Resize viewed windows to the correct size
 </dd>
 <dt>mod-tab</dt>
-<dd><p>Move focus to the next window</p>
+<dd>Move focus to the next window
 </dd>
 <dt>mod-shift-tab</dt>
-<dd><p>Move focus to the previous window</p>
+<dd>Move focus to the previous window
 </dd>
 <dt>mod-j</dt>
-<dd><p>Move focus to the next window</p>
+<dd>Move focus to the next window
 </dd>
 <dt>mod-k</dt>
-<dd><p>Move focus to the previous window</p>
+<dd>Move focus to the previous window
 </dd>
 <dt>mod-m</dt>
-<dd><p>Move focus to the master window</p>
+<dd>Move focus to the master window
 </dd>
 <dt>mod-return</dt>
-<dd><p>Swap the focused window and the master window</p>
+<dd>Swap the focused window and the master window
 </dd>
 <dt>mod-shift-j</dt>
-<dd><p>Swap the focused window with the next window</p>
+<dd>Swap the focused window with the next window
 </dd>
 <dt>mod-shift-k</dt>
-<dd><p>Swap the focused window with the previous window</p>
+<dd>Swap the focused window with the previous window
 </dd>
 <dt>mod-h</dt>
-<dd><p>Shrink the master area</p>
+<dd>Shrink the master area
 </dd>
 <dt>mod-l</dt>
-<dd><p>Expand the master area</p>
+<dd>Expand the master area
 </dd>
 <dt>mod-t</dt>
-<dd><p>Push window back into tiling</p>
+<dd>Push window back into tiling
 </dd>
 <dt>mod-comma</dt>
-<dd><p>Increment the number of windows in the master area</p>
+<dd>Increment the number of windows in the master area
 </dd>
 <dt>mod-period</dt>
-<dd><p>Deincrement the number of windows in the master area</p>
+<dd>Deincrement the number of windows in the master area
 </dd>
 <dt>mod-shift-q</dt>
-<dd><p>Quit xmonad</p>
+<dd>Quit xmonad
 </dd>
 <dt>mod-q</dt>
-<dd><p>Restart xmonad</p>
+<dd>Restart xmonad
 </dd>
 <dt>mod-shift-slash</dt>
-<dd><p>Run xmessage with a summary of the default keybindings (useful for beginners)</p>
+<dd>Run xmessage with a summary of the default keybindings (useful for beginners)
 </dd>
 <dt>mod-[1..9]</dt>
-<dd><p>Switch to workspace N</p>
+<dd>Switch to workspace N
 </dd>
 <dt>mod-shift-[1..9]</dt>
-<dd><p>Move client to workspace N</p>
+<dd>Move client to workspace N
 </dd>
 <dt>mod-{w,e,r}</dt>
-<dd><p>Switch to physical/Xinerama screens 1, 2, or 3</p>
+<dd>Switch to physical/Xinerama screens 1, 2, or 3
 </dd>
 <dt>mod-shift-{w,e,r}</dt>
-<dd><p>Move client to screen 1, 2, or 3</p>
+<dd>Move client to screen 1, 2, or 3
 </dd>
 <dt>mod-button1</dt>
-<dd><p>Set the window to floating mode and move by dragging</p>
+<dd>Set the window to floating mode and move by dragging
 </dd>
 <dt>mod-button2</dt>
-<dd><p>Raise the window to the top of the stack</p>
+<dd>Raise the window to the top of the stack
 </dd>
 <dt>mod-button3</dt>
-<dd><p>Set the window to floating mode and resize by dragging</p>
+<dd>Set the window to floating mode and resize by dragging
 </dd>
 </dl>
-<h1 id="examples"><a href="#TOC">Examples</a></h1>
+<h1 id="examples">Examples</h1>
 <p>To use xmonad as your window manager add to your <em>~/.xinitrc</em> file:</p>
-<pre class="sourceCode literate haskell"><code class="sourceCode haskell">exec xmonad</code></pre>
-<h1 id="customization"><a href="#TOC">Customization</a></h1>
-<p>xmonad is customized in ~/.xmonad/xmonad.hs, and then restarting with mod-q.</p>
+<blockquote>
+<p>exec xmonad</p>
+</blockquote>
+<h1 id="customization">Customization</h1>
+<p>xmonad is customized in ~/.xmonad/xmonad.hs, and then restarted with mod-q.</p>
 <p>You can find many extensions to the core feature set in the xmonad- contrib package, available through your package manager or from <a href="http://xmonad.org">xmonad.org</a>.</p>
-<h2 id="modular-configuration"><a href="#TOC">Modular Configuration</a></h2>
+<h2 id="modular-configuration">Modular Configuration</h2>
 <p>As of <em>xmonad-0.9</em>, any additional Haskell modules may be placed in <em>~/.xmonad/lib/</em> are available in GHC's searchpath. Hierarchical modules are supported: for example, the file <em>~/.xmonad/lib/XMonad/Stack/MyAdditions.hs</em> could contain:</p>
-<pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">module</span> <span class="dt">XMonad.Stack.MyAdditions</span> (function1) <span class="kw">where</span>
-    function1 <span class="fu">=</span> <span class="fu">error</span> <span class="st">&quot;function1: Not implemented yet!&quot;</span></code></pre>
+<pre class="haskell"><code>module XMonad.Stack.MyAdditions (function1) where
+  function1 = error &quot;function1: Not implemented yet!&quot;</code></pre>
 <p>Your xmonad.hs may then import XMonad.Stack.MyAdditions as if that module was contained within xmonad or xmonad-contrib.</p>
-<h1 id="bugs"><a href="#TOC">Bugs</a></h1>
+<h1 id="bugs">Bugs</h1>
 <p>Probably. If you find any, please report them to the <a href="http://code.google.com/p/xmonad/issues/list">bugtracker</a></p>
 </body>
 </html>
