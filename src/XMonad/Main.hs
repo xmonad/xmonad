@@ -48,7 +48,7 @@ import System.IO
 xmonad :: (LayoutClass l Window, Read (l Window)) => XConfig l -> IO ()
 xmonad initxmc = do
     -- setup locale information from environment
-    setLocale LC_ALL Nothing
+    setLocale LC_ALL (Just "")
     -- ignore SIGPIPE and SIGCHLD
     installSignalHandlers
     -- First, wrap the layout in an existential, to keep things pretty:
