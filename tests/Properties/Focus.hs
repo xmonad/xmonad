@@ -39,7 +39,7 @@ prop_focus_right (x :: T) = (focusDown (focusUp  x)) ==  x
 prop_focusMaster_idem (x :: T) = focusMaster x == focusMaster (focusMaster x)
 
 -- focusWindow actually leaves the window focused...
-prop_focusWindow_works (n :: NonNegative Int) (x :: T) =
+prop_focusWindow_works (NonNegative (n :: Int)) (x :: T) =
     case peek x of
         Nothing -> True
         Just _  -> let s = index x
@@ -61,7 +61,7 @@ prop_focus_up_local (x :: T) = hidden_spaces (focusUp x) == hidden_spaces x
 
 prop_focus_master_local (x :: T) = hidden_spaces (focusMaster x) == hidden_spaces x
 
-prop_focusWindow_local (n :: NonNegative Int) (x::T ) =
+prop_focusWindow_local (NonNegative (n :: Int)) (x::T ) =
     case peek x of
         Nothing -> True
         Just _  -> let s = index x

@@ -65,7 +65,7 @@ prop_purelayout_tall n r1 r2 rect = do
 -- Test message handling of Tall
 
 -- what happens when we send a Shrink message to Tall
-prop_shrink_tall (NonNegative n) (NonZero (NonNegative delta)) (NonNegative frac) =
+prop_shrink_tall (NonNegative n) (Positive delta) (NonNegative frac) =
         n == n' && delta == delta' -- these state components are unchanged
     && frac' <= frac  && (if frac' < frac then frac' == 0 || frac' == frac - delta
                                           else frac == 0 )
@@ -78,9 +78,9 @@ prop_shrink_tall (NonNegative n) (NonZero (NonNegative delta)) (NonNegative frac
 
 -- what happens when we send a Shrink message to Tall
 prop_expand_tall (NonNegative n)
-                 (NonZero (NonNegative delta))
+                 (Positive delta)
                  (NonNegative n1)
-                 (NonZero (NonNegative d1)) =
+                 (Positive d1) =
 
        n == n'
     && delta == delta' -- these state components are unchanged
@@ -97,7 +97,7 @@ prop_expand_tall (NonNegative n)
         --  pureMessage :: layout a -> SomeMessage -> Maybe (layout a)
 
 -- what happens when we send an IncMaster message to Tall
-prop_incmaster_tall (NonNegative n) (NonZero (NonNegative delta)) (NonNegative frac)
+prop_incmaster_tall (NonNegative n) (Positive delta) (NonNegative frac)
                     (NonNegative k) =
        delta == delta'  && frac == frac' && n' == n + k
     where

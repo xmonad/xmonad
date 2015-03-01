@@ -24,7 +24,7 @@ prop_screens_works (x :: T) = screens x == current x : visible x
 ------------------------------------------------------------------------
 -- Hints
 
-prop_resize_inc (NonZero (NonNegative inc_w),NonZero (NonNegative inc_h))  b@(w,h) =
+prop_resize_inc (Positive inc_w,Positive inc_h)  b@(w,h) =
     w' `mod` inc_w == 0 && h' `mod` inc_h == 0
    where (w',h') = applyResizeIncHint a b
          a = (inc_w,inc_h)
@@ -34,7 +34,7 @@ prop_resize_inc_extra ((NonNegative inc_w))  b@(w,h) =
    where (w',h') = applyResizeIncHint a b
          a = (-inc_w,0::Dimension)-- inc_h)
 
-prop_resize_max (NonZero (NonNegative inc_w),NonZero (NonNegative inc_h))  b@(w,h) =
+prop_resize_max (Positive inc_w,Positive inc_h)  b@(w,h) =
     w' <= inc_w && h' <= inc_h
    where (w',h') = applyMaxSizeHint a b
          a = (inc_w,inc_h)
