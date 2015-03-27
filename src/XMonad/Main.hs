@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, FlexibleContexts, ForeignFunctionInterface #-}
+{-# LANGUAGE MultiParamTypeClasses, FlexibleContexts #-}
 ----------------------------------------------------------------------------
 -- |
 -- Module      :  XMonad.Main
