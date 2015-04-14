@@ -271,6 +271,9 @@ instance (a ~ Choose Tall (Choose (Mirror Tall) Full)) => Default (XConfig a) wh
     , XMonad.clickJustFocuses       = clickJustFocuses
     , XMonad.clientMask         = clientMask
     , XMonad.rootMask           = rootMask
+    , XMonad.handleExtraArgs = \ xs theConf -> case xs of
+                [] -> return theConf
+                _ -> fail ("unrecognized flags:" ++ show xs)
     }
 
 -- | The default set of configuration values itself

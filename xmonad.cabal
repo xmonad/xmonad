@@ -52,6 +52,7 @@ library
                         XMonad.ManageHook
                         XMonad.Operations
                         XMonad.StackSet
+    other-modules:      Paths_xmonad
 
     build-depends: base < 5 && >=3,
                    containers,

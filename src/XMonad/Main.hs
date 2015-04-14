@@ -27,8 +27,6 @@ import Control.Monad.State
 import Data.Maybe (fromMaybe)
 import Data.Monoid (getAll)
 
-import System.Environment (getArgs)
-
 import Graphics.X11.Xlib hiding (refreshKeyboardMapping)
 import Graphics.X11.Xlib.Extras
 
@@ -40,13 +38,121 @@ import XMonad.Operations
 
 import System.IO
 
+import System.Info
+import System.Environment
+import System.Posix.Process (executeFile)
+import System.Exit (exitFailure)
+import System.FilePath
+
+import Paths_xmonad (version)
+import Data.Version (showVersion)
+
+import Graphics.X11.Xinerama (compiledWithXinerama)
+
 ------------------------------------------------------------------------
+
+
+-- |
+-- | The entry point into xmonad. Attempts to compile any custom main
+-- for xmonad, and if it doesn't find one, just launches the default.
+xmonad :: (LayoutClass l Window, Read (l Window)) => XConfig l -> IO ()
+xmonad conf = do
+    installSignalHandlers -- important to ignore SIGCHLD to avoid zombies
+
+    let launch serializedWinset serializedExtState args = do
+              catchIO buildLaunch
+              conf' @ XConfig { layoutHook = Layout l }
+                  <- handleExtraArgs conf args conf{ layoutHook = Layout (layoutHook conf) }
+              withArgs [] $
+                xmonadNoargs (conf' { layoutHook = l })
+                              serializedWinset
+                              serializedExtState
+
+    args <- getArgs
+    case args of
+        ("--resume": ws : xs : args') -> launch (Just ws) (Just xs) args'
+        ["--help"]            -> usage
+        ["--recompile"]       -> recompile True >>= flip unless exitFailure
+        ["--restart"]         -> sendRestart
+        ["--version"]         -> putStrLn $ unwords shortVersion
+        ["--verbose-version"] -> putStrLn . unwords $ shortVersion ++ longVersion
+        "--replace" : args'   -> do
+                                  sendReplace
+                                  launch Nothing Nothing args'
+        _                     -> launch Nothing Nothing args
+ where
+    shortVersion = ["xmonad", showVersion version]
+    longVersion  = [ "compiled by", compilerName, showVersion compilerVersion
+                   , "for",  arch ++ "-" ++ os
+                   , "\nXinerama:", show compiledWithXinerama ]
+
+usage :: IO ()
+usage = do
+    self <- getProgName
+    putStr . unlines $
+        concat ["Usage: ", self, " [OPTION]"] :
+        "Options:" :
+        "  --help                       Print this message" :
+        "  --version                    Print the version number" :
+        "  --recompile                  Recompile your ~/.xmonad/xmonad.hs" :
+        "  --replace                    Replace the running window manager with xmonad" :
+        "  --restart                    Request a running xmonad process to restart" :
+        []
+
+-- | Build "~\/.xmonad\/xmonad.hs" with ghc, then execute it.  If there are no
+-- errors, this function does not return.  An exception is raised in any of
+-- these cases:
+--
+--   * ghc missing
+--
+--   * both "~\/.xmonad\/xmonad.hs" and "~\/.xmonad\/xmonad-$arch-$os" missing
+--
+--   * xmonad.hs fails to compile
+--
+--      ** wrong ghc in path (fails to compile)
+--
+--      ** type error, syntax error, ..
+--
+--   * Missing XMonad\/XMonadContrib modules due to ghc upgrade
+--
+buildLaunch ::  IO ()
+buildLaunch = do
+    recompile False
+    dir  <- getXMonadDir
+    args <- getArgs
+    whoami <- getProgName
+    let compiledConfig = "xmonad-"++arch++"-"++os
+    unless (whoami == compiledConfig) $
+      executeFile (dir </> compiledConfig) False args Nothing
+
+sendRestart :: IO ()
+sendRestart = do
+    dpy <- openDisplay ""
+    rw <- rootWindow dpy $ defaultScreen dpy
+    xmonad_restart <- internAtom dpy "XMONAD_RESTART" False
+    allocaXEvent $ \e -> do
+        setEventType e clientMessage
+        setClientMessageEvent e rw xmonad_restart 32 0 currentTime
+        sendEvent dpy rw False structureNotifyMask e
+    sync dpy False
+
+-- | a wrapper for 'replace'
+sendReplace :: IO ()
+sendReplace = do
+    dpy <- openDisplay ""
+    let dflt = defaultScreen dpy
+    rootw  <- rootWindow dpy dflt
+    replace dpy dflt rootw
+
 
 -- |
 -- The main entry point
 --
-xmonad :: (LayoutClass l Window, Read (l Window)) => XConfig l -> IO ()
-xmonad initxmc = do
+xmonadNoargs :: (LayoutClass l Window, Read (l Window)) => XConfig l
+    -> Maybe String -- ^ serialized windowset
+    -> Maybe String -- ^ serialized extensible state
+    -> IO ()
+xmonadNoargs initxmc serializedWinset serializedExtstate = do
     -- setup locale information from environment
     setLocale LC_ALL (Just "")
     -- ignore SIGPIPE and SIGCHLD
@@ -57,10 +163,6 @@ xmonad initxmc = do
     let dflt = defaultScreen dpy
 
     rootw  <- rootWindow dpy dflt
-
-    args <- getArgs
-
-    when ("--replace" `elem` args) $ replace dpy dflt rootw
 
     -- If another WM is running, a BadAccess error will be returned.  The
     -- default error handler will write the exception to stderr and exit with
@@ -93,12 +195,12 @@ xmonad initxmc = do
                                 _         -> Nothing
 
         winset = fromMaybe initialWinset $ do
-                    ("--resume" : s : _) <- return args
+                    s                    <- serializedWinset
                     ws                   <- maybeRead reads s
                     return . W.ensureTags layout (workspaces xmc)
                            $ W.mapLayout (fromMaybe layout . maybeRead lreads) ws
         extState = fromMaybe M.empty $ do
-                     ("--resume" : _ : dyns : _) <- return args
+                     dyns                        <- serializedExtstate
                      vals                        <- maybeRead reads dyns
                      return . M.fromList . map (second Left) $ vals
 
