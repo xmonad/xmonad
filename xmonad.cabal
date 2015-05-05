@@ -64,7 +64,7 @@ library
                    mtl,
                    process,
                    unix,
-                   utf8-string >= 0.3 && < 0.4,
+                   utf8-string >= 0.3 && < 1.1,
                    X11>=1.5 && < 1.7
 
     if true
