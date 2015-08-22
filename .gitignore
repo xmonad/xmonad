@@ -1,0 +1,25 @@
+.cabal-sandbox/
+cabal.sandbox.config
+.hpc/
+*.hi
+*.o
+*.p_hi
+*.prof
+*.tix
+cabal.config
+dist
+dist-*
+
+# editor temp files
+
+*#
+.#*
+*~
+.*.swp
+
+# TAGS files
+TAGS
+tags
+
+# stack artifacts
+/.stack-work/
