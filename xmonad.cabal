@@ -29,8 +29,9 @@ bug-reports:        http://code.google.com/p/xmonad/issues/list
 build-type:         Simple
 
 tested-with:
-                    GHC==7.6.2,
-                    GHC==7.8.2
+                    GHC==7.6.3,
+                    GHC==7.8.4,
+                    GHC==7.10.2
 
 data-files:         man/xmonad.hs, man/xmonad.1, man/xmonad.1.html
 
