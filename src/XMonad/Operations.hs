@@ -111,7 +111,8 @@ windows f = do
 
     mapM_ setInitialProperties newwindows
 
-    whenJust (W.peek old) $ \otherw -> io $ setWindowBorder d otherw nbc
+    nbs <- asks (normalBorderColor . config)
+    whenJust (W.peek old) $ \otherw -> io $ setWindowBorderWithFallback d otherw nbs nbc
     modify (\s -> s { windowset = ws })
 
     -- notify non visibility
@@ -151,7 +152,8 @@ windows f = do
 
     mapM_ (uncurry tileWindow) rects
 
-    whenJust (W.peek ws) $ \w -> io $ setWindowBorder d w fbc
+    fbs <- asks (focusedBorderColor . config)
+    whenJust (W.peek ws) $ \w -> io $ setWindowBorderWithFallback d w fbs fbc
 
     mapM_ reveal visible
     setTopFocus
@@ -584,3 +586,10 @@ applyResizeIncHint (iw,ih) x@(w,h) =
 applyMaxSizeHint  :: D -> D -> D
 applyMaxSizeHint (mw,mh) x@(w,h) =
     if mw > 0 && mh > 0 then (min w mw,min h mh) else x
+
+-- | Set the border color using the window's color map, if possible, otherwise use fallback.
+setWindowBorderWithFallback :: Display -> Window -> String -> Pixel -> IO ()
+setWindowBorderWithFallback dpy w color fallback = C.handle (\(C.SomeException _) -> setWindowBorder dpy w fallback) $ do
+  wa <- getWindowAttributes dpy w
+  pixel <- color_pixel . fst <$> allocNamedColor dpy (wa_colormap wa) color
+  setWindowBorder dpy w pixel
