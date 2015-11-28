@@ -7,13 +7,13 @@
 
 * Follow the coding style of the other modules.
 
-* Code should be compilable with -Wall -Werror -fno-warn-unused-do-bind.
+* Code should be compilable with -Wall -Werror -fno-warn-unused-do-bind -fwarn-tabs.
   There should be no warnings.
 
 * Partial functions should be avoided: the window manager should not
   crash, so do not call `error` or `undefined`
 
-* Tabs are illegal. Use 4 spaces for indenting.
+* Use 4 spaces for indenting.
 
 * Any pure function added to the core should have QuickCheck properties
   precisely defining its behavior.
