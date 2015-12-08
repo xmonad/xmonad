@@ -1,3 +1,8 @@
+= General =
+
+* In the README, should we remove references to snapshots on
+  code.haskell.org?
+
 = Release management =
 
 * generate, and push website haddocks with xmonad-web/gen-docs.sh
