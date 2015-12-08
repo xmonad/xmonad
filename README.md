@@ -12,7 +12,7 @@ on several physical screens.
 
 ## Quick Start
 
- * From hackage:
+  * From hackage:
 
         cabal update
         cabal install xmonad xmonad-contrib
