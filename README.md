@@ -80,7 +80,7 @@ XMonadContrib is available at:
 
   * Latest release: <http://hackage.haskell.org/package/xmonad-contrib>
 
-  * Git version: <https://github.com/xmonad/xmonad>
+  * Git version: <https://github.com/xmonad/xmonad-contrib>
 
 ## Other Useful Programs
 
