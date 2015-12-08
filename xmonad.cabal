@@ -25,7 +25,7 @@ extra-source-files: README.md CHANGES.md TODO CONFIG STYLE
                     util/GenerateManpage.hs
                     util/hpcReport.sh
 cabal-version:      >= 1.8
-bug-reports:        http://code.google.com/p/xmonad/issues/list
+bug-reports:        https://github.com/xmonad/xmonad/issues
 build-type:         Simple
 
 tested-with:
@@ -36,8 +36,8 @@ tested-with:
 data-files:         man/xmonad.hs, man/xmonad.1, man/xmonad.1.html
 
 source-repository head
-  type:     darcs
-  location: http://code.haskell.org/xmonad
+  type:     git
+  location: https://github.com/xmonad/xmonad
 
 flag testing
     description: Testing mode, only build minimal components
