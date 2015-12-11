@@ -43,6 +43,11 @@ flag testing
     description: Testing mode, only build minimal components
     default: False
 
+flag generatemanpage
+     description: Build the tool for generating the man page
+     default: False
+     manual: True
+
 library
     hs-source-dirs:     src
     exposed-modules:    XMonad
@@ -93,6 +98,18 @@ executable xmonad
     ghc-options:    -Wall
     if impl(ghc >= 6.12.1)
         ghc-options:  -Wall -fno-warn-unused-do-bind
+
+executable generatemanpage
+    main-is: GenerateManpage.hs
+    hs-source-dirs: util
+    build-depends: base,
+                   Cabal,
+                   pandoc,
+                   pretty,
+                   regex-posix
+
+  if !flag(generatemanpage)
+    buildable: False
 
 -- note util/hpcReport.sh
 test-suite properties
