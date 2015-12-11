@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 -- Unlike the rest of xmonad, this file is copyright under the terms of the
 -- GPL.
 
@@ -12,7 +13,7 @@
 -- Format for the docstrings in Config.hs takes the following form:
 --
 -- -- mod-x %! Frob the whatsit
--- 
+--
 -- "Frob the whatsit" will be used as the description for keybinding "mod-x"
 --
 -- If the keybinding name is omitted, it will try to guess from the rest of the
@@ -34,7 +35,7 @@ import Distribution.PackageDescription
 import Text.PrettyPrint.HughesPJ
 import Distribution.Text
 
-import Text.Pandoc -- works with 1.12.4
+import Text.Pandoc -- works with 1.15.x
 
 releaseDate = "31 December 2012"
 
@@ -69,7 +70,7 @@ main = do
 
     let manHeader = unwords [".TH xmonad 1","\""++releaseDate++"\"",releaseName,"\"xmonad manual\""]
 
-    parsed <- readMarkdown def
+    Right parsed <- readMarkdown def
         . unlines
         . replace "___KEYBINDINGS___" keybindings
         . lines
