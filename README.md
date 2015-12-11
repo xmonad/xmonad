@@ -17,10 +17,11 @@ on several physical screens.
         cabal update
         cabal install xmonad xmonad-contrib
 
-  * Alternatively, install development snapshots (from git):
+  * Alternatively, build from source using the following repositories:
 
-        cabal install http://code.haskell.org/xmonad/xmonad.tar.gz \
-          http://code.haskell.org/XMonadContrib/xmc.tar.gz
+    - <https://github.com/xmonad/xmonad>
+
+    - <https://github.com/xmonad/xmonad-contrib>
 
 For the full story, read on.
 
