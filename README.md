@@ -91,11 +91,11 @@ A nicer xterm replacement, that supports resizing better:
 
 For custom status bars:
 
-  * dzen: <http://gotmor.googlepages.com/dzen>
-
   * xmobar: <http://hackage.haskell.org/package/xmobar>
 
   * taffybar: <https://github.com/travitch/taffybar>
+
+  * dzen: <http://gotmor.googlepages.com/dzen>
 
 For a program dispatch menu:
 
