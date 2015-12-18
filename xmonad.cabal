@@ -44,9 +44,9 @@ flag testing
     default: False
 
 flag generatemanpage
-     description: Build the tool for generating the man page
-     default: False
-     manual: True
+    description: Build the tool for generating the man page
+    default: False
+    manual: True
 
 library
     hs-source-dirs:     src
@@ -102,14 +102,15 @@ executable xmonad
 executable generatemanpage
     main-is: GenerateManpage.hs
     hs-source-dirs: util
-    build-depends: base,
-                   Cabal,
-                   pandoc,
-                   pretty,
-                   regex-posix
+    if flag(generatemanpage)
+        build-depends: base,
+                       Cabal,
+                       pandoc,
+                       pretty,
+                       regex-posix
+    else
+        buildable: False
 
-  if !flag(generatemanpage)
-    buildable: False
 
 -- note util/hpcReport.sh
 test-suite properties
