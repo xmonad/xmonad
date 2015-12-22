@@ -108,6 +108,8 @@ data XConfig l = XConfig
     , mouseBindings      :: !(XConfig Layout -> M.Map (ButtonMask, Button) (Window -> X ()))
                                                  -- ^ The mouse bindings
     , borderWidth        :: !Dimension           -- ^ The border width
+    , borderWidthOverride:: !(Query (Maybe Dimension))
+                                                 -- ^ Border width override for some windows
     , logHook            :: !(X ())              -- ^ The action to perform when the windows set is changed
     , startupHook        :: !(X ())              -- ^ The action to perform on startup
     , focusFollowsMouse  :: !Bool                -- ^ Whether window entry events can change focus

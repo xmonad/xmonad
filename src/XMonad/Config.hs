@@ -71,6 +71,10 @@ defaultModMask = mod1Mask
 borderWidth :: Dimension
 borderWidth = 1
 
+-- | Possible border width overrides for some windows. Default is no overrides
+borderWidthOverride :: Query (Maybe Dimension)
+borderWidthOverride = return Nothing
+
 -- | Border colors for unfocused and focused windows, respectively.
 --
 normalBorderColor, focusedBorderColor :: String
@@ -255,6 +259,7 @@ mouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList
 instance (a ~ Choose Tall (Choose (Mirror Tall) Full)) => Default (XConfig a) where
   def = XConfig
     { XMonad.borderWidth        = borderWidth
+    , XMonad.borderWidthOverride= borderWidthOverride
     , XMonad.workspaces         = workspaces
     , XMonad.layoutHook         = layout
     , XMonad.terminal           = terminal

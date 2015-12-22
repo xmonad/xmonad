@@ -369,7 +369,9 @@ handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
     ws <- gets windowset
     wa <- io $ getWindowAttributes dpy w
 
-    bw <- asks (borderWidth . config)
+    dbw <- asks (borderWidth . config)
+    bwf <- asks (borderWidthOverride . config)
+    bw <- fromMaybe dbw <$> runQuery bwf w
 
     if M.member w (floating ws)
         || not (member w ws)
