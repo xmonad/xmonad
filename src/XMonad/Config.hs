@@ -30,7 +30,7 @@ import XMonad.Core as XMonad hiding
     ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse
     ,handleEventHook,clickJustFocuses,rootMask,clientMask)
 import qualified XMonad.Core as XMonad
-    (workspaces,manageHook,keys,logHook,startupHook,borderWidth,boderWidthOverride,mouseBindings
+    (workspaces,manageHook,keys,logHook,startupHook,borderWidth,borderWidthOverride,mouseBindings
     ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse
     ,handleEventHook,clickJustFocuses,rootMask,clientMask)
 
