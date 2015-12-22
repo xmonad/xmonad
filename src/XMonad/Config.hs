@@ -26,11 +26,11 @@ module XMonad.Config (defaultConfig, Default(..)) where
 -- Useful imports
 --
 import XMonad.Core as XMonad hiding
-    (workspaces,manageHook,keys,logHook,startupHook,borderWidth,mouseBindings
+    (workspaces,manageHook,keys,logHook,startupHook,borderWidth,borderWidthOverride,mouseBindings
     ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse
     ,handleEventHook,clickJustFocuses,rootMask,clientMask)
 import qualified XMonad.Core as XMonad
-    (workspaces,manageHook,keys,logHook,startupHook,borderWidth,mouseBindings
+    (workspaces,manageHook,keys,logHook,startupHook,borderWidth,boderWidthOverride,mouseBindings
     ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse
     ,handleEventHook,clickJustFocuses,rootMask,clientMask)
 
