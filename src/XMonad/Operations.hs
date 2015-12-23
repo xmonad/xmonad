@@ -207,10 +207,7 @@ setInitialProperties :: Window -> X ()
 setInitialProperties w = asks normalBorder >>= \nb -> withDisplay $ \d -> do
     setWMState w iconicState
     asks (clientMask . config) >>= io . selectInput d w
-    dbw <- asks (borderWidth . config)
-    bwf <- asks (borderWidthOverride . config)
-    bw <- fromMaybe dbw <$> runQuery bwf w
-    io $ setWindowBorderWidth d w bw
+    setDefaultBorderWidth w
     -- we must initially set the color of new windows, to maintain invariants
     -- required by the border setting in 'windows'
     io $ setWindowBorder d w nb

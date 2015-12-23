@@ -24,7 +24,8 @@ module XMonad.Core (
     SomeMessage(..), fromMessage, LayoutMessages(..),
     StateExtension(..), ExtensionClass(..),
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
-    withDisplay, withWindowSet, isRoot, runOnWorkspaces,
+    withDisplay, withWindowSet, isRoot, setDefaultBorderWidth, setDefaultBorderWidth,
+    runOnWorkspaces,
     getAtom, spawn, spawnPID, xfork, getXMonadDir, recompile, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, atom_WM_TAKE_FOCUS, ManageHook, Query(..), runQuery
   ) where
@@ -212,6 +213,18 @@ withWindowSet f = gets windowset >>= f
 -- | True if the given window is the root window
 isRoot :: Window -> X Bool
 isRoot w = (w==) <$> asks theRoot
+
+-- | Get default window border width
+getDefaultBorderWidth :: Window -> X Dimension
+getDefaultBorderWidth win = do
+  dbw <- gets (borderWidth . config)
+  bwf <- gets (borderWidthOverride . config)
+  fromMaybe dbw <$> runQuery bwf win
+
+-- | Set window border width to default
+setDefaultBorderWidth :: Window -> X ()
+setDefaultBorderWidth win = getDefaultBorderWidth win >>= \bw ->
+  withDisplay $ \dpy -> io $ setWindowBorderWidth dpy win bw
 
 -- | Wrapper for the common case of atom internment
 getAtom :: String -> X Atom
