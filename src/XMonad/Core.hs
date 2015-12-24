@@ -24,7 +24,7 @@ module XMonad.Core (
     SomeMessage(..), fromMessage, LayoutMessages(..),
     StateExtension(..), ExtensionClass(..),
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
-    withDisplay, withWindowSet, isRoot, setDefaultBorderWidth, setDefaultBorderWidth,
+    withDisplay, withWindowSet, isRoot, getDefaultBorderWidth, setDefaultBorderWidth,
     runOnWorkspaces,
     getAtom, spawn, spawnPID, xfork, getXMonadDir, recompile, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, atom_WM_TAKE_FOCUS, ManageHook, Query(..), runQuery
