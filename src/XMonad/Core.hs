@@ -217,8 +217,8 @@ isRoot w = (w==) <$> asks theRoot
 -- | Get default window border width
 getDefaultBorderWidth :: Window -> X Dimension
 getDefaultBorderWidth win = do
-  dbw <- gets (borderWidth . config)
-  bwf <- gets (borderWidthOverride . config)
+  dbw <- asks (borderWidth . config)
+  bwf <- asks (borderWidthOverride . config)
   fromMaybe dbw <$> runQuery bwf win
 
 -- | Set window border width to default
