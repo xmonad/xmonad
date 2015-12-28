@@ -226,6 +226,28 @@ setDefaultBorderWidth :: Window -> X ()
 setDefaultBorderWidth win = getDefaultBorderWidth win >>= \bw ->
   withDisplay $ \dpy -> io $ setWindowBorderWidth dpy win bw
 
+-- | Utilities to construct borderWidthOverride
+-- May be used like this:
+-- > main = xmonad def { borderWidthOverride = chooseFirst
+-- >                       [ className =? "Firefox" --> overrideBW 1
+-- >                       , isDialog --> overrideBW 2 ] }
+overrideBW :: (Applicative q, Applicative f) => α -> q (f α)
+overrideBW = pure . pure
+
+-- | Applies first override. In above example Firefox dialogs
+-- will have border width of 1 pixels, just like other Firefox
+-- windows
+chooseFirst :: [Query (First α)] -> Query (Maybe α)
+chooseFirst = fmap getFirst . mconcat
+
+-- | Applies last override. If you change 'chooseFirst' with
+-- 'chooseLast' in above example, Firefox windows will have
+-- border width of 1 pixels, except dialogs, which will have
+-- border width of 2 pixels
+chooseLast :: [Query (Last α)] -> Query (Maybe α)
+chooseLast = fmap getLast . mconcat
+
+
 -- | Wrapper for the common case of atom internment
 getAtom :: String -> X Atom
 getAtom str = withDisplay $ \dpy -> io $ internAtom dpy str False
