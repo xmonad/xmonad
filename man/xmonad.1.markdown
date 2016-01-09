@@ -101,4 +101,4 @@ module was contained within xmonad or xmonad-contrib.
 Probably. If you find any, please report them to the [bugtracker]
 
 [xmonad.org]: http://xmonad.org
-[bugtracker]: http://code.google.com/p/xmonad/issues/list
+[bugtracker]: https://github.com/xmonad/xmonad/issues
