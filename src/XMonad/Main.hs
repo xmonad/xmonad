@@ -27,6 +27,8 @@ import Control.Monad.State
 import Data.Maybe (fromMaybe)
 import Data.Monoid (getAll)
 
+import qualified Control.Exception.Extensible as C
+
 import Graphics.X11.Xlib hiding (refreshKeyboardMapping)
 import Graphics.X11.Xlib.Extras
 
