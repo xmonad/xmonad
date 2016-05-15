@@ -507,7 +507,7 @@ mouseDrag f done = do
                     clearEvents pointerMotionMask
                     return z
 
--- | XXX comment me
+-- | drag the window under the cursor with the mouse while it is clicked
 mouseMoveWindow :: Window -> X ()
 mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     io $ raiseWindow d w
@@ -519,7 +519,7 @@ mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
                                              (fromIntegral (fromIntegral (wa_y wa) + (ey - oy))))
               (float w)
 
--- | XXX comment me
+-- | resize the window under the cursor with the mouse while it is clicked
 mouseResizeWindow :: Window -> X ()
 mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     io $ raiseWindow d w
