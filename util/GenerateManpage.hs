@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
--- Unlike the rest of xmonad, this file is copyright under the terms of the
--- GPL.
+-- Unlike the rest of xmonad, this file is released under the GNU General
+-- Public License version 2 or later.
 
 --
 -- Generates man/xmonad.1 from man/xmonad.1.in by filling the list of
