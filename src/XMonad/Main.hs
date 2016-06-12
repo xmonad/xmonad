@@ -369,7 +369,6 @@ handle e@(CrossingEvent {ev_event_type = t})
 -- configure a window
 handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
     ws <- gets windowset
-    wa <- io $ getWindowAttributes dpy w
 
     bw <- asks (borderWidth . config)
 
