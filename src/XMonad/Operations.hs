@@ -234,7 +234,9 @@ clearEvents mask = withDisplay $ \d -> io $ do
 -- | tileWindow. Moves and resizes w such that it fits inside the given
 -- rectangle, including its border.
 tileWindow :: Window -> Rectangle -> X ()
-tileWindow w r = withDisplay $ \d -> do
+tileWindow w r = catchX (tileWindow' w r) (io $ putStrLn "tileWindow failed")
+tileWindow' :: Window -> Rectangle -> X ()
+tileWindow' w r = withDisplay $ \d -> do
     bw <- (fromIntegral . wa_border_width) <$> io (getWindowAttributes d w)
     -- give all windows at least 1x1 pixels
     let least x | x <= bw*2  = 1
@@ -510,7 +512,9 @@ mouseDrag f done = do
 
 -- | XXX comment me
 mouseMoveWindow :: Window -> X ()
-mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
+mouseMoveWindow w = catchX (mouseMoveWindow' w) (io $ putStrLn "mouseMoveWindow failed")
+mouseMoveWindow' :: Window -> X ()
+mouseMoveWindow' w = whenX (isClient w) $ withDisplay $ \d -> do
     io $ raiseWindow d w
     wa <- io $ getWindowAttributes d w
     (_, _, _, ox', oy', _, _, _) <- io $ queryPointer d w
@@ -522,7 +526,9 @@ mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
 
 -- | XXX comment me
 mouseResizeWindow :: Window -> X ()
-mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
+mouseResizeWindow w = catchX (mouseResizeWindow' w) $ (io $ putStrLn "mouseResizeWindow failed")
+mouseResizeWindow' :: Window -> X ()
+mouseResizeWindow' w = whenX (isClient w) $ withDisplay $ \d -> do
     io $ raiseWindow d w
     wa <- io $ getWindowAttributes d w
     sh <- io $ getWMNormalHints d w
