@@ -464,16 +464,17 @@ recompile force = io $ do
         src  = base ++ ".hs"
         lib  = dir </> "lib"
     libTs <- mapM getModTime . Prelude.filter isSource =<< allFiles lib
+    isStack <- doesFileExist $ dir </> "stack.yaml"
     srcT <- getModTime src
     binT <- getModTime bin
     if force || any (binT <) (srcT : libTs)
       then do
         -- temporarily disable SIGCHLD ignoring:
         uninstallSignalHandlers
-        status <- bracket (openFile err WriteMode) hClose $ \h ->
-            waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-ilib", "-fforce-recomp", "-main-is", "main", "-v0", "-o",binn] (Just dir)
-                                    Nothing Nothing Nothing (Just h)
-
+        status <- bracket (openFile err WriteMode) hClose $ \errFile ->
+            waitForProcess =<< if isStack
+                               then compileStack dir errFile
+                               else compileGHC binn dir errFile
         -- re-enable SIGCHLD:
         installSignalHandlers
 
@@ -498,6 +499,21 @@ recompile force = io $ do
             cs <- prep <$> E.catch (getDirectoryContents t) (\(SomeException _) -> return [])
             ds <- filterM doesDirectoryExist cs
             concat . ((cs \\ ds):) <$> mapM allFiles ds
+       compileGHC binn dir errFile =
+         runProcess "ghc" ["--make"
+                          , "xmonad.hs"
+                          , "-i"
+                          , "-ilib"
+                          , "-fforce-recomp"
+                          , "-main-is", "main"
+                          , "-v0"
+                          , "-o", binn
+                          ] (Just dir) Nothing Nothing Nothing (Just errFile)
+       compileStack dir errFile =
+         runProcess "stack" [ "install"
+                            , "--local-bin-path", dir
+                            ] (Just dir) Nothing Nothing Nothing (Just errFile)
+
 
 -- | Conditionally run an action, using a @Maybe a@ to decide.
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
