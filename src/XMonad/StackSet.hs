@@ -477,12 +477,12 @@ insertUp a s = if member a s then s else insert
 --
 --   * otherwise, delete doesn't affect the master.
 --
-delete :: (Ord a, Eq s) => a -> StackSet i l a s sd -> StackSet i l a s sd
+delete :: (Ord a) => a -> StackSet i l a s sd -> StackSet i l a s sd
 delete w = sink w . delete' w
 
 -- | Only temporarily remove the window from the stack, thereby not destroying special
 -- information saved in the 'Stackset'
-delete' :: (Eq a, Eq s) => a -> StackSet i l a s sd -> StackSet i l a s sd
+delete' :: (Eq a) => a -> StackSet i l a s sd -> StackSet i l a s sd
 delete' w s = s { current = removeFromScreen        (current s)
                 , visible = map removeFromScreen    (visible s)
                 , hidden  = map removeFromWorkspace (hidden  s) }
@@ -547,7 +547,7 @@ shift n s = maybe s (\w -> shiftWin n w s) (peek s)
 -- focused element on that workspace.
 -- The actual focused workspace doesn't change. If the window is not
 -- found in the stackSet, the original stackSet is returned.
-shiftWin :: (Ord a, Eq a, Eq s, Eq i) => i -> a -> StackSet i l a s sd -> StackSet i l a s sd
+shiftWin :: (Ord a, Eq s, Eq i) => i -> a -> StackSet i l a s sd -> StackSet i l a s sd
 shiftWin n w s = case findTag w s of
                     Just from | n `tagMember` s && n /= from -> go from s
                     _                                        -> s
