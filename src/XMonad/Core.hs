@@ -463,16 +463,21 @@ recompile force = io $ do
         err  = base ++ ".errors"
         src  = base ++ ".hs"
         lib  = dir </> "lib"
+        yaml = dir </> "stack.yaml"
     libTs <- mapM getModTime . Prelude.filter isSource =<< allFiles lib
     srcT <- getModTime src
     binT <- getModTime bin
-    if force || any (binT <) (srcT : libTs)
+    yamlT <- getModTime yaml
+    if force || any (binT <) (srcT : yamlT : libTs)
       then do
         -- temporarily disable SIGCHLD ignoring:
         uninstallSignalHandlers
-        status <- bracket (openFile err WriteMode) hClose $ \h ->
-            waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-ilib", "-fforce-recomp", "-main-is", "main", "-v0", "-o",binn] (Just dir)
-                                    Nothing Nothing Nothing (Just h)
+        status <- bracket (openFile err WriteMode) hClose $ \h -> do
+            let runAndWait exe args = waitForProcess =<< runProcess exe args (Just dir) Nothing Nothing Nothing (Just h)
+                ghcArgs = ["--make", "xmonad.hs", "-i", "-ilib", "-fforce-recomp", "-main-is", "main", "-v0", "-o", binn]
+            case yamlT of
+                Nothing -> runAndWait "ghc" ghcArgs
+                Just _ -> runAndWait "stack" (["--stack-yaml", yaml, "ghc", "--"] ++ ghcArgs)
 
         -- re-enable SIGCHLD:
         installSignalHandlers
