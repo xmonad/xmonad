@@ -487,7 +487,7 @@ recompile force = io $ do
             -- nb, the ordering of printing, then forking, is crucial due to
             -- lazy evaluation
             hPutStrLn stderr msg
-            forkProcess $ executeFile "xmessage" True ["-default", "okay", msg] Nothing
+            forkProcess $ executeFile "xmessage" True ["-default", "okay", replaceUnicode msg] Nothing
             return ()
         return (status == ExitSuccess)
       else return True
@@ -498,6 +498,12 @@ recompile force = io $ do
             cs <- prep <$> E.catch (getDirectoryContents t) (\(SomeException _) -> return [])
             ds <- filterM doesDirectoryExist cs
             concat . ((cs \\ ds):) <$> mapM allFiles ds
+       -- Replace some of the unicode symbols GHC uses in its output
+       replaceUnicode = map $ \c -> case c of
+           '\8226' -> '*'  -- •
+           '\8216' -> '`'  -- ‘
+           '\8217' -> '`'  -- ’
+           _ -> c
 
 -- | Conditionally run an action, using a @Maybe a@ to decide.
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
