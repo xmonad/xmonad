@@ -463,16 +463,29 @@ recompile force = io $ do
         err  = base ++ ".errors"
         src  = base ++ ".hs"
         lib  = dir </> "lib"
+        buildscript = dir </> "build"
     libTs <- mapM getModTime . Prelude.filter isSource =<< allFiles lib
+    useBuildscript <- do
+      exists <- doesFileExist buildscript
+      if exists then do
+          permissions <- getPermissions buildscript
+          return $ executable permissions
+        else
+          return False
     srcT <- getModTime src
     binT <- getModTime bin
-    if force || any (binT <) (srcT : libTs)
+    buildScriptT  <- getModTime buildscript
+    let addBuildScriptT = if useBuildscript
+                          then (buildScriptT :)
+                          else id
+    if force || any (binT <) ( addBuildScriptT $ srcT : libTs)
       then do
         -- temporarily disable SIGCHLD ignoring:
         uninstallSignalHandlers
-        status <- bracket (openFile err WriteMode) hClose $ \h ->
-            waitForProcess =<< runProcess "ghc" ["--make", "xmonad.hs", "-i", "-ilib", "-fforce-recomp", "-main-is", "main", "-v0", "-o",binn] (Just dir)
-                                    Nothing Nothing Nothing (Just h)
+        status <- bracket (openFile err WriteMode) hClose $ \errHandle ->
+            waitForProcess =<< if useBuildscript
+                               then compileScript binn dir buildscript errHandle
+                               else compileGHC binn dir errHandle
 
         -- re-enable SIGCHLD:
         installSignalHandlers
@@ -504,6 +517,18 @@ recompile force = io $ do
            '\8216' -> '`'  -- ‘
            '\8217' -> '`'  -- ’
            _ -> c
+       compileGHC binn dir errHandle =
+         runProcess "ghc" ["--make"
+                          , "xmonad.hs"
+                          , "-i"
+                          , "-ilib"
+                          , "-fforce-recomp"
+                          , "-main-is", "main"
+                          , "-v0"
+                          , "-o", binn
+                          ] (Just dir) Nothing Nothing Nothing (Just errHandle)
+       compileScript binn dir script errHandle =
+         runProcess script [dir, binn] (Just dir) Nothing Nothing Nothing (Just errHandle)
 
 -- | Conditionally run an action, using a @Maybe a@ to decide.
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
