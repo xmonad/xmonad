@@ -467,11 +467,9 @@ recompile force = io $ do
     libTs <- mapM getModTime . Prelude.filter isSource =<< allFiles lib
     useBuildscript <- do
       exists <- doesFileExist buildscript
-      if exists then do
-          permissions <- getPermissions buildscript
-          return $ executable permissions
-        else
-          return False
+      if exists
+        then executable <$> getPermissions buildscript
+        else return False
     srcT <- getModTime src
     binT <- getModTime bin
     buildScriptT  <- getModTime buildscript
@@ -528,7 +526,7 @@ recompile force = io $ do
                           , "-o", binn
                           ] (Just dir) Nothing Nothing Nothing (Just errHandle)
        compileScript binn dir script errHandle =
-         runProcess script [dir, binn] (Just dir) Nothing Nothing Nothing (Just errHandle)
+         runProcess script [binn] (Just dir) Nothing Nothing Nothing (Just errHandle)
 
 -- | Conditionally run an action, using a @Maybe a@ to decide.
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
