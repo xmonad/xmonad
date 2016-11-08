@@ -431,9 +431,12 @@ runOnWorkspaces job = do
              $ current ws : visible ws
     modify $ \s -> s { windowset = ws { current = c, visible = v, hidden = h } }
 
--- | Return the path to @~\/.xmonad@.
+-- | Return the path to @~\/.xmonad@ if it exists, otherwise use @\/etc\/xmonad@.
 getXMonadDir :: MonadIO m => m String
-getXMonadDir = io $ getAppUserDataDirectory "xmonad"
+getXMonadDir = io $ do e <- userExists; if e then user else (return "/etc/xmonad")
+  where
+  user = getAppUserDataDirectory "xmonad"
+  userExists = user >>= doesDirectoryExist
 
 -- | 'recompile force', recompile @~\/.xmonad\/xmonad.hs@ when any of the
 -- following apply:
