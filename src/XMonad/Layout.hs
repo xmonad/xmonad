@@ -137,7 +137,7 @@ data ChangeLayout = FirstLayout | NextLayout deriving (Eq, Show, Typeable)
 instance Message ChangeLayout
 
 -- | The layout choice combinator
-(|||) :: (LayoutClass l a, LayoutClass r a) => l a -> r a -> Choose l r a
+(|||) :: l a -> r a -> Choose l r a
 (|||) = Choose L
 infixr 5 |||
 
