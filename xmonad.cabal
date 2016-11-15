@@ -43,6 +43,7 @@ source-repository head
 flag testing
     description: Testing mode, only build minimal components
     default: False
+    manual: True
 
 flag generatemanpage
     description: Build the tool for generating the man page
