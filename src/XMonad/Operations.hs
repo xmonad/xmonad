@@ -34,6 +34,7 @@ import Control.Monad.Reader
 import Control.Monad.State
 import qualified Control.Exception.Extensible as C
 
+import System.IO
 import System.Posix.Process (executeFile)
 import Graphics.X11.Xlib
 import Graphics.X11.Xinerama (getScreenInfo)
@@ -111,7 +112,10 @@ windows f = do
 
     mapM_ setInitialProperties newwindows
 
-    whenJust (W.peek old) $ \otherw -> io $ setWindowBorder d otherw nbc
+    whenJust (W.peek old) $ \otherw -> do
+      nbs <- asks (normalBorderColor . config)
+      setWindowBorderWithFallback d otherw nbs nbc
+
     modify (\s -> s { windowset = ws })
 
     -- notify non visibility
@@ -151,7 +155,9 @@ windows f = do
 
     mapM_ (uncurry tileWindow) rects
 
-    whenJust (W.peek ws) $ \w -> io $ setWindowBorder d w fbc
+    whenJust (W.peek ws) $ \w -> do
+      fbs <- asks (focusedBorderColor . config)
+      setWindowBorderWithFallback d w fbs fbc
 
     mapM_ reveal visible
     setTopFocus
@@ -180,6 +186,19 @@ setWMState :: Window -> Int -> X ()
 setWMState w v = withDisplay $ \dpy -> do
     a <- atom_WM_STATE
     io $ changeProperty32 dpy w a a propModeReplace [fromIntegral v, fromIntegral none]
+
+-- | Set the border color using the window's color map, if possible,
+-- otherwise use fallback.
+setWindowBorderWithFallback :: Display -> Window -> String -> Pixel -> X ()
+setWindowBorderWithFallback dpy w color basic = io $
+    C.handle fallback $ do
+      wa <- getWindowAttributes dpy w
+      pixel <- color_pixel . fst <$> allocNamedColor dpy (wa_colormap wa) color
+      setWindowBorder dpy w pixel
+  where
+    fallback :: C.SomeException -> IO ()
+    fallback e = do hPrint stderr e >> hFlush stderr
+                    setWindowBorder dpy w basic
 
 -- | hide. Hide a window by unmapping it, and setting Iconified.
 hide :: Window -> X ()
