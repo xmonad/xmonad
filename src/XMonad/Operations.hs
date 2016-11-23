@@ -252,10 +252,10 @@ clearEvents mask = withDisplay $ \d -> io $ do
 -- | tileWindow. Moves and resizes w such that it fits inside the given
 -- rectangle, including its border.
 tileWindow :: Window -> Rectangle -> X ()
-tileWindow w r = withDisplay $ \d -> do
-    bw <- (fromIntegral . wa_border_width) <$> io (getWindowAttributes d w)
+tileWindow w r = withDisplay $ \d -> withWindowAttributes d w $ \wa -> do
     -- give all windows at least 1x1 pixels
-    let least x | x <= bw*2  = 1
+    let bw = fromIntegral $ wa_border_width wa
+        least x | x <= bw*2  = 1
                 | otherwise  = x - bw*2
     io $ moveResizeWindow d w (rect_x r) (rect_y r)
                               (least $ rect_width r) (least $ rect_height r)
@@ -463,20 +463,27 @@ restart prog resume = do
 -- | Given a window, find the screen it is located on, and compute
 -- the geometry of that window wrt. that screen.
 floatLocation :: Window -> X (ScreenId, W.RationalRect)
-floatLocation w = withDisplay $ \d -> do
-    ws <- gets windowset
-    wa <- io $ getWindowAttributes d w
-    let bw = (fromIntegral . wa_border_width) wa
-    sc <- fromMaybe (W.current ws) <$> pointScreen (fi $ wa_x wa) (fi $ wa_y wa)
+floatLocation w =
+    catchX go $ do
+      -- Fallback solution if `go' fails.  Which it might, since it
+      -- calls `getWindowAttributes'.
+      sc <- W.current <$> gets windowset
+      return (W.screen sc, W.RationalRect 0 0 1 1)
 
-    let sr = screenRect . W.screenDetail $ sc
-        rr = W.RationalRect ((fi (wa_x wa) - fi (rect_x sr)) % fi (rect_width sr))
-                            ((fi (wa_y wa) - fi (rect_y sr)) % fi (rect_height sr))
-                            (fi (wa_width  wa + bw*2) % fi (rect_width sr))
-                            (fi (wa_height wa + bw*2) % fi (rect_height sr))
-
-    return (W.screen sc, rr)
   where fi x = fromIntegral x
+        go = withDisplay $ \d -> do
+          ws <- gets windowset
+          wa <- io $ getWindowAttributes d w
+          let bw = (fromIntegral . wa_border_width) wa
+          sc <- fromMaybe (W.current ws) <$> pointScreen (fi $ wa_x wa) (fi $ wa_y wa)
+
+          let sr = screenRect . W.screenDetail $ sc
+              rr = W.RationalRect ((fi (wa_x wa) - fi (rect_x sr)) % fi (rect_width sr))
+                                  ((fi (wa_y wa) - fi (rect_y sr)) % fi (rect_height sr))
+                                  (fi (wa_width  wa + bw*2) % fi (rect_width sr))
+                                  (fi (wa_height wa + bw*2) % fi (rect_height sr))
+
+          return (W.screen sc, rr)
 
 -- | Given a point, determine the screen (if any) that contains it.
 pointScreen :: Position -> Position

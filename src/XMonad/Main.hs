@@ -17,6 +17,7 @@ module XMonad.Main (xmonad) where
 
 import System.Locale.SetLocale
 import Control.Arrow (second)
+import qualified Control.Exception.Extensible as E
 import Data.Bits
 import Data.List ((\\))
 import Data.Function
@@ -290,10 +291,10 @@ handle (KeyEvent {ev_event_type = t, ev_state = m, ev_keycode = code})
 
 -- manage a new window
 handle (MapRequestEvent    {ev_window = w}) = withDisplay $ \dpy -> do
-    wa <- io $ getWindowAttributes dpy w -- ignore override windows
-    -- need to ignore mapping requests by managed windows not on the current workspace
-    managed <- isClient w
-    when (not (wa_override_redirect wa) && not managed) $ do manage w
+    withWindowAttributes dpy w $ \wa -> do -- ignore override windows
+      -- need to ignore mapping requests by managed windows not on the current workspace
+      managed <- isClient w
+      when (not (wa_override_redirect wa) && not managed) $ manage w
 
 -- window destroyed, unmanage it
 -- window gone,      unmanage it
@@ -367,8 +368,6 @@ handle e@(CrossingEvent {ev_event_type = t})
 -- configure a window
 handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
     ws <- gets windowset
-    wa <- io $ getWindowAttributes dpy w
-
     bw <- asks (borderWidth . config)
 
     if M.member w (floating ws)
@@ -382,7 +381,7 @@ handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
                     , wc_sibling      = ev_above e
                     , wc_stack_mode   = ev_detail e }
                 when (member w ws) (float w)
-        else io $ allocaXEvent $ \ev -> do
+        else withWindowAttributes dpy w $ \wa -> io $ allocaXEvent $ \ev -> do
                  setEventType ev configureNotify
                  setConfigureEvent ev w w
                      (wa_x wa) (wa_y wa) (wa_width wa)
@@ -416,7 +415,7 @@ handle e = broadcastMessage e -- trace (eventName e) -- ignoring
 scan :: Display -> Window -> IO [Window]
 scan dpy rootw = do
     (_, _, ws) <- queryTree dpy rootw
-    filterM ok ws
+    filterM (\w -> ok w `E.catch` skip) ws
   -- TODO: scan for windows that are either 'IsViewable' or where WM_STATE ==
   -- Iconic
   where ok w = do wa <- getWindowAttributes dpy w
@@ -427,6 +426,9 @@ scan dpy rootw = do
                             _          -> False
                   return $ not (wa_override_redirect wa)
                          && (wa_map_state wa == waIsViewable || ic)
+
+        skip :: E.SomeException -> IO Bool
+        skip _ = return False
 
 setNumlockMask :: X ()
 setNumlockMask = do

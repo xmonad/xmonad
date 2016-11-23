@@ -26,7 +26,8 @@ module XMonad.Core (
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
     getAtom, spawn, spawnPID, xfork, getXMonadDir, recompile, trace, whenJust, whenX,
-    atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, atom_WM_TAKE_FOCUS, ManageHook, Query(..), runQuery
+    atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, atom_WM_TAKE_FOCUS, withWindowAttributes,
+    ManageHook, Query(..), runQuery
   ) where
 
 import XMonad.StackSet hiding (modify)
@@ -49,7 +50,7 @@ import System.Process
 import System.Directory
 import System.Exit
 import Graphics.X11.Xlib
-import Graphics.X11.Xlib.Extras (Event)
+import Graphics.X11.Xlib.Extras (getWindowAttributes, WindowAttributes, Event)
 import Data.Typeable
 import Data.List ((\\))
 import Data.Maybe (isJust,fromMaybe)
@@ -206,6 +207,12 @@ withDisplay   f = asks display >>= f
 -- | Run a monadic action with the current stack set
 withWindowSet :: (WindowSet -> X a) -> X a
 withWindowSet f = gets windowset >>= f
+
+-- | Safely access window attributes.
+withWindowAttributes :: Display -> Window -> (WindowAttributes -> X ()) -> X ()
+withWindowAttributes dpy win f = do
+    wa <- userCode (io $ getWindowAttributes dpy win)
+    catchX (whenJust wa f) (return ())
 
 -- | True if the given window is the root window
 isRoot :: Window -> X Bool
