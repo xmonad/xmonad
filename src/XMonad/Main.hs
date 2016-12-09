@@ -27,6 +27,8 @@ import Control.Monad.State
 import Data.Maybe (fromMaybe)
 import Data.Monoid (getAll)
 
+import qualified Control.Exception.Extensible as C
+
 import Graphics.X11.Xlib hiding (refreshKeyboardMapping)
 import Graphics.X11.Xlib.Extras
 
@@ -367,7 +369,6 @@ handle e@(CrossingEvent {ev_event_type = t})
 -- configure a window
 handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
     ws <- gets windowset
-    wa <- io $ getWindowAttributes dpy w
 
     bw <- asks (borderWidth . config)
 
@@ -383,11 +384,7 @@ handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
                     , wc_stack_mode   = ev_detail e }
                 when (member w ws) (float w)
         else io $ allocaXEvent $ \ev -> do
-                 setEventType ev configureNotify
-                 setConfigureEvent ev w w
-                     (wa_x wa) (wa_y wa) (wa_width wa)
-                     (wa_height wa) (ev_border_width e) none (wa_override_redirect wa)
-                 sendEvent dpy w False 0 ev
+                 sendConfigureEvent dpy ev w e
     io $ sync dpy False
 
 -- configuration changes in the root may mean display settings have changed
@@ -406,6 +403,14 @@ handle e@ClientMessageEvent { ev_message_type = mt } = do
 
 handle e = broadcastMessage e -- trace (eventName e) -- ignoring
 
+sendConfigureEvent :: Display -> XEventPtr -> Window -> Event -> IO ()
+sendConfigureEvent dpy ev w e = C.handle (\(C.SomeException _) -> putStrLn "sendConfigureEvent failed") $ do
+                 wa <- io $ getWindowAttributes dpy w
+                 setEventType ev configureNotify
+                 setConfigureEvent ev w w
+                     (wa_x wa) (wa_y wa) (wa_width wa)
+                     (wa_height wa) (ev_border_width e) none (wa_override_redirect wa)
+                 sendEvent dpy w False 0 ev
 
 -- ---------------------------------------------------------------------
 -- IO stuff. Doesn't require any X state

@@ -29,7 +29,6 @@ import Data.Ratio
 import qualified Data.Map as M
 import qualified Data.Set as S
 
-import Control.Applicative
 import Control.Monad.Reader
 import Control.Monad.State
 import qualified Control.Exception.Extensible as C
@@ -111,7 +110,8 @@ windows f = do
 
     mapM_ setInitialProperties newwindows
 
-    whenJust (W.peek old) $ \otherw -> io $ setWindowBorder d otherw nbc
+    nbs <- asks (normalBorderColor . config)
+    whenJust (W.peek old) $ \otherw -> io $ setWindowBorderWithFallback d otherw nbs nbc
     modify (\s -> s { windowset = ws })
 
     -- notify non visibility
@@ -151,7 +151,8 @@ windows f = do
 
     mapM_ (uncurry tileWindow) rects
 
-    whenJust (W.peek ws) $ \w -> io $ setWindowBorder d w fbc
+    fbs <- asks (focusedBorderColor . config)
+    whenJust (W.peek ws) $ \w -> io $ setWindowBorderWithFallback d w fbs fbc
 
     mapM_ reveal visible
     setTopFocus
@@ -233,7 +234,9 @@ clearEvents mask = withDisplay $ \d -> io $ do
 -- | tileWindow. Moves and resizes w such that it fits inside the given
 -- rectangle, including its border.
 tileWindow :: Window -> Rectangle -> X ()
-tileWindow w r = withDisplay $ \d -> do
+tileWindow w r = catchX (tileWindow' w r) (io $ putStrLn "tileWindow failed")
+tileWindow' :: Window -> Rectangle -> X ()
+tileWindow' w r = withDisplay $ \d -> do
     bw <- (fromIntegral . wa_border_width) <$> io (getWindowAttributes d w)
     -- give all windows at least 1x1 pixels
     let least x | x <= bw*2  = 1
@@ -509,7 +512,9 @@ mouseDrag f done = do
 
 -- | drag the window under the cursor with the mouse while it is dragged
 mouseMoveWindow :: Window -> X ()
-mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
+mouseMoveWindow w = catchX (mouseMoveWindow' w) (io $ putStrLn "mouseMoveWindow failed")
+mouseMoveWindow' :: Window -> X ()
+mouseMoveWindow' w = whenX (isClient w) $ withDisplay $ \d -> do
     io $ raiseWindow d w
     wa <- io $ getWindowAttributes d w
     (_, _, _, ox', oy', _, _, _) <- io $ queryPointer d w
@@ -521,7 +526,9 @@ mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
 
 -- | resize the window under the cursor with the mouse while it is dragged
 mouseResizeWindow :: Window -> X ()
-mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
+mouseResizeWindow w = catchX (mouseResizeWindow' w) $ (io $ putStrLn "mouseResizeWindow failed")
+mouseResizeWindow' :: Window -> X ()
+mouseResizeWindow' w = whenX (isClient w) $ withDisplay $ \d -> do
     io $ raiseWindow d w
     wa <- io $ getWindowAttributes d w
     sh <- io $ getWMNormalHints d w
@@ -584,3 +591,10 @@ applyResizeIncHint (iw,ih) x@(w,h) =
 applyMaxSizeHint  :: D -> D -> D
 applyMaxSizeHint (mw,mh) x@(w,h) =
     if mw > 0 && mh > 0 then (min w mw,min h mh) else x
+
+-- | Set the border color using the window's color map, if possible, otherwise use fallback.
+setWindowBorderWithFallback :: Display -> Window -> String -> Pixel -> IO ()
+setWindowBorderWithFallback dpy w color fallback = C.handle (\(C.SomeException _) -> setWindowBorder dpy w fallback) $ do
+  wa <- getWindowAttributes dpy w
+  pixel <- color_pixel . fst <$> allocNamedColor dpy (wa_colormap wa) color
+  setWindowBorder dpy w pixel
