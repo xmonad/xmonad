@@ -369,8 +369,7 @@ handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
     ws <- gets windowset
     wa <- io $ getWindowAttributes dpy w
 
-    bw <- asks (borderWidth . config)
-
+    bw <- getDefaultBorderWidth w
     if M.member w (floating ws)
         || not (member w ws)
         then do io $ configureWindow dpy w (ev_value_mask e) $ WindowChanges

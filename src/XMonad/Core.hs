@@ -24,7 +24,8 @@ module XMonad.Core (
     SomeMessage(..), fromMessage, LayoutMessages(..),
     StateExtension(..), ExtensionClass(..),
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
-    withDisplay, withWindowSet, isRoot, runOnWorkspaces,
+    withDisplay, withWindowSet, isRoot, getDefaultBorderWidth, setDefaultBorderWidth,
+    runOnWorkspaces, overrideBW, chooseFirst, chooseLast,
     getAtom, spawn, spawnPID, xfork, getXMonadDir, recompile, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, atom_WM_TAKE_FOCUS, ManageHook, Query(..), runQuery
   ) where
@@ -108,6 +109,8 @@ data XConfig l = XConfig
     , mouseBindings      :: !(XConfig Layout -> M.Map (ButtonMask, Button) (Window -> X ()))
                                                  -- ^ The mouse bindings
     , borderWidth        :: !Dimension           -- ^ The border width
+    , borderWidthOverride:: !(Query (Maybe Dimension))
+                                                 -- ^ Border width override for some windows
     , logHook            :: !(X ())              -- ^ The action to perform when the windows set is changed
     , startupHook        :: !(X ())              -- ^ The action to perform on startup
     , focusFollowsMouse  :: !Bool                -- ^ Whether window entry events can change focus
@@ -210,6 +213,40 @@ withWindowSet f = gets windowset >>= f
 -- | True if the given window is the root window
 isRoot :: Window -> X Bool
 isRoot w = (w==) <$> asks theRoot
+
+-- | Get default window border width
+getDefaultBorderWidth :: Window -> X Dimension
+getDefaultBorderWidth win = do
+  dbw <- asks (borderWidth . config)
+  bwf <- asks (borderWidthOverride . config)
+  fromMaybe dbw <$> runQuery bwf win
+
+-- | Set window border width to default
+setDefaultBorderWidth :: Window -> X ()
+setDefaultBorderWidth win = getDefaultBorderWidth win >>= \bw ->
+  withDisplay $ \dpy -> io $ setWindowBorderWidth dpy win bw
+
+-- | Utilities to construct borderWidthOverride
+-- May be used like this:
+-- > main = xmonad def { borderWidthOverride = chooseFirst
+-- >                       [ className =? "Firefox" --> overrideBW 1
+-- >                       , isDialog --> overrideBW 2 ] }
+overrideBW :: (Applicative q, Applicative f) => α -> q (f α)
+overrideBW = pure . pure
+
+-- | Applies first override. In above example Firefox dialogs
+-- will have border width of 1 pixels, just like other Firefox
+-- windows
+chooseFirst :: [Query (First α)] -> Query (Maybe α)
+chooseFirst = fmap getFirst . mconcat
+
+-- | Applies last override. If you change 'chooseFirst' with
+-- 'chooseLast' in above example, Firefox windows will have
+-- border width of 1 pixels, except dialogs, which will have
+-- border width of 2 pixels
+chooseLast :: [Query (Last α)] -> Query (Maybe α)
+chooseLast = fmap getLast . mconcat
+
 
 -- | Wrapper for the common case of atom internment
 getAtom :: String -> X Atom

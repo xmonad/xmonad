@@ -26,11 +26,11 @@ module XMonad.Config (defaultConfig, Default(..)) where
 -- Useful imports
 --
 import XMonad.Core as XMonad hiding
-    (workspaces,manageHook,keys,logHook,startupHook,borderWidth,mouseBindings
+    (workspaces,manageHook,keys,logHook,startupHook,borderWidth,borderWidthOverride,mouseBindings
     ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse
     ,handleEventHook,clickJustFocuses,rootMask,clientMask)
 import qualified XMonad.Core as XMonad
-    (workspaces,manageHook,keys,logHook,startupHook,borderWidth,mouseBindings
+    (workspaces,manageHook,keys,logHook,startupHook,borderWidth,borderWidthOverride,mouseBindings
     ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse
     ,handleEventHook,clickJustFocuses,rootMask,clientMask)
 
@@ -70,6 +70,10 @@ defaultModMask = mod1Mask
 --
 borderWidth :: Dimension
 borderWidth = 1
+
+-- | Possible border width overrides for some windows. Default is no overrides
+borderWidthOverride :: Query (Maybe Dimension)
+borderWidthOverride = return Nothing
 
 -- | Border colors for unfocused and focused windows, respectively.
 --
@@ -255,6 +259,7 @@ mouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList
 instance (a ~ Choose Tall (Choose (Mirror Tall) Full)) => Default (XConfig a) where
   def = XConfig
     { XMonad.borderWidth        = borderWidth
+    , XMonad.borderWidthOverride= borderWidthOverride
     , XMonad.workspaces         = workspaces
     , XMonad.layoutHook         = layout
     , XMonad.terminal           = terminal
