@@ -25,7 +25,8 @@ module XMonad.Core (
     StateExtension(..), ExtensionClass(..),
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
-    getAtom, spawn, spawnPID, xfork, getXMonadDir, recompile, trace, whenJust, whenX,
+    getAtom, spawn, spawnPID, xfork, getXMonadDir, getXMonadCacheDir, getXMonadDataDir,
+    recompile, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, atom_WM_TAKE_FOCUS, withWindowAttributes,
     ManageHook, Query(..), runQuery
   ) where
@@ -42,6 +43,7 @@ import Data.Default
 import System.FilePath
 import System.IO
 import System.Info
+import System.Posix.Env (getEnv)
 import System.Posix.Process (executeFile, forkProcess, getAnyProcessStatus, createSession)
 import System.Posix.Signals
 import System.Posix.IO
@@ -438,39 +440,108 @@ runOnWorkspaces job = do
              $ current ws : visible ws
     modify $ \s -> s { windowset = ws { current = c, visible = v, hidden = h } }
 
--- | Return the path to @~\/.xmonad@.
+-- | Return the path to the xmonad configuration directory.  Several
+-- directories are considered.  In order of preference:
+--
+--   1. The directory specified in the @XMONAD_CONFIG_DIR@ environment variable.
+--   2. The XDG configuration directory.
+--   3. The @~\/.xmonad@ directory.
 getXMonadDir :: MonadIO m => m String
-getXMonadDir = io $ getAppUserDataDirectory "xmonad"
+getXMonadDir =
+    findFirstDirWithEnv "XMONAD_CONFIG_DIR"
+      [ getXdgDirectory XdgConfig "xmonad"
+      , getAppUserDataDirectory "xmonad"
+      ]
 
--- | 'recompile force', recompile @~\/.xmonad\/xmonad.hs@ when any of the
--- following apply:
+-- | Return the path to the xmonad cache directory.  Several
+-- directories are considered.  In order of preference:
+--
+--   1. The directory specified in the @XMONAD_CACHE_DIR@ environment variable.
+--   2. The XDG cache directory.
+--   3. The @~\/.xmonad@ directory.
+getXMonadCacheDir :: MonadIO m => m String
+getXMonadCacheDir =
+    findFirstDirWithEnv "XMONAD_CACHE_DIR"
+      [ getXdgDirectory XdgCache "xmonad"
+      , getAppUserDataDirectory "xmonad"
+      ]
+
+-- | Return the path to the xmonad data directory.  Several
+-- directories are considered.  In order of preference:
+--
+--   1. The directory specified in the @XMONAD_DATA_DIR@ environment variable.
+--   2. The XDG data directory.
+--   3. The @~\/.xmonad@ directory.
+getXMonadDataDir :: MonadIO m => m String
+getXMonadDataDir =
+    findFirstDirWithEnv "XMONAD_DATA_DIR"
+      [ getXdgDirectory XdgData "xmonad"
+      , getAppUserDataDirectory "xmonad"
+      ]
+
+-- | Helper function that will find the first existing directory and
+-- return its path.  If none of the directories can be found, create
+-- and return the first from the list.  If the list is empty this
+-- function returns the historical @~\/.xmonad@ directory.
+findFirstDirOf :: MonadIO m => [IO FilePath] -> m FilePath
+findFirstDirOf []        = findFirstDirOf [getAppUserDataDirectory "xmonad"]
+findFirstDirOf possibles = do
+    found <- go possibles
+
+    case found of
+      Just path -> return path
+      Nothing   -> do
+        primary <- io (head possibles)
+        io (createDirectoryIfMissing True primary)
+        return primary
+
+  where
+    go []     = return Nothing
+    go (x:xs) = do
+      dir    <- io x
+      exists <- io (doesPathExist dir)
+      if exists then return (Just dir) else go xs
+
+-- | Simple wrapper around @findFirstDirOf@ that allows the primary
+-- path to be specified by an environment variable.
+findFirstDirWithEnv :: MonadIO m => String -> [IO FilePath] -> m FilePath
+findFirstDirWithEnv envName paths = do
+    envPath' <- io (getEnv envName)
+
+    case envPath' of
+      Nothing      -> findFirstDirOf paths
+      Just envPath -> findFirstDirOf (return envPath:paths)
+
+
+-- | 'recompile force', recompile the xmonad configuration file when
+-- any of the following apply:
 --
 --      * force is 'True'
 --
 --      * the xmonad executable does not exist
 --
 --      * the xmonad executable is older than xmonad.hs or any file in
---        ~\/.xmonad\/lib
+--        the @lib@ directory (under the configuration directory).
 --
 -- The -i flag is used to restrict recompilation to the xmonad.hs file only,
--- and any files in the ~\/.xmonad\/lib directory.
+-- and any files in the aforementioned @lib@ directory.
 --
--- Compilation errors (if any) are logged to ~\/.xmonad\/xmonad.errors.  If
--- GHC indicates failure with a non-zero exit code, an xmessage displaying
--- that file is spawned.
+-- Compilation errors (if any) are logged to the @xmonad.errors@ file
+-- in the xmonad data directory.  If GHC indicates failure with a
+-- non-zero exit code, an xmessage displaying that file is spawned.
 --
 -- 'False' is returned if there are compilation errors.
 --
 recompile :: MonadIO m => Bool -> m Bool
 recompile force = io $ do
-    dir <- getXMonadDir
+    cfgdir  <- getXMonadDir
+    datadir <- getXMonadDataDir
     let binn = "xmonad-"++arch++"-"++os
-        bin  = dir </> binn
-        base = dir </> "xmonad"
-        err  = base ++ ".errors"
-        src  = base ++ ".hs"
-        lib  = dir </> "lib"
-        buildscript = dir </> "build"
+        bin  = datadir </> binn
+        err  = datadir </> "xmonad.errors"
+        src  = cfgdir </> "xmonad.hs"
+        lib  = cfgdir </> "lib"
+        buildscript = cfgdir </> "build"
     libTs <- mapM getModTime . Prelude.filter isSource =<< allFiles lib
     useBuildscript <- do
       exists <- doesFileExist buildscript
@@ -489,8 +560,8 @@ recompile force = io $ do
         uninstallSignalHandlers
         status <- bracket (openFile err WriteMode) hClose $ \errHandle ->
             waitForProcess =<< if useBuildscript
-                               then compileScript binn dir buildscript errHandle
-                               else compileGHC binn dir errHandle
+                               then compileScript bin cfgdir buildscript errHandle
+                               else compileGHC bin cfgdir errHandle
 
         -- re-enable SIGCHLD:
         installSignalHandlers
@@ -522,7 +593,7 @@ recompile force = io $ do
            '\8216' -> '`'  -- ‘
            '\8217' -> '`'  -- ’
            _ -> c
-       compileGHC binn dir errHandle =
+       compileGHC bin dir errHandle =
          runProcess "ghc" ["--make"
                           , "xmonad.hs"
                           , "-i"
@@ -530,10 +601,10 @@ recompile force = io $ do
                           , "-fforce-recomp"
                           , "-main-is", "main"
                           , "-v0"
-                          , "-o", binn
+                          , "-o", bin
                           ] (Just dir) Nothing Nothing Nothing (Just errHandle)
-       compileScript binn dir script errHandle =
-         runProcess script [binn] (Just dir) Nothing Nothing Nothing (Just errHandle)
+       compileScript bin dir script errHandle =
+         runProcess script [bin] (Just dir) Nothing Nothing Nothing (Just errHandle)
 
 -- | Conditionally run an action, using a @Maybe a@ to decide.
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()

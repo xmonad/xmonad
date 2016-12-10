@@ -100,13 +100,13 @@ usage = do
         "  --restart                    Request a running xmonad process to restart" :
         []
 
--- | Build "~\/.xmonad\/xmonad.hs" with ghc, then execute it.  If there are no
--- errors, this function does not return.  An exception is raised in any of
--- these cases:
+-- | Build the xmonad configuration file with ghc, then execute it.
+-- If there are no errors, this function does not return.  An
+-- exception is raised in any of these cases:
 --
 --   * ghc missing
 --
---   * both "~\/.xmonad\/xmonad.hs" and "~\/.xmonad\/xmonad-$arch-$os" missing
+--   * both the configuration file and executable are missing
 --
 --   * xmonad.hs fails to compile
 --
@@ -119,7 +119,7 @@ usage = do
 buildLaunch ::  IO ()
 buildLaunch = do
     recompile False
-    dir  <- getXMonadDir
+    dir  <- getXMonadDataDir
     args <- getArgs
     whoami <- getProgName
     let compiledConfig = "xmonad-"++arch++"-"++os
