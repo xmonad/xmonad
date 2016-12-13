@@ -1,5 +1,9 @@
 # Change Log / Release Notes
 
+## 0.13
+
+  * Re-builds using script `<xmonaddir>/build` if it exists and is executable
+
 ## 0.12 (December 14, 2015)
 
   * Compiles with GHC 7.10.2, 7.8.4, and 7.6.3
