@@ -25,8 +25,8 @@ module XMonad.Core (
     StateExtension(..), ExtensionClass(..),
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
-    getAtom, spawn, spawnPID, xfork, getXMonadDir, getXMonadCacheDir, getXMonadDataDir,
-    recompile, trace, whenJust, whenX,
+    getAtom, spawn, spawnPID, xfork, recompile, trace, whenJust, whenX,
+    getXMonadDir, getXMonadCacheDir, getXMonadDataDir, stateFileName,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, atom_WM_TAKE_FOCUS, withWindowAttributes,
     ManageHook, Query(..), runQuery
   ) where
@@ -512,6 +512,10 @@ findFirstDirWithEnv envName paths = do
       Nothing      -> findFirstDirOf paths
       Just envPath -> findFirstDirOf (return envPath:paths)
 
+
+-- | Get the name of the file used to store the xmonad window state.
+stateFileName :: MonadIO m => m FilePath
+stateFileName = (</> "xmonad.state") <$> getXMonadDataDir
 
 -- | 'recompile force', recompile the xmonad configuration file when
 -- any of the following apply:

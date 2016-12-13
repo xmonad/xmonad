@@ -1,6 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, PatternGuards, TypeSynonymInstances #-}
-
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, PatternGuards, TypeSynonymInstances #-}
 -- --------------------------------------------------------------------------
 -- |
 -- Module      :  XMonad.Operations
@@ -30,11 +29,13 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 
 import Control.Applicative
+import Control.Arrow (second)
 import Control.Monad.Reader
 import Control.Monad.State
 import qualified Control.Exception.Extensible as C
 
 import System.IO
+import System.Directory
 import System.Posix.Process (executeFile)
 import Graphics.X11.Xlib
 import Graphics.X11.Xinerama (getScreenInfo)
@@ -442,6 +443,69 @@ initColor dpy c = C.handle (\(C.SomeException _) -> return Nothing) $
 
 ------------------------------------------------------------------------
 
+-- | A type to help serialize xmonad's state to a file.
+data StateFile = StateFile
+  { sfWins :: W.StackSet  WorkspaceId String Window ScreenId ScreenDetail
+  , sfExt  :: [(String, String)]
+  } deriving (Show, Read)
+
+-- | Write the current window state (and extensible state) to a file
+-- so that xmonad can resume with that state intact.
+writeStateToFile :: X ()
+writeStateToFile = do
+    let maybeShow (t, Right (PersistentExtension ext)) = Just (t, show ext)
+        maybeShow (t, Left str) = Just (t, str)
+        maybeShow _ = Nothing
+
+        wsData   = W.mapLayout show . windowset
+        extState = catMaybes . map maybeShow . M.toList . extensibleState
+
+    path  <- stateFileName
+    stateData <- gets (\s -> StateFile (wsData s) (extState s))
+    catchIO (writeFile path $ show stateData)
+
+-- | Read the state of a previous xmonad instance from a file and
+-- return that state.
+readStateFile :: (LayoutClass l Window, Read (l Window)) => XConfig l -> X (Maybe XState)
+readStateFile xmc = do
+    path <- stateFileName
+    raw  <- userCode $ io (readFile path <* removeFile path)
+
+    return $ do
+      sf <- maybeRead reads =<< raw
+
+      let winset = W.ensureTags layout (workspaces xmc) $ W.mapLayout (fromMaybe layout . maybeRead lreads) (sfWins sf)
+          extState = M.fromList . map (second Left) $ sfExt sf
+
+      return XState { windowset       = winset
+                    , numberlockMask  = 0
+                    , mapped          = S.empty
+                    , waitingUnmap    = M.empty
+                    , dragging        = Nothing
+                    , extensibleState = extState
+                    }
+  where
+    layout = Layout (layoutHook xmc)
+    lreads = readsLayout layout
+    maybeRead reads' s = case reads' s of
+                           [(x, "")] -> Just x
+                           _         -> Nothing
+
+-- | Migrate state from a previously running xmonad instance that used
+-- the older @--resume@ technique.
+{-# DEPRECATED migrateState "will be removed some point in the future." #-}
+migrateState :: MonadIO m => String -> String -> m ()
+migrateState ws xs = do
+    io (putStrLn "WARNING: --resume is no longer supported.")
+    whenJust stateData $ \s -> do
+      path <- stateFileName
+      catchIO (writeFile path $ show s)
+  where
+    stateData = StateFile <$> maybeRead ws <*> maybeRead xs
+    maybeRead s = case reads s of
+                    [(x, "")] -> Just x
+                    _         -> Nothing
+
 -- | @restart name resume@. Attempt to restart xmonad by executing the program
 -- @name@.  If @resume@ is 'True', restart with the current window state.
 -- When executing another window manager, @resume@ should be 'False'.
@@ -449,13 +513,8 @@ restart :: String -> Bool -> X ()
 restart prog resume = do
     broadcastMessage ReleaseResources
     io . flush =<< asks display
-    let wsData = show . W.mapLayout show . windowset
-        maybeShow (t, Right (PersistentExtension ext)) = Just (t, show ext)
-        maybeShow (t, Left str) = Just (t, str)
-        maybeShow _ = Nothing
-        extState = return . show . catMaybes . map maybeShow . M.toList . extensibleState
-    args <- if resume then gets (\s -> "--resume":wsData s:extState s) else return []
-    catchIO (executeFile prog True args Nothing)
+    when resume writeStateToFile
+    catchIO (executeFile prog True [] Nothing)
 
 ------------------------------------------------------------------------
 -- | Floating layer support

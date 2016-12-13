@@ -13,10 +13,9 @@
 --
 -----------------------------------------------------------------------------
 
-module XMonad.Main (xmonad) where
+module XMonad.Main (xmonad, launch) where
 
 import System.Locale.SetLocale
-import Control.Arrow (second)
 import qualified Control.Exception.Extensible as E
 import Data.Bits
 import Data.List ((\\))
@@ -38,7 +37,7 @@ import qualified XMonad.StackSet as W
 import XMonad.Operations
 
 import System.IO
-
+import System.Directory
 import System.Info
 import System.Environment
 import System.Posix.Process (executeFile)
@@ -60,32 +59,28 @@ xmonad :: (LayoutClass l Window, Read (l Window)) => XConfig l -> IO ()
 xmonad conf = do
     installSignalHandlers -- important to ignore SIGCHLD to avoid zombies
 
-    let launch serializedWinset serializedExtState args = do
+    let launch' args = do
               catchIO buildLaunch
               conf' @ XConfig { layoutHook = Layout l }
                   <- handleExtraArgs conf args conf{ layoutHook = Layout (layoutHook conf) }
-              withArgs [] $
-                xmonadNoargs (conf' { layoutHook = l })
-                              serializedWinset
-                              serializedExtState
+              withArgs [] $ launch (conf' { layoutHook = l })
 
     args <- getArgs
     case args of
-        ("--resume": ws : xs : args') -> launch (Just ws) (Just xs) args'
+        ("--resume": ws : xs : args') -> migrateState ws xs >> launch' args'
         ["--help"]            -> usage
         ["--recompile"]       -> recompile True >>= flip unless exitFailure
         ["--restart"]         -> sendRestart
         ["--version"]         -> putStrLn $ unwords shortVersion
         ["--verbose-version"] -> putStrLn . unwords $ shortVersion ++ longVersion
-        "--replace" : args'   -> do
-                                  sendReplace
-                                  launch Nothing Nothing args'
-        _                     -> launch Nothing Nothing args
+        "--replace" : args'   -> sendReplace >> launch' args'
+        _                     -> launch' args
  where
     shortVersion = ["xmonad", showVersion version]
     longVersion  = [ "compiled by", compilerName, showVersion compilerVersion
                    , "for",  arch ++ "-" ++ os
                    , "\nXinerama:", show compiledWithXinerama ]
+
 
 usage :: IO ()
 usage = do
@@ -145,15 +140,28 @@ sendReplace = do
     rootw  <- rootWindow dpy dflt
     replace dpy dflt rootw
 
-
--- |
--- The main entry point
+-- | Entry point into xmonad for custom builds.
 --
-xmonadNoargs :: (LayoutClass l Window, Read (l Window)) => XConfig l
-    -> Maybe String -- ^ serialized windowset
-    -> Maybe String -- ^ serialized extensible state
-    -> IO ()
-xmonadNoargs initxmc serializedWinset serializedExtstate = do
+-- This function isn't meant to be called by the typical xmonad user
+-- because it:
+--
+--   * Does not process any command line arguments.
+--
+--   * Therefore doesn't know how to restart a running xmonad.
+--
+--   * Does not compile your configuration file since it assumes it's
+--     actually running from within your compiled configuration.
+--
+-- Unless you know what you are doing, you should probably be using
+-- the 'xmonad' function instead.
+--
+-- However, if you are using a custom build environment (such as
+-- stack, cabal, make, etc.) you will likely want to call this
+-- function instead of 'xmonad'.  You probably also want to have a key
+-- binding to the 'XMonad.Operations.restart` function that restarts
+-- your custom binary with the resume flag set to @True@.
+launch :: (LayoutClass l Window, Read (l Window)) => XConfig l -> IO ()
+launch initxmc = do
     -- setup locale information from environment
     setLocale LC_ALL (Just "")
     -- ignore SIGPIPE and SIGCHLD
@@ -176,7 +184,6 @@ xmonadNoargs initxmc serializedWinset serializedExtstate = do
     -- (ugly, I know)
     xSetErrorHandler -- in C, I'm too lazy to write the binding: dons
 
-    xinesc <- getCleanedScreenInfo dpy
     nbc    <- do v            <- initColor dpy $ normalBorderColor  xmc
                  ~(Just nbc_) <- initColor dpy $ normalBorderColor Default.def
                  return (fromMaybe nbc_ v)
@@ -186,24 +193,12 @@ xmonadNoargs initxmc serializedWinset serializedExtstate = do
                  return (fromMaybe fbc_ v)
 
     hSetBuffering stdout NoBuffering
+    xinesc <- getCleanedScreenInfo dpy
 
     let layout = layoutHook xmc
         lreads = readsLayout layout
         initialWinset = let padToLen n xs = take (max n (length xs)) $ xs ++ repeat ""
             in new layout (padToLen (length xinesc) (workspaces xmc)) $ map SD xinesc
-        maybeRead reads' s = case reads' s of
-                                [(x, "")] -> Just x
-                                _         -> Nothing
-
-        winset = fromMaybe initialWinset $ do
-                    s                    <- serializedWinset
-                    ws                   <- maybeRead reads s
-                    return . W.ensureTags layout (workspaces xmc)
-                           $ W.mapLayout (fromMaybe layout . maybeRead lreads) ws
-        extState = fromMaybe M.empty $ do
-                     dyns                        <- serializedExtstate
-                     vals                        <- maybeRead reads dyns
-                     return . M.fromList . map (second Left) $ vals
 
         cf = XConf
             { display       = dpy
@@ -219,14 +214,24 @@ xmonadNoargs initxmc serializedWinset serializedExtstate = do
 
         st = XState
             { windowset       = initialWinset
-            , numberlockMask   = 0
+            , numberlockMask  = 0
             , mapped          = S.empty
             , waitingUnmap    = M.empty
             , dragging        = Nothing
-            , extensibleState = extState
+            , extensibleState = M.empty
             }
+
     allocaXEvent $ \e ->
         runX cf st $ do
+            -- check for serialized state in a file.
+            serializedSt <- do
+                path <- stateFileName
+                exists <- io (doesFileExist path)
+                if exists then readStateFile initxmc else return Nothing
+
+            -- restore extensibleState if we read it from a file.
+            let extst = maybe M.empty extensibleState serializedSt
+            modify (\s -> s {extensibleState = extst})
 
             setNumlockMask
             grabKeys
@@ -241,6 +246,7 @@ xmonadNoargs initxmc serializedWinset serializedExtstate = do
             -- those windows.  Remove all windows that are no longer top-level
             -- children of the root, they may have disappeared since
             -- restarting.
+            let winset = maybe initialWinset windowset serializedSt
             windows . const . foldr W.delete winset $ W.allWindows winset \\ ws
 
             -- manage the as-yet-unmanaged windows
