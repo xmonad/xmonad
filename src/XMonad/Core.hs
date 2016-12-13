@@ -499,7 +499,7 @@ findFirstDirOf possibles = do
     go []     = return Nothing
     go (x:xs) = do
       dir    <- io x
-      exists <- io (doesPathExist dir)
+      exists <- io (doesDirectoryExist dir)
       if exists then return (Just dir) else go xs
 
 -- | Simple wrapper around @findFirstDirOf@ that allows the primary
