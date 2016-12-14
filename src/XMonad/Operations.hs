@@ -494,7 +494,7 @@ readStateFile xmc = do
 -- | Migrate state from a previously running xmonad instance that used
 -- the older @--resume@ technique.
 {-# DEPRECATED migrateState "will be removed some point in the future." #-}
-migrateState :: MonadIO m => String -> String -> m ()
+migrateState :: (Functor m, MonadIO m) => String -> String -> m ()
 migrateState ws xs = do
     io (putStrLn "WARNING: --resume is no longer supported.")
     whenJust stateData $ \s -> do
