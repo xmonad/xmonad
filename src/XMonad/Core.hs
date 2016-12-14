@@ -23,8 +23,11 @@ module XMonad.Core (
     Layout(..), readsLayout, Typeable, Message,
     SomeMessage(..), fromMessage, LayoutMessages(..),
     StateExtension(..), ExtensionClass(..),
+    FLayer(..), FloatClass(..), FloatDec(..), noFloatDec,
+    insertFDec, deleteByDec, newFDec, deleteByOrig, NoFloatDec(..),
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
-    withDisplay, withWindowSet, isRoot, runOnWorkspaces,
+    withDisplay, withWindowSet, withFLayer, 
+    isRoot, runOnWorkspaces, modifyFLayer,
     getAtom, spawn, spawnPID, xfork, getXMonadDir, recompile, trace, whenJust, whenX,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, atom_WM_TAKE_FOCUS, withWindowAttributes,
     ManageHook, Query(..), runQuery
@@ -66,6 +69,7 @@ data XState = XState
     , waitingUnmap     :: !(M.Map Window Int)            -- ^ the number of expected UnmapEvents
     , dragging         :: !(Maybe (Position -> Position -> X (), X ()))
     , numberlockMask   :: !KeyMask                       -- ^ The numlock modifier
+    , floatingLayer     :: !(FLayer Window)
     , extensibleState  :: !(M.Map String (Either String StateExtension))
     -- ^ stores custom state information.
     --
@@ -98,6 +102,7 @@ data XConfig l = XConfig
     , focusedBorderColor :: !String              -- ^ Focused windows border color. Default: \"#ff0000\"
     , terminal           :: !String              -- ^ The preferred terminal application. Default: \"xterm\"
     , layoutHook         :: !(l Window)          -- ^ The available layouts
+    , floatHook          :: !(FloatDec Window)
     , manageHook         :: !ManageHook          -- ^ The action to run when a new window is opened
     , handleEventHook    :: !(Event -> X All)    -- ^ Handle an X event, returns (All True) if the default handler
                                                  -- should also be run afterwards. mappend should be used for combining
@@ -112,6 +117,8 @@ data XConfig l = XConfig
     , logHook            :: !(X ())              -- ^ The action to perform when the windows set is changed
     , startupHook        :: !(X ())              -- ^ The action to perform on startup
     , focusFollowsMouse  :: !Bool                -- ^ Whether window entry events can change focus
+    , floatFocusFollowsMouse  :: !Bool                -- ^ Whether window entry events can change focus in the floating layer
+    , focusRaisesFloat   :: !Bool                -- ^ Whether focus raises thea float
     , clickJustFocuses   :: !Bool                -- ^ False to make a click which changes focus to be additionally passed to the window
     , clientMask         :: !EventMask           -- ^ The client events that xmonad is interested in
     , rootMask           :: !EventMask           -- ^ The root events that xmonad is interested in
@@ -202,7 +209,11 @@ userCodeDef defValue a = fromMaybe defValue `liftM` userCode a
 
 -- | Run a monad action with the current display settings
 withDisplay :: (Display -> X a) -> X a
-withDisplay   f = asks display >>= f
+withDisplay f = asks display >>= f
+
+-- | Run a monad action with the current floating layer
+withFLayer :: (FLayer Window -> X a) -> X a
+withFLayer f = gets floatingLayer >>= f
 
 -- | Run a monadic action with the current stack set
 withWindowSet :: (WindowSet -> X a) -> X a
@@ -565,3 +576,116 @@ uninstallSignalHandlers = io $ do
     installHandler openEndedPipe Default Nothing
     installHandler sigCHLD Default Nothing
     return ()
+
+--------------------------------------------------------------------
+-- Float Layer data support  
+--------------------------------------------------------------------
+
+-- | Existential type for the floating decorations
+data FloatDec a = forall fc. (FloatClass fc a) => FloatDec (fc a)
+
+-- | the data the floating layer needs in order to function
+data FLayer a = FLayer 
+    { -- map from the floating wins to their decorations, 
+      -- Nothing means the window should not be decorated
+      fWins :: M.Map a (Maybe a)
+      -- map from the decorations to their parent windows
+    , decWins :: M.Map a a
+      -- the Floating decorator
+    , fDec ::  FloatDec a
+    } 
+
+-- | given a decoration window, remove it and it's parent from the floating layer
+deleteByDec:: Ord a => a -> FLayer a -> FLayer a
+deleteByDec dw f@(FLayer fws dcs fd) = case M.lookup dw dcs of
+    Just fw -> FLayer (M.delete fw fws) (M.delete dw dcs) fd
+    otherwise -> f
+
+-- | given a floating window, remove it and it's decoration from the floating layer
+deleteByOrig :: Ord a => a -> FLayer a -> FLayer a
+deleteByOrig ow f@(FLayer fws dcs fd) = case M.lookup ow fws of
+    -- The window is decorated, remove the decoration
+    Just (Just dw) -> FLayer (M.delete ow fws) (M.delete dw dcs) fd
+    -- The window is not decorated
+    Just _ -> FLayer (M.delete ow fws) dcs fd 
+    -- Something funny is happening, just ignore it
+    otherwise -> f
+
+-- | add a given window and maybe it's decoration to the floating layer
+insertFDec :: Ord a => a -> Maybe a -> FLayer a -> FLayer a
+insertFDec ow Nothing (FLayer fs ds fd) = FLayer (M.insert ow Nothing fs) ds fd
+insertFDec ow (Just dw) (FLayer fs ds fd) = 
+    let fs' = M.insert ow (Just dw) fs
+        ds' = M.insert dw ow ds 
+    in FLayer fs' ds' fd
+
+-- | replace the floating layer's decorator
+newFDec :: Maybe (FloatDec a) -> FLayer a -> FLayer a
+newFDec (Just fd) fl = fl {fDec = fd}
+newFDec Nothing fl = fl
+
+-- | convinience wrapper for changes to the floating layer
+modifyFLayer :: (FLayer Window -> FLayer Window) -> X ()
+modifyFLayer f = modify $ \s -> s{floatingLayer = f $ floatingLayer s}
+
+-- | All floating decorations must be instances of this class, none of
+-- the functions need to be implemented
+class FloatClass fc a where
+    -- | handle a some message
+    handleFloatMessage :: fc a -> SomeMessage -> X (Maybe (fc a))
+    handleFloatMessage _ _ = return Nothing
+    
+    -- | Given a window create a new one or return Nothing if the
+    -- window should not be decorated
+    -- | You are are responsible for making sure the window is shown
+    createFDec :: fc a -> a -> X (Maybe a, Maybe (fc a))
+    createFDec _ _ = return (Nothing, Nothing)
+
+    -- | called whenever the parent window is resized or moved
+    -- adjust, the decoration to match
+    moveFDec :: fc a -> a -> a -> X (Maybe (fc a))
+    moveFDec _ _ _ = return Nothing
+
+    -- | called whenever the parent window is hidden. The decoration
+    -- window will be automatically hidden, but not until after this
+    -- function is called
+    hideFDec :: fc a -> a -> a -> X (Maybe (fc a))
+    hideFDec _ _ _ = return Nothing
+
+    -- | called when the parent window is sunk or destroyed. The
+    -- decoration will be automatically destroyed after this function is called
+    removeFDec :: fc a -> a -> a -> X (Maybe (fc a))
+    removeFDec _ _ _ = return Nothing
+
+    -- | called before a parent is about to be dragged, prepare the
+    -- decoration window
+    startDecDrag :: fc a -> a -> a -> X (Maybe (fc a))
+    startDecDrag _ _ _ = return Nothing
+
+    -- | a function that allows a decoration window to respond to changes to
+    -- it's parent window by a dragging function. Return a function that will
+    -- adjust the decoration window in accordance with the parent's new size
+    whileDecDrag :: fc a -> a -> a -> X (Rectangle -> X ())
+    whileDecDrag _ _ _ = return $ \_ -> return ()
+
+    -- | called when the parent is done being dragged
+    finishDecDrag :: fc a -> a -> a -> X (Maybe (fc a))
+    finishDecDrag _ _ _ = return Nothing
+
+-- | default floating layer, no decorations
+data NoFloatDec a = NoFloatDec 
+instance FloatClass NoFloatDec a
+
+--- | return the default floating layer wrapped in a FloatDec
+noFloatDec :: FloatDec Window
+noFloatDec = FloatDec NoFloatDec
+
+instance FloatClass FloatDec Window where
+    handleFloatMessage (FloatDec f)  m = fmap FloatDec <$> handleFloatMessage f m
+    createFDec (FloatDec f) dw  = fmap (fmap FloatDec) <$>  createFDec f dw
+    moveFDec (FloatDec f) ow dw = fmap FloatDec <$> moveFDec f ow dw
+    hideFDec (FloatDec f) ow dw = fmap FloatDec <$> hideFDec f ow dw
+    removeFDec (FloatDec f) ow dw = fmap FloatDec <$> removeFDec f ow dw
+    startDecDrag (FloatDec f) ow dw = fmap FloatDec <$> startDecDrag f ow dw
+    finishDecDrag (FloatDec f) ow dw = fmap FloatDec <$> finishDecDrag f ow dw
+    whileDecDrag (FloatDec f) = whileDecDrag f 

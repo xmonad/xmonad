@@ -28,11 +28,11 @@ module XMonad.Config (defaultConfig, Default(..)) where
 import XMonad.Core as XMonad hiding
     (workspaces,manageHook,keys,logHook,startupHook,borderWidth,mouseBindings
     ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse
-    ,handleEventHook,clickJustFocuses,rootMask,clientMask)
+    ,handleEventHook,clickJustFocuses,focusRaisesFloat,floatFocusFollowsMouse,clientMask,rootMask)
 import qualified XMonad.Core as XMonad
     (workspaces,manageHook,keys,logHook,startupHook,borderWidth,mouseBindings
     ,layoutHook,modMask,terminal,normalBorderColor,focusedBorderColor,focusFollowsMouse
-    ,handleEventHook,clickJustFocuses,rootMask,clientMask)
+    ,handleEventHook,clickJustFocuses,focusRaisesFloat,floatFocusFollowsMouse,clientMask,rootMask)
 
 import XMonad.Layout
 import XMonad.Operations
@@ -147,6 +147,9 @@ layout = tiled ||| Mirror tiled ||| Full
      -- Percent of screen to increment by when resizing panes
      delta   = 3/100
 
+-- |  the decorations applied o floating windows
+floatDecorator :: FloatDec Window
+floatDecorator = noFloatDec
 ------------------------------------------------------------------------
 -- Event Masks:
 
@@ -171,6 +174,14 @@ terminal = "xterm"
 -- | Whether focus follows the mouse pointer.
 focusFollowsMouse :: Bool
 focusFollowsMouse = True
+
+-- | Whether focus follows the mouse pointer for floating windows
+floatFocusFollowsMouse :: Bool
+floatFocusFollowsMouse = False
+
+-- | Whether clicking a floating window raises it
+focusRaisesFloat :: Bool
+focusRaisesFloat = True
 
 -- | Whether a mouse click select the focus or is just passed to the window
 clickJustFocuses :: Bool
@@ -254,26 +265,29 @@ mouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList
 
 instance (a ~ Choose Tall (Choose (Mirror Tall) Full)) => Default (XConfig a) where
   def = XConfig
-    { XMonad.borderWidth        = borderWidth
-    , XMonad.workspaces         = workspaces
-    , XMonad.layoutHook         = layout
-    , XMonad.terminal           = terminal
-    , XMonad.normalBorderColor  = normalBorderColor
-    , XMonad.focusedBorderColor = focusedBorderColor
-    , XMonad.modMask            = defaultModMask
-    , XMonad.keys               = keys
-    , XMonad.logHook            = logHook
-    , XMonad.startupHook        = startupHook
-    , XMonad.mouseBindings      = mouseBindings
-    , XMonad.manageHook         = manageHook
-    , XMonad.handleEventHook    = handleEventHook
-    , XMonad.focusFollowsMouse  = focusFollowsMouse
+    { XMonad.borderWidth            = borderWidth
+    , XMonad.workspaces             = workspaces
+    , XMonad.layoutHook             = layout
+    , XMonad.floatHook              = floatDecorator
+    , XMonad.terminal               = terminal
+    , XMonad.normalBorderColor      = normalBorderColor
+    , XMonad.focusedBorderColor     = focusedBorderColor
+    , XMonad.modMask                = defaultModMask
+    , XMonad.keys                   = keys
+    , XMonad.logHook                = logHook
+    , XMonad.startupHook            = startupHook
+    , XMonad.mouseBindings          = mouseBindings
+    , XMonad.manageHook             = manageHook
+    , XMonad.handleEventHook        = handleEventHook
+    , XMonad.focusFollowsMouse      = focusFollowsMouse
+    , XMonad.floatFocusFollowsMouse = floatFocusFollowsMouse
     , XMonad.clickJustFocuses       = clickJustFocuses
-    , XMonad.clientMask         = clientMask
-    , XMonad.rootMask           = rootMask
+    , XMonad.focusRaisesFloat       = focusRaisesFloat
+    , XMonad.clientMask             = clientMask
+    , XMonad.rootMask               = rootMask
     , XMonad.handleExtraArgs = \ xs theConf -> case xs of
-                [] -> return theConf
-                _ -> fail ("unrecognized flags:" ++ show xs)
+                    [] -> return theConf
+                    _ -> fail ("unrecognized flags:" ++ show xs)
     }
 
 -- | The default set of configuration values itself

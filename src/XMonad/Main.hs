@@ -188,6 +188,7 @@ xmonadNoargs initxmc serializedWinset serializedExtstate = do
     hSetBuffering stdout NoBuffering
 
     let layout = layoutHook xmc
+        floatDec = floatHook xmc
         lreads = readsLayout layout
         initialWinset = let padToLen n xs = take (max n (length xs)) $ xs ++ repeat ""
             in new layout (padToLen (length xinesc) (workspaces xmc)) $ map SD xinesc
@@ -223,6 +224,7 @@ xmonadNoargs initxmc serializedWinset serializedExtstate = do
             , mapped          = S.empty
             , waitingUnmap    = M.empty
             , dragging        = Nothing
+            , floatingLayer   = FLayer M.empty M.empty floatDec
             , extensibleState = extState
             }
     allocaXEvent $ \e ->
@@ -357,7 +359,11 @@ handle e@(ButtonEvent {ev_window = w,ev_event_type = t,ev_button = b })
 -- True in the user's config.
 handle e@(CrossingEvent {ev_window = w, ev_event_type = t})
     | t == enterNotify && ev_mode   e == notifyNormal
-    = whenX (asks $ focusFollowsMouse . config) (focus w)
+    = do 
+        ws <- gets windowset
+        if M.member w (W.floating ws)
+            then whenX (asks $ floatFocusFollowsMouse . config) (focus w)
+            else whenX (asks $ focusFollowsMouse . config) (focus w)
 
 -- left a window, check if we need to focus root
 handle e@(CrossingEvent {ev_event_type = t})
@@ -467,6 +473,8 @@ grabButtons = do
     let grab button mask = io $ grabButton dpy button mask rootw False buttonPressMask
                                            grabModeAsync grabModeSync none none
     io $ ungrabButton dpy anyButton anyModifier rootw
+    io $ grabButton dpy button1 noModMask rootw True buttonPressMask grabModeSync
+            grabModeSync none none
     ems <- extraModifiers
     ba <- asks buttonActions
     mapM_ (\(m,b) -> mapM_ (grab b . (m .|.)) ems) (M.keys $ ba)
