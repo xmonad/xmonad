@@ -1,5 +1,7 @@
 # xmonad: A Tiling Window Manager
 
+[![Build Status](https://travis-ci.org/xmonad/xmonad.svg?branch=master)](https://travis-ci.org/xmonad/xmonad)
+
 [xmonad][] is a tiling window manager for X. Windows are arranged
 automatically to tile the screen without gaps or overlap, maximising
 screen use. Window manager features are accessible from the keyboard:
