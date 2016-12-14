@@ -444,8 +444,12 @@ runOnWorkspaces job = do
 -- directories are considered.  In order of preference:
 --
 --   1. The directory specified in the @XMONAD_CONFIG_DIR@ environment variable.
---   2. The XDG configuration directory.
+--   2. The @XDG_CONFIG_HOME/xmonad@ directory.
 --   3. The @~\/.xmonad@ directory.
+--
+-- The first directory that exists will be used.  If none of the
+-- directories exist then (1) will be used if it is set, otherwise (2)
+-- will be used.  Either way, a directory will be created if necessary.
 getXMonadDir :: MonadIO m => m String
 getXMonadDir =
     findFirstDirWithEnv "XMONAD_CONFIG_DIR"
@@ -457,8 +461,12 @@ getXMonadDir =
 -- directories are considered.  In order of preference:
 --
 --   1. The directory specified in the @XMONAD_CACHE_DIR@ environment variable.
---   2. The XDG cache directory.
+--   2. The @XDG_CACHE_HOME/xmonad@ directory.
 --   3. The @~\/.xmonad@ directory.
+--
+-- The first directory that exists will be used.  If none of the
+-- directories exist then (1) will be used if it is set, otherwise (2)
+-- will be used.  Either way, a directory will be created if necessary.
 getXMonadCacheDir :: MonadIO m => m String
 getXMonadCacheDir =
     findFirstDirWithEnv "XMONAD_CACHE_DIR"
@@ -470,8 +478,12 @@ getXMonadCacheDir =
 -- directories are considered.  In order of preference:
 --
 --   1. The directory specified in the @XMONAD_DATA_DIR@ environment variable.
---   2. The XDG data directory.
+--   2. The @XDG_DATA_HOME/xmonad@ directory.
 --   3. The @~\/.xmonad@ directory.
+--
+-- The first directory that exists will be used.  If none of the
+-- directories exist then (1) will be used if it is set, otherwise (2)
+-- will be used.  Either way, a directory will be created if necessary.
 getXMonadDataDir :: MonadIO m => m String
 getXMonadDataDir =
     findFirstDirWithEnv "XMONAD_DATA_DIR"

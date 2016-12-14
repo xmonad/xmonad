@@ -15,15 +15,30 @@
 
 ### Enhancements
 
-  * The XDG specification is now honored, with fallback support for
-    `~/.xmonad`.  If the traditional `~/.xmonad` directory doesn't
-    exist then the XDG configuration and data directories will be used
-    instead.  Additionally, new environment variables can be used to
-    override `~/.xmonad` and XDG:
+  * You can now control which directory xmonad uses for finding your
+    configuration file and which one is used for storing the compiled
+    version of your configuration.  In order of preference:
 
-      - `XMONAD_CONFIG_DIR`
-      - `XMONAD_CACHE_DIR`
-      - `XMONAD_DATA_DIR`
+      1. New environment variables.  If you want to use these ensure
+         you set the correct environment variable and also create the
+         directory it references:
+
+         - `XMONAD_CONFIG_DIR`
+         - `XMONAD_CACHE_DIR`
+         - `XMONAD_DATA_DIR`
+
+      2. XDG Base Directory Specification directories, if they exist:
+
+         - `XDG_CONFIG_HOME/xmonad`
+         - `XDG_CACHE_HOME/xmonad`
+         - `XDG_DATA_HOME/xmonad`
+
+      3. The `~/.xmonad` directory.
+
+    If none of these directories exist then (1) will be used if it is
+    set, otherwise (2) will be used.  Of course, if neither (1) nor
+    (2) exist but (3) does then (3) will be used just like previous
+    versions of xmonad.
 
     This fixes a few issues, notably #7 and #56.
 
