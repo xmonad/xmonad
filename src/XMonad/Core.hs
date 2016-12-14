@@ -514,7 +514,7 @@ findFirstDirWithEnv envName paths = do
 
 
 -- | Get the name of the file used to store the xmonad window state.
-stateFileName :: MonadIO m => m FilePath
+stateFileName :: (Functor m, MonadIO m) => m FilePath
 stateFileName = (</> "xmonad.state") <$> getXMonadDataDir
 
 -- | 'recompile force', recompile the xmonad configuration file when
