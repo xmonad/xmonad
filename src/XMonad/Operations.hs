@@ -541,8 +541,11 @@ mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     (_, _, _, ox', oy', _, _, _) <- io $ queryPointer d w
     let ox = fromIntegral ox'
         oy = fromIntegral oy'
-    mouseDrag (\ex ey -> io $ moveWindow d w (fromIntegral (fromIntegral (wa_x wa) + (ex - ox)))
-                                             (fromIntegral (fromIntegral (wa_y wa) + (ey - oy))))
+    mouseDrag (\ex ey -> do
+                  io $ moveWindow d w (fromIntegral (fromIntegral (wa_x wa) + (ex - ox)))
+                                      (fromIntegral (fromIntegral (wa_y wa) + (ey - oy)))
+                  float w
+              )
               (float w)
 
 -- | resize the window under the cursor with the mouse while it is dragged
@@ -552,10 +555,12 @@ mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     wa <- io $ getWindowAttributes d w
     sh <- io $ getWMNormalHints d w
     io $ warpPointer d none w 0 0 0 0 (fromIntegral (wa_width wa)) (fromIntegral (wa_height wa))
-    mouseDrag (\ex ey ->
+    mouseDrag (\ex ey -> do
                  io $ resizeWindow d w `uncurry`
                     applySizeHintsContents sh (ex - fromIntegral (wa_x wa),
-                                               ey - fromIntegral (wa_y wa)))
+                                               ey - fromIntegral (wa_y wa))
+                 float w)
+
               (float w)
 
 -- ---------------------------------------------------------------------
