@@ -76,8 +76,10 @@ To use xmonad as your window manager add to your _~/.xinitrc_ file:
 > exec xmonad
 
 #Customization
+
 xmonad is customized in ~/.xmonad/xmonad.hs, and then restarted
-with mod-q.
+with mod-q. (or alternatively you can use the xdg defined config
+directory like ~/.config/xmonad/xmonad.hs)
 
 You can find many extensions to the core feature set in the xmonad-
 contrib package, available through your  package  manager  or  from

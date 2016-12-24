@@ -1,8 +1,10 @@
 == Configuring xmonad ==
 
-xmonad is configured by creating and editing the file:
+xmonad is configured by xmonad.hs the paths searched are:
 
     ~/.xmonad/xmonad.hs
+    $XDG_CONFIG_DIR/xmonad/xmonad.hs
+    ~/.config/xmonad/xmonad.hs
 
 xmonad then uses settings from this file as arguments to the window manager,
 on startup. For a complete example of possible settings, see the file:

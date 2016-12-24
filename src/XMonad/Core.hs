@@ -39,6 +39,7 @@ import Control.Applicative
 import Control.Monad.State
 import Control.Monad.Reader
 import Data.Default
+import System.Environment
 import System.FilePath
 import System.IO
 import System.Info
@@ -440,7 +441,18 @@ runOnWorkspaces job = do
 
 -- | Return the path to @~\/.xmonad@.
 getXMonadDir :: MonadIO m => m String
-getXMonadDir = io $ getAppUserDataDirectory "xmonad"
+getXMonadDir = io $ do folder <- getAppUserDataDirectory "xmonad"
+                       folderExists <- doesDirectoryExist folder
+                       if folderExists
+                           then return folder
+                           else getXdgDirectory "xmonad"
+  where
+    getXdgDirectory suffix = do
+      customXDGConfigDirectory <- lookupEnv "XDG_CONFIG_HOME"
+      configDirectory <- case customXDGConfigDirectory of
+                             Just d -> return d
+                             Nothing -> (</> ".config") <$> getHomeDirectory
+      return (configDirectory </> suffix)
 
 -- | 'recompile force', recompile @~\/.xmonad\/xmonad.hs@ when any of the
 -- following apply:
