@@ -35,10 +35,16 @@
 
       3. The `~/.xmonad` directory.
 
-    If none of these directories exist then (1) will be used if it is
-    set, otherwise (2) will be used.  Of course, if neither (1) nor
-    (2) exist but (3) does then (3) will be used just like previous
-    versions of xmonad.
+    If none of these directories exist then an appropriate directory
+    will be created.  If the relevant environment variable mentioned
+    in step (1) above is set, the referent directory will be created
+    and used.  Otherwise the relevant XDG directory from (2) will be
+    used.
+
+    Note: If the environment variables mentioned in (1) above are not
+    set, the directories in (2) don't exist, and `~/.xmonad` does
+    exist, the traditional behavior of using `~/.xmonad` for
+    everything will be used.
 
     This fixes a few issues, notably #7 and #56.
 
@@ -53,7 +59,8 @@
     need to have newer time stamps than the generated executable in
     order for the build script to be called.
 
-    This is one possible fix for issue #8.
+    This fixes #8.  (One of two possible custom build solutions.  See
+    the next entry for another solution.)
 
   * For users who build their xmonad configuration using tools such as
     cabal or stack, there is another option for executing xmonad.
@@ -70,7 +77,8 @@
     See the documentation for the `launch` function in `XMonad.Main`
     for more details.
 
-    This is another possible solution to issue #8.
+    Fixes #8.  (Second way to have a custom build environment for
+    XMonad.  See previous entry for another solution.)
 
 ## 0.12 (December 14, 2015)
 

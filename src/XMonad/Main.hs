@@ -184,6 +184,8 @@ launch initxmc = do
     -- (ugly, I know)
     xSetErrorHandler -- in C, I'm too lazy to write the binding: dons
 
+    xinesc <- getCleanedScreenInfo dpy
+
     nbc    <- do v            <- initColor dpy $ normalBorderColor  xmc
                  ~(Just nbc_) <- initColor dpy $ normalBorderColor Default.def
                  return (fromMaybe nbc_ v)
@@ -193,7 +195,6 @@ launch initxmc = do
                  return (fromMaybe fbc_ v)
 
     hSetBuffering stdout NoBuffering
-    xinesc <- getCleanedScreenInfo dpy
 
     let layout = layoutHook xmc
         lreads = readsLayout layout

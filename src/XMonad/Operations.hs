@@ -469,7 +469,7 @@ writeStateToFile = do
 readStateFile :: (LayoutClass l Window, Read (l Window)) => XConfig l -> X (Maybe XState)
 readStateFile xmc = do
     path <- stateFileName
-    raw  <- userCode $ io (readFile path <* removeFile path)
+    raw  <- userCode $ io (readFile path)
 
     return $ do
       sf <- maybeRead reads =<< raw
