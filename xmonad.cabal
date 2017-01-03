@@ -70,7 +70,7 @@ library
     build-depends: base < 5 && >=3,
                    containers,
                    data-default,
-                   directory,
+                   directory >= 1.2.3,
                    extensible-exceptions,
                    filepath,
                    setlocale,
