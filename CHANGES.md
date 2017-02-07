@@ -27,24 +27,18 @@
          - `XMONAD_CACHE_DIR`
          - `XMONAD_DATA_DIR`
 
-      2. XDG Base Directory Specification directories, if they exist:
+      2. The `~/.xmonad` directory.
+
+      3. XDG Base Directory Specification directories, if they exist:
 
          - `XDG_CONFIG_HOME/xmonad`
          - `XDG_CACHE_HOME/xmonad`
          - `XDG_DATA_HOME/xmonad`
 
-      3. The `~/.xmonad` directory.
-
-    If none of these directories exist then an appropriate directory
-    will be created.  If the relevant environment variable mentioned
-    in step (1) above is set, the referent directory will be created
-    and used.  Otherwise the relevant XDG directory from (2) will be
-    used.
-
-    Note: If the environment variables mentioned in (1) above are not
-    set, the directories in (2) don't exist, and `~/.xmonad` does
-    exist, the traditional behavior of using `~/.xmonad` for
-    everything will be used.
+    If none of these directories exist then one will be created using
+    the following logic: If the relevant environment variable
+    mentioned in step (1) above is set, the referent directory will be
+    created and used.  Otherwise `~/.xmonad` will be created and used.
 
     This fixes a few issues, notably #7 and #56.
 

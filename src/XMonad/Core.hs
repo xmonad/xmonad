@@ -450,8 +450,8 @@ runOnWorkspaces job = do
 -- preference:
 --
 --   1. The directory specified in the @XMONAD_CONFIG_DIR@ environment variable.
---   2. The @XDG_CONFIG_HOME/xmonad@ directory.
---   3. The @~\/.xmonad@ directory.
+--   2. The @~\/.xmonad@ directory.
+--   3. The @XDG_CONFIG_HOME/xmonad@ directory.
 --
 -- The first directory that exists will be used.  If none of the
 -- directories exist then (1) will be used if it is set, otherwise (2)
@@ -459,8 +459,8 @@ runOnWorkspaces job = do
 getXMonadDir :: MonadIO m => m String
 getXMonadDir =
     findFirstDirWithEnv "XMONAD_CONFIG_DIR"
-      [ getXdgDirectory XdgConfig "xmonad"
-      , getAppUserDataDirectory "xmonad"
+      [ getAppUserDataDirectory "xmonad"
+      , getXdgDirectory XdgConfig "xmonad"
       ]
 
 -- | Return the path to the xmonad cache directory.  This directory is
@@ -470,8 +470,8 @@ getXMonadDir =
 -- Several directories are considered.  In order of preference:
 --
 --   1. The directory specified in the @XMONAD_CACHE_DIR@ environment variable.
---   2. The @XDG_CACHE_HOME/xmonad@ directory.
---   3. The @~\/.xmonad@ directory.
+--   2. The @~\/.xmonad@ directory.
+--   3. The @XDG_CACHE_HOME/xmonad@ directory.
 --
 -- The first directory that exists will be used.  If none of the
 -- directories exist then (1) will be used if it is set, otherwise (2)
@@ -479,8 +479,8 @@ getXMonadDir =
 getXMonadCacheDir :: MonadIO m => m String
 getXMonadCacheDir =
     findFirstDirWithEnv "XMONAD_CACHE_DIR"
-      [ getXdgDirectory XdgCache "xmonad"
-      , getAppUserDataDirectory "xmonad"
+      [ getAppUserDataDirectory "xmonad"
+      , getXdgDirectory XdgCache "xmonad"
       ]
 
 -- | Return the path to the xmonad data directory.  This directory is
@@ -490,8 +490,8 @@ getXMonadCacheDir =
 -- Several directories are considered.  In order of preference:
 --
 --   1. The directory specified in the @XMONAD_DATA_DIR@ environment variable.
---   2. The @XDG_DATA_HOME/xmonad@ directory.
---   3. The @~\/.xmonad@ directory.
+--   2. The @~\/.xmonad@ directory.
+--   3. The @XDG_DATA_HOME/xmonad@ directory.
 --
 -- The first directory that exists will be used.  If none of the
 -- directories exist then (1) will be used if it is set, otherwise (2)
@@ -499,8 +499,8 @@ getXMonadCacheDir =
 getXMonadDataDir :: MonadIO m => m String
 getXMonadDataDir =
     findFirstDirWithEnv "XMONAD_DATA_DIR"
-      [ getXdgDirectory XdgData "xmonad"
-      , getAppUserDataDirectory "xmonad"
+      [ getAppUserDataDirectory "xmonad"
+      , getXdgDirectory XdgData "xmonad"
       ]
 
 -- | Helper function that will find the first existing directory and
