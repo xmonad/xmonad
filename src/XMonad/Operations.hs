@@ -189,7 +189,7 @@ setWMState w v = withDisplay $ \dpy -> do
     io $ changeProperty32 dpy w a a propModeReplace [fromIntegral v, fromIntegral none]
 
 -- | Set the border color using the window's color map, if possible,
--- otherwise use fallback.
+-- otherwise fallback to the color in @Pixel@.
 setWindowBorderWithFallback :: Display -> Window -> String -> Pixel -> X ()
 setWindowBorderWithFallback dpy w color basic = io $
     C.handle fallback $ do
