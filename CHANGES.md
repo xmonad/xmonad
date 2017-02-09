@@ -69,6 +69,8 @@
     Fixes #8.  (Second way to have a custom build environment for
     XMonad.  See previous entry for another solution.)
 
+  * Fixed a crash related to an unhandled getWindowAttributes exception
+
 ## 0.12 (December 14, 2015)
 
   * Compiles with GHC 7.10.2, 7.8.4, and 7.6.3
