@@ -1,6 +1,6 @@
 # Change Log / Release Notes
 
-## 0.13 (Sometime Early 2017)
+## 0.13 (February 10, 2017)
 
 ### Breaking Changes
 
