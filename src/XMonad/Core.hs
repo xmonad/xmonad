@@ -570,19 +570,16 @@ recompile force = io $ do
         src  = cfgdir </> "xmonad.hs"
         lib  = cfgdir </> "lib"
         buildscript = cfgdir </> "build"
+
     libTs <- mapM getModTime . Prelude.filter isSource =<< allFiles lib
-    useBuildscript <- do
-      exists <- doesFileExist buildscript
-      if exists
-        then executable <$> getPermissions buildscript
-        else return False
     srcT <- getModTime src
     binT <- getModTime bin
-    buildScriptT  <- getModTime buildscript
-    let addBuildScriptT = if useBuildscript
-                          then (buildScriptT :)
-                          else id
-    if force || any (binT <) ( addBuildScriptT $ srcT : libTs)
+
+    useBuildscript <- do
+      exists <- doesFileExist buildscript
+      if exists then isExecutable buildscript else return False
+
+    if force || useBuildscript || any (binT <) (srcT : libTs)
       then do
         -- temporarily disable SIGCHLD ignoring:
         uninstallSignalHandlers
@@ -610,6 +607,7 @@ recompile force = io $ do
       else return True
  where getModTime f = E.catch (Just <$> getModificationTime f) (\(SomeException _) -> return Nothing)
        isSource = flip elem [".hs",".lhs",".hsc"] . takeExtension
+       isExecutable f = E.catch (executable <$> getPermissions f) (\(SomeException _) -> return False)
        allFiles t = do
             let prep = map (t</>) . Prelude.filter (`notElem` [".",".."])
             cs <- prep <$> E.catch (getDirectoryContents t) (\(SomeException _) -> return [])

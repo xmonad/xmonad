@@ -48,11 +48,6 @@
     instead of `ghc`.  It takes one argument, the name of the
     executable binary it must produce.
 
-    Note: the build script is called whenever `ghc` would have been
-    called.  That means the `xmonad.hs` file (or any files in `lib`
-    need to have newer time stamps than the generated executable in
-    order for the build script to be called.
-
     This fixes #8.  (One of two possible custom build solutions.  See
     the next entry for another solution.)
 
