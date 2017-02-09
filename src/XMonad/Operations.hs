@@ -632,8 +632,12 @@ type D = (Dimension, Dimension)
 mkAdjust :: Window -> X (D -> D)
 mkAdjust w = withDisplay $ \d -> liftIO $ do
     sh <- getWMNormalHints d w
-    bw <- fmap (fromIntegral . wa_border_width) $ getWindowAttributes d w
-    return $ applySizeHints bw sh
+    wa <- C.try $ getWindowAttributes d w
+    case wa of
+         Left  err -> const (return id) (err :: C.SomeException)
+         Right wa' ->
+            let bw = fromIntegral $ wa_border_width wa'
+            in  return $ applySizeHints bw sh
 
 -- | Reduce the dimensions if needed to comply to the given SizeHints, taking
 -- window borders into account.
