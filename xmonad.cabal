@@ -1,5 +1,5 @@
 name:               xmonad
-version:            0.12
+version:            0.13
 homepage:           http://xmonad.org
 synopsis:           A tiling window manager
 description:
@@ -78,7 +78,7 @@ library
                    process,
                    unix,
                    utf8-string >= 0.3 && < 1.1,
-                   X11>=1.7 && < 1.8
+                   X11>=1.8 && < 1.9
 
     if true
         ghc-options:        -funbox-strict-fields -Wall
