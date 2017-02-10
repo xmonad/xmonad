@@ -64,7 +64,7 @@ We'll now walk through the complete list of toolchain dependencies.
 
 ## Running xmonad
 
-Add:
+If you built XMonad using `cabal` then add:
 
     exec $HOME/.cabal/bin/xmonad
 
@@ -72,7 +72,7 @@ to the last line of your `.xsession` or `.xinitrc` file.
 
 ## Configuring
 
-See the `CONFIG` document.
+See the [CONFIG][] document and the [example configuration file][example-config].
 
 ## XMonadContrib
 
@@ -117,3 +117,5 @@ For a program dispatch menu:
 [xmonadcontrib]: https://hackage.haskell.org/package/xmonad-contrib
 [xmc-prompt-shell]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Prompt-Shell.html
 [platform]: http://haskell.org/platform/
+[example-config]: https://github.com/xmonad/xmonad-testing/blob/master/example-config.hs
+[config]: https://github.com/xmonad/xmonad/blob/master/CONFIG

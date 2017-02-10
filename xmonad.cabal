@@ -17,7 +17,7 @@ license:            BSD3
 license-file:       LICENSE
 author:             Spencer Janssen
 maintainer:         xmonad@haskell.org
-extra-source-files: README.md CHANGES.md TODO CONFIG STYLE
+extra-source-files: README.md CHANGES.md CONFIG STYLE
                     tests/*.hs
                     tests/Properties/*.hs
                     tests/Properties/Layout/*.hs
