@@ -79,7 +79,7 @@ main = do
     Right template <- getDefaultTemplate Nothing "man"
     writeFile "./man/xmonad.1"
         . (manHeader ++)
-        . writeMan def{ writerStandalone = True, writerTemplate = template }
+        . writeMan def{ writerTemplate = Just template }
         $ parsed
     putStrLn "Documentation created: man/xmonad.1"
 
@@ -92,8 +92,7 @@ main = do
                              "<p>Section: xmonad manual (1)<br/>"++
                              "Updated: "++releaseDate++"</p>"++
                              "<hr/>")]
-            , writerStandalone = True
-            , writerTemplate = template
+            , writerTemplate = Just template
             , writerTableOfContents = True }
         $ parsed
     putStrLn "Documentation created: man/xmonad.1.html"
