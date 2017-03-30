@@ -1,5 +1,19 @@
 # Change Log / Release Notes
 
+## 0.14 (Not Yet Released)
+
+### Bug Fixes
+
+  * The state file that xmonad uses while restarting itself is now
+    removed after it is processed.  This fixes a bug that manifested
+    in several different ways:
+
+    - Names of old workspaces would be resurrected after a restart
+    - Screen sizes would be wrong after changing monitor configuration (#90)
+    - `spawnOnce` stopped working (xmonad/xmonad-contrib#155)
+    - Focus did not follow when moving between workspaces (#87)
+    - etc.
+
 ## 0.13 (February 10, 2017)
 
 ### Breaking Changes
