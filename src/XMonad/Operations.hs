@@ -465,14 +465,21 @@ writeStateToFile = do
     catchIO (writeFile path $ show stateData)
 
 -- | Read the state of a previous xmonad instance from a file and
--- return that state.
+-- return that state.  The state file is removed after reading it.
 readStateFile :: (LayoutClass l Window, Read (l Window)) => XConfig l -> X (Maybe XState)
 readStateFile xmc = do
     path <- stateFileName
-    raw  <- userCode $ io (readFile path)
+
+    -- I'm trying really hard here to make sure we read the entire
+    -- contents of the file before it is removed from the file system.
+    sf' <- userCode . io $ do
+        raw <- withFile path ReadMode readStrict
+        return $! maybeRead reads raw
+
+    io (removeFile path)
 
     return $ do
-      sf <- maybeRead reads =<< raw
+      sf <- join sf'
 
       let winset = W.ensureTags layout (workspaces xmc) $ W.mapLayout (fromMaybe layout . maybeRead lreads) (sfWins sf)
           extState = M.fromList . map (second Left) $ sfExt sf
@@ -490,6 +497,9 @@ readStateFile xmc = do
     maybeRead reads' s = case reads' s of
                            [(x, "")] -> Just x
                            _         -> Nothing
+
+    readStrict :: Handle -> IO String
+    readStrict h = hGetContents h >>= \s -> length s `seq` return s
 
 -- | Migrate state from a previously running xmonad instance that used
 -- the older @--resume@ technique.
