@@ -289,7 +289,7 @@ handleWithHook e = do
 handle :: Event -> X ()
 
 -- run window manager command
-handle (KeyEvent {ev_event_type = t, ev_state = m, ev_keycode = code})
+handle KeyEvent {ev_event_type = t, ev_state = m, ev_keycode = code}
     | t == keyPress = withDisplay $ \dpy -> do
         s  <- io $ keycodeToKeysym dpy code 0
         mClean <- cleanMask m
@@ -297,7 +297,7 @@ handle (KeyEvent {ev_event_type = t, ev_state = m, ev_keycode = code})
         userCodeDef () $ whenJust (M.lookup (mClean, s) ks) id
 
 -- manage a new window
-handle (MapRequestEvent    {ev_window = w}) = withDisplay $ \dpy -> do
+handle MapRequestEvent    {ev_window = w} = withDisplay $ \dpy -> do
     withWindowAttributes dpy w $ \wa -> do -- ignore override windows
       -- need to ignore mapping requests by managed windows not on the current workspace
       managed <- isClient w
@@ -305,30 +305,30 @@ handle (MapRequestEvent    {ev_window = w}) = withDisplay $ \dpy -> do
 
 -- window destroyed, unmanage it
 -- window gone,      unmanage it
-handle (DestroyWindowEvent {ev_window = w}) = whenX (isClient w) $ do
+handle DestroyWindowEvent {ev_window = w} = whenX (isClient w) $ do
     unmanage w
     modify (\s -> s { mapped       = S.delete w (mapped s)
                     , waitingUnmap = M.delete w (waitingUnmap s)})
 
 -- We track expected unmap events in waitingUnmap.  We ignore this event unless
 -- it is synthetic or we are not expecting an unmap notification from a window.
-handle (UnmapEvent {ev_window = w, ev_send_event = synthetic}) = whenX (isClient w) $ do
+handle UnmapEvent {ev_window = w, ev_send_event = synthetic} = whenX (isClient w) $ do
     e <- gets (fromMaybe 0 . M.lookup w . waitingUnmap)
-    if (synthetic || e == 0)
+    if synthetic || e == 0
         then unmanage w
         else modify (\s -> s { waitingUnmap = M.update mpred w (waitingUnmap s) })
  where mpred 1 = Nothing
        mpred n = Just $ pred n
 
 -- set keyboard mapping
-handle e@(MappingNotifyEvent {}) = do
+handle e@MappingNotifyEvent {} = do
     io $ refreshKeyboardMapping e
     when (ev_request e `elem` [mappingKeyboard, mappingModifier]) $ do
         setNumlockMask
         grabKeys
 
 -- handle button release, which may finish dragging.
-handle e@(ButtonEvent {ev_event_type = t})
+handle e@ButtonEvent {ev_event_type = t}
     | t == buttonRelease = do
     drag <- gets dragging
     case drag of
@@ -337,14 +337,14 @@ handle e@(ButtonEvent {ev_event_type = t})
         Nothing    -> broadcastMessage e
 
 -- handle motionNotify event, which may mean we are dragging.
-handle e@(MotionEvent {ev_event_type = _t, ev_x = x, ev_y = y}) = do
+handle e@MotionEvent {ev_event_type = _t, ev_x = x, ev_y = y} = do
     drag <- gets dragging
     case drag of
         Just (d,_) -> d (fromIntegral x) (fromIntegral y) -- we're dragging
         Nothing -> broadcastMessage e
 
 -- click on an unfocused window, makes it focused on this workspace
-handle e@(ButtonEvent {ev_window = w,ev_event_type = t,ev_button = b })
+handle e@ButtonEvent {ev_window = w,ev_event_type = t,ev_button = b }
     | t == buttonPress = do
     -- If it's the root window, then it's something we
     -- grabbed in grabButtons. Otherwise, it's click-to-focus.
@@ -362,7 +362,7 @@ handle e@(ButtonEvent {ev_window = w,ev_event_type = t,ev_button = b })
 
 -- entered a normal window: focus it if focusFollowsMouse is set to
 -- True in the user's config.
-handle e@(CrossingEvent {ev_window = w, ev_event_type = t})
+handle e@CrossingEvent {ev_window = w, ev_event_type = t}
     | t == enterNotify && ev_mode   e == notifyNormal
     = whenX (asks $ focusFollowsMouse . config) $ do
         dpy <- asks display
@@ -371,19 +371,19 @@ handle e@(CrossingEvent {ev_window = w, ev_event_type = t})
         when (w == w') (focus w)
 
 -- left a window, check if we need to focus root
-handle e@(CrossingEvent {ev_event_type = t})
+handle e@CrossingEvent {ev_event_type = t}
     | t == leaveNotify
     = do rootw <- asks theRoot
          when (ev_window e == rootw && not (ev_same_screen e)) $ setFocusX rootw
 
 -- configure a window
-handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
+handle e@ConfigureRequestEvent {ev_window = w} = withDisplay $ \dpy -> do
     ws <- gets windowset
     bw <- asks (borderWidth . config)
 
     if M.member w (floating ws)
         || not (member w ws)
-        then do io $ configureWindow dpy w (ev_value_mask e) $ WindowChanges
+        then do io $ configureWindow dpy w (ev_value_mask e) WindowChanges
                     { wc_x            = ev_x e
                     , wc_y            = ev_y e
                     , wc_width        = ev_width e
@@ -401,16 +401,16 @@ handle e@(ConfigureRequestEvent {ev_window = w}) = withDisplay $ \dpy -> do
     io $ sync dpy False
 
 -- configuration changes in the root may mean display settings have changed
-handle (ConfigureEvent {ev_window = w}) = whenX (isRoot w) rescreen
+handle ConfigureEvent {ev_window = w} = whenX (isRoot w) rescreen
 
 -- property notify
-handle event@(PropertyEvent { ev_event_type = t, ev_atom = a })
+handle event@PropertyEvent { ev_event_type = t, ev_atom = a }
     | t == propertyNotify && a == wM_NAME = asks (logHook . config) >>= userCodeDef () >>
                                          broadcastMessage event
 
 handle e@ClientMessageEvent { ev_message_type = mt } = do
     a <- getAtom "XMONAD_RESTART"
-    if (mt == a)
+    if mt == a
         then restart "xmonad" True
         else broadcastMessage e
 
@@ -480,7 +480,7 @@ grabButtons = do
     io $ ungrabButton dpy anyButton anyModifier rootw
     ems <- extraModifiers
     ba <- asks buttonActions
-    mapM_ (\(m,b) -> mapM_ (grab b . (m .|.)) ems) (M.keys $ ba)
+    mapM_ (\(m,b) -> mapM_ (grab b . (m .|.)) ems) (M.keys ba)
 
 -- | @replace@ to signals compliant window managers to exit.
 replace :: Display -> ScreenNumber -> Window -> IO ()

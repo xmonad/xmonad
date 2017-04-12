@@ -182,7 +182,7 @@ clickJustFocuses = True
 -- (The comment formatting character is used when generating the manpage)
 --
 keys :: XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
-keys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
+keys conf@XConfig {XMonad.modMask = modMask} = M.fromList $
     -- launching and killing programs
     [ ((modMask .|. shiftMask, xK_Return), spawn $ XMonad.terminal conf) -- %! Launch terminal
     , ((modMask,               xK_p     ), spawn "dmenu_run") -- %! Launch dmenu
@@ -218,7 +218,7 @@ keys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask              , xK_period), sendMessage (IncMasterN (-1))) -- %! Deincrement the number of windows in the master area
 
     -- quit, or restart
-    , ((modMask .|. shiftMask, xK_q     ), io (exitWith ExitSuccess)) -- %! Quit xmonad
+    , ((modMask .|. shiftMask, xK_q     ), io exitSuccess) -- %! Quit xmonad
     , ((modMask              , xK_q     ), spawn "if type xmonad; then xmonad --recompile && xmonad --restart; else xmessage xmonad not in \\$PATH: \"$PATH\"; fi") -- %! Restart xmonad
 
     , ((modMask .|. shiftMask, xK_slash ), spawn ("echo \"" ++ help ++ "\" | xmessage -file -")) -- %! Run xmessage with a summary of the default keybindings (useful for beginners)
@@ -240,7 +240,7 @@ keys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
 
 -- | Mouse bindings: default actions bound to mouse events
 mouseBindings :: XConfig Layout -> M.Map (KeyMask, Button) (Window -> X ())
-mouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList
+mouseBindings XConfig {XMonad.modMask = modMask} = M.fromList
     -- mod-button1 %! Set the window to floating mode and move by dragging
     [ ((modMask, button1), \w -> focus w >> mouseMoveWindow w
                                           >> windows W.shiftMaster)
