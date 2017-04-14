@@ -60,7 +60,11 @@ We'll now walk through the complete list of toolchain dependencies.
     library headers. On many platforms, these come pre-installed. For
     others, such as Debian, you can get them from your package manager:
 
-        $ apt-get install libx11-dev libxinerama-dev libxext-dev
+        $ apt-get install libx11-dev libxinerama-dev libxext-dev libxrandr-dev
+
+Then build and install with:
+
+    $ cabal install
 
 ## Running xmonad
 
