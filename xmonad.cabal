@@ -131,3 +131,20 @@ test-suite properties
                     X11,
                     xmonad
     main-is: Properties.hs
+    other-modules:  Instances
+                    Properties.Delete
+                    Properties.Failure
+                    Properties.Floating
+                    Properties.Focus
+                    Properties.GreedyView
+                    Properties.Insert
+                    Properties.Layout.Full
+                    Properties.Layout.Tall
+                    Properties.Screen
+                    Properties.Shift
+                    Properties.Stack
+                    Properties.StackSet
+                    Properties.Swap
+                    Properties.View
+                    Properties.Workspace
+                    Utils
