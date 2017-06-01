@@ -163,7 +163,7 @@ newtype Query a = Query (ReaderT Window X a)
     deriving (Functor, Applicative, Monad, MonadReader Window, MonadIO)
 
 runQuery :: Query a -> Window -> X a
-runQuery (Query m) w = runReaderT m w
+runQuery (Query m) = runReaderT m
 
 instance Monoid a => Monoid (Query a) where
     mempty  = return mempty
