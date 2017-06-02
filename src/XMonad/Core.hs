@@ -23,7 +23,7 @@ module XMonad.Core (
     Layout(..), readsLayout, Typeable, Message,
     SomeMessage(..), fromMessage, LayoutMessages(..),
     StateExtension(..), ExtensionClass(..),
-    runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
+    runX, catchX, finallyX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
     getAtom, spawn, spawnPID, xfork, recompile, trace, whenJust, whenX,
     getXMonadDir, getXMonadCacheDir, getXMonadDataDir, stateFileName,
@@ -188,6 +188,13 @@ catchX job errcase = do
                         _ -> do hPrint stderr e; runX c st errcase
     put s'
     return a
+
+-- | Run 'job' in the 'X' monad and then execute 'cleanup'.  In case
+-- of exception, 'cleanup' is executed anyway.
+--
+-- In case of no exception, return the return value of 'job'.
+finallyX :: X a -> X a -> X a
+finallyX job cleanup = catchX (job >>= \r -> cleanup >> return r) cleanup
 
 -- | Execute the argument, catching all exceptions.  Either this function or
 -- 'catchX' should be used at all callsites of user customized code.
