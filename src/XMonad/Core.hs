@@ -1,5 +1,5 @@
 {-# LANGUAGE ExistentialQuantification, FlexibleInstances, GeneralizedNewtypeDeriving,
-             MultiParamTypeClasses, TypeSynonymInstances, CPP, DeriveDataTypeable #-}
+             MultiParamTypeClasses, TypeSynonymInstances, DeriveDataTypeable #-}
 
 -----------------------------------------------------------------------------
 -- |
