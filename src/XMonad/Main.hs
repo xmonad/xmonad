@@ -471,7 +471,7 @@ grabKeys = do
          forM_ (keysymToKeycodes sym) $ \kc ->
               mapM_ (grab kc . (mask .|.)) =<< extraModifiers
 
--- | XXX comment me
+-- | Grab the buttons
 grabButtons :: X ()
 grabButtons = do
     XConf { display = dpy, theRoot = rootw } <- ask
