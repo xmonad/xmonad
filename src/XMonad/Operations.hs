@@ -355,18 +355,7 @@ setFocusX w = withWindowSet $ \ws -> do
 
     when ((inputHintSet && wmh_input hints) || (not inputHintSet)) $
       io $ do setInputFocus dpy w revertToPointerRoot 0
-    when (wmtf `elem` protocols) $
-      io $ allocaXEvent $ \ev -> do
-        setEventType ev clientMessage
-        setClientMessageEvent ev w wmprot 32 wmtf $ maybe currentTime event_time currevt
-        sendEvent dpy w False noEventMask ev
-        where event_time ev =
-                if (ev_event_type ev) `elem` timedEvents then
-                  ev_time ev
-                else
-                  currentTime
-              timedEvents = [ keyPress, keyRelease, buttonPress, buttonRelease, enterNotify, leaveNotify, selectionRequest ]
-
+    
 ------------------------------------------------------------------------
 -- Message handling
 
