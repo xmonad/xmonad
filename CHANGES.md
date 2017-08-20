@@ -1,5 +1,10 @@
 # Change Log / Release Notes
 
+## (Changes)
+### Bug Fixes
+	*When using two pointers (MPX) clicking on a window with the second, non-default pointer will set the keyboard focus on said window to the intended pointer and default. Now only the intended pointer focus is set.
+	*Focus follows mouse with second pointer
+
 ## 0.14 (Not Yet Released)
 
 ### Bug Fixes
