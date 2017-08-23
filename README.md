@@ -72,7 +72,7 @@ to the last line of your `.xsession` or `.xinitrc` file.
 
 ## Configuring
 
-See the [CONFIG][] document and the [example configuration file][example-config].
+See the [CONFIG][] document and the [example configuration file](https://github.com/xmonad/xmonad-contrib/blob/master/XMonad/Config/Example.hs).
 
 ## XMonadContrib
 
