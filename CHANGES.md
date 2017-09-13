@@ -14,6 +14,10 @@
     - Focus did not follow when moving between workspaces (#87)
     - etc.
 
+  * Recover old behavior (in 0.12) when `focusFollowsMouse == True`:
+    the focus follows when the mouse enters another workspace
+    but not moving into any window.
+
 ## 0.13 (February 10, 2017)
 
 ### Breaking Changes
