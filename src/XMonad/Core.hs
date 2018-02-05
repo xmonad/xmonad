@@ -39,6 +39,7 @@ import qualified Control.Exception.Extensible as E
 import Control.Applicative
 import Control.Monad.State
 import Control.Monad.Reader
+import Data.Semigroup
 import Data.Default
 import System.FilePath
 import System.IO
@@ -56,7 +57,7 @@ import Graphics.X11.Xlib.Extras (getWindowAttributes, WindowAttributes, Event)
 import Data.Typeable
 import Data.List ((\\))
 import Data.Maybe (isJust,fromMaybe)
-import Data.Monoid
+import Data.Monoid hiding ((<>))
 
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -151,6 +152,9 @@ instance Applicative X where
   pure = return
   (<*>) = ap
 
+instance Semigroup a => Semigroup (X a) where
+    (<>) = liftM2 (<>)
+
 instance (Monoid a) => Monoid (X a) where
     mempty  = return mempty
     mappend = liftM2 mappend
@@ -164,6 +168,9 @@ newtype Query a = Query (ReaderT Window X a)
 
 runQuery :: Query a -> Window -> X a
 runQuery (Query m) w = runReaderT m w
+
+instance Semigroup a => Semigroup (Query a) where
+    (<>) = liftM2 (<>)
 
 instance Monoid a => Monoid (Query a) where
     mempty  = return mempty
