@@ -20,6 +20,9 @@
 
   * Compiles with GHC 8.4.0
 
+  * Restored compatability with GHC version prior to 8.0.1 by removing the
+    dependency on directory version 1.2.3.
+
 ## 0.13 (February 10, 2017)
 
 ### Breaking Changes

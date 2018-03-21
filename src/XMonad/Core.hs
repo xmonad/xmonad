@@ -58,6 +58,7 @@ import Data.Typeable
 import Data.List ((\\))
 import Data.Maybe (isJust,fromMaybe)
 import Data.Monoid hiding ((<>))
+import System.Environment (lookupEnv)
 
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -467,7 +468,7 @@ getXMonadDir :: MonadIO m => m String
 getXMonadDir =
     findFirstDirWithEnv "XMONAD_CONFIG_DIR"
       [ getAppUserDataDirectory "xmonad"
-      , getXdgDirectory XdgConfig "xmonad"
+      , getXDGDirectory XDGConfig "xmonad"
       ]
 
 -- | Return the path to the xmonad cache directory.  This directory is
@@ -487,7 +488,7 @@ getXMonadCacheDir :: MonadIO m => m String
 getXMonadCacheDir =
     findFirstDirWithEnv "XMONAD_CACHE_DIR"
       [ getAppUserDataDirectory "xmonad"
-      , getXdgDirectory XdgCache "xmonad"
+      , getXDGDirectory XDGCache "xmonad"
       ]
 
 -- | Return the path to the xmonad data directory.  This directory is
@@ -507,7 +508,7 @@ getXMonadDataDir :: MonadIO m => m String
 getXMonadDataDir =
     findFirstDirWithEnv "XMONAD_DATA_DIR"
       [ getAppUserDataDirectory "xmonad"
-      , getXdgDirectory XdgData "xmonad"
+      , getXDGDirectory XDGData "xmonad"
       ]
 
 -- | Helper function that will find the first existing directory and
@@ -543,6 +544,27 @@ findFirstDirWithEnv envName paths = do
       Nothing      -> findFirstDirOf paths
       Just envPath -> findFirstDirOf (return envPath:paths)
 
+-- | Helper function to retrieve the various XDG directories.
+-- This has been based on the implementation shipped with GHC version 8.0.1 or
+-- higher. Put here to preserve compatibility with older GHC versions.
+getXDGDirectory :: XDGDirectory -> FilePath -> IO FilePath
+getXDGDirectory xdgDir suffix =
+  normalise . (</> suffix) <$>
+  case xdgDir of
+    XDGData   -> get "XDG_DATA_HOME"   ".local/share"
+    XDGConfig -> get "XDG_CONFIG_HOME" ".config"
+    XDGCache  -> get "XDG_CACHE_HOME"  ".cache"
+  where
+    get name fallback = do
+      env <- lookupEnv name
+      case env of
+        Nothing -> fallback'
+        Just path
+          | isRelative path -> fallback'
+          | otherwise -> return path
+      where
+        fallback' = (</> fallback) <$> getHomeDirectory
+data XDGDirectory = XDGData | XDGConfig | XDGCache
 
 -- | Get the name of the file used to store the xmonad window state.
 stateFileName :: (Functor m, MonadIO m) => m FilePath
