@@ -18,7 +18,7 @@
     the focus follows when the mouse enters another workspace
     but not moving into any window.
 
-  * Compiles with GHC 8.4.0
+  * Compiles with GHC 8.4.1
 
   * Restored compatability with GHC version prior to 8.0.1 by removing the
     dependency on directory version 1.2.3.
