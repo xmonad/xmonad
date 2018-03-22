@@ -100,8 +100,9 @@ script:
   - cabal new-build -w ${HC} ${TEST} ${BENCH} all
   - if [ "x$TEST" = "x--enable-tests" ]; then cabal new-test -w ${HC} ${TEST} ${BENCH} all; fi
 
-  # cabal check
-  - (cd xmonad-* && cabal check)
+  # We don't do cabal check because it is unhappy about a convenience flag for
+  #   building with profiling.
+  # - (cd xmonad-* && cabal check)
 
   # haddock
   - rm -rf ./dist-newstyle
