@@ -116,9 +116,10 @@ executable generatemanpage
     if flag(generatemanpage)
         build-depends: base,
                        Cabal,
-                       pandoc,
+                       pandoc >= 2,
                        pretty,
-                       regex-posix
+                       regex-posix,
+                       text
     else
         buildable: False
 
