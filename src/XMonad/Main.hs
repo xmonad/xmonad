@@ -367,10 +367,9 @@ handle e@(CrossingEvent {ev_window = w, ev_event_type = t})
     = whenX (asks $ focusFollowsMouse . config) $ do
         dpy <- asks display
         root <- asks theRoot
-        (_, _, w', _, _, _, _, _) <- io $ queryPointer dpy root
-        -- when Xlib cannot find a child that contains the pointer,
-        -- it returns None(0)
-        when (w' == 0 || w == w') (focus w)
+        --(_, _, w', _, _, _, _, _) <- io $ queryPointer dpy root
+        --when (w == w') (focus w)
+        focus w
 
 -- left a window, check if we need to focus root
 handle e@(CrossingEvent {ev_event_type = t})
