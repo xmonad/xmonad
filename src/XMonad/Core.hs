@@ -606,9 +606,36 @@ recompile force = io $ do
 
     useBuildscript <- do
       exists <- doesFileExist buildscript
-      if exists then isExecutable buildscript else return False
+      if exists
+        then do
+          isExe <- isExecutable buildscript
+          if isExe
+            then do
+              trace $ "XMonad will use build script at " ++ show buildscript ++ " to recompile."
+              return True
+            else do
+              trace $ unlines
+                [ "XMonad will not use build script, because " ++ show buildscript ++ " is not executable."
+                , "Suggested resolution to use it: chmod u+x " ++ show buildscript
+                ]
+              return False
+        else do
+          trace $
+            "XMonad will use ghc to recompile, because " ++ show buildscript ++ " does not exist."
+          return False
 
-    if force || useBuildscript || any (binT <) (srcT : libTs)
+    shouldRecompile <-
+      if useBuildscript || force
+        then return True
+        else if any (binT <) (srcT : libTs)
+          then do
+            trace "XMonad doing recompile because some files have changed."
+            return True
+          else do
+            trace "XMonad skipping recompile because it is not forced (e.g. via --recompile), and neither xmonad.hs nor any *.hs / *.lhs / *.hsc files in lib/ have been changed."
+            return False
+
+    if shouldRecompile
       then do
         -- temporarily disable SIGCHLD ignoring:
         uninstallSignalHandlers
@@ -621,17 +648,19 @@ recompile force = io $ do
         installSignalHandlers
 
         -- now, if it fails, run xmessage to let the user know:
-        when (status /= ExitSuccess) $ do
-            ghcErr <- readFile err
-            let msg = unlines $
-                    ["Error detected while loading xmonad configuration file: " ++ src]
-                    ++ lines (if null ghcErr then show status else ghcErr)
-                    ++ ["","Please check the file for errors."]
-            -- nb, the ordering of printing, then forking, is crucial due to
-            -- lazy evaluation
-            hPutStrLn stderr msg
-            forkProcess $ executeFile "xmessage" True ["-default", "okay", replaceUnicode msg] Nothing
-            return ()
+        if status == ExitSuccess
+            then trace "XMonad recompilation process exited with success!"
+            else do
+                ghcErr <- readFile err
+                let msg = unlines $
+                        ["Error detected while loading xmonad configuration file: " ++ src]
+                        ++ lines (if null ghcErr then show status else ghcErr)
+                        ++ ["","Please check the file for errors."]
+                -- nb, the ordering of printing, then forking, is crucial due to
+                -- lazy evaluation
+                hPutStrLn stderr msg
+                forkProcess $ executeFile "xmessage" True ["-default", "okay", replaceUnicode msg] Nothing
+                return ()
         return (status == ExitSuccess)
       else return True
  where getModTime f = E.catch (Just <$> getModificationTime f) (\(SomeException _) -> return Nothing)
