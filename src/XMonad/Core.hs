@@ -551,13 +551,13 @@ getXDGDirectory :: XDGDirectory -> FilePath -> IO FilePath
 getXDGDirectory xdgDir suffix =
   normalise . (</> suffix) <$>
   case xdgDir of
-    XDGData   -> get "XDG_DATA_HOME"   ".local/share"
-    XDGConfig -> get "XDG_CONFIG_HOME" ".config"
-    XDGCache  -> get "XDG_CACHE_HOME"  ".cache"
+    XDGData   -> getEnvPath "XDG_DATA_HOME"   ".local/share"
+    XDGConfig -> getEnvPath "XDG_CONFIG_HOME" ".config"
+    XDGCache  -> getEnvPath "XDG_CACHE_HOME"  ".cache"
   where
-    get name fallback = do
-      env <- lookupEnv name
-      case env of
+    getEnvPath name fallback = do
+      val <- lookupEnv name
+      case val of
         Nothing -> fallback'
         Just path
           | isRelative path -> fallback'
