@@ -221,9 +221,9 @@ keys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask .|. shiftMask, xK_q     ), io (exitWith ExitSuccess)) -- %! Quit xmonad
     , ((modMask              , xK_q     ), spawn "if type xmonad; then xmonad --recompile && xmonad --restart; else xmessage xmonad not in \\$PATH: \"$PATH\"; fi") -- %! Restart xmonad
 
-    , ((modMask .|. shiftMask, xK_slash ), helpCommand)
+    , ((modMask .|. shiftMask, xK_slash ), helpCommand) -- %! Run xmessage with a summary of the default keybindings (useful for beginners)
     -- repeat the binding for non-American layout keyboards
-    , ((modMask              , xK_question), helpCommand)
+    , ((modMask              , xK_question), helpCommand) -- %! Run xmessage with a summary of the default keybindings (useful for beginners)
     ]
     ++
     -- mod-[1..9] %! Switch to workspace N
@@ -239,7 +239,7 @@ keys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
         , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
   where
     helpCommand :: X ()
-    helpCommand = spawn ("echo " ++ show help ++ " | xmessage -file -")  -- %! Run xmessage with a summary of the default keybindings (useful for beginners)
+    helpCommand = spawn ("echo " ++ show help ++ " | xmessage -file -")
 
 -- | Mouse bindings: default actions bound to mouse events
 mouseBindings :: XConfig Layout -> M.Map (KeyMask, Button) (Window -> X ())
