@@ -80,7 +80,7 @@ library
                    process,
                    unix,
                    utf8-string >= 0.3 && < 1.1,
-                   X11>=1.8 && < 1.9,
+                   X11>=1.8 && < 1.10,
                    semigroups
 
     if true
