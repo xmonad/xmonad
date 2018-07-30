@@ -1,5 +1,16 @@
 # Change Log / Release Notes
 
+## unknown (unknown)
+
+### Breaking Changes
+
+  * The cabal build no longer installs xmonad.hs, xmonad.1, and xmonad.1.html
+    as data files. The location cabal picks for chose files isn't useful as
+    standard tools like man(1) won't find them there. Instead, we rely on
+    distributors to pick up the files from the source tarball during the build
+    and to install them into proper locations where their users expect them.
+    [https://github.com/xmonad/xmonad/pull/127]
+
 ## 0.14 (July 30, 2018)
 
 ### Bug Fixes
