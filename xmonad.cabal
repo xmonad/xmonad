@@ -52,11 +52,6 @@ flag generatemanpage
     default: False
     manual: True
 
-flag profiling
-     description: Enable profiling
-     default: False
-     manual: True
-
 library
     hs-source-dirs:     src
     exposed-modules:    XMonad
@@ -91,11 +86,6 @@ library
     if impl(ghc < 7.0.0)
         extensions: UndecidableInstances
         -- needed for XMonad.Config's instance Default (XConfig a)
-
-
-    if flag(profiling)
-        ghc-prof-options:   -prof -auto-all
-
     if flag(testing)
         buildable: False
 
