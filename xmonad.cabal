@@ -36,8 +36,6 @@ tested-with:
                     GHC==8.2.2,
                     GHC==8.4.3
 
-data-files:         man/xmonad.hs, man/xmonad.1, man/xmonad.1.html
-
 source-repository head
   type:     git
   location: https://github.com/xmonad/xmonad
