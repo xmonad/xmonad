@@ -28,7 +28,7 @@ import Data.Ratio
 import qualified Data.Map as M
 import qualified Data.Set as S
 
-import Control.Applicative
+import Control.Applicative((<$>), (<*>))
 import Control.Arrow (second)
 import Control.Monad.Reader
 import Control.Monad.State

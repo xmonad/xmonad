@@ -197,7 +197,6 @@ launch initxmc = do
     hSetBuffering stdout NoBuffering
 
     let layout = layoutHook xmc
-        lreads = readsLayout layout
         initialWinset = let padToLen n xs = take (max n (length xs)) $ xs ++ repeat ""
             in new layout (padToLen (length xinesc) (workspaces xmc)) $ map SD xinesc
 
