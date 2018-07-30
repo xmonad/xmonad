@@ -27,6 +27,9 @@ import Control.Applicative
 import Text.Regex.Posix
 import Data.Char
 import Data.List
+import Control.Monad.IO.Class (liftIO)
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 
 import Distribution.PackageDescription.Parse
 import Distribution.Verbosity
@@ -35,9 +38,9 @@ import Distribution.PackageDescription
 import Text.PrettyPrint.HughesPJ
 import Distribution.Text
 
-import Text.Pandoc -- works with 1.15.x
+import Text.Pandoc -- works with 2.1
 
-releaseDate = "31 December 2012"
+releaseDate = "5 July 2018"
 
 trim :: String -> String
 trim = reverse . dropWhile isSpace . reverse . dropWhile isSpace
@@ -68,31 +71,34 @@ main = do
     keybindings <- (intercalate "\n\n" . map markdownDefn . allBindings)
                     `liftM` readFile "./src/XMonad/Config.hs"
 
-    let manHeader = unwords [".TH xmonad 1","\""++releaseDate++"\"",releaseName,"\"xmonad manual\""]
+    let manHeader = T.pack .
+                    unwords
+                    $ [".TH xmonad 1","\""++releaseDate++"\"",releaseName,"\"xmonad manual\""]
 
-    Right parsed <- readMarkdown def
-        . unlines
-        . replace "___KEYBINDINGS___" keybindings
-        . lines
-        <$> readFile "./man/xmonad.1.markdown"
+    markdownSource <- readFile "./man/xmonad.1.markdown"
 
-    Right template <- getDefaultTemplate Nothing "man"
-    writeFile "./man/xmonad.1"
-        . (manHeader ++)
-        . writeMan def{ writerTemplate = Just template }
-        $ parsed
-    putStrLn "Documentation created: man/xmonad.1"
+    runIOorExplode $ do
+        parsed <- readMarkdown def
+            . T.pack
+            . unlines
+            . replace "___KEYBINDINGS___" keybindings
+            . lines
+            $ markdownSource
 
-    Right template <- getDefaultTemplate Nothing "html"
-    writeFile "./man/xmonad.1.html"
-        . writeHtmlString def
-            { writerVariables =
-                        [("include-before"
-                            ,"<h1>"++releaseName++"</h1>"++
-                             "<p>Section: xmonad manual (1)<br/>"++
-                             "Updated: "++releaseDate++"</p>"++
-                             "<hr/>")]
-            , writerTemplate = Just template
-            , writerTableOfContents = True }
-        $ parsed
-    putStrLn "Documentation created: man/xmonad.1.html"
+        manTemplate <- getDefaultTemplate "man"
+        manBody <- writeMan def { writerTemplate = Just manTemplate } parsed
+        liftIO $ TIO.writeFile "./man/xmonad.1" $ T.append manHeader manBody
+        liftIO $ putStrLn "Documentation created: man/xmonad.1"
+
+        htmltemplate <- getDefaultTemplate "html"
+        htmlBody <- writeHtml5String def
+                { writerVariables =
+                            [("include-before"
+                                ,"<h1>"++releaseName++"</h1>"++
+                                 "<p>Section: xmonad manual (1)<br/>"++
+                                 "Updated: "++releaseDate++"</p>"++
+                                 "<hr/>")]
+                , writerTemplate = Just htmltemplate
+                , writerTableOfContents = True } parsed
+        liftIO $ TIO.writeFile "./man/xmonad.1.html" htmlBody
+        liftIO $ putStrLn "Documentation created: man/xmonad.1.html"
