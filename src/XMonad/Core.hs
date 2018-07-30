@@ -73,7 +73,7 @@ data XState = XState
     , extensibleState  :: !(M.Map String (Either String StateExtension))
     -- ^ stores custom state information.
     --
-    -- The module "XMonad.Utils.ExtensibleState" in xmonad-contrib
+    -- The module "XMonad.Util.ExtensibleState" in xmonad-contrib
     -- provides additional information and a simple interface for using this.
     }
 
