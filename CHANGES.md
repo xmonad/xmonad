@@ -1,6 +1,6 @@
 # Change Log / Release Notes
 
-## 0.14 (Not Yet Released)
+## 0.14 (July 30, 2018)
 
 ### Bug Fixes
 
