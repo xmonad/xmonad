@@ -21,7 +21,7 @@ import XMonad.Layout (Full(..))
 import qualified XMonad.StackSet as W
 
 import Data.Maybe
-import Data.Monoid          (Endo(..))
+import Data.Monoid          (Endo(..),Any(..))
 import Data.List            (nub, (\\), find)
 import Data.Bits            ((.|.), (.&.), complement, testBit)
 import Data.Ratio
@@ -30,6 +30,7 @@ import qualified Data.Set as S
 
 import Control.Applicative((<$>), (<*>))
 import Control.Arrow (second)
+import Control.Monad (void)
 import Control.Monad.Reader
 import Control.Monad.State
 import qualified Control.Exception.Extensible as C
@@ -175,6 +176,25 @@ windows f = do
     isMouseFocused <- asks mouseFocused
     unless isMouseFocused $ clearEvents enterWindowMask
     asks (logHook . config) >>= userCodeDef ()
+
+-- | Modify the @WindowSet@ in state with no special handling.
+modifyWindowSet :: (WindowSet -> WindowSet) -> X ()
+modifyWindowSet f = modify $ \xst -> xst { windowset = f (windowset xst) }
+
+-- | Perform an @X@ action and check its return value against a predicate p.
+-- If p holds, unwind changes to the @WindowSet@ and replay them using @windows@.
+windowBracket :: (a -> Bool) -> X a -> X a
+windowBracket p action = withWindowSet $ \old -> do
+  a <- action
+  when (p a) . withWindowSet $ \new -> do
+    modifyWindowSet $ \_ -> old
+    windows         $ \_ -> new
+  return a
+
+-- | A version of @windowBracket@ that discards the return value, and handles an
+-- @X@ action reporting its need for refresh via @Any@.
+windowBracket_ :: X Any -> X ()
+windowBracket_ = void . windowBracket getAny
 
 -- | Produce the actual rectangle from a screen and a ratio on that screen.
 scaleRationalRect :: Rectangle -> W.RationalRect -> Rectangle
@@ -371,15 +391,16 @@ setFocusX w = withWindowSet $ \ws -> do
 -- Message handling
 
 -- | Throw a message to the current 'LayoutClass' possibly modifying how we
--- layout the windows, then refresh.
+-- layout the windows, in which case changes are handled through a refresh.
 sendMessage :: Message a => a -> X ()
-sendMessage a = do
+sendMessage a = windowBracket_ $ do
     w <- W.workspace . W.current <$> gets windowset
     ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
     whenJust ml' $ \l' ->
-        windows $ \ws -> ws { W.current = (W.current ws)
+        modifyWindowSet $ \ws -> ws { W.current = (W.current ws)
                                 { W.workspace = (W.workspace $ W.current ws)
                                   { W.layout = l' }}}
+    return (Any $ isJust ml')
 
 -- | Send a message to all layouts, without refreshing.
 broadcastMessage :: Message a => a -> X ()
