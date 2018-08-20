@@ -113,12 +113,18 @@ usage = do
 --
 buildLaunch ::  IO ()
 buildLaunch = do
-    recompile False
-    dir  <- getXMonadDataDir
-    args <- getArgs
     whoami <- getProgName
     let compiledConfig = "xmonad-"++arch++"-"++os
-    unless (whoami == compiledConfig) $
+    unless (whoami == compiledConfig) $ do
+      trace $ concat
+        [ "XMonad is recompiling and replacing itself another XMonad process because the current process is called "
+        , show whoami
+        , " but the compiled configuration should be called "
+        , show compiledConfig
+        ]
+      recompile False
+      dir  <- getXMonadDataDir
+      args <- getArgs
       executeFile (dir </> compiledConfig) False args Nothing
 
 sendRestart :: IO ()

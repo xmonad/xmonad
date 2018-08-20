@@ -43,6 +43,18 @@
   * Restored compatability with GHC version prior to 8.0.1 by removing the
     dependency on directory version 1.2.3.
 
+  * xmonad no longer always recompile on startup. Now it only does so if the
+    executable does not have the name that would be used for the compilation
+    output. The purpose of recompiling and executing the results in this case is
+    so that the `xmonad` executable in the package can be used with custom
+    configurations.
+
+### Enhancements
+
+  * Whenever xmonad recompiles, it now explains how it is attempting to
+    recompile, by outputting logs to stderr. If you are using xmonad as a custom
+    X session, then this will end up in a `.xsession-errors` file.
+
 ## 0.13 (February 10, 2017)
 
 ### Breaking Changes
