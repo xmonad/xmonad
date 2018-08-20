@@ -11,6 +11,15 @@
     and to install them into proper locations where their users expect them.
     [https://github.com/xmonad/xmonad/pull/127]
 
+### Bug Fixes
+
+  * Add support for GHC 8.6.x by providing an instance for 'MonadFail X'. A
+    side effect of that change is that our code no longer compiles with GHC
+    versions prior to 8.0.x. We could work around that, no doubt, but the
+    resulting code would require CPP and Cabal flags and whatnot. It feels more
+    reasonable to just require a moderately recent compiler instead of going
+    through all that trouble.
+
 ## 0.14 (July 30, 2018)
 
 ### Bug Fixes

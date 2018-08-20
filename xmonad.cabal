@@ -28,13 +28,7 @@ cabal-version:      >= 1.8
 bug-reports:        https://github.com/xmonad/xmonad/issues
 build-type:         Simple
 
-tested-with:
-                    GHC==7.6.3,
-                    GHC==7.8.4,
-                    GHC==7.10.3,
-                    GHC==8.0.2,
-                    GHC==8.2.2,
-                    GHC==8.4.3
+tested-with:        GHC==8.0.2, GHC==8.2.2, GHC==8.4.3, GHC==8.6.1
 
 source-repository head
   type:     git
@@ -62,7 +56,7 @@ library
                         XMonad.StackSet
     other-modules:      Paths_xmonad
 
-    build-depends: base >= 4.6 && < 4.12,
+    build-depends: base >= 4.6 && < 5,
                    containers,
                    data-default,
                    directory,
@@ -86,6 +80,8 @@ library
         -- needed for XMonad.Config's instance Default (XConfig a)
     if flag(testing)
         buildable: False
+    if !impl(ghc > 8)
+        build-depends: fail
 
 executable xmonad
     main-is:        Main.hs

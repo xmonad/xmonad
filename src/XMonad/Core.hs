@@ -37,6 +37,7 @@ import Prelude
 import Control.Exception.Extensible (fromException, try, bracket, throw, finally, SomeException(..))
 import qualified Control.Exception.Extensible as E
 import Control.Applicative(Applicative, pure, (<$>), (<*>))
+import Control.Monad.Fail
 import Control.Monad.State
 import Control.Monad.Reader
 import Data.Semigroup
@@ -147,7 +148,7 @@ data ScreenDetail   = SD { screenRect :: !Rectangle } deriving (Eq,Show, Read)
 -- instantiated on 'XConf' and 'XState' automatically.
 --
 newtype X a = X (ReaderT XConf (StateT XState IO) a)
-    deriving (Functor, Monad, MonadIO, MonadState XState, MonadReader XConf, Typeable)
+    deriving (Functor, Monad, MonadFail, MonadIO, MonadState XState, MonadReader XConf, Typeable)
 
 instance Applicative X where
   pure = return

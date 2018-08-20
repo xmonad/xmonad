@@ -2,7 +2,7 @@
 #
 #   runghc make_travis_yml_2.hs '-o' '.travis.yml' 'xmonad.cabal' 'libxrandr-dev'
 #
-# For more information, see https://github.com/hvr/multi-ghc-travis
+# For more information, see https://github.com/haskell-CI/haskell-ci
 #
 language: c
 sudo: false
@@ -28,6 +28,9 @@ before_cache:
 
 matrix:
   include:
+    - compiler: "ghc-8.6.1"
+      env: GHCHEAD=true
+      addons: {apt: {packages: [ghc-ppa-tools,cabal-install-head,ghc-8.6.1,libxrandr-dev], sources: [hvr-ghc]}}
     - compiler: "ghc-8.4.3"
     # env: TEST=--disable-tests BENCH=--disable-benchmarks
       addons: {apt: {packages: [ghc-ppa-tools,cabal-install-2.2,ghc-8.4.3,libxrandr-dev], sources: [hvr-ghc]}}
@@ -37,15 +40,9 @@ matrix:
     - compiler: "ghc-8.0.2"
     # env: TEST=--disable-tests BENCH=--disable-benchmarks
       addons: {apt: {packages: [ghc-ppa-tools,cabal-install-2.2,ghc-8.0.2,libxrandr-dev], sources: [hvr-ghc]}}
-    - compiler: "ghc-7.10.3"
-    # env: TEST=--disable-tests BENCH=--disable-benchmarks
-      addons: {apt: {packages: [ghc-ppa-tools,cabal-install-2.2,ghc-7.10.3,libxrandr-dev], sources: [hvr-ghc]}}
-    - compiler: "ghc-7.8.4"
-    # env: TEST=--disable-tests BENCH=--disable-benchmarks
-      addons: {apt: {packages: [ghc-ppa-tools,cabal-install-2.2,ghc-7.8.4,libxrandr-dev], sources: [hvr-ghc]}}
-    - compiler: "ghc-7.6.3"
-    # env: TEST=--disable-tests BENCH=--disable-benchmarks
-      addons: {apt: {packages: [ghc-ppa-tools,cabal-install-2.2,ghc-7.6.3,libxrandr-dev], sources: [hvr-ghc]}}
+
+  allow_failures:
+    - compiler: "ghc-8.6.1"
 
 before_install:
   - HC=${CC}
@@ -69,6 +66,24 @@ install:
   - travis_retry cabal update -v
   - "sed -i.bak 's/^jobs:/-- jobs:/' ${HOME}/.cabal/config"
   - rm -fv cabal.project cabal.project.local
+  # Overlay Hackage Package Index for GHC HEAD: https://github.com/hvr/head.hackage
+  - |
+    if $GHCHEAD; then
+      sed -i 's/-- allow-newer: .*/allow-newer: *:base/' ${HOME}/.cabal/config
+      for pkg in $($HCPKG list --simple-output); do pkg=$(echo $pkg | sed 's/-[^-]*$//'); sed -i "s/allow-newer: /allow-newer: *:$pkg, /" ${HOME}/.cabal/config; done
+
+      echo 'repository head.hackage'                                                        >> ${HOME}/.cabal/config
+      echo '   url: http://head.hackage.haskell.org/'                                       >> ${HOME}/.cabal/config
+      echo '   secure: True'                                                                >> ${HOME}/.cabal/config
+      echo '   root-keys: 07c59cb65787dedfaef5bd5f987ceb5f7e5ebf88b904bbd4c5cbdeb2ff71b740' >> ${HOME}/.cabal/config
+      echo '              2e8555dde16ebd8df076f1a8ef13b8f14c66bad8eafefd7d9e37d0ed711821fb' >> ${HOME}/.cabal/config
+      echo '              8f79fd2389ab2967354407ec852cbe73f2e8635793ac446d09461ffb99527f6e' >> ${HOME}/.cabal/config
+      echo '   key-threshold: 3'                                                            >> ${HOME}/.cabal.config
+
+      grep -Ev -- '^\s*--' ${HOME}/.cabal/config | grep -Ev '^\s*$'
+
+      cabal new-update head.hackage -v
+    fi
   - grep -Ev -- '^\s*--' ${HOME}/.cabal/config | grep -Ev '^\s*$'
   - "printf 'packages: \".\"\\n' > cabal.project"
   - touch cabal.project.local
