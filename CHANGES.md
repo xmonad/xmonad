@@ -2,6 +2,8 @@
 
 ## unknown (unknown)
 
+## 0.14.1 (August 20, 2018)
+
 ### Breaking Changes
 
   * The cabal build no longer installs xmonad.hs, xmonad.1, and xmonad.1.html
