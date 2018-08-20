@@ -8,7 +8,6 @@
 -- Unlike the rest of xmonad, this file is released under the GNU General
 -- Public License version 2 or later.
 
-import Control.Monad
 import Control.Monad.IO.Class (liftIO)
 import Data.Char
 import Data.List
@@ -71,11 +70,16 @@ allBindings xs = map (binding . map trim) (xs =~ "(.*)--(.*)%!(.*)")
 binding :: [String] -> (String, String)
 binding [ _, bindingLine, "", desc ] = (guessKeys bindingLine, desc)
 binding [ _, _, keyCombo, desc ] = (keyCombo, desc)
+binding x = error ("binding: called with unexpected argument " ++ show x)
 
 guessKeys :: String -> String
-guessKeys line = concat $ intersperse "-" (modifiers ++ [map toLower key])
-    where modifiers = map (!!1) (line =~ "(mod|shift|control)Mask")
-          (_, _, _, [key]) = line =~ "xK_([_[:alnum:]]+)" :: (String, String, String, [String])
+guessKeys line =
+  case keys of
+    [key] -> concat $ intersperse "-" (modifiers ++ [map toLower key])
+    _     -> error ("guessKeys: unexpected number of keys " ++ show keys)
+  where
+    modifiers = map (!!1) (line =~ "(mod|shift|control)Mask")
+    (_, _, _, keys) = line =~ "xK_([_[:alnum:]]+)" :: (String, String, String, [String])
 
 -- FIXME: What escaping should we be doing on these strings?
 markdownDefn :: (String, String) -> String
