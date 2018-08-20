@@ -98,9 +98,7 @@ executable generatemanpage
     hs-source-dirs: util
     if flag(generatemanpage)
         build-depends: base,
-                       Cabal == 2.0.*,
                        pandoc >= 2,
-                       pretty,
                        regex-posix,
                        text
     else

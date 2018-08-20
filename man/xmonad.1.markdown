@@ -1,7 +1,12 @@
-#Name
-xmonad - a tiling window manager
+% XMONAD(1) Tiling Window Manager
+%
+% 20 August 2018
 
-#Description
+# Name
+
+xmonad - Tiling Window Manager
+
+# Description
 
 _xmonad_ is a minimalist tiling window manager for X, written in Haskell.
 Windows are managed using automatic layout algorithms, which can be
@@ -28,7 +33,7 @@ combination of static guarantees provided by the type system, and
 type-based automated testing. A benefit of this is that the code is simple
 to understand, and easy to modify.
 
-#Usage
+# Usage
 
 _xmonad_ places each window into a "workspace". Each workspace can have
 any number of windows, which you can cycle though with mod-j and mod-k.
@@ -47,7 +52,8 @@ starts, workspace 1 is on screen 1, workspace 2 is on screen 2, etc. When
 switching workspaces to one that is already visible, the current and
 visible workspaces are swapped.
 
-##Flags
+## Flags
+
 xmonad  has  several flags which  you may pass to the executable.
 These flags are:
 
@@ -70,12 +76,13 @@ These flags are:
 
 ___KEYBINDINGS___
 
-#Examples
+# Examples
+
 To use xmonad as your window manager add to your _~/.xinitrc_ file:
 
 > exec xmonad
 
-#Customization
+# Customization
 xmonad is customized in ~/.xmonad/xmonad.hs, and then restarted
 with mod-q.
 
@@ -83,7 +90,7 @@ You can find many extensions to the core feature set in the xmonad-
 contrib package, available through your  package  manager  or  from
 [xmonad.org].
 
-##Modular Configuration
+## Modular Configuration
 As of _xmonad-0.9_, any additional Haskell modules may be placed in
 _~/.xmonad/lib/_ are available in GHC's searchpath. Hierarchical modules
 are supported: for example, the file
@@ -97,7 +104,7 @@ module XMonad.Stack.MyAdditions (function1) where
 Your xmonad.hs may then import XMonad.Stack.MyAdditions as if that
 module was contained within xmonad or xmonad-contrib.
 
-#Bugs
+# Bugs
 Probably. If you find any, please report them to the [bugtracker]
 
 [xmonad.org]: http://xmonad.org
