@@ -62,7 +62,7 @@ library
                         XMonad.StackSet
     other-modules:      Paths_xmonad
 
-    build-depends: base < 5 && >=3,
+    build-depends: base >= 4.6 && < 4.12,
                    containers,
                    data-default,
                    directory,
