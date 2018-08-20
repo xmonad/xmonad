@@ -67,8 +67,7 @@ library
                    process,
                    unix,
                    utf8-string >= 0.3 && < 1.1,
-                   X11>=1.8 && < 1.10,
-                   semigroups
+                   X11>=1.8 && < 1.10
 
     if true
         ghc-options:        -funbox-strict-fields -Wall
@@ -81,7 +80,7 @@ library
     if flag(testing)
         buildable: False
     if !impl(ghc > 8)
-        build-depends: fail
+        build-depends: fail, semigroups
 
 executable xmonad
     main-is:        Main.hs
