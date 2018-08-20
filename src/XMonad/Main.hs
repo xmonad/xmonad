@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-warnings-deprecations #-} -- For migrateState
 {-# LANGUAGE MultiParamTypeClasses, FlexibleContexts #-}
 ----------------------------------------------------------------------------
 -- |
