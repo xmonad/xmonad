@@ -2,6 +2,10 @@
 
 ## unknown (unknown)
 
+### Bug Fixes
+
+  * Compiles with GHC 8.6.1
+
 ### Breaking Changes
 
   * The cabal build no longer installs xmonad.hs, xmonad.1, and xmonad.1.html

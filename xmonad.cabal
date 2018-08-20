@@ -65,7 +65,7 @@ library
                    setlocale,
                    mtl,
                    process,
-                   unix,
+                   unix >= 2.8.0.0,
                    utf8-string >= 0.3 && < 1.1,
                    X11>=1.8 && < 1.10
 

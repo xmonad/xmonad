@@ -435,7 +435,7 @@ xfork x = io . forkProcess . finally nullStdin $ do
                 x
  where
     nullStdin = do
-        fd <- openFd "/dev/null" ReadOnly Nothing defaultFileFlags
+        fd <- openFd "/dev/null" ReadOnly defaultFileFlags
         dupTo fd stdInput
         closeFd fd
 
