@@ -1,135 +1,126 @@
 name:               xmonad
 version:            0.14.1
-homepage:           http://xmonad.org
 synopsis:           A tiling window manager
-description:
-    xmonad is a tiling window manager for X. Windows are arranged
-    automatically to tile the screen without gaps or overlap, maximising
-    screen use. All features of the window manager are accessible from
-    the keyboard: a mouse is strictly optional. xmonad is written and
-    extensible in Haskell. Custom layout algorithms, and other
-    extensions, may be written by the user in config files. Layouts are
-    applied dynamically, and different layouts may be used on each
-    workspace. Xinerama is fully supported, allowing windows to be tiled
-    on several screens.
-category:           System
+description:        xmonad is a tiling window manager for X. Windows are arranged
+                    automatically to tile the screen without gaps or overlap, maximising
+                    screen use. All features of the window manager are accessible from the
+                    keyboard: a mouse is strictly optional. xmonad is written and
+                    extensible in Haskell. Custom layout algorithms, and other extensions,
+                    may be written by the user in config files. Layouts are applied
+                    dynamically, and different layouts may be used on each workspace.
+                    Xinerama is fully supported, allowing windows to be tiled on several
+                    screens.
 license:            BSD3
 license-file:       LICENSE
-author:             Spencer Janssen
+author:             Spencer Janssen, Don Stewart, Adam Vogt, David Roundy, Jason Creighton
+                  , Brent Yorgey, Peter Jones, Peter Simons, Andrea Rossato, Devin Mullins
+                  , Lukas Mai, Alec Berryman, Stefan O'Rear, Daniel Wagner, Peter J. Jones
+                  , Daniel Schoepe, Karsten Schoelzel, Neil Mitchell, Joachim Breitner
+                  , Peter De Wachter, Eric Mertens, Geoff Reedy, Michiel Derhaeg
+                  , Philipp Balzarek, Valery V. Vorotyntsev, Alex Tarkovsky, Fabian Beuke
+                  , Felix Hirn, Michael Sloan, Tomas Janousek, Vanessa McHale, Nicolas Pouillard
+                  , Aaron Denney, Austin Seipp, Benno Fünfstück, Brandon S Allbery, Chris Mears
+                  , Christian Thiemann, Clint Adams, Daniel Neri, David Lazar, Ferenc Wagner
+                  , Francesco Ariis, Gábor Lipták, Ivan N. Veselov, Ivan Tarasov, Javran Cheng
+                  , Jens Petersen, Joey Hess, Jonne Ransijn, Josh Holland, Khudyakov Alexey
+                  , Klaus Weidner, Michael G. Sloan, Mikkel Christiansen, Nicolas Dudebout
+                  , Ondřej Súkup, Paul Hebble, Shachaf Ben-Kiki, Siim Põder, Tim McIver
+                  , Trevor Elliott, Wouter Swierstra, Conrad Irwin, Tim Thelion
 maintainer:         xmonad@haskell.org
-extra-source-files: README.md CHANGES.md CONFIG STYLE
+tested-with:        GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.3, GHC == 8.6.1
+category:           System
+homepage:           http://xmonad.org
+bug-reports:        https://github.com/xmonad/xmonad/issues
+build-type:         Simple
+extra-source-files: README.md
+                    CHANGES.md
+                    CONFIG
+                    STYLE
                     tests/*.hs
                     tests/Properties/*.hs
                     tests/Properties/Layout/*.hs
-                    man/xmonad.1.markdown man/xmonad.1 man/xmonad.1.html
+                    man/xmonad.1.markdown
+                    man/xmonad.1
+                    man/xmonad.1.html
                     util/GenerateManpage.hs
                     util/hpcReport.sh
 cabal-version:      >= 1.8
-bug-reports:        https://github.com/xmonad/xmonad/issues
-build-type:         Simple
-
-tested-with:        GHC==8.0.2, GHC==8.2.2, GHC==8.4.3, GHC==8.6.1
 
 source-repository head
   type:     git
   location: https://github.com/xmonad/xmonad
 
 flag testing
-    description: Testing mode, only build minimal components
-    default: False
-    manual: True
+  default:     False
+  manual:      True
+  description: Testing mode, only build minimal components
 
 flag generatemanpage
-    description: Build the tool for generating the man page
-    default: False
-    manual: True
+  default:     False
+  manual:      True
+  description: Build the tool for generating the man page
 
 library
-    hs-source-dirs:     src
-    exposed-modules:    XMonad
-                        XMonad.Main
-                        XMonad.Core
-                        XMonad.Config
-                        XMonad.Layout
-                        XMonad.ManageHook
-                        XMonad.Operations
-                        XMonad.StackSet
-    other-modules:      Paths_xmonad
+  exposed-modules: XMonad
+                   XMonad.Config
+                   XMonad.Core
+                   XMonad.Layout
+                   XMonad.Main
+                   XMonad.ManageHook
+                   XMonad.Operations
+                   XMonad.StackSet
+  other-modules:   Paths_xmonad
+  hs-source-dirs:  src
+  build-depends:   base                  >= 4.6 && < 5
+                 , X11                   >= 1.8 && < 1.10
+                 , containers
+                 , data-default
+                 , directory
+                 , extensible-exceptions
+                 , filepath
+                 , mtl
+                 , process
+                 , setlocale
+                 , unix
+                 , utf8-string           >= 0.3 && < 1.1
+  ghc-options:     -funbox-strict-fields -Wall -fno-warn-unused-do-bind
 
-    build-depends: base >= 4.6 && < 5,
-                   containers,
-                   data-default,
-                   directory,
-                   extensible-exceptions,
-                   filepath,
-                   setlocale,
-                   mtl,
-                   process,
-                   unix,
-                   utf8-string >= 0.3 && < 1.1,
-                   X11>=1.8 && < 1.10
-
-    if true
-        ghc-options:        -funbox-strict-fields -Wall
-
-    if impl(ghc >= 6.12.1)
-        ghc-options:        -fno-warn-unused-do-bind
-    if impl(ghc < 7.0.0)
-        extensions: UndecidableInstances
-        -- needed for XMonad.Config's instance Default (XConfig a)
-    if flag(testing)
-        buildable: False
-    if !impl(ghc > 8)
-        build-depends: fail, semigroups
+  if flag(testing)
+    buildable: False
 
 executable xmonad
-    main-is:        Main.hs
-    build-depends:  base,
-                    mtl,
-                    unix,
-                    X11,
-                    xmonad
-    ghc-options:    -Wall
-    if impl(ghc >= 6.12.1)
-        ghc-options:  -Wall -fno-warn-unused-do-bind
+  main-is:       Main.hs
+  build-depends: base, X11, mtl, unix, xmonad
+  ghc-options:   -Wall -fno-warn-unused-do-bind
 
 executable generatemanpage
-    main-is: GenerateManpage.hs
-    hs-source-dirs: util
-    if flag(generatemanpage)
-        build-depends: base,
-                       pandoc >= 2,
-                       regex-posix,
-                       text
-    else
-        buildable: False
+  main-is:        GenerateManpage.hs
+  hs-source-dirs: util
 
+  if flag(generatemanpage)
+    build-depends: base, pandoc >= 2, regex-posix, text
+  else
+    buildable: False
 
--- note util/hpcReport.sh
 test-suite properties
-    type: exitcode-stdio-1.0
-    hs-source-dirs: tests
-    build-depends:  base,
-                    containers,
-                    extensible-exceptions,
-                    QuickCheck >= 2,
-                    X11,
-                    xmonad
-    main-is: Properties.hs
-    other-modules:  Instances
-                    Properties.Delete
-                    Properties.Failure
-                    Properties.Floating
-                    Properties.Focus
-                    Properties.GreedyView
-                    Properties.Insert
-                    Properties.Layout.Full
-                    Properties.Layout.Tall
-                    Properties.Screen
-                    Properties.Shift
-                    Properties.Stack
-                    Properties.StackSet
-                    Properties.Swap
-                    Properties.View
-                    Properties.Workspace
-                    Utils
+  type:           exitcode-stdio-1.0
+  main-is:        Properties.hs
+  other-modules:  Instances
+                  Properties.Delete
+                  Properties.Failure
+                  Properties.Floating
+                  Properties.Focus
+                  Properties.GreedyView
+                  Properties.Insert
+                  Properties.Layout.Full
+                  Properties.Layout.Tall
+                  Properties.Screen
+                  Properties.Shift
+                  Properties.Stack
+                  Properties.StackSet
+                  Properties.Swap
+                  Properties.View
+                  Properties.Workspace
+                  Utils
+  hs-source-dirs: tests
+  build-depends:  base, QuickCheck >= 2, X11, containers, extensible-exceptions, xmonad
