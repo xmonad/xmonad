@@ -12,20 +12,20 @@ description:        xmonad is a tiling window manager for X. Windows are arrange
                     screens.
 license:            BSD3
 license-file:       LICENSE
-author:             Spencer Janssen, Don Stewart, Adam Vogt, David Roundy, Jason Creighton
-                  , Brent Yorgey, Peter Jones, Peter Simons, Andrea Rossato, Devin Mullins
-                  , Lukas Mai, Alec Berryman, Stefan O'Rear, Daniel Wagner, Peter J. Jones
-                  , Daniel Schoepe, Karsten Schoelzel, Neil Mitchell, Joachim Breitner
-                  , Peter De Wachter, Eric Mertens, Geoff Reedy, Michiel Derhaeg
-                  , Philipp Balzarek, Valery V. Vorotyntsev, Alex Tarkovsky, Fabian Beuke
-                  , Felix Hirn, Michael Sloan, Tomas Janousek, Vanessa McHale, Nicolas Pouillard
-                  , Aaron Denney, Austin Seipp, Benno Fünfstück, Brandon S Allbery, Chris Mears
-                  , Christian Thiemann, Clint Adams, Daniel Neri, David Lazar, Ferenc Wagner
-                  , Francesco Ariis, Gábor Lipták, Ivan N. Veselov, Ivan Tarasov, Javran Cheng
-                  , Jens Petersen, Joey Hess, Jonne Ransijn, Josh Holland, Khudyakov Alexey
-                  , Klaus Weidner, Michael G. Sloan, Mikkel Christiansen, Nicolas Dudebout
-                  , Ondřej Súkup, Paul Hebble, Shachaf Ben-Kiki, Siim Põder, Tim McIver
-                  , Trevor Elliott, Wouter Swierstra, Conrad Irwin, Tim Thelion
+author:             Spencer Janssen, Don Stewart, Adam Vogt, David Roundy, Jason Creighton,
+                    Brent Yorgey, Peter Jones, Peter Simons, Andrea Rossato, Devin Mullins,
+                    Lukas Mai, Alec Berryman, Stefan O'Rear, Daniel Wagner, Peter J. Jones,
+                    Daniel Schoepe, Karsten Schoelzel, Neil Mitchell, Joachim Breitner,
+                    Peter De Wachter, Eric Mertens, Geoff Reedy, Michiel Derhaeg,
+                    Philipp Balzarek, Valery V. Vorotyntsev, Alex Tarkovsky, Fabian Beuke,
+                    Felix Hirn, Michael Sloan, Tomas Janousek, Vanessa McHale, Nicolas Pouillard,
+                    Aaron Denney, Austin Seipp, Benno Fünfstück, Brandon S Allbery, Chris Mears,
+                    Christian Thiemann, Clint Adams, Daniel Neri, David Lazar, Ferenc Wagner,
+                    Francesco Ariis, Gábor Lipták, Ivan N. Veselov, Ivan Tarasov, Javran Cheng,
+                    Jens Petersen, Joey Hess, Jonne Ransijn, Josh Holland, Khudyakov Alexey,
+                    Klaus Weidner, Michael G. Sloan, Mikkel Christiansen, Nicolas Dudebout,
+                    Ondřej Súkup, Paul Hebble, Shachaf Ben-Kiki, Siim Põder, Tim McIver,
+                    Trevor Elliott, Wouter Swierstra, Conrad Irwin, Tim Thelion
 maintainer:         xmonad@haskell.org
 tested-with:        GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.3, GHC == 8.6.1
 category:           System
