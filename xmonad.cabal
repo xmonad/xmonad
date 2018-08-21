@@ -42,6 +42,7 @@ extra-source-files: README.md
                     man/xmonad.1.markdown
                     man/xmonad.1
                     man/xmonad.1.html
+                    man/xmonad.hs
                     util/GenerateManpage.hs
                     util/hpcReport.sh
 cabal-version:      >= 1.8
