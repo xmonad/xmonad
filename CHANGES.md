@@ -2,6 +2,13 @@
 
 ## unknown (unknown)
 
+## 0.14.2 (August 21, 2018)
+
+### Bug Fixes
+
+  * Add the sample configuration file xmonad.hs again to the release tarball.
+    [https://github.com/xmonad/xmonad/issues/181]
+
 ## 0.14.1 (August 20, 2018)
 
 ### Breaking Changes
