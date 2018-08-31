@@ -18,7 +18,7 @@ prop_delete x =
     where _ = x :: T
 
 -- delete is reversible with 'insert'.
--- It is the identiy, except for the 'master', which is reset on insert and delete.
+-- It is the identity, except for the 'master', which is reset on insert and delete.
 --
 prop_delete_insert (x :: T) =
     case peek x of
