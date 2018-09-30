@@ -2,6 +2,14 @@
 
 ## unknown (unknown)
 
+## 0.15 (September 30, 2018)
+
+  * Reimplement `sendMessage` to deal properly with windowset changes made
+    during handling.
+
+  * Add new library functions `windowBracket` and `modifyWindowSet` to
+    `XMonad.Operations`.
+
 ## 0.14.2 (August 21, 2018)
 
 ### Bug Fixes

@@ -1,6 +1,6 @@
 % XMONAD(1) Tiling Window Manager
 %
-% 20 August 2018
+% 30 September 2018
 
 # Name
 
