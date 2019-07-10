@@ -1,6 +1,6 @@
 import Test.QuickCheck
 
--- Our QC instances and properties.
+-- Our QC instances and properties:
 import Instances
 import Properties.Delete
 import Properties.Failure
