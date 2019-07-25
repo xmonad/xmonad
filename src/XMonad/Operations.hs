@@ -565,7 +565,10 @@ floatLocation w =
           ws <- gets windowset
           wa <- io $ getWindowAttributes d w
           let bw = (fromIntegral . wa_border_width) wa
-          sc <- fromMaybe (W.current ws) <$> pointScreen (fi $ wa_x wa) (fi $ wa_y wa)
+          managed <- isClient w
+          sc <- if managed
+                then fromMaybe (W.current ws) <$> pointScreen (fi $ wa_x wa) (fi $ wa_y wa)
+                else return (W.current ws)
 
           let sr = screenRect . W.screenDetail $ sc
               rr = W.RationalRect ((fi (wa_x wa) - fi (rect_x sr)) % fi (rect_width sr))
