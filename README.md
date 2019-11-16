@@ -125,5 +125,5 @@ For a program dispatch menu:
 [xmonadcontrib]: https://hackage.haskell.org/package/xmonad-contrib
 [xmc-prompt-shell]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Prompt-Shell.html
 [platform]: http://haskell.org/platform/
-[example-config]: https://github.com/xmonad/xmonad-testing/blob/master/example-config.hs
+[example-config]: https://github.com/xmonad/xmonad-contrib/blob/master/XMonad/Config/Example.hs
 [config]: https://github.com/xmonad/xmonad/blob/master/CONFIG
