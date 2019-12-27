@@ -21,7 +21,7 @@ import XMonad.Layout (Full(..))
 import qualified XMonad.StackSet as W
 
 import Data.Maybe
-import Data.Monoid          (Endo(..),Any(..))
+import Data.Monoid          (Endo(..), Any(..), mconcat)
 import Data.List            (nub, (\\), find)
 import Data.Bits            ((.|.), (.&.), complement, testBit)
 import Data.Ratio
@@ -128,7 +128,7 @@ windows f = do
     -- for each workspace, layout the currently visible workspaces
     let allscreens     = W.screens ws
         summed_visible = scanl (++) [] $ map (W.integrate' . W.stack . W.workspace) allscreens
-    rects <- fmap concat $ forM (zip allscreens summed_visible) $ \ (w, vis) -> do
+    rects <- fmap mconcat $ forM (zip allscreens summed_visible) $ \ (w, vis) -> do
         let wsp   = W.workspace w
             this  = W.view n ws
             n     = W.tag wsp
@@ -151,11 +151,11 @@ windows f = do
 
         io $ restackWindows d (map fst vs)
         -- return the visible windows for this workspace:
-        return vs
+        return (flt, rs)
 
-    let visible = map fst rects
+    let visible = let (floating, tiled) = rects in map fst floating ++ map fst tiled
 
-    mapM_ (uncurry tileWindow) rects
+    mapM_ (uncurry tileWindow) (snd rects)
 
     whenJust (W.peek ws) $ \w -> do
       fbs <- asks (focusedBorderColor . config)
