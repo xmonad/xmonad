@@ -72,7 +72,7 @@ These flags are:
 --verbose-version
 :   Display detailed version of _xmonad_
 
-##Default keyboard bindings
+## Default keyboard bindings
 
 ___KEYBINDINGS___
 
