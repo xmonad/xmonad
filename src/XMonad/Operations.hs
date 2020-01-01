@@ -155,6 +155,7 @@ windows f = do
 
     let visible = let (floating, tiled) = rects in map fst floating ++ map fst tiled
 
+    mapM_ (uncurry tileWindowFloating) (fst rects)
     mapM_ (uncurry tileWindow) (snd rects)
 
     whenJust (W.peek ws) $ \w -> do
@@ -269,6 +270,14 @@ clearEvents mask = withDisplay $ \d -> io $ do
     allocaXEvent $ \p -> fix $ \again -> do
         more <- checkMaskEvent d mask p
         when more again -- beautiful
+
+-- | tileWindowFloating. Moves and resizes w so that its client area fits inside
+-- the given rectangle. Since this window is floating, we allow the border to
+-- expand outwards, which is the default behavior of X.
+tileWindowFloating :: Window -> Rectangle -> X ()
+tileWindowFloating w r = withDisplay $ \d ->
+    io $ moveResizeWindow d w (rect_x r) (rect_y r)
+                              (rect_width r) (rect_height r)
 
 -- | tileWindow. Moves and resizes w such that it fits inside the given
 -- rectangle, including its border.
