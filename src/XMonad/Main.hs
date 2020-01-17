@@ -506,7 +506,7 @@ replace dpy dflt rootw = do
             let screen = defaultScreenOfDisplay dpy
                 visual = defaultVisualOfScreen screen
                 attrmask = cWOverrideRedirect .|. cWEventMask
-            createWindow dpy rootw (-100) (-100) 1 1 0 copyFromParent copyFromParent visual attrmask attributes
+            createWindow dpy rootw (-100) (-100) 1 1 0 0 copyFromParent visual attrmask attributes
 
         -- try to acquire wmSnAtom, this should signal the old WM to terminate
         xSetSelectionOwner dpy wmSnAtom netWmSnOwner currentTime
