@@ -1,5 +1,9 @@
 # Change Log / Release Notes
 
+## 0.15.1 (March 22, 2020)
+
+  * Added Nix build support
+
 ## unknown (unknown)
 
 ## 0.15 (September 30, 2018)
