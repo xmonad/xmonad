@@ -111,7 +111,7 @@ For a program dispatch menu:
 
   * [XMonad.Prompt.Shell][xmc-prompt-shell]: (from [XMonadContrib][])
 
-  * dmenu: <http://www.suckless.org/download/>
+  * dmenu: <https://tools.suckless.org/dmenu/>
 
   * gmrun: (in your package system)
 
