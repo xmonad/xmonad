@@ -16,7 +16,7 @@
 
 module XMonad.Layout (
     Full(..), Tall(..), Mirror(..),
-    Resize(..), IncMasterN(..), Choose, (|||), ChangeLayout(..),
+    Resize(..), IncMasterN(..), Choose(..), (|||), LR(..), ChangeLayout(..),
     mirrorRect, splitVertically,
     splitHorizontally, splitHorizontallyBy, splitVerticallyBy,
 
@@ -144,7 +144,7 @@ infixr 5 |||
 -- | A layout that allows users to switch between various layout options.
 data Choose l r a = Choose LR (l a) (r a) deriving (Read, Show)
 
--- | Are we on the left or right sub-layout?
+-- | Sets the current sub-layout (left or right) in 'Choose'.
 data LR = L | R deriving (Read, Show, Eq)
 
 data NextNoWrap = NextNoWrap deriving (Eq, Show, Typeable)
