@@ -85,7 +85,7 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 --    continuation reified as a data structure.
 --
 --    The Zipper lets us replace an item deep in a complex data
---    structure, e.g., a tree or a term, without an  mutation.  The
+--    structure, e.g., a tree or a term, without a mutation.  The
 --    resulting data structure will share as much of its components with
 --    the old structure as possible.
 --
