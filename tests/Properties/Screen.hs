@@ -52,13 +52,12 @@ prop_aspect_hint_shrink hint (w,h) = case applyAspectHint hint (w,h) of
 -- applyAspectHint does nothing when the supplied (x,y) fits
 -- the desired range
 prop_aspect_fits =
-    forAll ((,,,) <$> pos <*> pos <*> pos <*> pos) $ \ (x,y,a,b) -> 
+    forAll ((,,,) <$> pos <*> pos <*> pos <*> pos) $ \ (x,y,a,b) ->
     let f v = applyAspectHint ((x, y+a), (x+b, y)) v
     in  and [ noOverflows (*) x (y+a), noOverflows (*) (x+b) y ]
             ==> f (x,y) == (x,y)
 
   where pos = choose (0, 65535)
-        mul a b = toInteger (a*b) /= toInteger a * toInteger b
 
 prop_point_within r @ (Rectangle x y w h) =
     forAll ((,) <$>
