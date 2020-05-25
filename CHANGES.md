@@ -2,6 +2,9 @@
 
 ## unknown (unknown)
 
+  * Only apply `tileWindow` to tiled windows, so that floating windows are not
+    accidentally resized.
+
 ## 0.15 (September 30, 2018)
 
   * Reimplement `sendMessage` to deal properly with windowset changes made

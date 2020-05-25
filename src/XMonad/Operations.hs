@@ -21,7 +21,7 @@ import XMonad.Layout (Full(..))
 import qualified XMonad.StackSet as W
 
 import Data.Maybe
-import Data.Monoid          (Endo(..),Any(..))
+import Data.Monoid          (Endo(..), Any(..), mconcat)
 import Data.List            (nub, (\\), find)
 import Data.Bits            ((.|.), (.&.), complement, testBit)
 import Data.Ratio
@@ -128,7 +128,7 @@ windows f = do
     -- for each workspace, layout the currently visible workspaces
     let allscreens     = W.screens ws
         summed_visible = scanl (++) [] $ map (W.integrate' . W.stack . W.workspace) allscreens
-    rects <- fmap concat $ forM (zip allscreens summed_visible) $ \ (w, vis) -> do
+    rects <- fmap mconcat $ forM (zip allscreens summed_visible) $ \ (w, vis) -> do
         let wsp   = W.workspace w
             this  = W.view n ws
             n     = W.tag wsp
@@ -151,11 +151,12 @@ windows f = do
 
         io $ restackWindows d (map fst vs)
         -- return the visible windows for this workspace:
-        return vs
+        return (flt, rs)
 
-    let visible = map fst rects
+    let visible = let (floating, tiled) = rects in map fst floating ++ map fst tiled
 
-    mapM_ (uncurry tileWindow) rects
+    mapM_ (uncurry tileWindowFloating) (fst rects)
+    mapM_ (uncurry tileWindow) (snd rects)
 
     whenJust (W.peek ws) $ \w -> do
       fbs <- asks (focusedBorderColor . config)
@@ -269,6 +270,14 @@ clearEvents mask = withDisplay $ \d -> io $ do
     allocaXEvent $ \p -> fix $ \again -> do
         more <- checkMaskEvent d mask p
         when more again -- beautiful
+
+-- | tileWindowFloating. Moves and resizes w so that its client area fits inside
+-- the given rectangle. Since this window is floating, we allow the border to
+-- expand outwards, which is the default behavior of X.
+tileWindowFloating :: Window -> Rectangle -> X ()
+tileWindowFloating w r = withDisplay $ \d ->
+    io $ moveResizeWindow d w (rect_x r) (rect_y r)
+                              (rect_width r) (rect_height r)
 
 -- | tileWindow. Moves and resizes w such that it fits inside the given
 -- rectangle, including its border.
