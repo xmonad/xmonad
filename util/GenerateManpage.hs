@@ -30,12 +30,12 @@ main = do
             . lines
             $ markdownSource
 
-        manTemplate <- getDefaultTemplate "man"
+        manTemplate <- compileDefaultTemplate (T.pack "man")
         manBody <- writeMan def { writerTemplate = Just manTemplate } parsed
         liftIO $ TIO.writeFile "./man/xmonad.1" $ manBody
         liftIO $ putStrLn "Documentation created: man/xmonad.1"
 
-        htmltemplate <- getDefaultTemplate "html"
+        htmltemplate <- compileDefaultTemplate (T.pack "html")
         htmlBody <- writeHtml5String def
                                      { writerTemplate = Just htmltemplate
                                      , writerTableOfContents = True }
