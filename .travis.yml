@@ -100,7 +100,7 @@ install:
   - |
     echo "packages: ." >> cabal.project
   - if [ $HCNUMVER -ge 80200 ] ; then echo 'package xmonad' >> cabal.project ; fi
-  - "if [ $HCNUMVER -lt 80600 ] ; then echo '  flags: +generatemanpage' >> cabal.project; fi"
+  - "if [ $HCNUMVER -ge 80600 ] ; then echo '  flags: +generatemanpage' >> cabal.project; fi"
   - "if [ $HCNUMVER -ge 80200 ] ; then echo '  ghc-options: -Werror=missing-methods' >> cabal.project ; fi"
   - |
   - "for pkg in $($HCPKG list --simple-output); do echo $pkg | sed 's/-[^-]*$//' | (grep -vE -- '^(xmonad)$' || true) | sed 's/^/constraints: /' | sed 's/$/ installed/' >> cabal.project.local; done"
@@ -128,7 +128,7 @@ script:
   - |
     echo "packages: ${PKGDIR_xmonad}" >> cabal.project
   - if [ $HCNUMVER -ge 80200 ] ; then echo 'package xmonad' >> cabal.project ; fi
-  - "if [ $HCNUMVER -lt 80600 ] ; then echo '  flags: +generatemanpage' >> cabal.project; fi"
+  - "if [ $HCNUMVER -ge 80600 ] ; then echo '  flags: +generatemanpage' >> cabal.project; fi"
   - "if [ $HCNUMVER -ge 80200 ] ; then echo '  ghc-options: -Werror=missing-methods' >> cabal.project ; fi"
   - |
   - "for pkg in $($HCPKG list --simple-output); do echo $pkg | sed 's/-[^-]*$//' | (grep -vE -- '^(xmonad)$' || true) | sed 's/^/constraints: /' | sed 's/$/ installed/' >> cabal.project.local; done"
