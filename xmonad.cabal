@@ -27,7 +27,8 @@ author:             Spencer Janssen, Don Stewart, Adam Vogt, David Roundy, Jason
                     Ondřej Súkup, Paul Hebble, Shachaf Ben-Kiki, Siim Põder, Tim McIver,
                     Trevor Elliott, Wouter Swierstra, Conrad Irwin, Tim Thelion
 maintainer:         xmonad@haskell.org
-tested-with:        GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.3, GHC == 8.6.1
+tested-with:        GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.3, GHC == 8.6.5,
+                    GHC == 8.8.4, GHC == 8.10.2
 category:           System
 homepage:           http://xmonad.org
 bug-reports:        https://github.com/xmonad/xmonad/issues
