@@ -2,6 +2,10 @@
 
 ## unknown (unknown)
 
+  * Fixed a bug when using multiple screens with different dimensions,
+    causing some floating windows to be smaller/larger than the size they
+    requested.
+
 ## 0.15 (September 30, 2018)
 
   * Reimplement `sendMessage` to deal properly with windowset changes made
