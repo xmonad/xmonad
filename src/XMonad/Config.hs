@@ -41,8 +41,10 @@ import qualified XMonad.StackSet as W
 import Data.Bits ((.|.))
 import Data.Default
 import Data.Monoid
+import Data.Maybe
 import qualified Data.Map as M
 import System.Exit
+import qualified System.Directory as D
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras
 
@@ -219,7 +221,7 @@ keys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
 
     -- quit, or restart
     , ((modMask .|. shiftMask, xK_q     ), io (exitWith ExitSuccess)) -- %! Quit xmonad
-    , ((modMask              , xK_q     ), spawn "if type xmonad; then xmonad --recompile && xmonad --restart; else xmessage xmonad not in \\$PATH: \"$PATH\"; fi") -- %! Restart xmonad
+    , ((modMask              , xK_q     ), io (D.findExecutable "xmonad") >>= \me -> if isJust me then whenX (recompile True) (restart "xmonad" True) else spawn "xmessage xmonad not in \\$PATH: \"$PATH\"") -- %! Restart xmonad
 
     , ((modMask .|. shiftMask, xK_slash ), helpCommand) -- %! Run xmessage with a summary of the default keybindings (useful for beginners)
     -- repeat the binding for non-American layout keyboards
