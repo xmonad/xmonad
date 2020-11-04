@@ -6,6 +6,10 @@
     causing some floating windows to be smaller/larger than the size they
     requested.
 
+  * Added `Typeable layout` constraint to `LayoutClass`, making it possible to
+    cast `Layout` back into a concrete type and extract current layout state
+    from it.
+
 ## 0.15 (September 30, 2018)
 
   * Reimplement `sendMessage` to deal properly with windowset changes made
