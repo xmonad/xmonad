@@ -4,4 +4,4 @@ packages:
   xmonad.cabal
 
 package xmonad
-  flags: generatemanpage
+  flags: +generatemanpage
