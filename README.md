@@ -105,7 +105,7 @@ For custom status bars:
 
   * taffybar: <https://github.com/travitch/taffybar>
 
-  * dzen: <http://gotmor.googlepages.com/dzen>
+  * dzen: <https://github.com/robm/dzen>
 
 For a program dispatch menu:
 
