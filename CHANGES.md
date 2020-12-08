@@ -10,6 +10,9 @@
     cast `Layout` back into a concrete type and extract current layout state
     from it.
 
+  * Export constructor for `Choose` and `LR` from `Module.Layout` to allow
+    pattern-matching on the left and right sub-layouts of `Choose l r a`.
+
 ## 0.15 (September 30, 2018)
 
   * Reimplement `sendMessage` to deal properly with windowset changes made
