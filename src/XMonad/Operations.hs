@@ -24,6 +24,7 @@ import Data.Maybe
 import Data.Monoid          (Endo(..),Any(..))
 import Data.List            (nub, (\\), find)
 import Data.Bits            ((.|.), (.&.), complement, testBit)
+import Data.Function        (on)
 import Data.Ratio
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -565,13 +566,25 @@ floatLocation w =
           ws <- gets windowset
           wa <- io $ getWindowAttributes d w
           let bw = (fromIntegral . wa_border_width) wa
-          sc <- fromMaybe (W.current ws) <$> pointScreen (fi $ wa_x wa) (fi $ wa_y wa)
+          point_sc <- pointScreen (fi $ wa_x wa) (fi $ wa_y wa)
+          managed <- isClient w
 
-          let sr = screenRect . W.screenDetail $ sc
-              rr = W.RationalRect ((fi (wa_x wa) - fi (rect_x sr)) % fi (rect_width sr))
-                                  ((fi (wa_y wa) - fi (rect_y sr)) % fi (rect_height sr))
-                                  (fi (wa_width  wa + bw*2) % fi (rect_width sr))
-                                  (fi (wa_height wa + bw*2) % fi (rect_height sr))
+          -- ignore pointScreen for new windows unless it's the current
+          -- screen, otherwise the float's relative size is computed against
+          -- a different screen and the float ends up with the wrong size
+          let sr_eq = (==) `on` fmap (screenRect . W.screenDetail)
+              sc = fromMaybe (W.current ws) $
+                  if managed || point_sc `sr_eq` Just (W.current ws) then point_sc else Nothing
+              sr = screenRect . W.screenDetail $ sc
+              x = (fi (wa_x wa) - fi (rect_x sr)) % fi (rect_width sr)
+              y = (fi (wa_y wa) - fi (rect_y sr)) % fi (rect_height sr)
+              width  = fi (wa_width  wa + bw*2) % fi (rect_width sr)
+              height = fi (wa_height wa + bw*2) % fi (rect_height sr)
+              -- adjust x/y of unmanaged windows if we ignored or didn't get pointScreen,
+              -- it might be out of bounds otherwise
+              rr = if managed || point_sc `sr_eq` Just sc
+                  then W.RationalRect x y width height
+                  else W.RationalRect (0.5 - width/2) (0.5 - height/2) width height
 
           return (W.screen sc, rr)
 

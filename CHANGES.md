@@ -2,6 +2,14 @@
 
 ## unknown (unknown)
 
+  * Fixed a bug when using multiple screens with different dimensions,
+    causing some floating windows to be smaller/larger than the size they
+    requested.
+
+  * Added `Typeable layout` constraint to `LayoutClass`, making it possible to
+    cast `Layout` back into a concrete type and extract current layout state
+    from it.
+
   * Export constructor for `Choose` and `LR` from `Module.Layout` to allow
     pattern-matching on the left and right sub-layouts of `Choose l r a`.
 

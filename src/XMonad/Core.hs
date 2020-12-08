@@ -271,7 +271,7 @@ readsLayout (Layout l) s = [(Layout (asTypeOf x l), rs) | (x, rs) <- reads s]
 -- 'runLayout', 'handleMessage', and so on.  This ensures that the
 -- proper methods will be used, regardless of the particular methods
 -- that any 'LayoutClass' instance chooses to define.
-class Show (layout a) => LayoutClass layout a where
+class (Show (layout a), Typeable layout) => LayoutClass layout a where
 
     -- | By default, 'runLayout' calls 'doLayout' if there are any
     --   windows to be laid out, and 'emptyLayout' otherwise.  Most
