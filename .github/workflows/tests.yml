@@ -1,0 +1,39 @@
+name: Stack Tests
+
+on:
+    pull_request:
+    push:
+        branches:
+        - master
+
+jobs:
+  build:
+    name: CI
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        resolver: [lts-16, lts-15, lts-14, lts-12]
+
+    steps:
+      - name: Clone project
+        uses: actions/checkout@v2
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-${{ matrix.resolver }}-${{ hashFiles('stack.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.resolver }}-
+
+      - name: Build and run tests
+        shell: bash
+        run: |
+            set -ex
+            curl -sSL https://get.haskellstack.org/ | sh -s - -f
+            sudo apt install -y libasound2 libasound2-dev libxrandr-dev libtinfo-dev
+            sudo apt install -y libx11-dev libgmp-dev libxss-dev libxft-dev
+            stack test --fast --no-terminal --resolver=${{ matrix.resolver }}
+
