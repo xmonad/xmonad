@@ -71,13 +71,13 @@ When the time comes to release another version of XMonad and Contrib...
 
 [packdeps]: http://hackage.haskell.org/package/packdeps
 
-[aavogt]: https://github.com/orgs/xmonad/people/aavogt
-[geekosaur]: https://github.com/orgs/xmonad/people/geekosaur
-[byorgey]: https://github.com/orgs/xmonad/people/byorgey
-[dmwit]: https://github.com/orgs/xmonad/people/dmwit
-[davidlazar]: https://github.com/orgs/xmonad/people/davidlazar
-[twifkak]: https://github.com/orgs/xmonad/people/twifkak
+[aavogt]: https://github.com/aavogt
+[geekosaur]: https://github.com/geekosaur
+[byorgey]: https://github.com/byorgey
+[dmwit]: https://github.com/dmwit
+[davidlazar]: https://github.com/davidlazar
+[twifkak]: https://github.com/twifkak
 
-[pjones]: https://github.com/orgs/xmonad/people/pjones
+[pjones]: https://github.com/pjones
 [twitter:pjones]: https://twitter.com/contextualdev
 [pgp:pjones]: http://pgp.mit.edu/pks/lookup?op=get&search=0x526722D1204284CB

@@ -38,6 +38,10 @@ Awesome!  Here are a few things to keep in mind:
 
     - Join the `#xmonad` IRC channel on `chat.freenode.org`.
 
+  * [XMonad.Doc.Developing][xmonad-doc-developing] is a great
+    resource to get an overview of xmonad.  Make sure to also check
+    it if you want more details on the coding style.
+
   * Continue reading this document!
 
 ## Expediting Reviews and Merges
@@ -58,6 +62,10 @@ Here are some tips for getting your changes merged into xmonad:
   * Make sure you test your changes using the [xmonad-testing][]
     repository.  Include a new configuration file that shows off your
     changes if possible by creating a PR on that repository as well.
+
+  * Make sure you run the automated tests.  Both [xmonad-contrib][]
+    and [xmonad][] have test-suites that you could run with
+    `stack test` for example.
 
   * Make sure you read the section on rebasing and squashing commits
     below.
@@ -86,22 +94,27 @@ request (i.e. the `CHANGES.md` file).  Here is how you do that.
 
   1. Make sure that you have a `git remote` configured for the main
      repository.  I like to call this remote `upstream`:
-
-        $ git remote add upstream https://github.com/xmonad/xmonad-contrib.git
+     ```shell
+     $ git remote add upstream https://github.com/xmonad/xmonad-contrib.git
+     ```
 
   2. Pull from upstream and rewrite your changes on top of master.  For
      this to work you should not have any modified files in your
      working directory.  Run these commands from within your feature
      branch (the branch you are asking to be merged):
 
-        $ git fetch --all
-        $ git pull --rebase upstream master
+     ```shell
+     $ git fetch --all
+     $ git pull --rebase upstream master
+     ```
 
   3. If the rebase was successful you can now push your feature branch
      back to GitHub.  You need to force the push since your commits
      have been rewritten and have new IDs:
 
-        $ git push --force-with-lease
+     ```shell
+     $ git push --force-with-lease
+     ```
 
   4. Your pull request should now be conflict-free and only contain the
      changes that you actually made.
@@ -117,8 +130,9 @@ each pull request contains just one commit.
 
   2. Rebase all of those commits into a single commit.  Assuming you
      want to squash the last four (4) commits into a single commit:
-
-        $ git rebase -i HEAD~4
+     ```shell
+     $ git rebase -i HEAD~4
+     ```
 
   3. Git will open your editor and display the commits you are
      rebasing with the word "pick" in front of them.
@@ -131,11 +145,13 @@ each pull request contains just one commit.
 
   6. If everything was successful you can push your changed history
      back up to GitHub:
-
-        $ git push --force-with-lease
+     ```shell
+     $ git push --force-with-lease
+     ```
 
 [xmonad]: https://github.com/xmonad/xmonad
 [xmonad-contrib]: https://github.com/xmonad/xmonad-contrib
 [xmonad-testing]: https://github.com/xmonad/xmonad-testing
 [x11]: https://github.com/xmonad/X11
 [ml]: https://mail.haskell.org/cgi-bin/mailman/listinfo/xmonad
+[xmonad-doc-developing]: http://hackage.haskell.org/package/xmonad-contrib-0.16/docs/XMonad-Doc-Developing.html
