@@ -36,7 +36,6 @@ import XMonad.StackSet hiding (modify)
 import Prelude
 import Control.Exception.Extensible (fromException, try, bracket, throw, finally, SomeException(..))
 import qualified Control.Exception.Extensible as E
-import Control.Applicative(Applicative, pure, (<$>), (<*>))
 import Control.Monad.Fail
 import Control.Monad.State
 import Control.Monad.Reader
@@ -58,7 +57,6 @@ import Graphics.X11.Xlib.Extras (getWindowAttributes, WindowAttributes, Event)
 import Data.Typeable
 import Data.List ((\\))
 import Data.Maybe (isJust,fromMaybe)
-import Data.Monoid hiding ((<>))
 import System.Environment (lookupEnv)
 
 import qualified Data.Map as M
