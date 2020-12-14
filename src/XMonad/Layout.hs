@@ -16,7 +16,7 @@
 
 module XMonad.Layout (
     Full(..), Tall(..), Mirror(..),
-    Resize(..), IncMasterN(..), Choose(..), (|||), LR(..), ChangeLayout(..),
+    Resize(..), IncMasterN(..), Choose(..), (|||), CLR(..), ChangeLayout(..),
     mirrorRect, splitVertically,
     splitHorizontally, splitHorizontallyBy, splitVerticallyBy,
 
@@ -138,14 +138,14 @@ instance Message ChangeLayout
 
 -- | The layout choice combinator
 (|||) :: l a -> r a -> Choose l r a
-(|||) = Choose L
+(|||) = Choose CL
 infixr 5 |||
 
 -- | A layout that allows users to switch between various layout options.
-data Choose l r a = Choose LR (l a) (r a) deriving (Read, Show)
+data Choose l r a = Choose CLR (l a) (r a) deriving (Read, Show)
 
--- | Sets the current sub-layout (left or right) in 'Choose'.
-data LR = L | R deriving (Read, Show, Eq)
+-- | Choose the current sub-layout (left or right) in 'Choose'.
+data CLR = CL | CR deriving (Read, Show, Eq)
 
 data NextNoWrap = NextNoWrap deriving (Eq, Show, Typeable)
 instance Message NextNoWrap
@@ -159,26 +159,26 @@ handle l m = handleMessage l (SomeMessage m)
 -- new structure if any fields have changed, and performs any necessary cleanup
 -- on newly non-visible layouts.
 choose :: (LayoutClass l a, LayoutClass r a)
-       => Choose l r a-> LR -> Maybe (l a) -> Maybe (r a) -> X (Maybe (Choose l r a))
+       => Choose l r a -> CLR -> Maybe (l a) -> Maybe (r a) -> X (Maybe (Choose l r a))
 choose (Choose d _ _) d' Nothing Nothing | d == d' = return Nothing
 choose (Choose d l r) d' ml      mr = f lr
  where
     (l', r') = (fromMaybe l ml, fromMaybe r mr)
     lr       = case (d, d') of
-                    (L, R) -> (hide l'  , return r')
-                    (R, L) -> (return l', hide r'  )
-                    (_, _) -> (return l', return r')
+                    (CL, CR) -> (hide l'  , return r')
+                    (CR, CL) -> (return l', hide r'  )
+                    (_ , _ ) -> (return l', return r')
     f (x,y)  = fmap Just $ liftM2 (Choose d') x y
     hide x   = fmap (fromMaybe x) $ handle x Hide
 
 instance (LayoutClass l a, LayoutClass r a) => LayoutClass (Choose l r) a where
-    runLayout (W.Workspace i (Choose L l r) ms) =
-        fmap (second . fmap $ flip (Choose L) r) . runLayout (W.Workspace i l ms)
-    runLayout (W.Workspace i (Choose R l r) ms) =
-        fmap (second . fmap $ Choose R l) . runLayout (W.Workspace i r ms)
+    runLayout (W.Workspace i (Choose CL l r) ms) =
+        fmap (second . fmap $ flip (Choose CL) r) . runLayout (W.Workspace i l ms)
+    runLayout (W.Workspace i (Choose CR l r) ms) =
+        fmap (second . fmap $ Choose CR l) . runLayout (W.Workspace i r ms)
 
-    description (Choose L l _) = description l
-    description (Choose R _ r) = description r
+    description (Choose CL l _) = description l
+    description (Choose CR _ r) = description r
 
     handleMessage lr m | Just NextLayout <- fromMessage m = do
         mlr' <- handle lr NextNoWrap
@@ -186,25 +186,25 @@ instance (LayoutClass l a, LayoutClass r a) => LayoutClass (Choose l r) a where
 
     handleMessage c@(Choose d l r) m | Just NextNoWrap <- fromMessage m =
         case d of
-            L -> do
+            CL -> do
                 ml <- handle l NextNoWrap
                 case ml of
-                    Just _  -> choose c L ml Nothing
-                    Nothing -> choose c R Nothing =<< handle r FirstLayout
+                    Just _  -> choose c CL ml Nothing
+                    Nothing -> choose c CR Nothing =<< handle r FirstLayout
 
-            R -> choose c R Nothing =<< handle r NextNoWrap
+            CR -> choose c CR Nothing =<< handle r NextNoWrap
 
     handleMessage c@(Choose _ l _) m | Just FirstLayout <- fromMessage m =
-        flip (choose c L) Nothing =<< handle l FirstLayout
+        flip (choose c CL) Nothing =<< handle l FirstLayout
 
     handleMessage c@(Choose d l r) m | Just ReleaseResources <- fromMessage m =
         join $ liftM2 (choose c d) (handle l ReleaseResources) (handle r ReleaseResources)
 
     handleMessage c@(Choose d l r) m = do
         ml' <- case d of
-                L -> handleMessage l m
-                R -> return Nothing
+                CL -> handleMessage l m
+                CR -> return Nothing
         mr' <- case d of
-                L -> return Nothing
-                R -> handleMessage r m
+                CL -> return Nothing
+                CR -> handleMessage r m
         choose c d ml' mr'
