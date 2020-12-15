@@ -77,7 +77,7 @@ instance LayoutClass Tall a where
 -- algorithm.
 --
 -- The screen is divided into two panes. All clients are
--- then partioned between these two panes. One pane, the master, by
+-- then partitioned between these two panes. One pane, the master, by
 -- convention has the least number of windows in it.
 tile
     :: Rational  -- ^ @frac@, what proportion of the screen to devote to the master area
