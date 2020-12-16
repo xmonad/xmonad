@@ -29,9 +29,7 @@ import Data.Ratio
 import qualified Data.Map as M
 import qualified Data.Set as S
 
-import Control.Applicative((<$>), (<*>))
 import Control.Arrow (second)
-import Control.Monad (void)
 import Control.Monad.Reader
 import Control.Monad.State
 import qualified Control.Exception.Extensible as C

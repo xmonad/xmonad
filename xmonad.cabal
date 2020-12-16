@@ -27,8 +27,7 @@ author:             Spencer Janssen, Don Stewart, Adam Vogt, David Roundy, Jason
                     Ondřej Súkup, Paul Hebble, Shachaf Ben-Kiki, Siim Põder, Tim McIver,
                     Trevor Elliott, Wouter Swierstra, Conrad Irwin, Tim Thelion
 maintainer:         xmonad@haskell.org
-tested-with:        GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.3, GHC == 8.6.5,
-                    GHC == 8.8.4, GHC == 8.10.2
+tested-with:        GHC == 8.4.4, GHC == 8.6.5, GHC == 8.8.3, GHC == 8.8.4
 category:           System
 homepage:           http://xmonad.org
 bug-reports:        https://github.com/xmonad/xmonad/issues
@@ -85,7 +84,11 @@ library
                  , setlocale
                  , unix
                  , utf8-string           >= 0.3 && < 1.1
-  ghc-options:     -funbox-strict-fields -Wall -fno-warn-unused-do-bind
+  ghc-options:     -funbox-strict-fields -Wall -fno-warn-unused-do-bind -Wno-unused-imports
+
+  -- Keep this in sync with the oldest version in 'tested-with'
+  if impl(ghc <= 8.4.4)
+     ghc-options: -Werror=unused-imports
 
   if flag(testing)
     buildable: False
@@ -93,7 +96,11 @@ library
 executable xmonad
   main-is:       Main.hs
   build-depends: base, X11, mtl, unix, xmonad
-  ghc-options:   -Wall -fno-warn-unused-do-bind
+  ghc-options:   -Wall -fno-warn-unused-do-bind -Wno-unused-imports
+
+  -- Keep this in sync with the oldest version in 'tested-with'
+  if impl(ghc <= 8.4.4)
+     ghc-options: -Werror=unused-imports
 
 executable generatemanpage
   main-is:        GenerateManpage.hs
