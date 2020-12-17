@@ -8,13 +8,26 @@
 
   * Brent Yorgey [GitHub][byorgey], IRC: `byorgey`
 
-  * Daniel Wagner [GitHub][dmwit], IRC: `dmwit`
+  * Daniel Wagner [GitHub][dmwit], [Twitter][twitter:dmwit], IRC: `dmwit`
 
-  * David Lazar [GitHub][davidlazar]
+  * Peter Simons [GitHub][peti], [Twitter][twitter:peti]
 
-  * Devin Mullins [GitHub][twifkak]
+  * Sibi Prabakaran [GitHub][psibi], [Twitter][twitter:psibi], IRC: `psibi[m]`
 
-  * Peter J. Jones [GitHub][pjones], [Twitter][twitter:pjones], [OpenPGP Key][pgp:pjones], IRC: `pmade`
+  * Tomáš Janoušek [GitHub][liskin], [Twitter][twitter:liskin], IRC: `Liskni_si`
+
+[aavogt]: https://github.com/aavogt
+[geekosaur]: https://github.com/geekosaur
+[byorgey]: https://github.com/byorgey
+[dmwit]: https://github.com/dmwit
+[peti]: https://github.com/peti
+[psibi]: https://github.com/psibi
+[liskin]: https://github.com/liskin
+
+[twitter:dmwit]: https://twitter.com/dmwit13
+[twitter:peti]: https://twitter.com/OriginalPeti
+[twitter:psibi]: https://twitter.com/psibi
+[twitter:liskin]: https://twitter.com/Liskni_si
 
 ## Release Procedures
 
@@ -70,14 +83,3 @@ When the time comes to release another version of XMonad and Contrib...
       - Haskell Cafe
 
 [packdeps]: http://hackage.haskell.org/package/packdeps
-
-[aavogt]: https://github.com/aavogt
-[geekosaur]: https://github.com/geekosaur
-[byorgey]: https://github.com/byorgey
-[dmwit]: https://github.com/dmwit
-[davidlazar]: https://github.com/davidlazar
-[twifkak]: https://github.com/twifkak
-
-[pjones]: https://github.com/pjones
-[twitter:pjones]: https://twitter.com/contextualdev
-[pgp:pjones]: http://pgp.mit.edu/pks/lookup?op=get&search=0x526722D1204284CB
