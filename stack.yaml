@@ -5,3 +5,7 @@ packages:
 
 extra-deps:
 - X11-1.9.2
+
+flags:
+  xmonad:
+    generatemanpage: true

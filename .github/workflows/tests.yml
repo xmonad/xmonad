@@ -9,12 +9,16 @@ on:
 jobs:
   build:
     name: CI
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        resolver: [lts-16, lts-15, lts-14, lts-12]
+        include:
+          - resolver: lts-16
+            generatemanpage: true  # only specify once, pushes to the branch
+          - resolver: lts-15
+          - resolver: lts-14
+          - resolver: lts-12
 
     steps:
       - name: Clone project
@@ -40,9 +44,24 @@ jobs:
             libxft-dev \
             libxrandr-dev \
             libxss-dev \
+            pandoc \
             #
 
       - name: Build and run tests
         run: |
           set -ex
           stack test --fast --no-terminal --resolver=${{ matrix.resolver }}
+
+      - name: Generate manpage
+        if: >
+          github.event_name == 'push' &&
+          github.event.ref == 'refs/heads/master' &&
+          matrix.generatemanpage
+        run: |
+          set -ex
+          stack exec --resolver=${{ matrix.resolver }} generatemanpage
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git diff --quiet --exit-code && exit
+          git commit -a -m 'man: Update'
+          git push
