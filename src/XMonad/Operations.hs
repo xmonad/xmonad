@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, PatternGuards, TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, PatternGuards, TypeSynonymInstances, NamedFieldPuns #-}
 -- --------------------------------------------------------------------------
 -- |
 -- Module      :  XMonad.Operations
@@ -36,6 +36,7 @@ import qualified Control.Exception.Extensible as C
 
 import System.IO
 import System.Directory
+import System.FilePath ((</>))
 import System.Posix.Process (executeFile)
 import Graphics.X11.Xlib
 import Graphics.X11.Xinerama (getScreenInfo)
@@ -524,12 +525,11 @@ readStateFile xmc = do
 -- | Migrate state from a previously running xmonad instance that used
 -- the older @--resume@ technique.
 {-# DEPRECATED migrateState "will be removed some point in the future." #-}
-migrateState :: (Functor m, MonadIO m) => String -> String -> m ()
-migrateState ws xs = do
+migrateState :: (Functor m, MonadIO m) => Dirs -> String -> String -> m ()
+migrateState Dirs{ dataDir } ws xs = do
     io (putStrLn "WARNING: --resume is no longer supported.")
-    whenJust stateData $ \s -> do
-      path <- stateFileName
-      catchIO (writeFile path $ show s)
+    whenJust stateData $ \s ->
+        catchIO (writeFile (dataDir </> "xmonad.state") $ show s)
   where
     stateData = StateFile <$> maybeRead ws <*> maybeRead xs
     maybeRead s = case reads s of

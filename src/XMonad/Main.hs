@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, FlexibleContexts #-}
+{-# LANGUAGE MultiParamTypeClasses, FlexibleContexts, NamedFieldPuns #-}
 ----------------------------------------------------------------------------
 -- |
 -- Module      :  XMonad.Main
@@ -39,7 +39,7 @@ import XMonad.Operations
 import System.IO
 import System.Directory
 import System.Info
-import System.Environment
+import System.Environment (getArgs, getProgName, withArgs)
 import System.Posix.Process (executeFile)
 import System.Exit (exitFailure)
 import System.FilePath
@@ -59,17 +59,18 @@ xmonad :: (LayoutClass l Window, Read (l Window)) => XConfig l -> IO ()
 xmonad conf = do
     installSignalHandlers -- important to ignore SIGCHLD to avoid zombies
 
+    dirs <- getDirs
     let launch' args = do
-              catchIO buildLaunch
+              catchIO (buildLaunch dirs)
               conf'@XConfig { layoutHook = Layout l }
                   <- handleExtraArgs conf args conf{ layoutHook = Layout (layoutHook conf) }
-              withArgs [] $ launch (conf' { layoutHook = l })
+              withArgs [] $ launch (conf' { layoutHook = l }) dirs
 
     args <- getArgs
     case args of
-        ("--resume": ws : xs : args') -> migrateState ws xs >> launch' args'
+        ("--resume": ws : xs : args') -> migrateState dirs ws xs >> launch' args'
         ["--help"]            -> usage
-        ["--recompile"]       -> recompile True >>= flip unless exitFailure
+        ["--recompile"]       -> recompile dirs True >>= flip unless exitFailure
         ["--restart"]         -> sendRestart
         ["--version"]         -> putStrLn $ unwords shortVersion
         ["--verbose-version"] -> putStrLn . unwords $ shortVersion ++ longVersion
@@ -90,7 +91,7 @@ usage = do
         "Options:" :
         "  --help                       Print this message" :
         "  --version                    Print the version number" :
-        "  --recompile                  Recompile your ~/.xmonad/xmonad.hs" :
+        "  --recompile                  Recompile your xmonad.hs" :
         "  --replace                    Replace the running window manager with xmonad" :
         "  --restart                    Request a running xmonad process to restart" :
         []
@@ -111,8 +112,8 @@ usage = do
 --
 --   * Missing XMonad\/XMonadContrib modules due to ghc upgrade
 --
-buildLaunch ::  IO ()
-buildLaunch = do
+buildLaunch :: Dirs -> IO ()
+buildLaunch dirs@Dirs{ dataDir } = do
     whoami <- getProgName
     let compiledConfig = "xmonad-"++arch++"-"++os
     unless (whoami == compiledConfig) $ do
@@ -122,10 +123,9 @@ buildLaunch = do
         , " but the compiled configuration should be called "
         , show compiledConfig
         ]
-      recompile False
-      dir  <- getXMonadDataDir
+      recompile dirs False
       args <- getArgs
-      executeFile (dir </> compiledConfig) False args Nothing
+      executeFile (dataDir </> compiledConfig) False args Nothing
 
 sendRestart :: IO ()
 sendRestart = do
@@ -166,8 +166,8 @@ sendReplace = do
 -- function instead of 'xmonad'.  You probably also want to have a key
 -- binding to the 'XMonad.Operations.restart` function that restarts
 -- your custom binary with the resume flag set to @True@.
-launch :: (LayoutClass l Window, Read (l Window)) => XConfig l -> IO ()
-launch initxmc = do
+launch :: (LayoutClass l Window, Read (l Window)) => XConfig l -> Dirs -> IO ()
+launch initxmc drs = do
     -- setup locale information from environment
     setLocale LC_ALL (Just "")
     -- ignore SIGPIPE and SIGCHLD
@@ -216,7 +216,9 @@ launch initxmc = do
             , buttonActions = mouseBindings xmc xmc
             , mouseFocused  = False
             , mousePosition = Nothing
-            , currentEvent  = Nothing }
+            , currentEvent  = Nothing
+            , dirs          = drs
+            }
 
         st = XState
             { windowset       = initialWinset
