@@ -13,6 +13,8 @@
   * Export constructor for `Choose` and `CLR` from `Module.Layout` to allow
     pattern-matching on the left and right sub-layouts of `Choose l r a`.
 
+  * Compatibility with GHC 9.0
+
 ## 0.15 (September 30, 2018)
 
   * Reimplement `sendMessage` to deal properly with windowset changes made
