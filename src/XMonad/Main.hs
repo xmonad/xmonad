@@ -61,7 +61,7 @@ xmonad conf = do
 
     let launch' args = do
               catchIO buildLaunch
-              conf' @ XConfig { layoutHook = Layout l }
+              conf'@XConfig { layoutHook = Layout l }
                   <- handleExtraArgs conf args conf{ layoutHook = Layout (layoutHook conf) }
               withArgs [] $ launch (conf' { layoutHook = l })
 
