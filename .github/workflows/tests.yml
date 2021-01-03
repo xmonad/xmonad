@@ -29,11 +29,20 @@ jobs:
             ${{ runner.os }}-${{ matrix.resolver }}-${{ hashFiles('stack.yaml') }}-
             ${{ runner.os }}-${{ matrix.resolver }}-
 
-      - name: Build and run tests
-        shell: bash
+      - name: Install dependencies
         run: |
-            set -ex
-            curl -sSL https://get.haskellstack.org/ | sh -s - -f
-            sudo apt install -y libasound2 libasound2-dev libxrandr-dev libtinfo-dev
-            sudo apt install -y libx11-dev libgmp-dev libxss-dev libxft-dev
-            stack test --fast --no-terminal --resolver=${{ matrix.resolver }}
+          set -ex
+          sudo apt install -y \
+            libasound2-dev \
+            libgmp-dev \
+            libtinfo-dev \
+            libx11-dev \
+            libxft-dev \
+            libxrandr-dev \
+            libxss-dev \
+            #
+
+      - name: Build and run tests
+        run: |
+          set -ex
+          stack test --fast --no-terminal --resolver=${{ matrix.resolver }}
