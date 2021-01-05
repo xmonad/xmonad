@@ -15,6 +15,20 @@
 
   * Compatibility with GHC 9.0
 
+  * Improve handling of XDG directories.
+
+      1. If all three of xmonad's environment variables (`XMONAD_DATA_DIR,`
+         `XMONAD_CONFIG_DIR`, and `XMONAD_CACHE_DIR`) are set, use them.
+      2. If there is a build script called `build` (see [here](https://github.com/xmonad/xmonad-testing/tree/master/build-scripts) for usage
+         examples) or configuration `xmonad.hs` in `~/.xmonad`, set all three
+         directories to `~/.xmonad`.
+      3. Otherwise, use the `xmonad` directory in `XDG_DATA_HOME`,
+         `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME` (or their respective
+         fallbacks). These directories are created if necessary.
+
+    In the cases of 1. and 3., the build script or executable is
+    expected to be in the config dir.
+
 ## 0.15 (September 30, 2018)
 
   * Reimplement `sendMessage` to deal properly with windowset changes made
