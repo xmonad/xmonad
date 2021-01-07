@@ -58,7 +58,7 @@ xmonad  has  several flags which  you may pass to the executable.
 These flags are:
 
 --recompile
-:   Recompiles your configuration in _~/.xmonad/xmonad.hs_
+:   Recompiles your _xmonad.hs_ configuration
 
 --restart
 :   Causes the currently running _xmonad_ process to restart
@@ -83,8 +83,16 @@ To use xmonad as your window manager add to your _~/.xinitrc_ file:
 > exec xmonad
 
 # Customization
-xmonad is customized in ~/.xmonad/xmonad.hs, and then restarted
-with mod-q.
+xmonad is customized in your _xmonad.hs_, and then restarted with mod-q.
+You can choose where your configuration file lives by
+
+  1. Setting `XMONAD_DATA_DIR,` `XMONAD_CONFIG_DIR`, and
+     `XMONAD_CACHE_DIR`; _xmonad.hs_ is then expected to be in
+     `XMONAD_CONFIG_DIR`.
+  2. Creating _xmonad.hs_ in _~/.xmonad_.
+  3. Creating _xmonad.hs_ in `XDG_CONFIG_HOME`.  Note that, in this
+     case, xmonad will use `XDG_DATA_HOME` and `XDG_CACHE_HOME` for its
+     data and cache directory respectively.
 
 You can find many extensions to the core feature set in the xmonad-
 contrib package, available through your  package  manager  or  from
@@ -107,5 +115,5 @@ module was contained within xmonad or xmonad-contrib.
 # Bugs
 Probably. If you find any, please report them to the [bugtracker]
 
-[xmonad.org]: http://xmonad.org
+[xmonad.org]: https://xmonad.org
 [bugtracker]: https://github.com/xmonad/xmonad/issues
