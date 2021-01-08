@@ -1,47 +1,48 @@
-{-# LANGUAGE FlexibleContexts #-}
-
--- Generates a in-memory version of "man/xmonad.1.markdown" that has the list
--- of known key-bindings is inserted automatically from "Config.hs". That
--- document is then rendered with Pandoc as "man/xmonad.1" and
--- "man/xmonad.1.html".
+-- Reads "man/xmonad.1.markdown.in" and generates "man/xmonad.1.markdown" that
+-- has the list of known key-bindings extracted automatically from
+-- "src/XMonad/Config.hs". That document is then rendered with Pandoc as
+-- "man/xmonad.1" and "man/xmonad.1.html".
 --
 -- Unlike the rest of xmonad, this file is released under the GNU General
--- Public License version 2 or later.
+-- Public License version 2 or later. (Used to be linked with pandoc and now
+-- it's too much hassle to relicense.)
 
-import Control.Monad.IO.Class (liftIO)
 import Data.Char
 import Data.List
-import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
-import Text.Pandoc
+import System.Process
 import Text.Regex.Posix
 
 main :: IO ()
 main = do
     keybindings <- guessBindings
 
-    markdownSource <- readFile "./man/xmonad.1.markdown"
+    markdownSource <- readFile "./man/xmonad.1.markdown.in"
+    writeFile "./man/xmonad.1.markdown"
+        . unlines
+        . replace "___KEYBINDINGS___" keybindings
+        . lines
+        $ markdownSource
 
-    runIOorExplode $ do
-        parsed <- readMarkdown (def { readerStandalone = True, readerExtensions = pandocExtensions })
-            . T.pack
-            . unlines
-            . replace "___KEYBINDINGS___" keybindings
-            . lines
-            $ markdownSource
+    callCommand . unwords $
+        [ "pandoc"
+        , "--from=markdown"
+        , "--to=man"
+        , "--standalone"
+        , "--output=./man/xmonad.1"
+        , "./man/xmonad.1.markdown"
+        ]
+    putStrLn "Documentation created: man/xmonad.1"
 
-        manTemplate <- compileDefaultTemplate (T.pack "man")
-        manBody <- writeMan def { writerTemplate = Just manTemplate } parsed
-        liftIO $ TIO.writeFile "./man/xmonad.1" $ manBody
-        liftIO $ putStrLn "Documentation created: man/xmonad.1"
-
-        htmltemplate <- compileDefaultTemplate (T.pack "html")
-        htmlBody <- writeHtml5String def
-                                     { writerTemplate = Just htmltemplate
-                                     , writerTableOfContents = True }
-                                     parsed
-        liftIO $ TIO.writeFile "./man/xmonad.1.html" htmlBody
-        liftIO $ putStrLn "Documentation created: man/xmonad.1.html"
+    callCommand . unwords $
+        [ "pandoc"
+        , "--from=markdown"
+        , "--to=html"
+        , "--standalone"
+        , "--table-of-contents"
+        , "--output=./man/xmonad.1.html"
+        , "./man/xmonad.1.markdown"
+        ]
+    putStrLn "Documentation created: man/xmonad.1.html"
 
 -- | The format for the docstrings in "Config.hs" takes the following form:
 --

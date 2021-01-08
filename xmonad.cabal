@@ -107,7 +107,7 @@ executable generatemanpage
   hs-source-dirs: util
 
   if flag(generatemanpage)
-    build-depends: base, pandoc > 2.10, regex-posix, text
+    build-depends: base, process, regex-posix, text
   else
     buildable: False
 
