@@ -9,18 +9,25 @@
 
 import Data.Char
 import Data.List
+import qualified Data.Text as T
+import qualified Data.Text.IO as T
+import Distribution.PackageDescription.Parsec (readGenericPackageDescription)
+import Distribution.Verbosity (normal)
+import Distribution.PackageDescription (package, packageDescription)
+import Distribution.Text (display)
 import System.Process
 import Text.Regex.Posix
 
 main :: IO ()
 main = do
+    releaseName <- display . package . packageDescription
+        <$> readGenericPackageDescription normal "./xmonad.cabal"
     keybindings <- guessBindings
 
-    markdownSource <- readFile "./man/xmonad.1.markdown.in"
-    writeFile "./man/xmonad.1.markdown"
-        . unlines
-        . replace "___KEYBINDINGS___" keybindings
-        . lines
+    markdownSource <- T.readFile "./man/xmonad.1.markdown.in"
+    T.writeFile "./man/xmonad.1.markdown"
+        . T.replace (T.pack "___VERSION___") (T.pack releaseName)
+        . T.replace (T.pack "___KEYBINDINGS___") (T.pack keybindings)
         $ markdownSource
 
     callCommand . unwords $
@@ -85,9 +92,6 @@ guessKeys line =
 -- FIXME: What escaping should we be doing on these strings?
 markdownDefn :: (String, String) -> String
 markdownDefn (key, desc) = key ++ "\n:     " ++ desc
-
-replace :: Eq a => a -> a -> [a] -> [a]
-replace x y = map (\a -> if a == x then y else a)
 
 trim :: String -> String
 trim = reverse . dropWhile isSpace . reverse . dropWhile isSpace

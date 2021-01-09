@@ -107,7 +107,7 @@ executable generatemanpage
   hs-source-dirs: util
 
   if flag(generatemanpage)
-    build-depends: base, process, regex-posix, text
+    build-depends: base, Cabal, process, regex-posix, text
   else
     buildable: False
 
