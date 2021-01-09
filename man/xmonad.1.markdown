@@ -1,6 +1,6 @@
-% XMONAD(1) Tiling Window Manager
+% XMONAD(1) xmonad-0.15 | xmonad - Tiling Window Manager
 %
-% 30 September 2018
+% January 2020
 
 # Name
 
