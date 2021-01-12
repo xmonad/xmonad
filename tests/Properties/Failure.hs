@@ -2,7 +2,7 @@ module Properties.Failure where
 
 import XMonad.StackSet hiding (filter)
 
-import qualified Control.Exception.Extensible as C
+import qualified Control.Exception as C
 import System.IO.Unsafe
 import Data.List (isPrefixOf)
 

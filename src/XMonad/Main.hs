@@ -16,7 +16,7 @@
 module XMonad.Main (xmonad, launch) where
 
 import System.Locale.SetLocale
-import qualified Control.Exception.Extensible as E
+import qualified Control.Exception as E
 import Data.Bits
 import Data.List ((\\))
 import Data.Function

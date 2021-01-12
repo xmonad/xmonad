@@ -77,7 +77,6 @@ library
                  , containers
                  , data-default
                  , directory
-                 , extensible-exceptions
                  , filepath
                  , mtl
                  , process
@@ -132,4 +131,4 @@ test-suite properties
                   Properties.Workspace
                   Utils
   hs-source-dirs: tests
-  build-depends:  base, QuickCheck >= 2, X11, containers, extensible-exceptions, xmonad
+  build-depends:  base, QuickCheck >= 2, X11, containers, xmonad

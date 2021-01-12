@@ -21,8 +21,8 @@ module XMonad.ManageHook where
 import XMonad.Core
 import Graphics.X11.Xlib.Extras
 import Graphics.X11.Xlib (Display, Window, internAtom, wM_NAME)
-import Control.Exception.Extensible (bracket, SomeException(..))
-import qualified Control.Exception.Extensible as E
+import Control.Exception (bracket, SomeException(..))
+import qualified Control.Exception as E
 import Control.Monad.Reader
 import Data.Maybe
 import Data.Monoid
