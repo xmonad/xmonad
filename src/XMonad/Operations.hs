@@ -32,7 +32,7 @@ import qualified Data.Set as S
 import Control.Arrow (second)
 import Control.Monad.Reader
 import Control.Monad.State
-import qualified Control.Exception.Extensible as C
+import qualified Control.Exception as C
 
 import System.IO
 import System.Directory
