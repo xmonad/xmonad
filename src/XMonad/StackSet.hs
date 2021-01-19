@@ -151,7 +151,7 @@ data Workspace i l a = Workspace  { tag :: !i, layout :: l, stack :: Maybe (Stac
     deriving (Show, Read, Eq)
 
 -- | A structure for window geometries
-data RationalRect = RationalRect Rational Rational Rational Rational
+data RationalRect = RationalRect !Rational !Rational !Rational !Rational
     deriving (Show, Read, Eq)
 
 -- |

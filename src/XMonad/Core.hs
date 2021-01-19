@@ -135,7 +135,8 @@ type WorkspaceId = String
 newtype ScreenId    = S Int deriving (Eq,Ord,Show,Read,Enum,Num,Integral,Real)
 
 -- | The 'Rectangle' with screen dimensions
-data ScreenDetail   = SD { screenRect :: !Rectangle } deriving (Eq,Show, Read)
+newtype ScreenDetail = SD { screenRect :: Rectangle }
+    deriving (Eq,Show, Read)
 
 ------------------------------------------------------------------------
 
