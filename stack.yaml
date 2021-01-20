@@ -1,10 +1,19 @@
-resolver: lts-16.22
+resolver: nightly-2021-01-05
+
+flags:
+  xmonad:
+    generatemanpage: true
 
 packages:
 - ./
 
 extra-deps:
 - X11-1.9.2
+- pandoc-2.11.3.2
+- citeproc-0.3.0.3
+- commonmark-0.1.1.2
+- commonmark-extensions-0.2.0.4
+- commonmark-pandoc-0.2.0.1
 
 nix:
   packages:
