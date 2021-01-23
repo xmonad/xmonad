@@ -29,6 +29,9 @@
     In the cases of 1. and 3., the build script or executable is
     expected to be in the config dir.
 
+  * Change `ScreenDetail` to a newtype and make `RationalRect` strict in
+    its contents.
+
 ## 0.15 (September 30, 2018)
 
   * Reimplement `sendMessage` to deal properly with windowset changes made
