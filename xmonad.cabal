@@ -81,6 +81,7 @@ library
                  , mtl
                  , process
                  , setlocale
+                 , transformers          >= 0.3
                  , unix
                  , utf8-string           >= 0.3 && < 1.1
   ghc-options:     -funbox-strict-fields -Wall -fno-warn-unused-do-bind

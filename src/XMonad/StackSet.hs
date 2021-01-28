@@ -1,4 +1,5 @@
 {-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE DeriveFunctor #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -52,6 +53,8 @@ module XMonad.StackSet (
     ) where
 
 import Prelude hiding (filter)
+import Control.Applicative.Backwards (Backwards (Backwards, forwards))
+import Data.Foldable (foldr, toList)
 import Data.Maybe   (listToMaybe,isJust,fromMaybe)
 import qualified Data.List as L (deleteBy,find,splitAt,filter,nub)
 import Data.List ( (\\) )
@@ -175,8 +178,19 @@ data RationalRect = RationalRect !Rational !Rational !Rational !Rational
 data Stack a = Stack { focus  :: !a        -- focused thing in this set
                      , up     :: [a]       -- clowns to the left
                      , down   :: [a] }     -- jokers to the right
-    deriving (Show, Read, Eq)
+    deriving (Show, Read, Eq, Functor)
 
+instance Foldable Stack where
+    toList = integrate
+    foldr f z = foldr f z . toList
+
+instance Traversable Stack where
+    traverse f s =
+        flip Stack
+            -- 'Backwards' applies the Applicative in reverse order.
+            <$> forwards (traverse (Backwards . f) (up s))
+            <*> f (focus s)
+            <*> traverse f (down s)
 
 -- | this function indicates to catch that an error is expected
 abort :: String -> a
