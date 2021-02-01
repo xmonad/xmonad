@@ -24,7 +24,7 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Control.Monad.Reader
 import Control.Monad.State
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, isJust)
 import Data.Monoid (getAll)
 
 import Graphics.X11.Xlib hiding (refreshKeyboardMapping)
@@ -48,6 +48,7 @@ import Paths_xmonad (version)
 import Data.Version (showVersion)
 
 import Graphics.X11.Xinerama (compiledWithXinerama)
+import Graphics.X11.Xrandr (xrrQueryExtension, xrrUpdateConfiguration)
 
 ------------------------------------------------------------------------
 
@@ -261,8 +262,11 @@ launch initxmc drs = do
 
             userCode $ startupHook initxmc
 
+            rrData <- io $ xrrQueryExtension dpy
+            let rrUpdate = when (isJust rrData) . void . xrrUpdateConfiguration
+
             -- main loop, for all you HOF/recursion fans out there.
-            forever $ prehandle =<< io (nextEvent dpy e >> getEvent e)
+            forever $ prehandle =<< io (nextEvent dpy e >> rrUpdate e >> getEvent e)
 
     return ()
       where
