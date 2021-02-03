@@ -1,13 +1,19 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Properties.Stack where
 
 import Test.QuickCheck
+import Test.QuickCheck.Classes (
+    Laws (lawsTypeclass, lawsProperties), Proxy1 (Proxy1),
+    foldableLaws, traversableLaws,
+    )
 import Instances
 
 import XMonad.StackSet hiding (filter)
 import qualified XMonad.StackSet as S (filter)
 
 import Data.Maybe
+import Data.Functor.Classes (Eq1 (liftEq), Show1 (liftShowsPrec))
 
 
 -- The list returned by index should be the same length as the actual
@@ -49,3 +55,50 @@ prop_differentiate xs =
         if null xs then differentiate xs == Nothing
                    else (differentiate xs) == Just (Stack (head xs) [] (tail xs))
     where _ = xs :: [Int]
+
+
+-- Check type class laws of 'Data.Foldable.Foldable' and 'Data.Traversable.Traversable'.
+newtype TestStack a = TestStack (Stack a)
+    deriving (Eq, Read, Show, Foldable, Functor)
+
+instance Arbitrary1 TestStack where
+   liftArbitrary gen =
+       (\ x xu xd -> TestStack (Stack x xu xd))
+       <$> gen
+       <*> liftArbitrary gen
+       <*> liftArbitrary gen
+
+instance (Arbitrary a)=> Arbitrary (TestStack a) where
+   arbitrary = arbitrary1
+   shrink = shrink1
+
+instance Traversable TestStack where
+   traverse f (TestStack sx) = fmap TestStack (traverse f sx)
+
+instance Eq1 TestStack where
+    liftEq f (TestStack (Stack x xu xd)) (TestStack (Stack y yu yd)) =
+        f x y && liftEq f xu yu && liftEq f xd yd
+
+instance Show1 TestStack where
+    liftShowsPrec shwP shwL p (TestStack (Stack x xu xd)) =
+        showString "TestStack (Stack {focus = "
+                <> shwP p x
+                <> showString ", up = "
+                <> shwL xu
+                <> showString ", down ="
+                <> shwL xd
+                <> showString "})"
+
+proxy_TestStack :: Proxy1 TestStack
+proxy_TestStack = Proxy1
+laws_Stack_Traversable, laws_Stack_Foldable :: Laws
+laws_Stack_Traversable = traversableLaws proxy_TestStack
+laws_Stack_Foldable = foldableLaws proxy_TestStack
+prop_laws_Stack =
+    format laws_Stack_Foldable <> format laws_Stack_Traversable
+  where
+    format laws =
+        fmap
+        (\(name, prop) ->
+            ("Stack: " <> lawsTypeclass laws <> ": " <> name, prop))
+        (lawsProperties laws)
