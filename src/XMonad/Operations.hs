@@ -91,7 +91,7 @@ killWindow w = withDisplay $ \d -> do
     io $ if wmdelt `elem` protocols
         then allocaXEvent $ \ev -> do
                 setEventType ev clientMessage
-                setClientMessageEvent ev w wmprot 32 wmdelt 0
+                setClientMessageEvent ev w wmprot 32 wmdelt currentTime
                 sendEvent d w False noEventMask ev
         else killClient d w >> return ()
 
