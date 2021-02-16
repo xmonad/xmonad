@@ -637,7 +637,6 @@ mouseDrag f done = do
 -- | drag the window under the cursor with the mouse while it is dragged
 mouseMoveWindow :: Window -> X ()
 mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
-    io $ raiseWindow d w
     wa <- io $ getWindowAttributes d w
     (_, _, _, ox', oy', _, _, _) <- io $ queryPointer d w
     let ox = fromIntegral ox'
@@ -652,7 +651,6 @@ mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
 -- | resize the window under the cursor with the mouse while it is dragged
 mouseResizeWindow :: Window -> X ()
 mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
-    io $ raiseWindow d w
     wa <- io $ getWindowAttributes d w
     sh <- io $ getWMNormalHints d w
     io $ warpPointer d none w 0 0 0 0 (fromIntegral (wa_width wa)) (fromIntegral (wa_height wa))
