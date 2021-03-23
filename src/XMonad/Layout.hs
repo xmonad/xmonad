@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, PatternGuards, TypeSynonymInstances, DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, PatternGuards, TypeSynonymInstances, DeriveDataTypeable, LambdaCase #-}
 
 -- --------------------------------------------------------------------------
 -- |
@@ -16,7 +16,7 @@
 
 module XMonad.Layout (
     Full(..), Tall(..), Mirror(..),
-    Resize(..), IncMasterN(..), Choose(..), (|||), CLR(..), ChangeLayout(..),
+    Resize(..), IncMasterN(..), Choose(..), (|||), CLR(..), ChangeLayout(..), JumpToLayout(..),
     mirrorRect, splitVertically,
     splitHorizontally, splitHorizontallyBy, splitVerticallyBy,
 
@@ -30,7 +30,7 @@ import Graphics.X11 (Rectangle(..))
 import qualified XMonad.StackSet as W
 import Control.Arrow ((***), second)
 import Control.Monad
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, isNothing)
 
 ------------------------------------------------------------------------
 
@@ -131,10 +131,40 @@ mirrorRect (Rectangle rx ry rw rh) = Rectangle ry rx rh rw
 -- LayoutClass selection manager
 -- Layouts that transition between other layouts
 
--- | Messages to change the current layout.
+-- | Messages to change the current layout.  Also see 'JumpToLayout'.
 data ChangeLayout = FirstLayout | NextLayout deriving (Eq, Show)
 
 instance Message ChangeLayout
+
+-- | A message to jump to a particular layout, specified by its
+-- description string.
+--
+-- The argument given to a 'JumpToLayout' message should be the
+-- @description@ of the layout to be selected.  If you use
+-- "XMonad.Hooks.DynamicLog" from @xmonad-contrib@, this is the name of
+-- the layout displayed in your status bar.  Alternatively, you can use
+-- GHCi to determine the proper name to use.  For example:
+--
+-- > $ ghci
+-- > GHCi, version 6.8.2: http://www.haskell.org/ghc/  :? for help
+-- > Loading package base ... linking ... done.
+-- > :set prompt "> "    -- don't show loaded module names
+-- > > :m +XMonad.Core   -- load the xmonad core
+-- > > :m +XMonad.Layout.Grid  -- load whatever module you want to use
+-- > > description Grid  -- find out what it's called
+-- > "Grid"
+--
+-- As yet another (possibly easier) alternative, you can use the
+-- "XMonad.Layout.Renamed" module (also in @xmonad-contrib@) to give
+-- custom names to your layouts, and use those.
+--
+-- For example, if you want to jump directly to the 'Full' layout you
+-- can do
+--
+-- > , ((modm .|. controlMask, xK_f), sendMessage $ JumpToLayout "Full")
+--
+newtype JumpToLayout = JumpToLayout String
+instance Message JumpToLayout
 
 -- | The layout choice combinator
 (|||) :: l a -> r a -> Choose l r a
@@ -147,6 +177,11 @@ data Choose l r a = Choose CLR (l a) (r a) deriving (Read, Show)
 -- | Choose the current sub-layout (left or right) in 'Choose'.
 data CLR = CL | CR deriving (Read, Show, Eq)
 
+-- | Switch how to choose the layout around.
+switch :: Choose l r a -> Choose l r a
+switch (Choose CL l r) = Choose CR l r
+switch (Choose CR l r) = Choose CL l r
+
 data NextNoWrap = NextNoWrap deriving (Eq, Show)
 instance Message NextNoWrap
 
@@ -154,6 +189,18 @@ instance Message NextNoWrap
 -- SomeMessage repeatedly.
 handle :: (LayoutClass l a, Message m) => l a -> m -> X (Maybe (l a))
 handle l m = handleMessage l (SomeMessage m)
+
+-- | Swap the two sub-layouts.
+swap :: (LayoutClass l a, LayoutClass r a) => Choose l r a -> X (Choose l r a)
+swap c = switch . fromMaybe c <$> passOnM (SomeMessage Hide) c
+
+-- | Try to pass on 'SomeMessage' to a sub-layout.
+passOnM
+    :: (LayoutClass l a, LayoutClass r a)
+    => SomeMessage -> Choose l r a -> X (Maybe (Choose l r a))
+passOnM m = \case
+    Choose CL l r -> fmap (flip (Choose CL) r) <$> handleMessage l m
+    Choose CR l r -> fmap (Choose CR l)        <$> handleMessage r m
 
 -- | A smart constructor that takes some potential modifications, returns a
 -- new structure if any fields have changed, and performs any necessary cleanup
@@ -199,6 +246,23 @@ instance (LayoutClass l a, LayoutClass r a) => LayoutClass (Choose l r) a where
 
     handleMessage c@(Choose d l r) m | Just ReleaseResources <- fromMessage m =
         join $ liftM2 (choose c d) (handle l ReleaseResources) (handle r ReleaseResources)
+
+    handleMessage c@(Choose CL _ r) m
+        | Just (JumpToLayout desc) <- fromMessage m
+        , desc == description r
+        = Just <$> swap c
+
+    handleMessage c@(Choose CR l _) m
+        | Just (JumpToLayout desc) <- fromMessage m
+        , desc == description l
+        = Just <$> swap c
+
+    handleMessage c m
+        | Just JumpToLayout{} <- fromMessage m
+        = do m' <- passOnM m c
+             if isNothing m'
+                 then traverse (swap . switch) =<< passOnM m (switch c)
+                 else return m'
 
     handleMessage c@(Choose d l r) m = do
         ml' <- case d of
