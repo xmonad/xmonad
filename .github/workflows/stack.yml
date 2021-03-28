@@ -13,9 +13,13 @@ jobs:
       matrix:
         include:
           - resolver: lts-12
+            ghc: 8.4.4
           - resolver: lts-14
+            ghc: 8.6.5
           - resolver: lts-16
+            ghc: 8.8.4
           - resolver: lts-17
+            ghc: 8.10.4
 
     steps:
       - name: Clone project
@@ -32,6 +36,13 @@ jobs:
             libxss-dev \
             #
 
+      - name: Install GHC
+        # use system ghc in stack, don't waste GH Actions cache space
+        run: |
+          set -ex
+          sudo apt install -y ghc-${{ matrix.ghc }}
+          echo /opt/ghc/${{ matrix.ghc }}/bin >> $GITHUB_PATH
+
       - name: Cache Haskell dependencies
         uses: actions/cache@v2
         with:
@@ -46,4 +57,4 @@ jobs:
           set -ex
           stack test \
             --fast --no-terminal \
-            --resolver=${{ matrix.resolver }}
+            --resolver=${{ matrix.resolver }} --system-ghc
