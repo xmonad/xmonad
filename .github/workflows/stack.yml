@@ -6,13 +6,16 @@ on:
 
 jobs:
   build:
-    name: CI
-    runs-on: ${{ matrix.os }}
+    name: Stack CI - Linux - ${{ matrix.resolver }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        resolver: [lts-16, lts-15, lts-14, lts-12]
+        include:
+          - resolver: lts-12
+          - resolver: lts-14
+          - resolver: lts-16
+          - resolver: lts-17
 
     steps:
       - name: Clone project
