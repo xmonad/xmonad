@@ -68,7 +68,6 @@ xmonad conf = do
 
     args <- getArgs
     case args of
-        ("--resume": ws : xs : args') -> migrateState dirs ws xs >> launch' args'
         ["--help"]            -> usage
         ["--recompile"]       -> recompile dirs True >>= flip unless exitFailure
         ["--restart"]         -> sendRestart
