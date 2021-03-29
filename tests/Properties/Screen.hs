@@ -59,7 +59,7 @@ prop_aspect_fits =
 
   where pos = choose (0, 65535)
 
-prop_point_within r @ (Rectangle x y w h) =
+prop_point_within r@(Rectangle x y w h) =
     forAll ((,) <$>
               choose (0, fromIntegral w - 1) <*>
               choose (0, fromIntegral h - 1)) $
