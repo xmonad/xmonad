@@ -43,14 +43,22 @@ jobs:
           sudo apt install -y ghc-${{ matrix.ghc }}
           echo /opt/ghc/${{ matrix.ghc }}/bin >> $GITHUB_PATH
 
+      - name: Cache Haskell package metadata
+        uses: actions/cache@v2
+        with:
+          path: ~/.stack/pantry
+          key: stack-pantry-${{ runner.os }}
+
       - name: Cache Haskell dependencies
         uses: actions/cache@v2
         with:
-          path: ~/.stack
-          key: ${{ runner.os }}-${{ matrix.resolver }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('*.cabal') }}
+          path: |
+            ~/.stack/*
+            !~/.stack/pantry
+          key: stack-${{ runner.os }}-${{ matrix.resolver }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('*.cabal') }}
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.resolver }}-${{ hashFiles('stack.yaml') }}-
-            ${{ runner.os }}-${{ matrix.resolver }}-
+            stack-${{ runner.os }}-${{ matrix.resolver }}-${{ hashFiles('stack.yaml') }}-
+            stack-${{ runner.os }}-${{ matrix.resolver }}-
 
       - name: Build and test
         run: |
