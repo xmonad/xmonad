@@ -51,11 +51,6 @@ source-repository head
   type:     git
   location: https://github.com/xmonad/xmonad
 
-flag testing
-  default:     False
-  manual:      True
-  description: Testing mode, only build minimal components
-
 flag generatemanpage
   default:     False
   manual:      True
@@ -88,9 +83,6 @@ library
   -- Keep this in sync with the oldest version in 'tested-with'
   if impl(ghc <= 8.4.4)
      ghc-options: -Werror=unused-imports
-
-  if flag(testing)
-    buildable: False
 
 executable xmonad
   main-is:       Main.hs
