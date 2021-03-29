@@ -1,1 +1,5 @@
 apt: libx11-dev libxext-dev libxinerama-dev libxrandr-dev libxss-dev
+
+raw-project
+  package xmonad
+    flags: +pedantic

@@ -65,4 +65,5 @@ jobs:
           set -ex
           stack test \
             --fast --no-terminal \
-            --resolver=${{ matrix.resolver }} --system-ghc
+            --resolver=${{ matrix.resolver }} --system-ghc \
+            --flag=xmonad:pedantic

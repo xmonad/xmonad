@@ -136,6 +136,8 @@ jobs:
           echo "package xmonad" >> cabal.project
           echo "    ghc-options: -Werror=missing-methods" >> cabal.project
           cat >> cabal.project <<EOF
+          package xmonad
+            flags: +pedantic
           EOF
           $HCPKG list --simple-output --names-only | perl -ne 'for (split /\s+/) { print "constraints: $_ installed\n" unless /^(xmonad)$/; }' >> cabal.project.local
           cat cabal.project

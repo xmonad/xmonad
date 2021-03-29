@@ -51,6 +51,11 @@ source-repository head
   type:     git
   location: https://github.com/xmonad/xmonad
 
+flag pedantic
+  description: Be pedantic (-Werror and the like)
+  default:     False
+  manual:      True
+
 flag generatemanpage
   default:     False
   manual:      True
@@ -78,20 +83,26 @@ library
                  , setlocale
                  , unix
                  , utf8-string           >= 0.3 && < 1.1
-  ghc-options:     -funbox-strict-fields -Wall -fno-warn-unused-do-bind -Wno-unused-imports
+  ghc-options:     -funbox-strict-fields -Wall -fno-warn-unused-do-bind
 
   -- Keep this in sync with the oldest version in 'tested-with'
-  if impl(ghc <= 8.4.4)
-     ghc-options: -Werror=unused-imports
+  if impl(ghc > 8.4.4)
+    ghc-options:   -Wno-unused-imports
+
+  if flag(pedantic)
+    ghc-options:   -Werror
 
 executable xmonad
   main-is:       Main.hs
   build-depends: base, X11, mtl, unix, xmonad
-  ghc-options:   -Wall -fno-warn-unused-do-bind -Wno-unused-imports
+  ghc-options:   -Wall -fno-warn-unused-do-bind
 
   -- Keep this in sync with the oldest version in 'tested-with'
-  if impl(ghc <= 8.4.4)
-     ghc-options: -Werror=unused-imports
+  if impl(ghc > 8.4.4)
+    ghc-options:   -Wno-unused-imports
+
+  if flag(pedantic)
+    ghc-options:   -Werror
 
 executable generatemanpage
   main-is:        GenerateManpage.hs
@@ -124,3 +135,6 @@ test-suite properties
                   Utils
   hs-source-dirs: tests
   build-depends:  base, QuickCheck >= 2, X11, containers, xmonad
+
+  if flag(pedantic)
+    ghc-options:   -Werror
