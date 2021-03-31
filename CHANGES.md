@@ -35,6 +35,8 @@
   * Fixed dunst notifications being obscured when moving floats.
     https://github.com/xmonad/xmonad/issues/208
 
+  * Broadcast `DestroyWindowEvent` to layouts
+
 ## 0.15 (September 30, 2018)
 
   * Reimplement `sendMessage` to deal properly with windowset changes made
