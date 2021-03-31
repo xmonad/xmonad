@@ -20,15 +20,17 @@ main :: IO ()
 main = do
     keybindings <- guessBindings
 
-    markdownSource <- readFile "./man/xmonad.1.markdown"
+    markdownSource <- readFile "./man/xmonad.1.markdown.in"
+    let markdownOutput = unlines
+                       . replace "___KEYBINDINGS___" keybindings
+                       . lines
+                       $ markdownSource
+    writeFile "./man/xmonad.1.markdown" markdownOutput
 
     runIOorExplode $ do
-        parsed <- readMarkdown (def { readerStandalone = True, readerExtensions = pandocExtensions })
-            . T.pack
-            . unlines
-            . replace "___KEYBINDINGS___" keybindings
-            . lines
-            $ markdownSource
+        parsed <- readMarkdown
+            (def { readerStandalone = True, readerExtensions = pandocExtensions })
+            (T.pack markdownOutput)
 
         manTemplate <- compileDefaultTemplate (T.pack "man")
         manBody <- writeMan def { writerTemplate = Just manTemplate } parsed
