@@ -12,29 +12,34 @@ import Control.Monad.IO.Class (liftIO)
 import Data.Char
 import Data.List
 import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
+import qualified Data.Text.IO as T
+import Distribution.PackageDescription.Parsec (readGenericPackageDescription)
+import Distribution.Verbosity (normal)
+import Distribution.PackageDescription (package, packageDescription)
+import Distribution.Text (display)
 import Text.Pandoc
 import Text.Regex.Posix
 
 main :: IO ()
 main = do
+    releaseName <- display . package . packageDescription
+        <$> readGenericPackageDescription normal "./xmonad.cabal"
     keybindings <- guessBindings
 
-    markdownSource <- readFile "./man/xmonad.1.markdown.in"
-    let markdownOutput = unlines
-                       . replace "___KEYBINDINGS___" keybindings
-                       . lines
+    markdownSource <- T.readFile "./man/xmonad.1.markdown.in"
+    let markdownOutput = T.replace (T.pack "___VERSION___") (T.pack releaseName)
+                       . T.replace (T.pack "___KEYBINDINGS___") (T.pack keybindings)
                        $ markdownSource
-    writeFile "./man/xmonad.1.markdown" markdownOutput
+    T.writeFile "./man/xmonad.1.markdown" markdownOutput
 
     runIOorExplode $ do
         parsed <- readMarkdown
             (def { readerStandalone = True, readerExtensions = pandocExtensions })
-            (T.pack markdownOutput)
+            markdownOutput
 
         manTemplate <- compileDefaultTemplate (T.pack "man")
         manBody <- writeMan def { writerTemplate = Just manTemplate } parsed
-        liftIO $ TIO.writeFile "./man/xmonad.1" $ manBody
+        liftIO $ T.writeFile "./man/xmonad.1" $ manBody
         liftIO $ putStrLn "Documentation created: man/xmonad.1"
 
         htmltemplate <- compileDefaultTemplate (T.pack "html")
@@ -42,7 +47,7 @@ main = do
                                      { writerTemplate = Just htmltemplate
                                      , writerTableOfContents = True }
                                      parsed
-        liftIO $ TIO.writeFile "./man/xmonad.1.html" htmlBody
+        liftIO $ T.writeFile "./man/xmonad.1.html" htmlBody
         liftIO $ putStrLn "Documentation created: man/xmonad.1.html"
 
 -- | The format for the docstrings in "Config.hs" takes the following form:
@@ -86,9 +91,6 @@ guessKeys line =
 -- FIXME: What escaping should we be doing on these strings?
 markdownDefn :: (String, String) -> String
 markdownDefn (key, desc) = key ++ "\n:     " ++ desc
-
-replace :: Eq a => a -> a -> [a] -> [a]
-replace x y = map (\a -> if a == x then y else a)
 
 trim :: String -> String
 trim = reverse . dropWhile isSpace . reverse . dropWhile isSpace

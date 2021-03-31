@@ -7,5 +7,5 @@ build-type: Simple
 executable generatemanpage
   main-is: GenerateManpage.hs
   hs-source-dirs: .
-  build-depends: base, pandoc > 2.10, regex-posix, text
+  build-depends: base, Cabal, pandoc > 2.10, regex-posix, text
   default-language: Haskell2010
