@@ -1,0 +1,43 @@
+name: Generate manpage
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone project
+        uses: actions/checkout@v2
+
+      - name: Install GHC
+        run: |
+          set -ex
+          sudo apt install -y ghc-$GHC_VERSION
+          echo /opt/ghc/$GHC_VERSION/bin >> $GITHUB_PATH
+        env:
+          GHC_VERSION: 8.10.4
+
+      - name: Cache ~/.cabal metadata
+        uses: actions/cache@v2
+        with:
+          path: ~/.cabal
+          key: generatemanpage-cabal-${{ runner.os }}
+
+      - name: Generate manpage
+        run: |
+          set -ex
+          cabal update
+          cabal build --project-file=util/GenerateManpage.cabal.project generatemanpage
+          cabal exec --project-file=util/GenerateManpage.cabal.project generatemanpage
+
+      - name: Commit/push if changed
+        run: |
+          set -ex
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git diff --quiet --exit-code && exit
+          git commit -a -m 'man: Update'
+          git push

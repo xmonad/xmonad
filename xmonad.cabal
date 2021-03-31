@@ -43,7 +43,6 @@ extra-source-files: README.md
                     man/xmonad.1
                     man/xmonad.1.html
                     man/xmonad.hs
-                    util/GenerateManpage.hs
                     util/hpcReport.sh
 cabal-version:      >= 1.8
 
@@ -55,11 +54,6 @@ flag pedantic
   description: Be pedantic (-Werror and the like)
   default:     False
   manual:      True
-
-flag generatemanpage
-  default:     False
-  manual:      True
-  description: Build the tool for generating the man page
 
 library
   exposed-modules: XMonad
@@ -103,15 +97,6 @@ executable xmonad
 
   if flag(pedantic)
     ghc-options:   -Werror
-
-executable generatemanpage
-  main-is:        GenerateManpage.hs
-  hs-source-dirs: util
-
-  if flag(generatemanpage)
-    build-depends: base, pandoc > 2.10, regex-posix, text
-  else
-    buildable: False
 
 test-suite properties
   type:           exitcode-stdio-1.0

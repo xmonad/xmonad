@@ -35,6 +35,10 @@
   * Fixed dunst notifications being obscured when moving floats.
     https://github.com/xmonad/xmonad/issues/208
 
+  * `util/GenerateManpage.hs` is no longer distributed in the tarball.
+    Instead, the manpage source is regenerated and manpage rebuilt
+    automatically in CI.
+
 ## 0.15 (September 30, 2018)
 
   * Reimplement `sendMessage` to deal properly with windowset changes made
