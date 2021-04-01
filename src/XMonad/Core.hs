@@ -387,6 +387,7 @@ instance Message LayoutMessages
 --
 -- Minimal complete definition: initialValue
 class Typeable a => ExtensionClass a where
+    {-# MINIMAL initialValue #-}
     -- | Defines an initial value for the state extension
     initialValue :: a
     -- | Specifies whether the state extension should be
