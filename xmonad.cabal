@@ -143,8 +143,9 @@ test-suite properties
                 , containers
                 , xmonad
 
-  if flag(quickcheck-classes)
+  if flag(quickcheck-classes) && impl(ghc > 8.5)
     -- no quickcheck-classes in LTS-12
+    -- GHC 8.4 and lower needs too much boilerplate (Eq1, Show1, …)
     build-depends: quickcheck-classes >= 0.4.3
 
   if flag(pedantic)
