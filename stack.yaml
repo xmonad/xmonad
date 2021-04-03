@@ -6,6 +6,13 @@ packages:
 extra-deps:
 - X11-1.9.2
 
+flags:
+  xmonad:
+    # stack doesn't support automatic flags
+    # https://cabal.readthedocs.io/en/latest/cabal-package.html#resolution-of-conditions-and-flags
+    # https://github.com/commercialhaskell/stack/issues/1313#issuecomment-157259270
+    quickcheck-classes: false
+
 nix:
   packages:
     - zlib
