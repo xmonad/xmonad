@@ -61,6 +61,8 @@ flag generatemanpage
   manual:      True
   description: Build the tool for generating the man page
 
+flag quickcheck-classes
+
 library
   exposed-modules: XMonad
                    XMonad.Config
@@ -137,10 +139,13 @@ test-suite properties
   hs-source-dirs: tests
   build-depends:  base
                 , QuickCheck >= 2
-                , quickcheck-classes >= 0.4.3
                 , X11
                 , containers
                 , xmonad
+
+  if flag(quickcheck-classes)
+    -- no quickcheck-classes in LTS-12
+    build-depends: quickcheck-classes >= 0.4.3
 
   if flag(pedantic)
     ghc-options:   -Werror
