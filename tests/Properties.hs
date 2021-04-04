@@ -196,6 +196,5 @@ tests =
   ,("pointWithin",        property prop_point_within)
   ,("pointWithin mirror", property prop_point_within_mirror)
 
-  ]
-
-
+  ] <>
+  prop_laws_Stack
