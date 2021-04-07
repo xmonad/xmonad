@@ -256,14 +256,18 @@ readsLayout (Layout l) s = [(Layout (asTypeOf x l), rs) | (x, rs) <- reads s]
 -- | Every layout must be an instance of 'LayoutClass', which defines
 -- the basic layout operations along with a sensible default for each.
 --
--- Minimal complete definition:
+-- All of the methods have default implementations, so there is no
+-- minimal complete definition.  They do, however, have a dependency
+-- structure by default; this is something to be aware of should you
+-- choose to implement one of these methods.  Here is how a minimal
+-- complete definition would look like if we did not provide any default
+-- implementations:
 --
--- * 'runLayout' || (('doLayout' || 'pureLayout') && 'emptyLayout'), and
+-- * 'runLayout' || (('doLayout' || 'pureLayout') && 'emptyLayout')
 --
 -- * 'handleMessage' || 'pureMessage'
 --
--- You should also strongly consider implementing 'description',
--- although it is not required.
+-- * 'description'
 --
 -- Note that any code which /uses/ 'LayoutClass' methods should only
 -- ever call 'runLayout', 'handleMessage', and 'description'!  In
@@ -387,6 +391,7 @@ instance Message LayoutMessages
 --
 -- Minimal complete definition: initialValue
 class Typeable a => ExtensionClass a where
+    {-# MINIMAL initialValue #-}
     -- | Defines an initial value for the state extension
     initialValue :: a
     -- | Specifies whether the state extension should be
