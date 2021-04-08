@@ -83,3 +83,16 @@ When the time comes to release another version of XMonad and Contrib...
       - Haskell Cafe
 
 [packdeps]: http://hackage.haskell.org/package/packdeps
+
+## Website and Other Accounts
+
+* The [xmonad twitter] is tended to by [liskin].
+
+* The [xmonad.org] domain is owned by [eyenx] and the website itself is
+  deployed via GitHub Pages.  It can be updated by making a pull request
+  against the [xmonad-web] repository.
+
+[eyenx]: https://github.com/eyenx
+[xmonad-web]: https://github.com/xmonad/xmonad-web/
+[xmonad.org]: https://xmonad.org/
+[xmonad twitter]: https://twitter.com/xmonad
