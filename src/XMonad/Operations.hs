@@ -14,7 +14,33 @@
 --
 -----------------------------------------------------------------------------
 
-module XMonad.Operations where
+module XMonad.Operations (
+-- * Manage One Window
+    manage, unmanage, killWindow, kill, isClient,
+    setInitialProperties, setWMState, setWindowBorderWithFallback,
+    hide, reveal, tileWindow,
+    setTopFocus, focus, withFocused,
+-- * Manage Windows
+    windows, refresh, rescreen, modifyWindowSet, windowBracket, windowBracket_, clearEvents, getCleanedScreenInfo,
+-- * Keyboard and Mouse
+    cleanMask, extraModifiers,
+    mouseDrag, mouseMoveWindow, mouseResizeWindow,
+    setButtonGrab, setFocusX,
+-- * Messages
+    sendMessage, broadcastMessage, sendMessageWithNoRefresh,
+-- * Save and Restore State
+    StateFile (..), writeStateToFile, readStateFile, restart,
+-- * Floating Layer
+    float, floatLocation,
+-- * Window Size Hints
+    D, mkAdjust, applySizeHints, applySizeHints', applySizeHintsContents,
+    applyAspectHint, applyResizeIncHint, applyMaxSizeHint,
+-- * Rectangles
+    containedIn, nubScreens, pointWithin, scaleRationalRect,
+-- * Other Utilities
+    initColor, pointScreen, screenWorkspace,
+    setLayout, updateLayout,
+    ) where
 
 import XMonad.Core
 import XMonad.Layout (Full(..))
