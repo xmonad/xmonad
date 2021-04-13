@@ -63,6 +63,7 @@ import Data.Ratio
 import qualified Data.Map as M
 import qualified Data.Set as S
 
+import Control.Applicative (liftA3)
 import Control.Arrow (second)
 import Control.Monad.Reader
 import Control.Monad.State
@@ -456,13 +457,13 @@ filterMessageWithNoRefresh p a = updateLayoutsBy $ \ wrk ->
 
 -- | Update the layouts of some workspaces.
 updateLayoutsBy :: (WindowSpace -> X (Maybe (Layout Window))) -> X ()
-updateLayoutsBy f = runOnWorkspaces $ \ wrk ->
+updateLayoutsBy f = runOnWorkspaces' $ \ wrk ->
     maybe wrk (\ l' -> wrk{ W.layout = l' }) <$> f wrk
 
 -- | Update the layout field of a workspace.
 updateLayout :: WorkspaceId -> Maybe (Layout Window) -> X ()
 updateLayout i ml = whenJust ml $ \l ->
-    runOnWorkspaces $ \ww -> return $ if W.tag ww == i then ww { W.layout = l} else ww
+    runOnWorkspaces' $ \ww -> return $ if W.tag ww == i then ww { W.layout = l} else ww
 
 -- | Set the layout of the currently viewed workspace.
 setLayout :: Layout Window -> X ()
@@ -504,6 +505,32 @@ initColor :: Display -> String -> IO (Maybe Pixel)
 initColor dpy c = C.handle (\(C.SomeException _) -> return Nothing) $
     (Just . color_pixel . fst) <$> allocNamedColor dpy colormap c
     where colormap = defaultColormap dpy (defaultScreen dpy)
+
+-- | Use a 'Monad' function to modify the workspaces in 'XState',
+-- starting with the current workspace.
+--
+-- This is effectively the same as 'runOnWorkspaces' but with a
+-- different order of operations and more general signature.
+runOnWorkspaces' :: MonadState XState m
+                 => (WindowSpace -> m WindowSpace) -> m ()
+runOnWorkspaces' = windowsetM_ . workspacesA
+  where
+    windowsetM_ f = do
+        ws' <- f =<< gets windowset
+        modify $ \ s -> s{ windowset = ws' }
+
+-- | Traverse an 'Applicative' function over the workspaces, starting
+-- with the current.
+workspacesA :: Applicative m
+            => (W.Workspace i l a -> m (W.Workspace i' l' a))
+            -> W.StackSet i l a sid sd -> m (W.StackSet i' l' a sid sd)
+workspacesA f s = liftA3
+    (\cur' vis' hid' -> s{ W.current = cur', W.visible = vis', W.hidden = hid' })
+    (workspaceL f (W.current s))
+    ((traverse . workspaceL) f (W.visible s))
+    (traverse f (W.hidden s))
+  where
+    workspaceL g z = (\x -> z{ W.workspace = x }) <$> g (W.workspace z)
 
 ------------------------------------------------------------------------
 
