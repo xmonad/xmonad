@@ -440,17 +440,24 @@ sendMessage a = windowBracket_ $ do
 
 -- | Send a message to all layouts, without refreshing.
 broadcastMessage :: Message a => a -> X ()
-broadcastMessage a = withWindowSet $ \ws -> do
-   let c = W.workspace . W.current $ ws
-       v = map W.workspace . W.visible $ ws
-       h = W.hidden ws
-   mapM_ (sendMessageWithNoRefresh a) (c : v ++ h)
+broadcastMessage = filterMessageWithNoRefresh (const True)
 
 -- | Send a message to a layout, without refreshing.
-sendMessageWithNoRefresh :: Message a => a -> W.Workspace WorkspaceId (Layout Window) Window -> X ()
+sendMessageWithNoRefresh :: Message a => a -> WindowSpace -> X ()
 sendMessageWithNoRefresh a w =
-    handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing >>=
-    updateLayout  (W.tag w)
+    filterMessageWithNoRefresh (((==) `on` W.tag) w) a
+
+-- | Send a message to the layouts of some workspaces, without refreshing.
+filterMessageWithNoRefresh :: Message a => (WindowSpace -> Bool) -> a -> X ()
+filterMessageWithNoRefresh p a = updateLayoutsBy $ \ wrk ->
+    if p wrk
+      then userCodeDef Nothing $ W.layout wrk `handleMessage` SomeMessage a
+      else pure Nothing
+
+-- | Update the layouts of some workspaces.
+updateLayoutsBy :: (WindowSpace -> X (Maybe (Layout Window))) -> X ()
+updateLayoutsBy f = runOnWorkspaces $ \ wrk ->
+    maybe wrk (\ l' -> wrk{ W.layout = l' }) <$> f wrk
 
 -- | Update the layout field of a workspace.
 updateLayout :: WorkspaceId -> Maybe (Layout Window) -> X ()
