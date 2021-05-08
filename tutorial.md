@@ -740,23 +740,33 @@ and then plug that into our main function:
 ```
 
 As before, we now change things by modifying that `def` record until we
-find something that we like.  There are _a lot_ of options for the [PP
-record]; I'd advise you to read through all of them now, so you don't
-get lost!
+find something that we like.  First, for some functionality that we need
+further down we need to import one more module:
+
+``` haskell
+  import XMonad.Util.Loggers
+```
+
+Now we are finally ready to make things pretty.  There are _a lot_ of
+options for the [PP record]; I'd advise you to read through all of them
+now, so you don't get lost!
 
 ``` haskell
   myXmobarPP :: PP
   myXmobarPP = def
       { ppSep             = magenta " • "
-      , ppTitle           = wrap (white    "[") (white    "]") . magenta . ppWindow
-      , ppTitleUnfocused  = wrap (lowWhite "[") (lowWhite "]") . blue    . ppWindow
       , ppTitleSanitize   = xmobarStrip
       , ppCurrent         = wrap " " "" . xmobarBorder "Top" "#8be9fd" 2
       , ppHidden          = white . wrap " " ""
       , ppHiddenNoWindows = lowWhite . wrap " " ""
       , ppUrgent          = red . wrap (yellow "!") (yellow "!")
+      , ppOrder           = \[ws, l, _, wins] -> [ws, l, wins]
+      , ppExtras          = [logTitles formatFocused formatUnfocused]
       }
     where
+      formatFocused   = wrap (white    "[") (white    "]") . magenta . ppWindow
+      formatUnfocused = wrap (lowWhite "[") (lowWhite "]") . blue    . ppWindow
+
       -- | Windows should have *some* title, which should not not exceed a
       -- sane length.
       ppWindow :: String -> String
@@ -771,12 +781,12 @@ get lost!
       lowWhite = xmobarColor "#bbbbbb" ""
 ```
 
-_IF YOU ARE ON A VERSION `< 0.17`_: Both `ppTitleUnfocused` and
-  `xmobarBorder` are not available yet, so you will have to remove them.
-  As an alternative to `xmobarBorder`, a common way to "mark" the
-  currently focused workspace is by using brackets; you can try
-  something like `ppCurrent = wrap (blue "[") (blue "]")` and see if you
-  like it.
+_IF YOU ARE ON A VERSION `< 0.17`_: Both `logTitles` and `xmobarBorder`
+  are not available yet, so you will have to remove them.  As an
+  alternative to `xmobarBorder`, a common way to "mark" the currently
+  focused workspace is by using brackets; you can try something like
+  `ppCurrent = wrap (blue "[") (blue "]")` and see if you like it.  Also
+  read the bit about `ppOrder` further down!
 
 That's a lot!  But don't worry, take a deep breath and remind yourself
 of what you read above in the documentation of the [PP record].  Even if
@@ -787,8 +797,68 @@ focused window, `ppCurrent` formats the currently focused workspace,
 The rest is just deciding on some pretty colours and formatting things
 just how we like it.
 
-If this is too much for you, you can also really just start with the
-blank
+An important thing to talk about may be `ppOrder`.  Quoting from its
+documentation:
+
+  > By default, this function receives a list with three formatted
+  > strings, representing the workspaces, the layout, and the current
+  > window title, respectively. If you have specified any extra loggers
+  > in ppExtras, their output will also be appended to the list.
+
+So the first three argument of the list (`ws`, `l`, and `_` in our case,
+where the `_` just means we want to ignore that argument and not give it
+a name) are the workspaces to show, the currently active layout, and the
+title of the focused window.  The last element—`wins`—is what we gave to
+`ppExtras`; if you added more loggers to that then you would have to add
+more items to the list, like this:
+
+``` haskell
+  ppOrder = \[ws, l, _, wins, more, more2] -> [ws, l, wins, more, more2]
+```
+
+However, many people want to show _all_ window titles on the currently
+focused workspace instead.  For that, one can use `logTitles` from
+[XMonad.Util.Loggers] (remember that module we just imported?).
+However, `logTitles` logs _all_ titles.  Naturally, we don't want to
+show the focused window twice and so we suppress it here by ignoring the
+third argument of `ppOrder` and not returning it.  The functions
+`formatFocused` and `formatUnfocused` should be relatively self
+explanitory—they decide how to format the focused resp. unfocused
+windows.
+
+By the way, the `\ ... ->` syntax in there is Haskell's way to express a
+[lambda abstraction] (or anonymous function, as some languages call it).
+All of the arguments of the function come directly after the `\` and
+before the `->`; in our case, this is a list with exactly four elements
+in it.  Basically, it's a nice way to write a function inline and not
+having to define it inside e.g. a `where` clause.  The above could have
+also be written as
+
+``` haskell
+  myXmobarPP :: PP
+  myXmobarPP = def
+      { -- stuff here
+      , ppOrder = myOrder
+        -- more stuff here
+      }
+    where
+      myOrder [ws, l, _, wins] = [ws, l, wins]
+      -- more stuff here
+```
+
+If you're unsure of the number of elements that your `ppOrder` will
+take, you can also specify the list like this:
+
+``` haskell
+  ppOrder = \(ws : l : _ : wins : _) -> [ws, l, wins]
+```
+
+This says that it is a list of _at least_ four elements (`ws`, `l`, the
+unnamed argument, and `wins`), but that afterwards everything is
+possible.
+
+This config is really quite complicated.  If this is too much for you,
+you can also really just start with the blank
 
 ``` haskell
   myXmobarPP :: PP
@@ -948,6 +1018,7 @@ this:
   import XMonad.Hooks.StatusBar.PP
 
   import XMonad.Util.EZConfig
+  import XMonad.Util.Loggers
   import XMonad.Util.Ungrab
 
   import XMonad.Layout.Magnifier
@@ -991,15 +1062,18 @@ this:
   myXmobarPP :: PP
   myXmobarPP = def
       { ppSep             = magenta " • "
-      , ppTitle           = wrap (white    "[") (white    "]") . magenta . ppWindow
-      , ppTitleUnfocused  = wrap (lowWhite "[") (lowWhite "]") . blue    . ppWindow
       , ppTitleSanitize   = xmobarStrip
       , ppCurrent         = wrap " " "" . xmobarBorder "Top" "#8be9fd" 2
       , ppHidden          = white . wrap " " ""
       , ppHiddenNoWindows = lowWhite . wrap " " ""
       , ppUrgent          = red . wrap (yellow "!") (yellow "!")
+      , ppOrder           = \[ws, l, _, wins] -> [ws, l, wins]
+      , ppExtras          = [logTitles formatFocused formatUnfocused]
       }
     where
+      formatFocused   = wrap (white    "[") (white    "]") . magenta . ppWindow
+      formatUnfocused = wrap (lowWhite "[") (lowWhite "]") . blue    . ppWindow
+
       -- | Windows should have *some* title, which should not not exceed a
       -- sane length.
       ppWindow :: String -> String
@@ -1178,6 +1252,7 @@ either :)
 [INSTALL.md]: https://github.com/xmonad/xmonad/blob/master/INSTALL.md#stack
 [XMonad.Config]: https://github.com/xmonad/xmonad/blob/master/src/XMonad/Config.hs
 [XMonad.ManageHook]: https://hackage.haskell.org/package/xmonad/docs/XMonad-ManageHook.html
+[XMonad.Util.Loggers]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Util-Loggers.html
 [XMonad.Util.EZConfig]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Util-EZConfig.html
 [XMonad.Layout.Renamed]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Layout-Renamed.html
 [XMonad.Layout.Magnifier]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Layout-Magnifier.html
@@ -1200,4 +1275,5 @@ either :)
 [Haskell]: https://www.haskell.org/
 [trayer-srg]: https://github.com/sargon/trayer-srg
 [record update]: http://learnyouahaskell.com/making-our-own-types-and-typeclasses
+[lambda abstraction]: https://wiki.haskell.org/Lambda_abstraction
 [GNU Emacs conventions]: https://www.gnu.org/software/emacs/manual/html_node/elisp/Key-Sequences.html#Key-Sequences
