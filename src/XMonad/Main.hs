@@ -473,8 +473,11 @@ grabKeys = do
     -- build a map from keysyms to lists of keysyms (doing what
     -- XGetKeyboardMapping would do if the X11 package bound it)
     syms <- forM allCodes $ \code -> io (keycodeToKeysym dpy code 0)
-    let keysymMap = M.fromListWith (++) (zip syms [[code] | code <- allCodes])
-        keysymToKeycodes sym = M.findWithDefault [] sym keysymMap
+    let keysymMap' = M.fromListWith (++) (zip syms [[code] | code <- allCodes])
+    -- keycodeToKeysym returns noSymbol for all unbound keycodes, and we don't
+    -- want to grab those whenever someone accidentally uses def :: KeySym
+    let keysymMap = M.delete noSymbol keysymMap'
+    let keysymToKeycodes sym = M.findWithDefault [] sym keysymMap
     forM_ (M.keys ks) $ \(mask,sym) ->
          forM_ (keysymToKeycodes sym) $ \kc ->
               mapM_ (grab kc . (mask .|.)) =<< extraModifiers
