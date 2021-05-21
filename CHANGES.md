@@ -41,6 +41,9 @@
     Instead, the manpage source is regenerated and manpage rebuilt
     automatically in CI.
 
+  * Added the `extensibleConf` field to `XConfig` which makes it easier for
+    contrib modules to have composable configuration (custom hooks, …).
+
 ## 0.15 (September 30, 2018)
 
   * Reimplement `sendMessage` to deal properly with windowset changes made

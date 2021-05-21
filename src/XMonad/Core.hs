@@ -23,7 +23,7 @@ module XMonad.Core (
     XConf(..), XConfig(..), LayoutClass(..),
     Layout(..), readsLayout, Typeable, Message,
     SomeMessage(..), fromMessage, LayoutMessages(..),
-    StateExtension(..), ExtensionClass(..),
+    StateExtension(..), ExtensionClass(..), ConfExtension(..),
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
     getAtom, spawn, spawnPID, xfork, recompile, trace, whenJust, whenX,
@@ -122,6 +122,11 @@ data XConfig l = XConfig
     , rootMask           :: !EventMask           -- ^ The root events that xmonad is interested in
     , handleExtraArgs    :: !([String] -> XConfig Layout -> IO (XConfig Layout))
                                                  -- ^ Modify the configuration, complain about extra arguments etc. with arguments that are not handled by default
+    , extensibleConf     :: !(M.Map TypeRep ConfExtension)
+                                                 -- ^ Stores custom config information.
+                                                 --
+                                                 -- The module "XMonad.Util.ExtensibleConf" in xmonad-contrib
+                                                 -- provides additional information and a simple interface for using this.
     }
 
 
@@ -383,7 +388,7 @@ data LayoutMessages = Hide              -- ^ sent when a layout becomes non-visi
 instance Message LayoutMessages
 
 -- ---------------------------------------------------------------------
--- Extensible state
+-- Extensible state/config
 --
 
 -- | Every module must make the data it wants to store
@@ -409,6 +414,9 @@ data StateExtension =
     -- ^ Non-persistent state extension
   | forall a. (Read a, Show a, ExtensionClass a) => PersistentExtension a
     -- ^ Persistent extension
+
+-- | Existential type to store a config extension.
+data ConfExtension = forall a. Typeable a => ConfExtension a
 
 -- ---------------------------------------------------------------------
 -- | General utilities
