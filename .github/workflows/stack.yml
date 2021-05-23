@@ -66,6 +66,12 @@ jobs:
             stack-${{ runner.os }}-${{ matrix.resolver }}-${{ hashFiles('stack.yaml') }}-
             stack-${{ runner.os }}-${{ matrix.resolver }}-
 
+      - name: Update hackage index
+        # always update index to prevent the shared ~/.stack/pantry cache from being empty
+        run: |
+          set -ex
+          stack update
+
       - name: Build and test
         run: |
           set -ex
