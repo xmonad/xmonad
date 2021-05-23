@@ -49,11 +49,20 @@ jobs:
           sudo apt install -y ghc-${{ matrix.ghc }}
           echo /opt/ghc/${{ matrix.ghc }}/bin >> $GITHUB_PATH
 
+      - name: Refresh caches once a month
+        id: cache-date
+        # GHA writes caches on the first miss and then never updates them again;
+        # force updating the cache at least once a month
+        run: |
+          echo "::set-output name=date::$(date +%Y-%m)"
+
       - name: Cache Haskell package metadata
         uses: actions/cache@v2
         with:
           path: ~/.stack/pantry
-          key: stack-pantry-${{ runner.os }}
+          key: stack-pantry-${{ runner.os }}-${{ steps.cache-date.outputs.date }}
+          restore-keys: |
+            stack-pantry-${{ runner.os }}-
 
       - name: Cache Haskell dependencies
         uses: actions/cache@v2
@@ -61,9 +70,10 @@ jobs:
           path: |
             ~/.stack/*
             !~/.stack/pantry
-          key: stack-${{ runner.os }}-${{ matrix.resolver }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('*.cabal') }}
+          key: stack-${{ runner.os }}-${{ matrix.resolver }}-${{ steps.cache-date.outputs.date }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('*.cabal') }}
           restore-keys: |
-            stack-${{ runner.os }}-${{ matrix.resolver }}-${{ hashFiles('stack.yaml') }}-
+            stack-${{ runner.os }}-${{ matrix.resolver }}-${{ steps.cache-date.outputs.date }}-${{ hashFiles('stack.yaml') }}-
+            stack-${{ runner.os }}-${{ matrix.resolver }}-${{ steps.cache-date.outputs.date }}-
             stack-${{ runner.os }}-${{ matrix.resolver }}-
 
       - name: Update hackage index
