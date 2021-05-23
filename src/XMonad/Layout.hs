@@ -8,7 +8,7 @@
 --
 -- Maintainer  :  spencerjanssen@gmail.com
 -- Stability   :  unstable
--- Portability :  not portable, Typeable deriving, mtl, posix
+-- Portability :  not portable, mtl, posix
 --
 -- The collection of core layouts.
 --
@@ -35,10 +35,10 @@ import Data.Maybe (fromMaybe)
 ------------------------------------------------------------------------
 
 -- | Change the size of the master pane.
-data Resize     = Shrink | Expand   deriving Typeable
+data Resize     = Shrink | Expand
 
 -- | Increase the number of clients in the master pane.
-data IncMasterN = IncMasterN !Int    deriving Typeable
+data IncMasterN = IncMasterN !Int
 
 instance Message Resize
 instance Message IncMasterN
@@ -132,7 +132,7 @@ mirrorRect (Rectangle rx ry rw rh) = Rectangle ry rx rh rw
 -- Layouts that transition between other layouts
 
 -- | Messages to change the current layout.
-data ChangeLayout = FirstLayout | NextLayout deriving (Eq, Show, Typeable)
+data ChangeLayout = FirstLayout | NextLayout deriving (Eq, Show)
 
 instance Message ChangeLayout
 
@@ -147,7 +147,7 @@ data Choose l r a = Choose CLR (l a) (r a) deriving (Read, Show)
 -- | Choose the current sub-layout (left or right) in 'Choose'.
 data CLR = CL | CR deriving (Read, Show, Eq)
 
-data NextNoWrap = NextNoWrap deriving (Eq, Show, Typeable)
+data NextNoWrap = NextNoWrap deriving (Eq, Show)
 instance Message NextNoWrap
 
 -- | A small wrapper around handleMessage, as it is tedious to write

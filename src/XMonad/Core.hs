@@ -154,7 +154,7 @@ newtype ScreenDetail = SD { screenRect :: Rectangle }
 -- instantiated on 'XConf' and 'XState' automatically.
 --
 newtype X a = X (ReaderT XConf (StateT XState IO) a)
-    deriving (Functor, Monad, MonadFail, MonadIO, MonadState XState, MonadReader XConf, Typeable)
+    deriving (Functor, Monad, MonadFail, MonadIO, MonadState XState, MonadReader XConf)
 
 instance Applicative X where
   pure = return
@@ -383,7 +383,7 @@ instance Message Event
 -- layouts) should consider handling.
 data LayoutMessages = Hide              -- ^ sent when a layout becomes non-visible
                     | ReleaseResources  -- ^ sent when xmonad is exiting or restarting
-    deriving (Typeable, Eq)
+    deriving Eq
 
 instance Message LayoutMessages
 

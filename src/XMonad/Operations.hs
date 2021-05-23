@@ -8,7 +8,7 @@
 --
 -- Maintainer  :  dons@cse.unsw.edu.au
 -- Stability   :  unstable
--- Portability :  not portable, Typeable deriving, mtl, posix
+-- Portability :  not portable, mtl, posix
 --
 -- Operations.
 --
