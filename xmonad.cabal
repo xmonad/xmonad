@@ -80,7 +80,7 @@ library
                  , transformers          >= 0.3
                  , unix
                  , utf8-string           >= 0.3 && < 1.1
-  ghc-options:     -funbox-strict-fields -Wall -fno-warn-unused-do-bind
+  ghc-options:     -funbox-strict-fields -Wall -Wno-unused-do-bind
 
   -- Keep this in sync with the oldest version in 'tested-with'
   if impl(ghc > 8.4.4)
@@ -92,7 +92,7 @@ library
 executable xmonad
   main-is:       Main.hs
   build-depends: base, X11, mtl, unix, xmonad
-  ghc-options:   -Wall -fno-warn-unused-do-bind
+  ghc-options:   -Wall -Wno-unused-do-bind
 
   -- Keep this in sync with the oldest version in 'tested-with'
   if impl(ghc > 8.4.4)
