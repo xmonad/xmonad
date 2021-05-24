@@ -1172,17 +1172,15 @@ everything in one line:
 
 ## Get in Touch
 
-The `freenode/#xmonad` channel is very friendly and helpful.  It is
-possible that people will not immediately answer—we do have lives as
+The `irc.libera.chat/#xmonad` channel is very friendly and helpful.  It
+is possible that people will not immediately answer—we do have lives as
 well, after all :).  Eventually though, people will usually chime in if
 they have something helpful to say; sometimes this takes 10 minutes,
 other times it may well take 10 hours.  If you don't have an IRC client
 ready to go, the easiest way to join is via [webchat]—just jot down a
-username and `#xmonad` as the channel and you should be good to go!
-There is a [log] of the channel available, in case you do have to
-disconnect at some point, so don't worry about missing any messages.  We
-also have a [matrix room] that's linked to IRC, in case you prefer
-that.
+username and you should be good to go!  There is a [log] of the channel
+available, in case you do have to disconnect at some point, so don't
+worry about missing any messages.
 
 If you're not a fan of real-time interactions, you can also post to the
 [xmonad mailing list] or the [xmonad subreddit].
@@ -1230,11 +1228,10 @@ either :)
   - [TheMC47](https://github.com/TheMC47/dotfiles/tree/master/xmonad/.xmonad)
 
 
-[log]: https://ircbrowse.tomsmeding.com/browse/xmonad
+[log]: https://ircbrowse.tomsmeding.com/browse/lcxmonad
 [EWMH]: https://specifications.freedesktop.org/wm-spec/wm-spec-1.3.html
 [ICCCM]: https://tronche.com/gui/x/icccm/
-[webchat]: https://webchat.freenode.net/
-[matrix room]: https://matrix.to/#/#freenode_#xmonad:matrix.org
+[webchat]: https://kiwiirc.com/nextclient/irc.libera.chat/?#xmonad
 [about xmonad]: https://xmonad.org/about.html
 [shell variable]: https://www.shellscript.sh/variables1.html
 [xmonad-testing]: https://github.com/xmonad/xmonad-testing
