@@ -36,7 +36,7 @@ Awesome!  Here are a few things to keep in mind:
 
     - Post a message to the [mailing list][ml].
 
-    - Join the `#xmonad` IRC channel on `chat.freenode.org`.
+    - Join the `#xmonad` IRC channel on `irc.libera.chat`.
 
   * [XMonad.Doc.Developing][xmonad-doc-developing] is a great
     resource to get an overview of xmonad.  Make sure to also check
