@@ -35,6 +35,8 @@ package system (e.g. on Debian or Gentoo). If at all possible, use this
 in preference to a source build, as the dependency resolution will be
 simpler.
 
+For tool-specific guides see [INSTALL.md](./INSTALL.md).
+
 We'll now walk through the complete list of toolchain dependencies.
 
   * GHC: the Glasgow Haskell Compiler
