@@ -82,7 +82,9 @@ to the last line of your `.xsession` or `.xinitrc` file.
 
 ## Configuring
 
-See the [CONFIG][] document and the [example configuration file][example-config].
+There is a full tutorial available in [TUTORIAL.md](./TUTORIAL.md).
+Additionally, see the [CONFIG](./CONFIG) document, as well as the
+[example configuration file][example-config].
 
 ## XMonadContrib
 
@@ -128,4 +130,3 @@ For a program dispatch menu:
 [xmc-prompt-shell]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Prompt-Shell.html
 [platform]: http://haskell.org/platform/
 [example-config]: https://github.com/xmonad/xmonad-contrib/blob/master/XMonad/Config/Example.hs
-[config]: https://github.com/xmonad/xmonad/blob/master/CONFIG
