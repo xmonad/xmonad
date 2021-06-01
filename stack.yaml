@@ -4,7 +4,7 @@ packages:
 - ./
 
 extra-deps:
-- X11-1.9.2
+- X11-1.10
 
 flags:
   xmonad:
