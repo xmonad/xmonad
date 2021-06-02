@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, PatternGuards, TypeSynonymInstances, DeriveDataTypeable, LambdaCase #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, PatternGuards, TypeSynonymInstances, DeriveDataTypeable, LambdaCase, MultiWayIf #-}
 
 -- --------------------------------------------------------------------------
 -- |
@@ -30,7 +30,7 @@ import Graphics.X11 (Rectangle(..))
 import qualified XMonad.StackSet as W
 import Control.Arrow ((***), second)
 import Control.Monad
-import Data.Maybe (fromMaybe, isNothing)
+import Data.Maybe (fromMaybe)
 
 ------------------------------------------------------------------------
 
@@ -177,11 +177,6 @@ data Choose l r a = Choose CLR (l a) (r a) deriving (Read, Show)
 -- | Choose the current sub-layout (left or right) in 'Choose'.
 data CLR = CL | CR deriving (Read, Show, Eq)
 
--- | Switch how to choose the layout around.
-switch :: Choose l r a -> Choose l r a
-switch (Choose CL l r) = Choose CR l r
-switch (Choose CR l r) = Choose CL l r
-
 data NextNoWrap = NextNoWrap deriving (Eq, Show)
 instance Message NextNoWrap
 
@@ -189,18 +184,6 @@ instance Message NextNoWrap
 -- SomeMessage repeatedly.
 handle :: (LayoutClass l a, Message m) => l a -> m -> X (Maybe (l a))
 handle l m = handleMessage l (SomeMessage m)
-
--- | Swap the two sub-layouts.
-swap :: (LayoutClass l a, LayoutClass r a) => Choose l r a -> X (Choose l r a)
-swap c = switch . fromMaybe c <$> passOnM (SomeMessage Hide) c
-
--- | Try to pass on 'SomeMessage' to a sub-layout.
-passOnM
-    :: (LayoutClass l a, LayoutClass r a)
-    => SomeMessage -> Choose l r a -> X (Maybe (Choose l r a))
-passOnM m = \case
-    Choose CL l r -> fmap (flip (Choose CL) r) <$> handleMessage l m
-    Choose CR l r -> fmap (Choose CR l)        <$> handleMessage r m
 
 -- | A smart constructor that takes some potential modifications, returns a
 -- new structure if any fields have changed, and performs any necessary cleanup
@@ -247,22 +230,13 @@ instance (LayoutClass l a, LayoutClass r a) => LayoutClass (Choose l r) a where
     handleMessage c@(Choose d l r) m | Just ReleaseResources <- fromMessage m =
         join $ liftM2 (choose c d) (handle l ReleaseResources) (handle r ReleaseResources)
 
-    handleMessage c@(Choose CL _ r) m
-        | Just (JumpToLayout desc) <- fromMessage m
-        , desc == description r
-        = Just <$> swap c
-
-    handleMessage c@(Choose CR l _) m
-        | Just (JumpToLayout desc) <- fromMessage m
-        , desc == description l
-        = Just <$> swap c
-
-    handleMessage c m
-        | Just JumpToLayout{} <- fromMessage m
-        = do m' <- passOnM m c
-             if isNothing m'
-                 then traverse (swap . switch) =<< passOnM m (switch c)
-                 else return m'
+    handleMessage c@(Choose d l r) m | Just (JumpToLayout desc) <- fromMessage m = do
+        ml <- handleMessage l m
+        mr <- handleMessage r m
+        let md | desc == description (fromMaybe l ml) = CL
+               | desc == description (fromMaybe r mr) = CR
+               | otherwise = d
+        choose c md ml mr
 
     handleMessage c@(Choose d l r) m = do
         ml' <- case d of
