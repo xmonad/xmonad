@@ -44,6 +44,10 @@
   * Added the `extensibleConf` field to `XConfig` which makes it easier for
     contrib modules to have composable configuration (custom hooks, …).
 
+  * Migrated `X.L.LayoutCombinators.(|||)` into `XMonad.Layout`,
+    providing the ability to directly jump to a layout with the
+    `JumpToLayout` message.
+
 ## 0.15 (September 30, 2018)
 
   * Reimplement `sendMessage` to deal properly with windowset changes made

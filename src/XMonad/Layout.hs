@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, PatternGuards, TypeSynonymInstances, DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, PatternGuards, TypeSynonymInstances, DeriveDataTypeable, LambdaCase, MultiWayIf #-}
 
 -- --------------------------------------------------------------------------
 -- |
@@ -16,7 +16,7 @@
 
 module XMonad.Layout (
     Full(..), Tall(..), Mirror(..),
-    Resize(..), IncMasterN(..), Choose(..), (|||), CLR(..), ChangeLayout(..),
+    Resize(..), IncMasterN(..), Choose(..), (|||), CLR(..), ChangeLayout(..), JumpToLayout(..),
     mirrorRect, splitVertically,
     splitHorizontally, splitHorizontallyBy, splitVerticallyBy,
 
@@ -131,10 +131,40 @@ mirrorRect (Rectangle rx ry rw rh) = Rectangle ry rx rh rw
 -- LayoutClass selection manager
 -- Layouts that transition between other layouts
 
--- | Messages to change the current layout.
+-- | Messages to change the current layout.  Also see 'JumpToLayout'.
 data ChangeLayout = FirstLayout | NextLayout deriving (Eq, Show)
 
 instance Message ChangeLayout
+
+-- | A message to jump to a particular layout, specified by its
+-- description string.
+--
+-- The argument given to a 'JumpToLayout' message should be the
+-- @description@ of the layout to be selected.  If you use
+-- "XMonad.Hooks.DynamicLog" from @xmonad-contrib@, this is the name of
+-- the layout displayed in your status bar.  Alternatively, you can use
+-- GHCi to determine the proper name to use.  For example:
+--
+-- > $ ghci
+-- > GHCi, version 6.8.2: http://www.haskell.org/ghc/  :? for help
+-- > Loading package base ... linking ... done.
+-- > :set prompt "> "    -- don't show loaded module names
+-- > > :m +XMonad.Core   -- load the xmonad core
+-- > > :m +XMonad.Layout.Grid  -- load whatever module you want to use
+-- > > description Grid  -- find out what it's called
+-- > "Grid"
+--
+-- As yet another (possibly easier) alternative, you can use the
+-- "XMonad.Layout.Renamed" module (also in @xmonad-contrib@) to give
+-- custom names to your layouts, and use those.
+--
+-- For example, if you want to jump directly to the 'Full' layout you
+-- can do
+--
+-- > , ((modm .|. controlMask, xK_f), sendMessage $ JumpToLayout "Full")
+--
+newtype JumpToLayout = JumpToLayout String
+instance Message JumpToLayout
 
 -- | The layout choice combinator
 (|||) :: l a -> r a -> Choose l r a
@@ -199,6 +229,14 @@ instance (LayoutClass l a, LayoutClass r a) => LayoutClass (Choose l r) a where
 
     handleMessage c@(Choose d l r) m | Just ReleaseResources <- fromMessage m =
         join $ liftM2 (choose c d) (handle l ReleaseResources) (handle r ReleaseResources)
+
+    handleMessage c@(Choose d l r) m | Just (JumpToLayout desc) <- fromMessage m = do
+        ml <- handleMessage l m
+        mr <- handleMessage r m
+        let md | desc == description (fromMaybe l ml) = CL
+               | desc == description (fromMaybe r mr) = CR
+               | otherwise = d
+        choose c md ml mr
 
     handleMessage c@(Choose d l r) m = do
         ml' <- case d of
