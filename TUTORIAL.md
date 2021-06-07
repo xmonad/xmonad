@@ -461,9 +461,9 @@ Replace your `main` function above with:
 
 _IF YOU ARE ON A VERSION `< 0.17`_: The `xmobarProp` function does not
   exist in these versions.  Instead of it, use `xmobar` via
-  `main = xmonad . ewmhFullscreen . ewmh =<< xmobar myConfig`
-  and carefully read the part about pipes later on (`xmobar` uses pipes
-  to make xmobar talk to xmonad).
+  `main = xmonad . ewmh =<< xmobar myConfig` and carefully read the part
+  about pipes later on (`xmobar` uses pipes to make xmobar talk to
+  xmonad).
 
 As a quick side-note, we could have also written
 
