@@ -39,7 +39,7 @@ import XMonad.Operations
 import XMonad.ManageHook
 import qualified XMonad.StackSet as W
 import Data.Bits ((.|.))
-import Data.Default
+import Data.Default.Class
 import Data.Monoid
 import qualified Data.Map as M
 import System.Exit
