@@ -14,6 +14,8 @@
 
   * Sibi Prabakaran [GitHub][psibi], [Twitter][twitter:psibi], IRC: `psibi[m]`
 
+  * slotThe [GitHub][slotThe], IRC: `Solid`
+
   * Tomáš Janoušek [GitHub][liskin], [Twitter][twitter:liskin], IRC: `Liskni_si`
 
 [aavogt]: https://github.com/aavogt
@@ -23,6 +25,7 @@
 [peti]: https://github.com/peti
 [psibi]: https://github.com/psibi
 [liskin]: https://github.com/liskin
+[slotThe]: https://github.com/slotThe
 
 [twitter:dmwit]: https://twitter.com/dmwit13
 [twitter:peti]: https://twitter.com/OriginalPeti
