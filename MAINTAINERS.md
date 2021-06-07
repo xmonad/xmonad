@@ -2,35 +2,60 @@
 
 ## The XMonad Core Team
 
-  * Adam Vogt [GitHub][aavogt]
-
   * Brandon S Allbery [GitHub][geekosaur], IRC: `geekosaur`
 
   * Brent Yorgey [GitHub][byorgey], IRC: `byorgey`
 
   * Daniel Wagner [GitHub][dmwit], [Twitter][twitter:dmwit], IRC: `dmwit`
 
-  * Peter Simons [GitHub][peti], [Twitter][twitter:peti]
-
-  * Sibi Prabakaran [GitHub][psibi], [Twitter][twitter:psibi], IRC: `psibi[m]`
+  * Sibi Prabakaran [GitHub][psibi], [Twitter][twitter:psibi], IRC: `sibi`
 
   * slotThe [GitHub][slotThe], IRC: `Solid`
 
-  * Tomáš Janoušek [GitHub][liskin], [Twitter][twitter:liskin], IRC: `Liskni_si`
+  * Tomáš Janoušek [GitHub][liskin], [Twitter][twitter:liskin], IRC: `liskin`
 
-[aavogt]: https://github.com/aavogt
 [geekosaur]: https://github.com/geekosaur
 [byorgey]: https://github.com/byorgey
 [dmwit]: https://github.com/dmwit
-[peti]: https://github.com/peti
 [psibi]: https://github.com/psibi
 [liskin]: https://github.com/liskin
 [slotThe]: https://github.com/slotThe
 
 [twitter:dmwit]: https://twitter.com/dmwit13
-[twitter:peti]: https://twitter.com/OriginalPeti
 [twitter:psibi]: https://twitter.com/psibi
 [twitter:liskin]: https://twitter.com/Liskni_si
+
+## Hall of Fame (past maintainers/developers)
+
+  * Adam Vogt [GitHub](https://github.com/aavogt)
+
+  * Peter Simons [GitHub](https://github.com/peti), [Twitter](https://twitter.com/OriginalPeti)
+
+  * Spencer Janssen [GitHub](https://github.com/spencerjanssen)
+
+  * Don Stewart [GitHub](https://github.com/donsbot), [Twitter](https://twitter.com/donsbot)
+
+  * David Roundy [GitHub](https://github.com/droundy)
+
+  * Daniel Schoepe [GitHub](https://github.com/dschoepe)
+
+  * Eric Mertens [GitHub](https://github.com/glguy)
+
+  * Nicolas Pouillard [GitHub](https://github.com/np)
+
+  * Roman Cheplyaka [GitHub](https://github.com/UnkindPartition)
+
+  * Gwern Branwen [GitHub](https://github.com/gwern)
+
+  * Lukas Mai [GitHub](https://github.com/mauke)
+
+  * Braden Shepherdson [GitHub](https://github.com/shepheb)
+
+  * Devin Mullins [GitHub](https://github.com/twifkak)
+
+  * David Lazar [GitHub](https://github.com/davidlazar)
+
+  * Peter J. Jones [GitHub](https://github.com/pjones)
 
 ## Release Procedures
 
