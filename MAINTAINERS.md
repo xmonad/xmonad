@@ -70,7 +70,7 @@ When the time comes to release another version of xmonad and xmonad-contrib:
      - [`CHANGES.md`](CHANGES.md)
      - [`INSTALL.md`](INSTALL.md)
      - [`man/xmonad.1.markdown.in`](man/xmonad.1.markdown.in)
-     - haddocks <!-- TODO: link to web with doc snapshots once there's one -->
+     - [haddocks](https://xmonad.github.io/xmonad-docs/)
 
      If the manpage changes, wait for the CI to rebuild the rendered outputs.
 
