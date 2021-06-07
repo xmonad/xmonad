@@ -59,58 +59,59 @@
 
 ## Release Procedures
 
-When the time comes to release another version of XMonad and Contrib...
+When the time comes to release another version of xmonad and xmonad-contrib:
 
-  1. Create a release branch (e.g., `release-0.XX`).
+  1. Update the version number in all the `*.cabal` files and let the CI
+     verify that it all builds together.
 
-     This will allow you to separate the release process from main
-     development.  Changes you make on this branch will be merged back
-     into `master` as one of the last steps.
+  2. Review documentation files and make sure they are accurate:
 
-  2. Update the version number in the `*.cabal` files and verify
-     dependencies and documentation.  This includes the `tested-with:`
-     field.
+     - [`README.md`](README.md)
+     - [`CHANGES.md`](CHANGES.md)
+     - [`INSTALL.md`](INSTALL.md)
+     - [`man/xmonad.1.markdown.in`](man/xmonad.1.markdown.in)
+     - [haddocks](https://xmonad.github.io/xmonad-docs/)
 
-  3. Use the [packdeps][] tool to ensure you have the dependency
-     versions correct.  If you need to update the version of a
-     dependency then you should rebuild and retest.
+     If the manpage changes, wait for the CI to rebuild the rendered outputs.
 
-  4. Review documentation files and make sure they are accurate:
+  3. Check dependency bounds. In particular, [packdeps][] can be used to check
+     if any new versions are excluded by the upper bounds specified.
+     Also, make sure that `tested-with:` covers several recent releases of
+     GHC, and that `.github/workflows/stack.yml` tests with several recent
+     revisions of [Stackage][] LTS.
 
-     - `README.md`
-     - `CHANGES.md`
-     - and the `example-config.hs` in the `xmonad-testing` repo
+  4. Create a release on GitHub:
 
-  5. Generate the manpage:
+     - https://github.com/xmonad/xmonad/releases/new
+     - https://github.com/xmonad/xmonad-contrib/releases/new
 
-     * `cabal configure` with the `-fgeneratemanpage` flag
-     * Build the project
-     * Run the `generatemanpage` tool from the top level of this repo
-     * Review the man page: `man -l man/xmonad.1`
+     CI will upload a release candidate to Hackage. Check again that
+     everything looks good. To publish a final release, run the CI workflow
+     once again with the correct version number:
 
-  6. Tag the repository with the release version (e.g., `v0.13`)
+     - https://github.com/xmonad/xmonad/actions/workflows/haskell-ci.yml
+     - https://github.com/xmonad/xmonad-contrib/actions/workflows/haskell-ci.yml
 
-  7. Build the project tarballs (`cabal sdist`)
+     See [haskell-ci-hackage.patch][] for details about the release infrastructure.
 
-  8. Upload the packages to Hackage (`cabal upload`)
+  5. Update the website:
 
-  9. Merge the release branches into `master`
+     - Post a [new release announcement][web-announce]
+     - Check install instructions, guided tour, keybindings cheat sheet, …
 
-  10. Update the website:
+  7. Post announcement to:
 
-      * Generate and push haddocks with `xmonad-web/gen-docs.sh`
+     - [XMonad mailing list](https://mail.haskell.org/mailman/listinfo/xmonad)
+     - [Haskell Cafe](https://mail.haskell.org/cgi-bin/mailman/listinfo/haskell-cafe)
+     - [Haskell Discourse](https://discourse.haskell.org/)
 
-      * Check that `tour.html` and `intro.html` are up to date, and
-        mention all core bindings
+     See [old announcements][old-announce] for inspiration.
 
-  11. Update the topic for the IRC channel (`#xmonad`)
-
-  12. Send the `announce-0.XX.txt` file to:
-
-      - XMonad mailing list
-      - Haskell Cafe
-
-[packdeps]: http://hackage.haskell.org/package/packdeps
+[packdeps]: https://hackage.haskell.org/package/packdeps
+[Stackage]: https://www.stackage.org/
+[haskell-ci-hackage.patch]: .github/workflows/haskell-ci-hackage.patch
+[web-announce]: https://github.com/xmonad/xmonad-web/tree/gh-pages/news/_posts
+[old-announce]: https://github.com/xmonad/xmonad-web/tree/55614349421ebafaef4a47424fcb16efa80ff768
 
 ## Website and Other Accounts
 
