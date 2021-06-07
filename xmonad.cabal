@@ -35,10 +35,11 @@ build-type:         Simple
 extra-source-files: README.md
                     CHANGES.md
                     CONFIG
+                    CONTRIBUTING.md
+                    INSTALL.md
+                    MAINTAINERS.md
                     STYLE
-                    tests/*.hs
-                    tests/Properties/*.hs
-                    tests/Properties/Layout/*.hs
+                    TUTORIAL.md
                     man/xmonad.1.markdown
                     man/xmonad.1
                     man/xmonad.1.html
