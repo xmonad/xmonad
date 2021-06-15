@@ -33,6 +33,11 @@ manager.  For example, on Debian:
   $ apt install haskell-stack
 ```
 
+If you install stack via this method, it is advisable that you run
+`stack upgrade` after installation.  This will make sure that you are on
+the most recent version of the program, regardless of which version your
+distribution actually packages.
+
 If your distribution does not package stack, you can also easily install
 it via the following command (this is the recommended way to install
 stack via its [documentation][stack]):
