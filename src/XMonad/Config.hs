@@ -239,7 +239,7 @@ keys conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
         , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
   where
     helpCommand :: X ()
-    helpCommand = spawn ("echo " ++ show help ++ " | xmessage -file -")
+    helpCommand = spawn ("printf " ++ show help ++ " | xmessage -file -")
 
 -- | Mouse bindings: default actions bound to mouse events
 mouseBindings :: XConfig Layout -> M.Map (KeyMask, Button) (Window -> X ())
