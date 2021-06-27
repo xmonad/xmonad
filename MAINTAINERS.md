@@ -99,10 +99,11 @@ When the time comes to release another version of xmonad and xmonad-contrib:
      - Post a [new release announcement][web-announce]
      - Check install instructions, guided tour, keybindings cheat sheet, …
 
-  7. Send e-mail announcement to:
+  7. Post announcement to:
 
      - [XMonad mailing list](https://mail.haskell.org/mailman/listinfo/xmonad)
      - [Haskell Cafe](https://mail.haskell.org/cgi-bin/mailman/listinfo/haskell-cafe)
+     - [Haskell Discourse](https://discourse.haskell.org/)
 
      See [old announcements][old-announce] for inspiration.
 
