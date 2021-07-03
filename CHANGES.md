@@ -48,6 +48,8 @@
     providing the ability to directly jump to a layout with the
     `JumpToLayout` message.
 
+  * Document the help command in the help message.
+
 ## 0.15 (September 30, 2018)
 
   * Reimplement `sendMessage` to deal properly with windowset changes made
