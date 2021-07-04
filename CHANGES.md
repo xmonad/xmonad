@@ -1,6 +1,7 @@
 # Change Log / Release Notes
 
 ## unknown (unknown)
+  * Added Lenses for StackSet and associated datatypes to allow external modules to easily manipulate the StackSet
 
   * Fixed a bug when using multiple screens with different dimensions,
     causing some floating windows to be smaller/larger than the size they

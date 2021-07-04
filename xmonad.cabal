@@ -80,6 +80,7 @@ library
                  , transformers          >= 0.3
                  , unix
                  , utf8-string           >= 0.3 && < 1.1
+                 , microlens
   ghc-options:     -funbox-strict-fields -Wall -Wno-unused-do-bind
 
   -- Keep this in sync with the oldest version in 'tested-with'
