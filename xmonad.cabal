@@ -35,10 +35,11 @@ build-type:         Simple
 extra-source-files: README.md
                     CHANGES.md
                     CONFIG
+                    CONTRIBUTING.md
+                    INSTALL.md
+                    MAINTAINERS.md
                     STYLE
-                    tests/*.hs
-                    tests/Properties/*.hs
-                    tests/Properties/Layout/*.hs
+                    TUTORIAL.md
                     man/xmonad.1.markdown
                     man/xmonad.1
                     man/xmonad.1.html
@@ -71,7 +72,7 @@ library
   build-depends:   base                  >= 4.9 && < 5
                  , X11                   >= 1.10 && < 1.11
                  , containers
-                 , data-default
+                 , data-default-class
                  , directory
                  , filepath
                  , mtl
@@ -79,7 +80,6 @@ library
                  , setlocale
                  , transformers          >= 0.3
                  , unix
-                 , utf8-string           >= 0.3 && < 1.1
   ghc-options:     -funbox-strict-fields -Wall -Wno-unused-do-bind
 
   -- Keep this in sync with the oldest version in 'tested-with'
@@ -91,7 +91,7 @@ library
 
 executable xmonad
   main-is:       Main.hs
-  build-depends: base, X11, mtl, unix, xmonad
+  build-depends: base, xmonad
   ghc-options:   -Wall -Wno-unused-do-bind
 
   -- Keep this in sync with the oldest version in 'tested-with'

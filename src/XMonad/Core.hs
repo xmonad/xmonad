@@ -43,7 +43,7 @@ import Control.Monad.State
 import Control.Monad.Reader
 import Data.Semigroup
 import Data.Traversable (for)
-import Data.Default
+import Data.Default.Class
 import System.FilePath
 import System.IO
 import System.Info
