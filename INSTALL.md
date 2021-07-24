@@ -184,6 +184,61 @@ And that's it!  Recompilation should work normally now, though you will
 potentially need to restart your computer, or at least the running X
 session, first.
 
+### Make XMonad your window manager
+
+This step varies depending on your distribution and X display manager (if
+any).
+
+#### Debian, Ubuntu
+
+`/etc/X11/xinit/xinitrc` runs `/etc/X11/Xsession` which runs `~/.xsession`, so
+you probably want to put `exec xmonad` there (don't forget the shebang and chmod).
+
+(Tested with `startx`, `xdm`, `lightdm`.)
+
+By using `~/.xsession`, the distro takes care of stuff like dbus, ssh-agent, X
+resources, etc.  If you want a completely manual X session, use `~/.xinitrc`
+instead.  Or invoke `startx`/`xinit` with an explicit path.
+
+Some newer display managers require an entry in `/usr/share/xsessions`.
+To use your custom `~/.xsession`, put these lines to
+`/usr/share/xsessions/default.desktop`:
+
+```
+[Desktop Entry]
+Name=Default X session
+Type=Application
+Exec=default
+```
+
+(Tested with `sddm`.)
+
+#### Fedora
+
+`/etc/X11/xinit/xinitrc` runs `~/.Xclients`, so you probably want to put `exec
+xmonad` there (don't forget the shebang and chmod).  Like in Debian, this can
+be overridden by having a completely custom `~/.xinitrc` or passing arguments
+to `startx`/`xinit`.
+
+X display managers (e.g. `lightdm`) usually invoke `/etc/X11/xinit/Xsession`
+instead, which additionally redirects output to `~/.xsession-errors` and also
+tries `~/.xsession` before `~/.Xclients`.
+
+Newer display managers require an entry in `/usr/share/xsessions`, which is
+available in the `xorg-x11-xinit-session` package.
+
+#### Arch
+
+`/etc/X11/xinit/xinitrc` runs `twm`, `xclock` and 3 `xterm`s; users are
+meant to just copy that to `~/.xinitrc` and
+[customize](https://wiki.archlinux.org/title/Xinit#xinitrc) it: replace the
+last few lines with `exec xmonad`.
+
+Display managers like `lightdm` have their own `Xsession` script which invokes
+`~/.xsession`.  Other display managers need an entry in
+`/usr/share/xsessions`, https://aur.archlinux.org/packages/xinit-xsession/
+provides one.
+
 ### Don't Recompile on Every Startup
 
 By default, xmonad always recompiles itself when a build script is used
