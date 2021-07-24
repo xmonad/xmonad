@@ -1,5 +1,32 @@
 # Install XMonad
 
+## Dependencies
+
+### Debian, Ubuntu
+
+``` shell
+$ sudo apt install \
+  git \
+  libx11-dev libxft-dev libxinerama-dev libxrandr-dev libxss-dev
+```
+
+### Fedora
+
+``` shell
+$ sudo dnf install \
+  git \
+  libX11-devel libXft-devel libXinerama-devel libXrandr-devel libXScrnSaver-devel
+```
+
+### Arch
+
+``` shell
+$ sudo pacman -S \
+  git \
+  libx11 libxft libxinerama libxrandr libxss \
+  pkgconf
+```
+
 ## Stack
 
 ### Preparation
@@ -27,10 +54,12 @@ main = xmonad def
 ### Install Stack
 
 The easiest way to get [stack] is probably via your system's package
-manager.  For example, on Debian:
+manager:
 
 ``` shell
-$ apt install haskell-stack
+$ sudo apt install haskell-stack    # Debian, Ubuntu
+$ sudo dnf install stack            # Fedora
+$ sudo pacman -S stack              # Arch
 ```
 
 If you install stack via this method, it is advisable that you run
@@ -121,8 +150,8 @@ packages (`stack build`) and then copy the relevant executables
 directory to your `$PATH`!
 
 If you're getting build failures while building the `X11` package it may
-be that you don't have the required C libraries installed.  Depending on
-your system, this may be `libX11-devel`, or `libxss`.
+be that you don't have the required C libraries installed.  See
+[above](#dependencies).
 
 ### Tell XMonad How to Recompile Itself
 
