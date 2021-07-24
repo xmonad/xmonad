@@ -10,7 +10,7 @@ configuration will reside within `$XDG_CONFIG_HOME`, which is
 it:
 
 ``` shell
-  $ mkdir -p ~/.config/xmonad && cd ~/.config/xmonad
+$ mkdir -p ~/.config/xmonad && cd ~/.config/xmonad
 ```
 
 If you already have an `xmonad.hs` configuration, you can copy it over
@@ -18,10 +18,10 @@ now.  If not, you can use the defaults: create a file called `xmonad.hs`
 with the following content:
 
 ``` haskell
-  import XMonad
+import XMonad
 
-  main :: IO ()
-  main = xmonad def
+main :: IO ()
+main = xmonad def
 ```
 
 ### Install Stack
@@ -30,7 +30,7 @@ The easiest way to get [stack] is probably via your system's package
 manager.  For example, on Debian:
 
 ``` shell
-  $ apt install haskell-stack
+$ apt install haskell-stack
 ```
 
 If you install stack via this method, it is advisable that you run
@@ -43,7 +43,7 @@ it via the following command (this is the recommended way to install
 stack via its [documentation][stack]):
 
 ``` shell
-  $ curl -sSL https://get.haskellstack.org/ | sh
+$ curl -sSL https://get.haskellstack.org/ | sh
 ```
 
 Yet another way would be via [ghcup]; this is similar to installers like
@@ -56,16 +56,16 @@ directory (`~/.config/xmonad`), we can start by cloning the `xmonad` and
 the `xmonad-contrib` repositories:
 
 ``` shell
-  $ git clone https://github.com/xmonad/xmonad
-  $ git clone https://github.com/xmonad/xmonad-contrib
+$ git clone https://github.com/xmonad/xmonad
+$ git clone https://github.com/xmonad/xmonad-contrib
 ```
 
 This will give you the latest `$HEAD`; if you want you can also check
 out a tagged release, e.g.:
 
 ``` shell
-  $ git clone --branch v0.16 https://github.com/xmonad/xmonad
-  $ git clone --branch v0.17 https://github.com/xmonad/xmonad-contrib
+$ git clone --branch v0.16 https://github.com/xmonad/xmonad
+$ git clone --branch v0.17 https://github.com/xmonad/xmonad-contrib
 ```
 
 Starting a new stack project is as simple as running `stack init`.
@@ -75,41 +75,41 @@ Stack should now inform you that it will use the relevant `stack` and
 this:
 
 ```
-  $ stack init
-  Looking for .cabal or package.yaml files to use to init the project.
-  Using cabal packages:
-  - xmonad-contrib/
-  - xmonad/
+$ stack init
+Looking for .cabal or package.yaml files to use to init the project.
+Using cabal packages:
+- xmonad-contrib/
+- xmonad/
 
-  Selecting the best among 19 snapshots...
+Selecting the best among 19 snapshots...
 
-  * Matches https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/9.yaml
+* Matches https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/9.yaml
 
-  Selected resolver: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/9.yaml
-  Initialising configuration using resolver: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/9.yaml
-  Total number of user packages considered: 2
-  Writing configuration to file: stack.yaml
-  All done.
+Selected resolver: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/9.yaml
+Initialising configuration using resolver: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/9.yaml
+Total number of user packages considered: 2
+Writing configuration to file: stack.yaml
+All done.
 ```
 
 If you look into your current directory now, you should see a freshly
 generated `stack.yaml` file:
 
 ```
-  $ ls
-  xmonad  xmonad-contrib  stack.yaml  xmonad.hs
+$ ls
+xmonad  xmonad-contrib  stack.yaml  xmonad.hs
 ```
 
 The meat of that file (comments start with `#`, we've omitted them here)
 will look a little bit like
 
 ``` yaml
-  resolver:
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/9.yaml
+resolver:
+  url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/9.yaml
 
-  packages:
-  - xmonad
-  - xmonad-contrib
+packages:
+- xmonad
+- xmonad-contrib
 ```
 
 ### Install Everything
@@ -137,16 +137,16 @@ without a build file, with the exception that we are invoking `stack
 ghc` instead of plain `ghc`) would be
 
 ``` shell
-  #!/bin/sh
+#!/bin/sh
 
-  exec stack ghc --  \
-    --make xmonad.hs \
-    -i               \
-    -ilib            \
-    -fforce-recomp   \
-    -main-is main    \
-    -v0              \
-    -o "$1"
+exec stack ghc --  \
+  --make xmonad.hs \
+  -i               \
+  -ilib            \
+  -fforce-recomp   \
+  -main-is main    \
+  -v0              \
+  -o "$1"
 ```
 
 Don't forget to mark the file as `+x`: `chmod +x build`!
@@ -165,13 +165,13 @@ that too annoying, then you can use the `xmonad-ARCH` executable that
 example, instead of writing
 
 ``` shell
-  exec xmonad
+exec xmonad
 ```
 
 in your `~/.xinitrc`, you would write
 
 ``` shell
-  exec $HOME/.local/share/xmonad/xmonad-x86_64-linux
+exec $HOME/.local/share/xmonad/xmonad-x86_64-linux
 ```
 
 The `~/.local/share` prefix is the `$XDG_DATA_DIR` directory.  Note that
