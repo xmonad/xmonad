@@ -1,8 +1,31 @@
 # Install XMonad
 
+On many systems xmonad is available as a binary package in your
+distribution (Debian, Ubuntu, Fedora, Arch, Gentoo, …).
+It's by far the easiest way to get xmonad, although you'll miss out on the
+latest features and fixes that may not have been released yet.
+
+If you do want the latest and greatest, continue reading.
+Those who install from distro can skip this and go straight to
+[the XMonad Configuration Tutorial](TUTORIAL.md).
+
+<!-- https://github.com/frnmst/md-toc -->
+<!-- regenerate via: md_toc -s1 -p github INSTALL.md -->
+<!--TOC-->
+
+- [Dependencies](#dependencies)
+- [Preparation](#preparation)
+- [Download XMonad sources](#download-xmonad-sources)
+- [Build XMonad](#build-xmonad)
+  - [Build using Stack](#build-using-stack)
+- [Make XMonad your window manager](#make-xmonad-your-window-manager)
+- [Don't Recompile on Every Startup](#dont-recompile-on-every-startup)
+
+<!--TOC-->
+
 ## Dependencies
 
-### Debian, Ubuntu
+#### Debian, Ubuntu
 
 ``` shell
 $ sudo apt install \
@@ -10,7 +33,7 @@ $ sudo apt install \
   libx11-dev libxft-dev libxinerama-dev libxrandr-dev libxss-dev
 ```
 
-### Fedora
+#### Fedora
 
 ``` shell
 $ sudo dnf install \
@@ -18,7 +41,7 @@ $ sudo dnf install \
   libX11-devel libXft-devel libXinerama-devel libXrandr-devel libXScrnSaver-devel
 ```
 
-### Arch
+#### Arch
 
 ``` shell
 $ sudo pacman -S \
@@ -27,9 +50,7 @@ $ sudo pacman -S \
   pkgconf
 ```
 
-## Stack
-
-### Preparation
+## Preparation
 
 We'll use the [XDG] directory specifications here, meaning our
 configuration will reside within `$XDG_CONFIG_HOME`, which is
@@ -51,7 +72,44 @@ main :: IO ()
 main = xmonad def
 ```
 
-### Install Stack
+Older versions of xmonad used `~/.xmonad` instead.
+This is still supported, but XDG is preferred.
+
+## Download XMonad sources
+
+Still in `~/.config/xmonad`, clone `xmonad` and `xmonad-contrib` repositories
+using [git][]:
+
+``` shell
+$ git clone https://github.com/xmonad/xmonad
+$ git clone https://github.com/xmonad/xmonad-contrib
+```
+
+This will give you the latest `HEAD`; if you want you can also check
+out a tagged release, e.g.:
+
+``` shell
+$ git clone --branch v0.15 https://github.com/xmonad/xmonad
+$ git clone --branch v0.16 https://github.com/xmonad/xmonad-contrib
+```
+
+(Sources and binaries don't usually go into `~/.config`.  In our case,
+however, it avoids complexities related to Haskell build tools and lets us
+focus on the important bits of XMonad installation.)
+
+## Build XMonad
+
+There are two widely used Haskell build tools:
+
+* [Stack][stack]
+* [cabal-install][cabal-install]
+
+We include instructions for both.
+Unless you already know which one you prefer, use Stack, which is easier.
+
+### Build using Stack
+
+#### Install Stack
 
 The easiest way to get [stack] is probably via your system's package
 manager:
@@ -78,26 +136,13 @@ $ curl -sSL https://get.haskellstack.org/ | sh
 Yet another way would be via [ghcup]; this is similar to installers like
 `rustup`, in case you prefer that.
 
-### Create a New Project
+#### Create a New Project
 
 Let's create a stack project.  Since we're already in the correct
-directory (`~/.config/xmonad`), we can start by cloning the `xmonad` and
-the `xmonad-contrib` repositories:
+directory (`~/.config/xmonad`) with `xmonad` and `xmonad-contrib`
+subdirectories, starting a new stack project is as simple as running `stack
+init`.
 
-``` shell
-$ git clone https://github.com/xmonad/xmonad
-$ git clone https://github.com/xmonad/xmonad-contrib
-```
-
-This will give you the latest `$HEAD`; if you want you can also check
-out a tagged release, e.g.:
-
-``` shell
-$ git clone --branch v0.16 https://github.com/xmonad/xmonad
-$ git clone --branch v0.17 https://github.com/xmonad/xmonad-contrib
-```
-
-Starting a new stack project is as simple as running `stack init`.
 Stack should now inform you that it will use the relevant `stack` and
 `cabal` files from `xmonad` and `xmonad-contrib` to generate its
 `stack.yaml` file.  At the time of writing, this looks a little bit like
@@ -141,7 +186,7 @@ packages:
 - xmonad-contrib
 ```
 
-### Install Everything
+#### Install Everything
 
 Installing things is as easy as typing `stack install`.  This will
 install the correct version of GHC, as well as build all of the required
@@ -153,7 +198,7 @@ If you're getting build failures while building the `X11` package it may
 be that you don't have the required C libraries installed.  See
 [above](#dependencies).
 
-### Tell XMonad How to Recompile Itself
+#### Tell XMonad How to Recompile Itself
 
 In order to tell xmonad to invoke `stack build` when we issue `xmonad
 --recompile` (bound to `M-q` by default), we need to create a so-called
@@ -184,7 +229,7 @@ And that's it!  Recompilation should work normally now, though you will
 potentially need to restart your computer, or at least the running X
 session, first.
 
-### Make XMonad your window manager
+## Make XMonad your window manager
 
 This step varies depending on your distribution and X display manager (if
 any).
@@ -239,7 +284,7 @@ Display managers like `lightdm` have their own `Xsession` script which invokes
 `/usr/share/xsessions`, https://aur.archlinux.org/packages/xinit-xsession/
 provides one.
 
-### Don't Recompile on Every Startup
+## Don't Recompile on Every Startup
 
 By default, xmonad always recompiles itself when a build script is used
 (because the build script could contain arbitrary code, so a simple
@@ -264,6 +309,8 @@ executable will also be within that directory and not in
 `$XDG_DATA_DIR`.
 
 [XDG]: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+[git]: https://git-scm.com/
 [stack]: https://docs.haskellstack.org/en/stable/README/
+[cabal-install]: https://www.haskell.org/cabal/
 [ghcup]: https://www.haskell.org/ghcup/
 [what xmonad would do]: https://github.com/xmonad/xmonad/blob/master/src/XMonad/Core.hs#L657-L665
