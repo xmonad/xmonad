@@ -18,6 +18,7 @@ Those who install from distro can skip this and go straight to
 - [Download XMonad sources](#download-xmonad-sources)
 - [Build XMonad](#build-xmonad)
   - [Build using Stack](#build-using-stack)
+  - [Build using cabal-install](#build-using-cabal-install)
 - [Make XMonad your window manager](#make-xmonad-your-window-manager)
 - [Don't Recompile on Every Startup](#dont-recompile-on-every-startup)
 
@@ -229,6 +230,56 @@ And that's it!  Recompilation should work normally now, though you will
 potentially need to restart your computer, or at least the running X
 session, first.
 
+### Build using cabal-install
+
+#### Install cabal-install
+
+The easiest way to get [cabal-install] is probably via your system's package
+manager:
+
+``` shell
+$ sudo apt install cabal-install    # Debian, Ubuntu
+$ sudo dnf install cabal-install    # Fedora
+$ sudo pacman -S cabal-install      # Arch
+```
+
+If your distribution does not package cabal-install, [ghcup][] is another
+option.  See also <https://www.haskell.org/cabal/#install-upgrade>.
+
+#### Create a New Project
+
+Let's create a cabal project.  Since we're already in the correct
+directory (`~/.config/xmonad`) with `xmonad` and `xmonad-contrib`
+subdirectories, we'll instruct cabal to use them.  Create a file named
+`cabal.project` containing:
+
+```
+packages: */*.cabal
+```
+
+(If you skip this step, cabal will use the latest releases from [Hackage][]
+instead.)
+
+#### Install Everything
+
+You'll need to update the cabal package index, build xmonad and xmonad-contrib
+libraries and then build the xmonad binary:
+
+``` shell
+$ cabal update
+$ cabal install --package-env=$HOME/.config/xmonad --lib xmonad xmonad-contrib
+$ cabal install --package-env=$HOME/.config/xmonad xmonad
+```
+
+This will create a GHC environment in `~/.config/xmonad` so that the libraries
+are available for recompilation of the config file, and also install the
+xmonad binary to `~/.cabal/bin/xmonad`.  Make sure you have that directory in
+your `$PATH`!
+
+If you're getting build failures while building the `X11` package it may
+be that you don't have the required C libraries installed.  See
+[above](#dependencies).
+
 ## Make XMonad your window manager
 
 This step varies depending on your distribution and X display manager (if
@@ -314,3 +365,4 @@ executable will also be within that directory and not in
 [cabal-install]: https://www.haskell.org/cabal/
 [ghcup]: https://www.haskell.org/ghcup/
 [what xmonad would do]: https://github.com/xmonad/xmonad/blob/master/src/XMonad/Core.hs#L657-L665
+[Hackage]: https://hackage.haskell.org/
