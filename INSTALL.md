@@ -28,27 +28,27 @@ Those who install from distro can skip this and go straight to
 
 #### Debian, Ubuntu
 
-``` shell
+``` console
 $ sudo apt install \
-  git \
-  libx11-dev libxft-dev libxinerama-dev libxrandr-dev libxss-dev
+> git \
+> libx11-dev libxft-dev libxinerama-dev libxrandr-dev libxss-dev
 ```
 
 #### Fedora
 
-``` shell
+``` console
 $ sudo dnf install \
-  git \
-  libX11-devel libXft-devel libXinerama-devel libXrandr-devel libXScrnSaver-devel
+> git \
+> libX11-devel libXft-devel libXinerama-devel libXrandr-devel libXScrnSaver-devel
 ```
 
 #### Arch
 
-``` shell
+``` console
 $ sudo pacman -S \
-  git \
-  libx11 libxft libxinerama libxrandr libxss \
-  pkgconf
+> git \
+> libx11 libxft libxinerama libxrandr libxss \
+> pkgconf
 ```
 
 ## Preparation
@@ -58,7 +58,7 @@ configuration will reside within `$XDG_CONFIG_HOME`, which is
 `~/.config` on most systems.  Let's create this directory and move to
 it:
 
-``` shell
+``` console
 $ mkdir -p ~/.config/xmonad && cd ~/.config/xmonad
 ```
 
@@ -81,7 +81,7 @@ This is still supported, but XDG is preferred.
 Still in `~/.config/xmonad`, clone `xmonad` and `xmonad-contrib` repositories
 using [git][]:
 
-``` shell
+``` console
 $ git clone https://github.com/xmonad/xmonad
 $ git clone https://github.com/xmonad/xmonad-contrib
 ```
@@ -89,7 +89,7 @@ $ git clone https://github.com/xmonad/xmonad-contrib
 This will give you the latest `HEAD`; if you want you can also check
 out a tagged release, e.g.:
 
-``` shell
+``` console
 $ git clone --branch v0.15 https://github.com/xmonad/xmonad
 $ git clone --branch v0.16 https://github.com/xmonad/xmonad-contrib
 ```
@@ -115,7 +115,7 @@ Unless you already know which one you prefer, use Stack, which is easier.
 The easiest way to get [stack] is probably via your system's package
 manager:
 
-``` shell
+``` console
 $ sudo apt install haskell-stack    # Debian, Ubuntu
 $ sudo dnf install stack            # Fedora
 $ sudo pacman -S stack              # Arch
@@ -130,7 +130,7 @@ If your distribution does not package stack, you can also easily install
 it via the following command (this is the recommended way to install
 stack via its [documentation][stack]):
 
-``` shell
+``` console
 $ curl -sSL https://get.haskellstack.org/ | sh
 ```
 
@@ -149,7 +149,7 @@ Stack should now inform you that it will use the relevant `stack` and
 `stack.yaml` file.  At the time of writing, this looks a little bit like
 this:
 
-```
+``` console
 $ stack init
 Looking for .cabal or package.yaml files to use to init the project.
 Using cabal packages:
@@ -170,7 +170,7 @@ All done.
 If you look into your current directory now, you should see a freshly
 generated `stack.yaml` file:
 
-```
+``` console
 $ ls
 xmonad  xmonad-contrib  stack.yaml  xmonad.hs
 ```
@@ -237,7 +237,7 @@ session, first.
 The easiest way to get [cabal-install] is probably via your system's package
 manager:
 
-``` shell
+``` console
 $ sudo apt install cabal-install    # Debian, Ubuntu
 $ sudo dnf install cabal-install    # Fedora
 $ sudo pacman -S cabal-install      # Arch
@@ -265,7 +265,7 @@ instead.)
 You'll need to update the cabal package index, build xmonad and xmonad-contrib
 libraries and then build the xmonad binary:
 
-``` shell
+``` console
 $ cabal update
 $ cabal install --package-env=$HOME/.config/xmonad --lib xmonad xmonad-contrib
 $ cabal install --package-env=$HOME/.config/xmonad xmonad
