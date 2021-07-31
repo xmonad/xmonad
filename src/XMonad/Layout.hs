@@ -27,6 +27,7 @@ module XMonad.Layout (
 import XMonad.Core
 
 import Graphics.X11 (Rectangle(..))
+import Graphics.X11.Xlib.Extras ( Event(DestroyWindowEvent) )
 import qualified XMonad.StackSet as W
 import Control.Arrow ((***), second)
 import Control.Monad
@@ -229,6 +230,9 @@ instance (LayoutClass l a, LayoutClass r a) => LayoutClass (Choose l r) a where
 
     handleMessage c@(Choose d l r) m | Just ReleaseResources <- fromMessage m =
         join $ liftM2 (choose c d) (handle l ReleaseResources) (handle r ReleaseResources)
+
+    handleMessage c@(Choose d l r) m | Just e@DestroyWindowEvent{} <- fromMessage m =
+        join $ liftM2 (choose c d) (handle l e) (handle r e)
 
     handleMessage c@(Choose d l r) m | Just (JumpToLayout desc) <- fromMessage m = do
         ml <- handleMessage l m
