@@ -22,4 +22,4 @@ jobs:
       - name: Clone project
         uses: actions/checkout@v2
       - name: Build
-        run: nix build
+        run: nix build --print-build-logs
