@@ -332,8 +332,13 @@ last few lines with `exec xmonad`.
 
 Display managers like `lightdm` have their own `Xsession` script which invokes
 `~/.xsession`.  Other display managers need an entry in
-`/usr/share/xsessions`, https://aur.archlinux.org/packages/xinit-xsession/
+`/usr/share/xsessions`, <https://aur.archlinux.org/packages/xinit-xsession/>
 provides one.
+
+#### See also
+
+* <https://xmonad.org/documentation.html#in-your-environment>
+* [FAQ: How can I use xmonad with a display manager? (xdm, kdm, gdm)](https://wiki.haskell.org/Xmonad/Frequently_asked_questions#How_can_I_use_xmonad_with_a_display_manager.3F_.28xdm.2C_kdm.2C_gdm.29)
 
 ## Don't Recompile on Every Startup
 
