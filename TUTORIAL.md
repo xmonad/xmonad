@@ -1,12 +1,3 @@
-NOTE: `xmonad 0.16` and `xmonad-contrib 0.17` are obviously not released
-yet.  But don't worry, if you're reading this then you're already a beta
-tester :) Since this guide is supposed to work on older versions of
-xmonad as well this is no problem however; please report any
-incompatibilities you notice and state the version of xmonad and
-xmonad-contrib that you tried to use.  If you use the git versions of
-xmonad and xmonad-contrib, you should be able to follow everything just
-fine.
-
 # XMonad Configuration Tutorial
 
 We're going to take you, step-by-step, through the process of
@@ -29,6 +20,15 @@ the ability to magnify stack windows via [XMonad.Layout.Magnifier]:
 
 So let's get started!
 
+NOTE: `xmonad 0.17` and `xmonad-contrib 0.17` are obviously not released
+yet.  But don't worry, if you're reading this then you're already a beta
+tester :) Since this guide is supposed to work on older versions of
+xmonad as well this is no problem however; please report any
+incompatibilities you notice and state the version of xmonad and
+xmonad-contrib that you tried to use.  If you use the git versions of
+xmonad and xmonad-contrib, you should be able to follow everything just
+fine.
+
 ## Preliminaries
 
 First you'll want to install xmonad.  You can either do this with your
@@ -47,7 +47,7 @@ package manager, you will need to `xmonad --recompile` _every time_ a
 Haskell dependency is updated—else xmonad may fail to start when you
 want to log in!
 
-We're going to assume xmonad version `0.16` and xmonad-contrib version
+We're going to assume xmonad version `0.17` and xmonad-contrib version
 `0.17` here, though most of these steps should work with older versions
 as well.  When we get to the relevant parts, will point you to
 alternatives that work with at least xmonad version `0.15` and
@@ -70,8 +70,8 @@ commands for your system.
 
 To install xmonad, as well as some utilities, via `apt` you can just run
 
-``` shell
-  apt-get install xmonad libghc-xmonad-contrib-dev libghc-xmonad-dev suckless-tools
+``` console
+$ apt-get install xmonad libghc-xmonad-contrib-dev libghc-xmonad-dev suckless-tools
 ```
 
 This installs xmonad itself, everything you need to configure it, and
@@ -114,10 +114,10 @@ file called `xmonad.hs`.  We'll start off with importing some of the
 utility modules we will use.  At the very top of the file, write
 
 ``` haskell
-  import XMonad
+import XMonad
 
-  import XMonad.Util.EZConfig
-  import XMonad.Util.Ungrab
+import XMonad.Util.EZConfig
+import XMonad.Util.Ungrab
 ```
 
 All of these imports are _unqualified_, meaning we are importing all of
@@ -127,7 +127,7 @@ you can do so by adding the necessary function to the `import` statement
 in parentheses.  For example
 
 ``` haskell
-  import XMonad.Util.EZConfig (additionalKeysP)
+import XMonad.Util.EZConfig (additionalKeysP)
 ```
 
 For the purposes of this tutorial, we will be importing everything
@@ -137,8 +137,8 @@ Next, a basic configuration—which is the same as the default config—is
 this:
 
 ``` haskell
-  main :: IO ()
-  main = xmonad def
+main :: IO ()
+main = xmonad def
 ```
 
 In case you're interested in what this default configuration actually
@@ -163,10 +163,10 @@ Alt on most keyboards.  We can do this by changing the above `main`
 function in the following way:
 
 ``` haskell
-  main :: IO ()
-  main = xmonad $ def
-      { modMask = mod4Mask  -- Rebind Mod to the Super key
-      }
+main :: IO ()
+main = xmonad $ def
+    { modMask = mod4Mask  -- Rebind Mod to the Super key
+    }
 ```
 
 The two dashes signify a comment to the end of the line.  Notice the
@@ -184,10 +184,10 @@ use a dollar sign instead.  For us this is particularly nice, because
 now we don't have to awkwardly write
 
 ``` haskell
-  main :: IO ()
-  main = xmonad (def
-      { modMask = mod4Mask  -- Rebind Mod to the Super key
-      })
+main :: IO ()
+main = xmonad (def
+    { modMask = mod4Mask  -- Rebind Mod to the Super key
+    })
 ```
 
 This will be especially handy when adding more combinators; something we
@@ -203,15 +203,15 @@ achieved with the `additionalKeysP` function from the
 config file, starting with `main`, now looks like:
 
 ``` haskell
-  main :: IO ()
-  main = xmonad $ def
-      { modMask = mod4Mask  -- Rebind Mod to the Super key
-      }
-    `additionalKeysP`
-      [ ("M-S-z", spawn "xscreensaver-command -lock")
-      , ("M-S-=", unGrab *> spawn "scrot -s"        )
-      , ("M-]"  , spawn "firefox"                   )
-      ]
+main :: IO ()
+main = xmonad $ def
+    { modMask = mod4Mask  -- Rebind Mod to the Super key
+    }
+  `additionalKeysP`
+    [ ("M-S-z", spawn "xscreensaver-command -lock")
+    , ("M-S-=", unGrab *> spawn "scrot -s"        )
+    , ("M-]"  , spawn "firefox"                   )
+    ]
 ```
 
 That syntax look familiar?
@@ -226,8 +226,8 @@ release its keyboard grab before `scrot -s` tries to grab the keyboard
 itself.  The little `*>` operator essentially just sequences two
 functions, i.e. `f *> g` says
 
-  > first do `f` and then, discarding any result that `f` may have given
-  > me, do `g`.
+> first do `f` and then, discarding any result that `f` may have given
+> me, do `g`.
 
 Do note that you may need to install `scrot` if you don't have it on
 your system already.
@@ -241,16 +241,16 @@ We start by visiting the documentation for [XMonad.Layout.ThreeColumns].
 The very first sentence of the `Usage` section tells us exactly what we
 want to start with:
 
-  > You can use this module with the following in your `~/.xmonad/xmonad.hs`:
-  >
-  > `import XMonad.Layout.ThreeColumns`
+> You can use this module with the following in your `~/.xmonad/xmonad.hs`:
+>
+> `import XMonad.Layout.ThreeColumns`
 
 Ignoring the part about where exactly our `xmonad.hs` is (we have opted
 to put it into `~/.config/xmonad/xmonad.hs`, remember?) we can follow
 that documentation word for word.  Let's add
 
 ``` haskell
-  import XMonad.Layout.ThreeColumns
+import XMonad.Layout.ThreeColumns
 ```
 
 to the top of our configuration file.  Most modules have a lot of
@@ -263,12 +263,12 @@ layout.  To do this, there is the `layoutHook`.  Let's use the default
 layout as a base:
 
 ``` haskell
-  myLayout = tiled ||| Mirror tiled ||| Full
-    where
-      tiled   = Tall nmaster delta ratio
-      nmaster = 1      -- Default number of windows in the master pane
-      ratio   = 1/2    -- Default proportion of screen occupied by master pane
-      delta   = 3/100  -- Percent of screen to increment by when resizing panes
+myLayout = tiled ||| Mirror tiled ||| Full
+  where
+    tiled   = Tall nmaster delta ratio
+    nmaster = 1      -- Default number of windows in the master pane
+    ratio   = 1/2    -- Default proportion of screen occupied by master pane
+    delta   = 3/100  -- Percent of screen to increment by when resizing panes
 ```
 
 The so-called `where`-clause above simply consists of local declarations
@@ -276,7 +276,7 @@ that might clutter things up where they all declared at the top-level
 like this
 
 ``` haskell
-  myLayout = Tall 1 (3/100) (1/2) ||| Mirror (Tall 1 (3/100) (1/2)) ||| Full
+myLayout = Tall 1 (3/100) (1/2) ||| Mirror (Tall 1 (3/100) (1/2)) ||| Full
 ```
 
 It also gives us the chance of documenting what the individual numbers
@@ -290,24 +290,24 @@ worry; it'll come with time!
 We can, for example, add the additional layout like this:
 
 ``` haskell
-  myLayout = tiled ||| Mirror tiled ||| Full ||| ThreeColMid 1 (3/100) (1/2)
-    where
-      tiled   = Tall nmaster delta ratio
-      nmaster = 1      -- Default number of windows in the master pane
-      ratio   = 1/2    -- Default proportion of screen occupied by master pane
-      delta   = 3/100  -- Percent of screen to increment by when resizing panes
+myLayout = tiled ||| Mirror tiled ||| Full ||| ThreeColMid 1 (3/100) (1/2)
+  where
+    tiled   = Tall nmaster delta ratio
+    nmaster = 1      -- Default number of windows in the master pane
+    ratio   = 1/2    -- Default proportion of screen occupied by master pane
+    delta   = 3/100  -- Percent of screen to increment by when resizing panes
 ```
 
 or even, because the numbers happen to line up, like this:
 
 ``` haskell
-  myLayout = tiled ||| Mirror tiled ||| Full ||| threeCol
-    where
-      threeCol = ThreeColMid nmaster delta ratio
-      tiled    = Tall nmaster delta ratio
-      nmaster  = 1      -- Default number of windows in the master pane
-      ratio    = 1/2    -- Default proportion of screen occupied by master pane
-      delta    = 3/100  -- Percent of screen to increment by when resizing panes
+myLayout = tiled ||| Mirror tiled ||| Full ||| threeCol
+  where
+    threeCol = ThreeColMid nmaster delta ratio
+    tiled    = Tall nmaster delta ratio
+    nmaster  = 1      -- Default number of windows in the master pane
+    ratio    = 1/2    -- Default proportion of screen occupied by master pane
+    delta    = 3/100  -- Percent of screen to increment by when resizing panes
 ```
 
 Now we just need to tell xmonad that we want to use this modified
@@ -315,16 +315,16 @@ Now we just need to tell xmonad that we want to use this modified
 yourself by just looking at the documentation.  Ready?  Here we go:
 
 ``` haskell
-  main :: IO ()
-  main = xmonad $ def
-      { modMask    = mod4Mask  -- Rebind Mod to the Super key
-      , layoutHook = myLayout  -- Use custom layouts
-      }
-    `additionalKeysP`
-      [ ("M-S-z", spawn "xscreensaver-command -lock")
-      , ("M-S-=", unGrab *> spawn "scrot -s"        )
-      , ("M-]"  , spawn "firefox"                   )
-      ]
+main :: IO ()
+main = xmonad $ def
+    { modMask    = mod4Mask  -- Rebind Mod to the Super key
+    , layoutHook = myLayout  -- Use custom layouts
+    }
+  `additionalKeysP`
+    [ ("M-S-z", spawn "xscreensaver-command -lock")
+    , ("M-S-=", unGrab *> spawn "scrot -s"        )
+    , ("M-]"  , spawn "firefox"                   )
+    ]
 ```
 
 But we also wanted to add magnification, right?  Luckily for us, there's
@@ -335,13 +335,13 @@ modifier from the library; it magnifies a window by a given amount, but
 only if it's a stack window.  Add it to your three column layout thusly:
 
 ``` haskell
-  myLayout = tiled ||| Mirror tiled ||| Full ||| threeCol
-    where
-      threeCol = magnifiercz' 1.3 $ ThreeColMid nmaster delta ratio
-      tiled    = Tall nmaster delta ratio
-      nmaster  = 1      -- Default number of windows in the master pane
-      ratio    = 1/2    -- Default proportion of screen occupied by master pane
-      delta    = 3/100  -- Percent of screen to increment by when resizing panes
+myLayout = tiled ||| Mirror tiled ||| Full ||| threeCol
+  where
+    threeCol = magnifiercz' 1.3 $ ThreeColMid nmaster delta ratio
+    tiled    = Tall nmaster delta ratio
+    nmaster  = 1      -- Default number of windows in the master pane
+    ratio    = 1/2    -- Default proportion of screen occupied by master pane
+    delta    = 3/100  -- Percent of screen to increment by when resizing panes
 ```
 
 Don't forget to import the module!
@@ -351,7 +351,7 @@ from the dollar to the end of the line.  If you don't like that you can
 also write
 
 ``` haskell
-  threeCol = magnifiercz' 1.3 (ThreeColMid nmaster delta ratio)
+threeCol = magnifiercz' 1.3 (ThreeColMid nmaster delta ratio)
 ```
 
 instead.
@@ -374,7 +374,7 @@ This functionality is to be found in the [XMonad.Hooks.EwmhDesktops]
 module, so let's import it:
 
 ``` haskell
-  import XMonad.Hooks.EwmhDesktops
+import XMonad.Hooks.EwmhDesktops
 ```
 
 We might also consider using the `ewmhFullscreen` combinator.  By
@@ -398,16 +398,16 @@ To use the two combinators, we compose them with the `xmonad` function
 in the following way:
 
 ``` haskell
-  main :: IO ()
-  main = xmonad $ ewmhFullscreen $ ewmh $ def
-      { modMask    = mod4Mask  -- Rebind Mod to the Super key
-      , layoutHook = myLayout  -- Use custom layouts
-      }
-    `additionalKeysP`
-      [ ("M-S-z", spawn "xscreensaver-command -lock")
-      , ("M-S-=", unGrab *> spawn "scrot -s"        )
-      , ("M-]"  , spawn "firefox"                   )
-      ]
+main :: IO ()
+main = xmonad $ ewmhFullscreen $ ewmh $ def
+    { modMask    = mod4Mask  -- Rebind Mod to the Super key
+    , layoutHook = myLayout  -- Use custom layouts
+    }
+  `additionalKeysP`
+    [ ("M-S-z", spawn "xscreensaver-command -lock")
+    , ("M-S-=", unGrab *> spawn "scrot -s"        )
+    , ("M-]"  , spawn "firefox"                   )
+    ]
 ```
 
 Do mind the order of the two combinators—by a particularly awkward set
@@ -420,18 +420,18 @@ Let's call the config part `myConfig` for... obvious reasons.  It would
 look like this:
 
 ``` haskell
-  main :: IO ()
-  main = xmonad $ ewmhFullscreen $ ewmh $ myConfig
+main :: IO ()
+main = xmonad $ ewmhFullscreen $ ewmh $ myConfig
 
-  myConfig = def
-      { modMask    = mod4Mask  -- Rebind Mod to the Super key
-      , layoutHook = myLayout  -- Use custom layouts
-      }
-    `additionalKeysP`
-      [ ("M-S-z", spawn "xscreensaver-command -lock")
-      , ("M-S-=", unGrab *> spawn "scrot -s"        )
-      , ("M-]"  , spawn "firefox"                   )
-      ]
+myConfig = def
+    { modMask    = mod4Mask  -- Rebind Mod to the Super key
+    , layoutHook = myLayout  -- Use custom layouts
+    }
+  `additionalKeysP`
+    [ ("M-S-z", spawn "xscreensaver-command -lock")
+    , ("M-S-=", unGrab *> spawn "scrot -s"        )
+    , ("M-]"  , spawn "firefox"                   )
+    ]
 ```
 
 Much better!
@@ -442,9 +442,9 @@ Onto the main dish.  First, we have to import the necessary modules.
 Add the following to your list of imports:
 
 ``` haskell
-  import XMonad.Hooks.DynamicLog
-  import XMonad.Hooks.StatusBar
-  import XMonad.Hooks.StatusBar.PP
+import XMonad.Hooks.DynamicLog
+import XMonad.Hooks.StatusBar
+import XMonad.Hooks.StatusBar.PP
 ```
 
 _IF YOU ARE ON A VERSION `< 0.17`_: The `XMonad.Hooks.StatusBar` and
@@ -455,8 +455,8 @@ _IF YOU ARE ON A VERSION `< 0.17`_: The `XMonad.Hooks.StatusBar` and
 Replace your `main` function above with:
 
 ``` haskell
-  main :: IO ()
-  main = xmonad $ ewmhFullscreen $ ewmh $ xmobarProp $ myConfig
+main :: IO ()
+main = xmonad $ ewmhFullscreen $ ewmh $ xmobarProp $ myConfig
 ```
 
 _IF YOU ARE ON A VERSION `< 0.17`_: The `xmobarProp` function does not
@@ -468,20 +468,20 @@ _IF YOU ARE ON A VERSION `< 0.17`_: The `xmobarProp` function does not
 As a quick side-note, we could have also written
 
 ``` haskell
-  main :: IO ()
-  main = xmonad . ewmhFullscreen . ewmh . xmobarProp $ myConfig
+main :: IO ()
+main = xmonad . ewmhFullscreen . ewmh . xmobarProp $ myConfig
 ```
 
 Notice how `$` became `.`!  The dot operator `(.)` in Haskell means
 function composition and is read from right to left.  What this means in
 this specific case is essentially the following:
 
-  > take the four functions `xmonad`, `ewmhFullscreen`, `ewmh`, and
-  > `xmobarProp` and give me the big new function
-  > `xmonad . ewmhFullscreen . ewmh . xmobarProp` that first executes
-  > `xmobarProp`, then `ewmh`, then `ewmhFullscreen`, and finally
-  > `xmonad`.  Then give it `myConfig` as its argument so it can do its
-  > thing.
+> take the four functions `xmonad`, `ewmhFullscreen`, `ewmh`, and
+> `xmobarProp` and give me the big new function
+> `xmonad . ewmhFullscreen . ewmh . xmobarProp` that first executes
+> `xmobarProp`, then `ewmh`, then `ewmhFullscreen`, and finally
+> `xmonad`.  Then give it `myConfig` as its argument so it can do its
+> thing.
 
 This should strike you as nothing more than a syntactical quirk, at
 least in this case.  And indeed, since `($)` is just function
@@ -490,19 +490,19 @@ This may be more obvious if we write everything with parentheses and
 apply the `(.)` operator (because we do have an argument):
 
 ``` haskell
-  -- ($) version
-  main = xmonad $ ewmhFullscreen $ ewmh $ xmobarProp $ myConfig
-  -- ($) version with parentheses
-  main = xmonad (ewmhFullscreen (ewmh (xmobarProp (myConfig))))
+-- ($) version
+main = xmonad $ ewmhFullscreen $ ewmh $ xmobarProp $ myConfig
+-- ($) version with parentheses
+main = xmonad (ewmhFullscreen (ewmh (xmobarProp (myConfig))))
 
-  -- (.) version with parentheses
-  main = (xmonad . ewmhFullscreen . ewmh . xmobarProp) (myConfig)
-  -- xmobarProp applied
-  main = (xmonad . ewmhFullscreen . ewmh) (xmobarProp (myConfig))
-  -- ewmh applied
-  main = (xmonad . ewmhFullscreen) (ewmh (xmobarProp (myConfig)))
-  -- xmonad and ewmhFullscreen applied
-  main = (xmonad (ewmhFullscreen (ewmh (xmobarProp (myConfig))))
+-- (.) version with parentheses
+main = (xmonad . ewmhFullscreen . ewmh . xmobarProp) (myConfig)
+-- xmobarProp applied
+main = (xmonad . ewmhFullscreen . ewmh) (xmobarProp (myConfig))
+-- ewmh applied
+main = (xmonad . ewmhFullscreen) (ewmh (xmobarProp (myConfig)))
+-- xmonad and ewmhFullscreen applied
+main = (xmonad (ewmhFullscreen (ewmh (xmobarProp (myConfig))))
 ```
 
 It's the same!  This is special to the interplay with `(.)` and `($)`
@@ -510,13 +510,13 @@ though; if you're on an older version of xmonad and xmonad-contrib and
 use `xmobar` instead of `xmobarProp`, then you _have_ to write
 
 ``` haskell
-  main = xmonad . ewmhFullscreen . ewmh =<< xmobar myConfig
+main = xmonad . ewmhFullscreen . ewmh =<< xmobar myConfig
 ```
 
 and this is _not_ equivalent to
 
 ``` haskell
-  main = xmonad (ewmhFullscreen (ewmh =<< xmobar myConfig))
+main = xmonad (ewmhFullscreen (ewmh =<< xmobar myConfig))
 ```
 
 Consult a Haskell book of your choice for why this is the case.
@@ -564,40 +564,40 @@ do want to configure xmobar in Haskell there is a note about that at the
 end of this section.
 
 ``` haskell
-  Config { overrideRedirect = False
-         , font     = "xft:iosevka-9"
-         , bgColor  = "#5f5f5f"
-         , fgColor  = "#f8f8f2"
-         , position = TopW L 90
-         , commands = [ Run Weather "EGPF"
-                          [ "--template", "<weather> <tempC>°C"
-                          , "-L", "0"
-                          , "-H", "25"
-                          , "--low"   , "lightblue"
-                          , "--normal", "#f8f8f2"
-                          , "--high"  , "red"
-                          ] 36000
-                      , Run Cpu
-                          [ "-L", "3"
-                          , "-H", "50"
-                          , "--high"  , "red"
-                          , "--normal", "green"
-                          ] 10
-                      , Run Alsa "default" "Master"
-                          [ "--template", "<volumestatus>"
-                          , "--suffix"  , "True"
-                          , "--"
-                          , "--on", ""
-                          ]
-                      , Run Memory ["--template", "Mem: <usedratio>%"] 10
-                      , Run Swap [] 10
-                      , Run Date "%a %Y-%m-%d <fc=#8be9fd>%H:%M</fc>" "date" 10
-                      , Run XMonadLog
-                      ]
-         , sepChar  = "%"
-         , alignSep = "}{"
-         , template = "%XMonadLog% }{ %alsa:default:Master% | %cpu% | %memory% * %swap% | %EGPF% | %date% "
-         }
+Config { overrideRedirect = False
+       , font     = "xft:iosevka-9"
+       , bgColor  = "#5f5f5f"
+       , fgColor  = "#f8f8f2"
+       , position = TopW L 90
+       , commands = [ Run Weather "EGPF"
+                        [ "--template", "<weather> <tempC>°C"
+                        , "-L", "0"
+                        , "-H", "25"
+                        , "--low"   , "lightblue"
+                        , "--normal", "#f8f8f2"
+                        , "--high"  , "red"
+                        ] 36000
+                    , Run Cpu
+                        [ "-L", "3"
+                        , "-H", "50"
+                        , "--high"  , "red"
+                        , "--normal", "green"
+                        ] 10
+                    , Run Alsa "default" "Master"
+                        [ "--template", "<volumestatus>"
+                        , "--suffix"  , "True"
+                        , "--"
+                        , "--on", ""
+                        ]
+                    , Run Memory ["--template", "Mem: <usedratio>%"] 10
+                    , Run Swap [] 10
+                    , Run Date "%a %Y-%m-%d <fc=#8be9fd>%H:%M</fc>" "date" 10
+                    , Run XMonadLog
+                    ]
+       , sepChar  = "%"
+       , alignSep = "}{"
+       , template = "%XMonadLog% }{ %alsa:default:Master% | %cpu% | %memory% * %swap% | %EGPF% | %date% "
+       }
 ```
 
 First, we set the font to use for the bar, as well as the colors.  The
@@ -649,8 +649,8 @@ top-level documentation of the module!) should give us some ideas for
 how to proceed:
 
 ``` haskell
-  xmobarProp config =
-    withEasySB (statusBarProp "xmobar" (pure xmobarPP)) toggleStrutsKey config
+xmobarProp config =
+  withEasySB (statusBarProp "xmobar" (pure xmobarPP)) toggleStrutsKey config
 ```
 
 This means that `xmobarProp` just calls the functions `withEasySB` and
@@ -661,12 +661,12 @@ what we want to modify!
 Let's copy the implementation over into our main function:
 
 ``` haskell
-  main :: IO ()
-  main = xmonad
-       . ewmhFullscreen
-       . ewmh
-       . withEasySB (statusBarProp "xmobar" (pure def)) defToggleStrutsKey
-       $ myConfig
+main :: IO ()
+main = xmonad
+     . ewmhFullscreen
+     . ewmh
+     . withEasySB (statusBarProp "xmobar" (pure def)) defToggleStrutsKey
+     $ myConfig
 ```
 
 _IF YOU ARE ON A VERSION `< 0.17`_: `xmobar` has a similar definition,
@@ -674,31 +674,31 @@ _IF YOU ARE ON A VERSION `< 0.17`_: `xmobar` has a similar definition,
     toggleStrutsKey`.  Sadly, the `defToggleStrutsKey` function is not yet
   exported, so you will have to define it yourself:
 
-  ``` haskell
-    main :: IO ()
-    main = xmonad
-         . ewmhFullscreen
-         . ewmh
-       =<< statusBar "xmobar" def toggleStrutsKey myConfig
-      where
-        toggleStrutsKey :: XConfig Layout -> (KeyMask, KeySym)
-        toggleStrutsKey XConfig{ modMask = m } = (m, xK_b)
-  ```
+``` haskell
+main :: IO ()
+main = xmonad
+     . ewmhFullscreen
+     . ewmh
+   =<< statusBar "xmobar" def toggleStrutsKey myConfig
+  where
+    toggleStrutsKey :: XConfig Layout -> (KeyMask, KeySym)
+    toggleStrutsKey XConfig{ modMask = m } = (m, xK_b)
+```
 
 The `defToggleStrutsKey` here is just the key with which you can toggle
 the bar; it is bound to `M-b`.  If you want to change this, you can also
 define your own:
 
 ``` haskell
-  main :: IO ()
-  main = xmonad
-       . ewmhFullscreen
-       . ewmh
-       . withEasySB (statusBarProp "xmobar" (pure def)) toggleStrutsKey
-       $ myConfig
-    where
-      toggleStrutsKey :: XConfig Layout -> (KeyMask, KeySym)
-      toggleStrutsKey XConfig{ modMask = m } = (m, xK_b)
+main :: IO ()
+main = xmonad
+     . ewmhFullscreen
+     . ewmh
+     . withEasySB (statusBarProp "xmobar" (pure def)) toggleStrutsKey
+     $ myConfig
+  where
+    toggleStrutsKey :: XConfig Layout -> (KeyMask, KeySym)
+    toggleStrutsKey XConfig{ modMask = m } = (m, xK_b)
 ```
 
 Feel free to change the binding by modifying the `(m, xK_b)` tuple to
@@ -709,12 +709,12 @@ If you want your xmobar configuration file to reside somewhere else than
 positional argument!  For example:
 
 ``` haskell
-  main :: IO ()
-  main = xmonad
-       . ewmhFullscreen
-       . ewmh
-       . withEasySB (statusBarProp "xmobar ~/.config/xmobar/xmobarrc" (pure def)) defToggleStrutsKey
-       $ myConfig
+main :: IO ()
+main = xmonad
+     . ewmhFullscreen
+     . ewmh
+     . withEasySB (statusBarProp "xmobar ~/.config/xmobar/xmobarrc" (pure def)) defToggleStrutsKey
+     $ myConfig
 ```
 
 Back to controlling what exactly we send to xmobar.  The `def`
@@ -724,19 +724,19 @@ this.  To prepare, we can first create a new function `myXmobarPP` with
 the default configuration:
 
 ``` haskell
-  myXmobarPP :: PP
-  myXmobarPP = def
+myXmobarPP :: PP
+myXmobarPP = def
 ```
 
 and then plug that into our main function:
 
 ``` haskell
-  main :: IO ()
-  main = xmonad
-       . ewmhFullscreen
-       . ewmh
-       . withEasySB (statusBarProp "xmobar" (pure myXmobarPP)) defToggleStrutsKey
-       $ myConfig
+main :: IO ()
+main = xmonad
+     . ewmhFullscreen
+     . ewmh
+     . withEasySB (statusBarProp "xmobar" (pure myXmobarPP)) defToggleStrutsKey
+     $ myConfig
 ```
 
 As before, we now change things by modifying that `def` record until we
@@ -744,7 +744,7 @@ find something that we like.  First, for some functionality that we need
 further down we need to import one more module:
 
 ``` haskell
-  import XMonad.Util.Loggers
+import XMonad.Util.Loggers
 ```
 
 Now we are finally ready to make things pretty.  There are _a lot_ of
@@ -752,33 +752,33 @@ options for the [PP record]; I'd advise you to read through all of them
 now, so you don't get lost!
 
 ``` haskell
-  myXmobarPP :: PP
-  myXmobarPP = def
-      { ppSep             = magenta " • "
-      , ppTitleSanitize   = xmobarStrip
-      , ppCurrent         = wrap " " "" . xmobarBorder "Top" "#8be9fd" 2
-      , ppHidden          = white . wrap " " ""
-      , ppHiddenNoWindows = lowWhite . wrap " " ""
-      , ppUrgent          = red . wrap (yellow "!") (yellow "!")
-      , ppOrder           = \[ws, l, _, wins] -> [ws, l, wins]
-      , ppExtras          = [logTitles formatFocused formatUnfocused]
-      }
-    where
-      formatFocused   = wrap (white    "[") (white    "]") . magenta . ppWindow
-      formatUnfocused = wrap (lowWhite "[") (lowWhite "]") . blue    . ppWindow
+myXmobarPP :: PP
+myXmobarPP = def
+    { ppSep             = magenta " • "
+    , ppTitleSanitize   = xmobarStrip
+    , ppCurrent         = wrap " " "" . xmobarBorder "Top" "#8be9fd" 2
+    , ppHidden          = white . wrap " " ""
+    , ppHiddenNoWindows = lowWhite . wrap " " ""
+    , ppUrgent          = red . wrap (yellow "!") (yellow "!")
+    , ppOrder           = \[ws, l, _, wins] -> [ws, l, wins]
+    , ppExtras          = [logTitles formatFocused formatUnfocused]
+    }
+  where
+    formatFocused   = wrap (white    "[") (white    "]") . magenta . ppWindow
+    formatUnfocused = wrap (lowWhite "[") (lowWhite "]") . blue    . ppWindow
 
-      -- | Windows should have *some* title, which should not not exceed a
-      -- sane length.
-      ppWindow :: String -> String
-      ppWindow = xmobarRaw . (\w -> if null w then "untitled" else w) . shorten 30
+    -- | Windows should have *some* title, which should not not exceed a
+    -- sane length.
+    ppWindow :: String -> String
+    ppWindow = xmobarRaw . (\w -> if null w then "untitled" else w) . shorten 30
 
-      blue, lowWhite, magenta, red, white, yellow :: String -> String
-      magenta  = xmobarColor "#ff79c6" ""
-      blue     = xmobarColor "#bd93f9" ""
-      white    = xmobarColor "#f8f8f2" ""
-      yellow   = xmobarColor "#f1fa8c" ""
-      red      = xmobarColor "#ff5555" ""
-      lowWhite = xmobarColor "#bbbbbb" ""
+    blue, lowWhite, magenta, red, white, yellow :: String -> String
+    magenta  = xmobarColor "#ff79c6" ""
+    blue     = xmobarColor "#bd93f9" ""
+    white    = xmobarColor "#f8f8f2" ""
+    yellow   = xmobarColor "#f1fa8c" ""
+    red      = xmobarColor "#ff5555" ""
+    lowWhite = xmobarColor "#bbbbbb" ""
 ```
 
 _IF YOU ARE ON A VERSION `< 0.17`_: Both `logTitles` and `xmobarBorder`
@@ -800,10 +800,10 @@ just how we like it.
 An important thing to talk about may be `ppOrder`.  Quoting from its
 documentation:
 
-  > By default, this function receives a list with three formatted
-  > strings, representing the workspaces, the layout, and the current
-  > window title, respectively. If you have specified any extra loggers
-  > in ppExtras, their output will also be appended to the list.
+> By default, this function receives a list with three formatted
+> strings, representing the workspaces, the layout, and the current
+> window title, respectively. If you have specified any extra loggers
+> in ppExtras, their output will also be appended to the list.
 
 So the first three argument of the list (`ws`, `l`, and `_` in our case,
 where the `_` just means we want to ignore that argument and not give it
@@ -813,7 +813,7 @@ title of the focused window.  The last element—`wins`—is what we gave to
 more items to the list, like this:
 
 ``` haskell
-  ppOrder = \[ws, l, _, wins, more, more2] -> [ws, l, wins, more, more2]
+ppOrder = \[ws, l, _, wins, more, more2] -> [ws, l, wins, more, more2]
 ```
 
 However, many people want to show _all_ window titles on the currently
@@ -835,22 +835,22 @@ having to define it inside e.g. a `where` clause.  The above could have
 also be written as
 
 ``` haskell
-  myXmobarPP :: PP
-  myXmobarPP = def
-      { -- stuff here
-      , ppOrder = myOrder
-        -- more stuff here
-      }
-    where
-      myOrder [ws, l, _, wins] = [ws, l, wins]
+myXmobarPP :: PP
+myXmobarPP = def
+    { -- stuff here
+    , ppOrder = myOrder
       -- more stuff here
+    }
+  where
+    myOrder [ws, l, _, wins] = [ws, l, wins]
+    -- more stuff here
 ```
 
 If you're unsure of the number of elements that your `ppOrder` will
 take, you can also specify the list like this:
 
 ``` haskell
-  ppOrder = \(ws : l : _ : wins : _) -> [ws, l, wins]
+ppOrder = \(ws : l : _ : wins : _) -> [ws, l, wins]
 ```
 
 This says that it is a list of _at least_ four elements (`ws`, `l`, the
@@ -861,8 +861,8 @@ This config is really quite complicated.  If this is too much for you,
 you can also really just start with the blank
 
 ``` haskell
-  myXmobarPP :: PP
-  myXmobarPP = def
+myXmobarPP :: PP
+myXmobarPP = def
 ```
 
 then add something, reload xmonad, see how things change and whether you
@@ -879,14 +879,14 @@ to set our desktop background, and the like.
 For this, we will need a few pieces of software.
 
 ``` shell
-  apt-get install trayer xscreensaver
+apt-get install trayer xscreensaver
 ```
 
 If you want a network applet, something to set your desktop background,
 and a power-manager:
 
 ``` shell
-  apt-get install nm-applet feh xfce4-power-manager
+apt-get install nm-applet feh xfce4-power-manager
 ```
 
 First, configure xscreensaver how you like it with the
@@ -899,31 +899,31 @@ for how to do this.
 Your `~/.xinitrc` may wind up looking like this:
 
 ``` shell
-  #!/bin/sh
+#!/bin/sh
 
-  # [... default stuff that your distro may throw in here ...] #
+# [... default stuff that your distro may throw in here ...] #
 
-  # Set up an icon tray
-  trayer --edge top --align right --SetDockType true --SetPartialStrut true \
-   --expand true --width 10 --transparent true --tint 0x5f5f5f --height 18 &
+# Set up an icon tray
+trayer --edge top --align right --SetDockType true --SetPartialStrut true \
+ --expand true --width 10 --transparent true --tint 0x5f5f5f --height 18 &
 
-  # Set the default X cursor to the usual pointer
-  xsetroot -cursor_name left_ptr
+# Set the default X cursor to the usual pointer
+xsetroot -cursor_name left_ptr
 
-  # Set a nice background
-  feh --bg-fill --no-fehbg ~/.wallpapers/haskell-red-noise.png
+# Set a nice background
+feh --bg-fill --no-fehbg ~/.wallpapers/haskell-red-noise.png
 
-  # Fire up screensaver
-  xscreensaver -no-splash &
+# Fire up screensaver
+xscreensaver -no-splash &
 
-  # Power Management
-  xfce4-power-manager &
+# Power Management
+xfce4-power-manager &
 
-  if [ -x /usr/bin/nm-applet ] ; then
-     nm-applet --sm-disable &
-  fi
+if [ -x /usr/bin/nm-applet ] ; then
+   nm-applet --sm-disable &
+fi
 
-  exec xmonad
+exec xmonad
 ```
 
 Notice the call to `trayer` above.  The options tell it to go on the top
@@ -959,7 +959,7 @@ Then click on the application that you would like to know the properties
 of.  In our case you should see (among other things)
 
 ``` shell
-  WM_CLASS(STRING) = "gimp", "Gimp"
+WM_CLASS(STRING) = "gimp", "Gimp"
 ```
 
 The second string in `WM_CLASS` is the class name, which we can access
@@ -971,7 +971,7 @@ Let's use the class name for now.  We can tell all windows with that
 class name to float by defining the following manageHook:
 
 ``` haskell
-  myManageHook = (className =? "Gimp" --> doFloat)
+myManageHook = (className =? "Gimp" --> doFloat)
 ```
 
 Say we also want to float all dialogs.  This is easy with the `isDialog`
@@ -979,11 +979,11 @@ function from [XMonad.Hooks.ManageHelpers] (which you should import) and
 a little modification to the `myManageHook` function:
 
 ``` haskell
-  myManageHook :: ManageHook
-  myManageHook = composeAll
-      [ className =? "Gimp" --> doFloat
-      , isDialog            --> doFloat
-      ]
+myManageHook :: ManageHook
+myManageHook = composeAll
+    [ className =? "Gimp" --> doFloat
+    , isDialog            --> doFloat
+    ]
 ```
 
 Now we just need to tell xmonad to actually use our manageHook.  This is
@@ -991,16 +991,16 @@ as easy as overriding the `manageHook` field in `myConfig`.  You can do
 it like this:
 
 ``` haskell
-  myConfig = def
-      { modMask    = mod4Mask      -- Rebind Mod to the Super key
-      , layoutHook = myLayout      -- Use custom layouts
-      , manageHook = myManageHook  -- Match on certain windows
-      }
-    `additionalKeysP`
-      [ ("M-S-z", spawn "xscreensaver-command -lock")
-      , ("M-S-=", unGrab *> spawn "scrot -s"        )
-      , ("M-]"  , spawn "firefox"                   )
-      ]
+myConfig = def
+    { modMask    = mod4Mask      -- Rebind Mod to the Super key
+    , layoutHook = myLayout      -- Use custom layouts
+    , manageHook = myManageHook  -- Match on certain windows
+    }
+  `additionalKeysP`
+    [ ("M-S-z", spawn "xscreensaver-command -lock")
+    , ("M-S-=", unGrab *> spawn "scrot -s"        )
+    , ("M-]"  , spawn "firefox"                   )
+    ]
 ```
 
 ## The Whole Thing
@@ -1009,83 +1009,83 @@ The full `~/.config/xmonad/xmonad.hs`, in all its glory, now looks like
 this:
 
 ``` haskell
-  import XMonad
+import XMonad
 
-  import XMonad.Hooks.DynamicLog
-  import XMonad.Hooks.ManageDocks
-  import XMonad.Hooks.ManageHelpers
-  import XMonad.Hooks.StatusBar
-  import XMonad.Hooks.StatusBar.PP
+import XMonad.Hooks.DynamicLog
+import XMonad.Hooks.ManageDocks
+import XMonad.Hooks.ManageHelpers
+import XMonad.Hooks.StatusBar
+import XMonad.Hooks.StatusBar.PP
 
-  import XMonad.Util.EZConfig
-  import XMonad.Util.Loggers
-  import XMonad.Util.Ungrab
+import XMonad.Util.EZConfig
+import XMonad.Util.Loggers
+import XMonad.Util.Ungrab
 
-  import XMonad.Layout.Magnifier
-  import XMonad.Layout.ThreeColumns
+import XMonad.Layout.Magnifier
+import XMonad.Layout.ThreeColumns
 
-  import XMonad.Hooks.EwmhDesktops
+import XMonad.Hooks.EwmhDesktops
 
 
-  main :: IO ()
-  main = xmonad
-       . ewmhFullscreen
-       . ewmh
-       . withEasySB (statusBarProp "xmobar" (pure myXmobarPP)) defToggleStrutsKey
-       $ myConfig
+main :: IO ()
+main = xmonad
+     . ewmhFullscreen
+     . ewmh
+     . withEasySB (statusBarProp "xmobar" (pure myXmobarPP)) defToggleStrutsKey
+     $ myConfig
 
-  myConfig = def
-      { modMask    = mod4Mask      -- Rebind Mod to the Super key
-      , layoutHook = myLayout      -- Use custom layouts
-      , manageHook = myManageHook  -- Match on certain windows
-      }
-    `additionalKeysP`
-      [ ("M-S-z", spawn "xscreensaver-command -lock")
-      , ("M-S-=", unGrab *> spawn "scrot -s"        )
-      , ("M-]"  , spawn "firefox"                   )
-      ]
+myConfig = def
+    { modMask    = mod4Mask      -- Rebind Mod to the Super key
+    , layoutHook = myLayout      -- Use custom layouts
+    , manageHook = myManageHook  -- Match on certain windows
+    }
+  `additionalKeysP`
+    [ ("M-S-z", spawn "xscreensaver-command -lock")
+    , ("M-S-=", unGrab *> spawn "scrot -s"        )
+    , ("M-]"  , spawn "firefox"                   )
+    ]
 
-  myManageHook :: ManageHook
-  myManageHook = composeAll
-      [ className =? "Gimp" --> doFloat
-      , isDialog            --> doFloat
-      ]
+myManageHook :: ManageHook
+myManageHook = composeAll
+    [ className =? "Gimp" --> doFloat
+    , isDialog            --> doFloat
+    ]
 
-  myLayout = tiled ||| Mirror tiled ||| Full ||| threeCol
-    where
-      threeCol = magnifiercz' 1.3 $ ThreeColMid nmaster delta ratio
-      tiled    = Tall nmaster delta ratio
-      nmaster  = 1      -- Default number of windows in the master pane
-      ratio    = 1/2    -- Default proportion of screen occupied by master pane
-      delta    = 3/100  -- Percent of screen to increment by when resizing panes
+myLayout = tiled ||| Mirror tiled ||| Full ||| threeCol
+  where
+    threeCol = magnifiercz' 1.3 $ ThreeColMid nmaster delta ratio
+    tiled    = Tall nmaster delta ratio
+    nmaster  = 1      -- Default number of windows in the master pane
+    ratio    = 1/2    -- Default proportion of screen occupied by master pane
+    delta    = 3/100  -- Percent of screen to increment by when resizing panes
 
-  myXmobarPP :: PP
-  myXmobarPP = def
-      { ppSep             = magenta " • "
-      , ppTitleSanitize   = xmobarStrip
-      , ppCurrent         = wrap " " "" . xmobarBorder "Top" "#8be9fd" 2
-      , ppHidden          = white . wrap " " ""
-      , ppHiddenNoWindows = lowWhite . wrap " " ""
-      , ppUrgent          = red . wrap (yellow "!") (yellow "!")
-      , ppOrder           = \[ws, l, _, wins] -> [ws, l, wins]
-      , ppExtras          = [logTitles formatFocused formatUnfocused]
-      }
-    where
-      formatFocused   = wrap (white    "[") (white    "]") . magenta . ppWindow
-      formatUnfocused = wrap (lowWhite "[") (lowWhite "]") . blue    . ppWindow
+myXmobarPP :: PP
+myXmobarPP = def
+    { ppSep             = magenta " • "
+    , ppTitleSanitize   = xmobarStrip
+    , ppCurrent         = wrap " " "" . xmobarBorder "Top" "#8be9fd" 2
+    , ppHidden          = white . wrap " " ""
+    , ppHiddenNoWindows = lowWhite . wrap " " ""
+    , ppUrgent          = red . wrap (yellow "!") (yellow "!")
+    , ppOrder           = \[ws, l, _, wins] -> [ws, l, wins]
+    , ppExtras          = [logTitles formatFocused formatUnfocused]
+    }
+  where
+    formatFocused   = wrap (white    "[") (white    "]") . magenta . ppWindow
+    formatUnfocused = wrap (lowWhite "[") (lowWhite "]") . blue    . ppWindow
 
-      -- | Windows should have *some* title, which should not not exceed a
-      -- sane length.
-      ppWindow :: String -> String
-      ppWindow = xmobarRaw . (\w -> if null w then "untitled" else w) . shorten 30
+    -- | Windows should have *some* title, which should not not exceed a
+    -- sane length.
+    ppWindow :: String -> String
+    ppWindow = xmobarRaw . (\w -> if null w then "untitled" else w) . shorten 30
 
-      blue, lowWhite, magenta, red, white, yellow :: String -> String
-      magenta  = xmobarColor "#ff79c6" ""
-      blue     = xmobarColor "#bd93f9" ""
-      white    = xmobarColor "#f8f8f2" ""
-      yellow   = xmobarColor "#f1fa8c" ""
-      red      = xmobarColor "#ff5555" ""
-      lowWhite = xmobarColor "#bbbbbb" ""
+    blue, lowWhite, magenta, red, white, yellow :: String -> String
+    magenta  = xmobarColor "#ff79c6" ""
+    blue     = xmobarColor "#bd93f9" ""
+    white    = xmobarColor "#f8f8f2" ""
+    yellow   = xmobarColor "#f1fa8c" ""
+    red      = xmobarColor "#ff5555" ""
+    lowWhite = xmobarColor "#bbbbbb" ""
 ```
 
 ## Further Customizations
@@ -1107,19 +1107,19 @@ your Icons with `<fn>` tags and the respective index of the font
 configuration above with this new functionality:
 
 ``` haskell
-  Config { overrideRedirect = False
-         , font             = "xft:iosevka-9"
-         , additionalFonts  = ["xft:FontAwesome-9"]
-         ...
-         , Run Battery
-             [ ...
-             , "--lows"   , "<fn=1>\62020</fn>  "
-             , "--mediums", "<fn=1>\62018</fn>  "
-             , "--highs"  , "<fn=1>\62016</fn>  "
-               ...
-             ]
-         ...
-         }
+Config { overrideRedirect = False
+       , font             = "xft:iosevka-9"
+       , additionalFonts  = ["xft:FontAwesome-9"]
+       ...
+       , Run Battery
+           [ ...
+           , "--lows"   , "<fn=1>\62020</fn>  "
+           , "--mediums", "<fn=1>\62018</fn>  "
+           , "--highs"  , "<fn=1>\62016</fn>  "
+             ...
+           ]
+       ...
+       }
 ```
 
 For an explanation of the battery commands used above, see xmobars
@@ -1148,16 +1148,16 @@ we again follow the documentation (try it yourself!)—import the module
 and then change `myLayout` like this:
 
 ``` haskell
-  myLayout = tiled ||| Mirror tiled ||| Full ||| threeCol
-    where
-      threeCol
-          = renamed [Replace "ThreeCol"]
-          $ magnifiercz' 1.3
-          $ ThreeColMid nmaster delta ratio
-      tiled   = Tall nmaster delta ratio
-      nmaster = 1      -- Default number of windows in the master pane
-      ratio   = 1/2    -- Default proportion of screen occupied by master pane
-      delta   = 3/100  -- Percent of screen to increment by when resizing panes
+myLayout = tiled ||| Mirror tiled ||| Full ||| threeCol
+  where
+    threeCol
+        = renamed [Replace "ThreeCol"]
+        $ magnifiercz' 1.3
+        $ ThreeColMid nmaster delta ratio
+    tiled   = Tall nmaster delta ratio
+    nmaster = 1      -- Default number of windows in the master pane
+    ratio   = 1/2    -- Default proportion of screen occupied by master pane
+    delta   = 3/100  -- Percent of screen to increment by when resizing panes
 ```
 
 The new line `renamed [Replace "ThreeCol"]` tells the layout to throw
@@ -1167,7 +1167,7 @@ breaks here are just cosmetic, by the way; if you want you can write
 everything in one line:
 
 ``` haskell
-  threeCol = renamed [Replace "ThreeCol"] $ magnifiercz' 1.3 $ ThreeColMid nmaster delta ratio
+threeCol = renamed [Replace "ThreeCol"] $ magnifiercz' 1.3 $ ThreeColMid nmaster delta ratio
 ```
 
 ## Get in Touch
@@ -1193,9 +1193,9 @@ you will have to set this up manually.  For example, you could put
 something like
 
 ``` shell
-  if [[ ! $DISPLAY ]]; then
-    exec startx >& ~/.xsession-errors
-  fi
+if [[ ! $DISPLAY ]]; then
+  exec startx >& ~/.xsession-errors
+fi
 ```
 
 into your `~/.profile` file to explicitly log everything into
@@ -1246,7 +1246,7 @@ either :)
 
 [Hacks]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Util-Hacks.html
 [PP record]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Hooks-DynamicLog.html#t:PP
-[INSTALL.md]: https://github.com/xmonad/xmonad/blob/master/INSTALL.md#stack
+[INSTALL.md]: INSTALL.md
 [XMonad.Config]: https://github.com/xmonad/xmonad/blob/master/src/XMonad/Config.hs
 [XMonad.ManageHook]: https://hackage.haskell.org/package/xmonad/docs/XMonad-ManageHook.html
 [XMonad.Util.Loggers]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Util-Loggers.html
