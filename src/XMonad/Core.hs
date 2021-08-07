@@ -27,7 +27,7 @@ module XMonad.Core (
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
     getAtom, spawn, spawnPID, xfork, recompile, trace, whenJust, whenX,
-    getXMonadDir, getXMonadCacheDir, getXMonadDataDir, stateFileName,
+    getXMonadDir, getXMonadCacheDir, getXMonadDataDir, stateFileName, binFileName,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, atom_WM_TAKE_FOCUS, withWindowAttributes,
     ManageHook, Query(..), runQuery, Directories'(..), Directories, getDirectories,
   ) where
@@ -35,7 +35,7 @@ module XMonad.Core (
 import XMonad.StackSet hiding (modify)
 
 import Prelude
-import Control.Exception (fromException, try, bracket, throw, finally, SomeException(..))
+import Control.Exception (fromException, try, bracket, bracket_, throw, finally, SomeException(..))
 import qualified Control.Exception as E
 import Control.Applicative ((<|>), empty)
 import Control.Monad.Fail
@@ -552,19 +552,117 @@ getXMonadDataDir :: X String
 getXMonadDataDir = asks (dataDir . directories)
 {-# DEPRECATED getXMonadDataDir "Use `asks (dataDir . directories)' instead." #-}
 
--- | Get the name of the file used to store the xmonad window state.
-stateFileName :: X FilePath
-stateFileName = (</> "xmonad.state") <$> getXMonadDataDir
+binFileName, errFileName, stateFileName, srcFileName, libFileName :: Directories -> FilePath
+binFileName   Directories{ dataDir } = dataDir </> "xmonad-" <> arch <> "-" <> os
+errFileName   Directories{ dataDir } = dataDir </> "xmonad.errors"
+stateFileName Directories{ dataDir } = dataDir </> "xmonad.state"
+srcFileName   Directories{  cfgDir } =  cfgDir </> "xmonad.hs"
+libFileName   Directories{  cfgDir } =  cfgDir </> "lib"
 
--- | 'recompile force', recompile the xmonad configuration file when
--- any of the following apply:
+buildScriptFileName :: Directories -> FilePath
+buildScriptFileName Directories{ cfgDir } = cfgDir </> "build"
+
+-- | Compilation method for xmonad configuration.
+data Compile = CompileGhc | CompileScript FilePath
+    deriving (Show)
+
+-- | Detect compilation method by looking for known file names in xmonad
+-- configuration directory.
+detectCompile :: Directories -> IO Compile
+detectCompile dirs = tryScript <|> useGhc
+  where
+    buildScript = buildScriptFileName dirs
+
+    tryScript = do
+        guard =<< doesFileExist buildScript
+        isExe <- isExecutable buildScript
+        if isExe
+          then do
+            trace $ "XMonad will use build script at " <> show buildScript <> " to recompile."
+            pure $ CompileScript buildScript
+          else do
+            trace $ "XMonad will not use build script, because " <> show buildScript <> " is not executable."
+            trace $ "Suggested resolution to use it: chmod u+x " <> show buildScript
+            empty
+
+    useGhc = do
+        trace $ "XMonad will use ghc to recompile, because " <> show buildScript <> " does not exist."
+        pure CompileGhc
+
+    isExecutable f = E.catch (executable <$> getPermissions f) (\(SomeException _) -> return False)
+
+-- | Should we recompile xmonad configuration? Is it newer than the compiled
+-- binary?
+shouldCompile :: Directories -> Compile -> IO Bool
+shouldCompile _dirs CompileScript{} =
+    True <$ trace "XMonad recompiling because a custom build script is being used."
+shouldCompile dirs CompileGhc = do
+    libTs <- mapM getModTime . Prelude.filter isSource =<< allFiles (libFileName dirs)
+    srcT <- getModTime (srcFileName dirs)
+    binT <- getModTime (binFileName dirs)
+    if any (binT <) (srcT : libTs)
+        then True <$ trace "XMonad recompiling because some files have changed."
+        else False <$ trace "XMonad skipping recompile because it is not forced (e.g. via --recompile), and neither xmonad.hs nor any *.hs / *.lhs / *.hsc files in lib/ have been changed."
+  where
+    getModTime f = E.catch (Just <$> getModificationTime f) (\(SomeException _) -> return Nothing)
+    isSource = flip elem [".hs",".lhs",".hsc"] . takeExtension
+    allFiles t = do
+        let prep = map (t</>) . Prelude.filter (`notElem` [".",".."])
+        cs <- prep <$> E.catch (getDirectoryContents t) (\(SomeException _) -> return [])
+        ds <- filterM doesDirectoryExist cs
+        concat . ((cs \\ ds):) <$> mapM allFiles ds
+
+-- | Compile the configuration.
+compile :: Directories -> Compile -> IO ExitCode
+compile dirs method =
+    bracket_ uninstallSignalHandlers installSignalHandlers $
+        bracket (openFile (errFileName dirs) WriteMode) hClose $ \err ->
+            waitForProcess =<< runProcess exe args (Just (cfgDir dirs)) Nothing Nothing Nothing (Just err)
+  where
+    (exe, args) = case method of
+        CompileScript script ->
+            (script, [binFileName dirs])
+        CompileGhc ->
+            ("ghc", [ "--make"
+                    , "xmonad.hs"
+                    , "-i" -- only look in @lib@
+                    , "-ilib"
+                    , "-fforce-recomp"
+                    , "-main-is", "main"
+                    , "-v0"
+                    , "-o", binFileName dirs
+                    ])
+
+-- | Notify the user that compilation failed and what was wrong.
+compileFailed :: Directories -> ExitCode -> IO ()
+compileFailed dirs status = do
+    ghcErr <- readFile (errFileName dirs)
+    let msg = unlines $
+            ["Errors detected while compiling xmonad config: " <> srcFileName dirs]
+            ++ lines (if null ghcErr then show status else ghcErr)
+            ++ ["","Please check the file for errors."]
+    -- nb, the ordering of printing, then forking, is crucial due to
+    -- lazy evaluation
+    trace msg
+    void $ forkProcess $ executeFile "xmessage" True ["-default", "okay", replaceUnicode msg] Nothing
+  where
+    -- Replace some of the unicode symbols GHC uses in its output
+    replaceUnicode = map $ \c -> case c of
+        '\8226' -> '*'  -- •
+        '\8216' -> '`'  -- ‘
+        '\8217' -> '`'  -- ’
+        _ -> c
+
+-- | Recompile the xmonad configuration file when any of the following apply:
 --
---      * force is 'True'
+--  * force is 'True'
 --
---      * the xmonad executable does not exist
+--  * the xmonad executable does not exist
 --
---      * the xmonad executable is older than xmonad.hs or any file in
---        the @lib@ directory (under the configuration directory).
+--  * the xmonad executable is older than @xmonad.hs@ or any file in
+--    the @lib@ directory (under the configuration directory)
+--
+--  * custom @build@ script is being used
 --
 -- The -i flag is used to restrict recompilation to the xmonad.hs file only,
 -- and any files in the aforementioned @lib@ directory.
@@ -576,103 +674,20 @@ stateFileName = (</> "xmonad.state") <$> getXMonadDataDir
 -- 'False' is returned if there are compilation errors.
 --
 recompile :: MonadIO m => Directories -> Bool -> m Bool
-recompile Directories{ cfgDir, dataDir } force = io $ do
-    let binn = "xmonad-"++arch++"-"++os
-        bin  = dataDir </> binn
-        err  = dataDir </> "xmonad.errors"
-        src  = cfgDir  </> "xmonad.hs"
-        lib  = cfgDir  </> "lib"
-        buildscript = cfgDir </> "build"
-
-    libTs <- mapM getModTime . Prelude.filter isSource =<< allFiles lib
-    srcT <- getModTime src
-    binT <- getModTime bin
-
-    useBuildscript <- do
-      exists <- doesFileExist buildscript
-      if exists
-        then do
-          isExe <- isExecutable buildscript
-          if isExe
-            then do
-              trace $ "XMonad will use build script at " ++ show buildscript ++ " to recompile."
-              return True
-            else do
-              trace $ unlines
-                [ "XMonad will not use build script, because " ++ show buildscript ++ " is not executable."
-                , "Suggested resolution to use it: chmod u+x " ++ show buildscript
-                ]
-              return False
-        else do
-          trace $
-            "XMonad will use ghc to recompile, because " ++ show buildscript ++ " does not exist."
-          return False
-
-    shouldRecompile <-
-      if useBuildscript || force
-        then return True
-        else if any (binT <) (srcT : libTs)
-          then do
-            trace "XMonad doing recompile because some files have changed."
-            return True
-          else do
-            trace "XMonad skipping recompile because it is not forced (e.g. via --recompile), and neither xmonad.hs nor any *.hs / *.lhs / *.hsc files in lib/ have been changed."
-            return False
-
-    if shouldRecompile
+recompile dirs force = io $ do
+    method <- detectCompile dirs
+    willCompile <- if force
+        then True <$ trace "XMonad recompiling (forced)."
+        else shouldCompile dirs method
+    if willCompile
       then do
-        -- temporarily disable SIGCHLD ignoring:
-        uninstallSignalHandlers
-        status <- bracket (openFile err WriteMode) hClose $ \errHandle ->
-            waitForProcess =<< if useBuildscript
-                               then compileScript bin cfgDir buildscript errHandle
-                               else compileGHC bin cfgDir errHandle
-
-        -- re-enable SIGCHLD:
-        installSignalHandlers
-
-        -- now, if it fails, run xmessage to let the user know:
+        status <- compile dirs method
         if status == ExitSuccess
             then trace "XMonad recompilation process exited with success!"
-            else do
-                ghcErr <- readFile err
-                let msg = unlines $
-                        ["Error detected while loading xmonad configuration file: " ++ src]
-                        ++ lines (if null ghcErr then show status else ghcErr)
-                        ++ ["","Please check the file for errors."]
-                -- nb, the ordering of printing, then forking, is crucial due to
-                -- lazy evaluation
-                hPutStrLn stderr msg
-                forkProcess $ executeFile "xmessage" True ["-default", "okay", replaceUnicode msg] Nothing
-                return ()
-        return (status == ExitSuccess)
-      else return True
- where getModTime f = E.catch (Just <$> getModificationTime f) (\(SomeException _) -> return Nothing)
-       isSource = flip elem [".hs",".lhs",".hsc"] . takeExtension
-       isExecutable f = E.catch (executable <$> getPermissions f) (\(SomeException _) -> return False)
-       allFiles t = do
-            let prep = map (t</>) . Prelude.filter (`notElem` [".",".."])
-            cs <- prep <$> E.catch (getDirectoryContents t) (\(SomeException _) -> return [])
-            ds <- filterM doesDirectoryExist cs
-            concat . ((cs \\ ds):) <$> mapM allFiles ds
-       -- Replace some of the unicode symbols GHC uses in its output
-       replaceUnicode = map $ \c -> case c of
-           '\8226' -> '*'  -- •
-           '\8216' -> '`'  -- ‘
-           '\8217' -> '`'  -- ’
-           _ -> c
-       compileGHC bin dir errHandle =
-         runProcess "ghc" ["--make"
-                          , "xmonad.hs"
-                          , "-i"
-                          , "-ilib"
-                          , "-fforce-recomp"
-                          , "-main-is", "main"
-                          , "-v0"
-                          , "-o", bin
-                          ] (Just dir) Nothing Nothing Nothing (Just errHandle)
-       compileScript bin dir script errHandle =
-         runProcess script [bin] (Just dir) Nothing Nothing Nothing (Just errHandle)
+            else compileFailed dirs status
+        pure $ status == ExitSuccess
+      else
+        pure True
 
 -- | Conditionally run an action, using a @Maybe a@ to decide.
 whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
