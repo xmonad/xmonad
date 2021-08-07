@@ -20,7 +20,7 @@ Those who install from distro can skip this and go straight to
   - [Build using Stack](#build-using-stack)
   - [Build using cabal-install](#build-using-cabal-install)
 - [Make XMonad your window manager](#make-xmonad-your-window-manager)
-- [Don't Recompile on Every Startup](#dont-recompile-on-every-startup)
+- [Custom Build Script](#custom-build-script)
 
 <!--TOC-->
 
@@ -187,6 +187,12 @@ packages:
 - xmonad-contrib
 ```
 
+With `stack.yaml` alongside `xmonad.hs`, xmonad now knows that it needs to use
+`stack ghc` instead of just `ghc` when (re)compiling its configuration.
+If you want to keep xmonad sources and the stack project elsewhere, but still
+use `xmonad --recompile`, symlink your real `stack.yaml` into the xmonad
+configuration directory, or [use a custom build script](#custom-build-script).
+
 #### Install Everything
 
 Installing things is as easy as typing `stack install`.  This will
@@ -198,37 +204,6 @@ directory to your `$PATH`!
 If you're getting build failures while building the `X11` package it may
 be that you don't have the required C libraries installed.  See
 [above](#dependencies).
-
-#### Tell XMonad How to Recompile Itself
-
-In order to tell xmonad to invoke `stack build` when we issue `xmonad
---recompile` (bound to `M-q` by default), we need to create a so-called
-`build` file.  This is quite literally just a shell script called
-`build` in your xmonad directory (which is `~/.config/xmonad` for us)
-that tells xmonad how it should build its executable.
-
-A good starting point (this is essentially [what xmonad would do]
-without a build file, with the exception that we are invoking `stack
-ghc` instead of plain `ghc`) would be
-
-``` shell
-#!/bin/sh
-
-exec stack ghc --  \
-  --make xmonad.hs \
-  -i               \
-  -ilib            \
-  -fforce-recomp   \
-  -main-is main    \
-  -v0              \
-  -o "$1"
-```
-
-Don't forget to mark the file as `+x`: `chmod +x build`!
-
-And that's it!  Recompilation should work normally now, though you will
-potentially need to restart your computer, or at least the running X
-session, first.
 
 ### Build using cabal-install
 
@@ -340,7 +315,35 @@ provides one.
 * <https://xmonad.org/documentation.html#in-your-environment>
 * [FAQ: How can I use xmonad with a display manager? (xdm, kdm, gdm)](https://wiki.haskell.org/Xmonad/Frequently_asked_questions#How_can_I_use_xmonad_with_a_display_manager.3F_.28xdm.2C_kdm.2C_gdm.29)
 
-## Don't Recompile on Every Startup
+## Custom Build Script
+
+If you need to customize what happens during `xmonad --recompile` (bound to
+`M-q` by default), perhaps because your xmonad configuration is a whole
+separate Haskell package, you need to create a so-called `build` file.  This
+is quite literally just a shell script called `build` in your xmonad directory
+(which is `~/.config/xmonad` for us) that tells xmonad how it should build its
+executable.
+
+A good starting point (this is essentially [what xmonad would do][]
+without a build file, with the exception that we are invoking `stack
+ghc` instead of plain `ghc`) would be
+
+``` shell
+#!/bin/sh
+
+exec stack ghc --  \
+  --make xmonad.hs \
+  -i               \
+  -ilib            \
+  -fforce-recomp   \
+  -main-is main    \
+  -v0              \
+  -o "$1"
+```
+
+Don't forget to mark the file as `+x`: `chmod +x build`!
+
+#### Don't Recompile on Every Startup
 
 By default, xmonad always recompiles itself when a build script is used
 (because the build script could contain arbitrary code, so a simple
@@ -369,5 +372,5 @@ executable will also be within that directory and not in
 [stack]: https://docs.haskellstack.org/en/stable/README/
 [cabal-install]: https://www.haskell.org/cabal/
 [ghcup]: https://www.haskell.org/ghcup/
-[what xmonad would do]: https://github.com/xmonad/xmonad/blob/master/src/XMonad/Core.hs#L657-L665
+[what xmonad would do]: https://github.com/xmonad/xmonad/blob/master/src/XMonad/Core.hs#L659-L667
 [Hackage]: https://hackage.haskell.org/
