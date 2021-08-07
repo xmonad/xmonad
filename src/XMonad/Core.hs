@@ -527,9 +527,9 @@ getDirectories = xmEnvDirs <|> xmDirs <|> xdgDirs
     xmEnvDirs :: IO Directories
     xmEnvDirs = do
         let xmEnvs = Directories{ dataDir  = "XMONAD_DATA_DIR"
-                         , cfgDir   = "XMONAD_CONFIG_DIR"
-                         , cacheDir = "XMONAD_CACHE_DIR"
-                         }
+                                , cfgDir   = "XMONAD_CONFIG_DIR"
+                                , cacheDir = "XMONAD_CACHE_DIR"
+                                }
         maybe empty pure . sequenceA =<< traverse getEnv xmEnvs
 
     -- | Check whether the config file or a build script is in the
