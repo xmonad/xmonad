@@ -12,7 +12,7 @@
 
   * slotThe [GitHub][slotThe], IRC: `Solid`
 
-  * Tomáš Janoušek [GitHub][liskin], [Twitter][twitter:liskin], IRC: `liskin`
+  * Tomáš Janoušek [GitHub][liskin], [Twitter][twitter:liskin], IRC: `liskin`, [GPG][gpg:liskin]
 
 [geekosaur]: https://github.com/geekosaur
 [byorgey]: https://github.com/byorgey
@@ -20,6 +20,8 @@
 [psibi]: https://github.com/psibi
 [liskin]: https://github.com/liskin
 [slotThe]: https://github.com/slotThe
+
+[gpg:liskin]: https://github.com/liskin.gpg
 
 [twitter:dmwit]: https://twitter.com/dmwit13
 [twitter:psibi]: https://twitter.com/psibi
