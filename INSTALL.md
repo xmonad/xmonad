@@ -356,13 +356,13 @@ exec xmonad
 in your `~/.xinitrc`, you would write
 
 ``` shell
-exec $HOME/.local/share/xmonad/xmonad-x86_64-linux
+exec $HOME/.cache/xmonad/xmonad-x86_64-linux
 ```
 
-The `~/.local/share` prefix is the `$XDG_DATA_DIR` directory.  Note that
+The `~/.cache` prefix is the `$XDG_CACHE_HOME` directory.  Note that
 if your xmonad configuration resides within `~/.xmonad`, then the
 executable will also be within that directory and not in
-`$XDG_DATA_DIR`.
+`$XDG_CACHE_HOME`.
 
 [XDG]: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
 [git]: https://git-scm.com/

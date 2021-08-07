@@ -29,6 +29,10 @@
     In the cases of 1. and 3., the build script or executable is
     expected to be in the config dir.
 
+    Additionally, the xmonad config binary and intermediate object files were
+    moved to the cache directory (only relevant if using XDG or
+    `XMONAD_CACHE_DIR`).
+
   * Change `ScreenDetail` to a newtype and make `RationalRect` strict in
     its contents.
 
