@@ -57,6 +57,14 @@
   * `DestroyWindowEvent` is now broadcasted to layouts to let them know
     window-specific resources can be discarded.
 
+  * Recompilation now detects `stack.yaml` (can be a symlink) alongside
+    `xmonad.hs` and switches to using `stack ghc`. We also updated INSTALL.md
+    with instructions for cabal-install that lead to correct recompilation.
+
+    Deprecation warnings during recompilation are no longer suppressed to make
+    it easier for us to clean up the codebase. These can still be suppressed
+    manually using an `OPTIONS_GHC` pragma with `-Wno-deprecations`.
+
 ## 0.15 (September 30, 2018)
 
   * Reimplement `sendMessage` to deal properly with windowset changes made
