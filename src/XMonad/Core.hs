@@ -45,6 +45,7 @@ import Data.Semigroup
 import Data.Traversable (for)
 import Data.Time.Clock (UTCTime)
 import Data.Default.Class
+import Data.List (isInfixOf)
 import System.FilePath
 import System.IO
 import System.Info
@@ -683,6 +684,22 @@ compile dirs method =
         ExitSuccess -> cmd2
         e -> pure e
 
+-- | Check GHC output for deprecation warnings and notify the user if there
+-- were any. Report success otherwise.
+checkCompileWarnings :: Directories -> IO ()
+checkCompileWarnings dirs = do
+    ghcErr <- readFile (errFileName dirs)
+    if "-Wdeprecations" `isInfixOf` ghcErr
+      then do
+        let msg = unlines $
+                ["Deprecations detected while compiling xmonad config: " <> srcFileName dirs]
+                ++ lines ghcErr
+                ++ ["","Please correct them or silence using {-# OPTIONS_GHC -Wno-deprecations #-}."]
+        trace msg
+        xmessage msg
+      else
+        trace "XMonad recompilation process exited with success!"
+
 -- | Notify the user that compilation failed and what was wrong.
 compileFailed :: Directories -> ExitCode -> IO ()
 compileFailed dirs status = do
@@ -726,7 +743,7 @@ recompile dirs force = io $ do
       then do
         status <- compile dirs method
         if status == ExitSuccess
-            then trace "XMonad recompilation process exited with success!"
+            then checkCompileWarnings dirs
             else compileFailed dirs status
         pure $ status == ExitSuccess
       else
