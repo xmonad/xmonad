@@ -43,6 +43,7 @@ import Control.Monad.State
 import Control.Monad.Reader
 import Data.Semigroup
 import Data.Traversable (for)
+import Data.Time.Clock (UTCTime)
 import Data.Default.Class
 import System.FilePath
 import System.IO
@@ -571,19 +572,21 @@ stateFileName Directories{ dataDir } = dataDir </> "xmonad.state"
 srcFileName   Directories{  cfgDir } =  cfgDir </> "xmonad.hs"
 libFileName   Directories{  cfgDir } =  cfgDir </> "lib"
 
-buildScriptFileName :: Directories -> FilePath
+buildScriptFileName, stackYamlFileName :: Directories -> FilePath
 buildScriptFileName Directories{ cfgDir } = cfgDir </> "build"
+stackYamlFileName   Directories{ cfgDir } = cfgDir </> "stack.yaml"
 
 -- | Compilation method for xmonad configuration.
-data Compile = CompileGhc | CompileScript FilePath
+data Compile = CompileGhc | CompileStackGhc FilePath | CompileScript FilePath
     deriving (Show)
 
 -- | Detect compilation method by looking for known file names in xmonad
 -- configuration directory.
 detectCompile :: Directories -> IO Compile
-detectCompile dirs = tryScript <|> useGhc
+detectCompile dirs = tryScript <|> tryStack <|> useGhc
   where
     buildScript = buildScriptFileName dirs
+    stackYaml = stackYamlFileName dirs
 
     tryScript = do
         guard =<< doesFileExist buildScript
@@ -597,8 +600,15 @@ detectCompile dirs = tryScript <|> useGhc
             trace $ "Suggested resolution to use it: chmod u+x " <> show buildScript
             empty
 
+    tryStack = do
+        guard =<< doesFileExist stackYaml
+        canonStackYaml <- canonicalizePath stackYaml
+        trace $ "XMonad will use stack ghc --stack-yaml " <> show canonStackYaml <> " to recompile."
+        pure $ CompileStackGhc canonStackYaml
+
     useGhc = do
-        trace $ "XMonad will use ghc to recompile, because " <> show buildScript <> " does not exist."
+        trace $ "XMonad will use ghc to recompile, because neither "
+                <> show buildScript <> " nor " <> show stackYaml <> " exists."
         pure CompileGhc
 
     isExecutable f = E.catch (executable <$> getPermissions f) (\(SomeException _) -> return False)
@@ -606,8 +616,6 @@ detectCompile dirs = tryScript <|> useGhc
 -- | Should we recompile xmonad configuration? Is it newer than the compiled
 -- binary?
 shouldCompile :: Directories -> Compile -> IO Bool
-shouldCompile _dirs CompileScript{} =
-    True <$ trace "XMonad recompiling because a custom build script is being used."
 shouldCompile dirs CompileGhc = do
     libTs <- mapM getModTime . Prelude.filter isSource =<< allFiles (libFileName dirs)
     srcT <- getModTime (srcFileName dirs)
@@ -616,34 +624,57 @@ shouldCompile dirs CompileGhc = do
         then True <$ trace "XMonad recompiling because some files have changed."
         else False <$ trace "XMonad skipping recompile because it is not forced (e.g. via --recompile), and neither xmonad.hs nor any *.hs / *.lhs / *.hsc files in lib/ have been changed."
   where
-    getModTime f = E.catch (Just <$> getModificationTime f) (\(SomeException _) -> return Nothing)
     isSource = flip elem [".hs",".lhs",".hsc"] . takeExtension
     allFiles t = do
         let prep = map (t</>) . Prelude.filter (`notElem` [".",".."])
         cs <- prep <$> E.catch (getDirectoryContents t) (\(SomeException _) -> return [])
         ds <- filterM doesDirectoryExist cs
         concat . ((cs \\ ds):) <$> mapM allFiles ds
+shouldCompile dirs CompileStackGhc{} = do
+    stackYamlT <- getModTime (stackYamlFileName dirs)
+    binT <- getModTime (binFileName dirs)
+    if binT < stackYamlT
+        then True <$ trace "XMonad recompiling because some files have changed."
+        else shouldCompile dirs CompileGhc
+shouldCompile _dirs CompileScript{} =
+    True <$ trace "XMonad recompiling because a custom build script is being used."
+
+getModTime :: FilePath -> IO (Maybe UTCTime)
+getModTime f = E.catch (Just <$> getModificationTime f) (\(SomeException _) -> return Nothing)
 
 -- | Compile the configuration.
 compile :: Directories -> Compile -> IO ExitCode
 compile dirs method =
     bracket_ uninstallSignalHandlers installSignalHandlers $
-        bracket (openFile (errFileName dirs) WriteMode) hClose $ \err ->
-            waitForProcess =<< runProcess exe args (Just (cfgDir dirs)) Nothing Nothing Nothing (Just err)
+        bracket (openFile (errFileName dirs) WriteMode) hClose $ \err -> do
+            let run = runProc (cfgDir dirs) err
+            case method of
+                CompileGhc ->
+                    run "ghc" ghcArgs
+                CompileStackGhc stackYaml ->
+                    run "stack" ["build", "--silent"] .&&.
+                    run "stack" ("ghc" : "--stack-yaml" : stackYaml : "--" : ghcArgs)
+                CompileScript script ->
+                    run script [binFileName dirs]
   where
-    (exe, args) = case method of
-        CompileScript script ->
-            (script, [binFileName dirs])
-        CompileGhc ->
-            ("ghc", [ "--make"
-                    , "xmonad.hs"
-                    , "-i" -- only look in @lib@
-                    , "-ilib"
-                    , "-fforce-recomp"
-                    , "-main-is", "main"
-                    , "-v0"
-                    , "-o", binFileName dirs
-                    ])
+    ghcArgs = [ "--make"
+              , "xmonad.hs"
+              , "-i" -- only look in @lib@
+              , "-ilib"
+              , "-fforce-recomp"
+              , "-main-is", "main"
+              , "-v0"
+              , "-o", binFileName dirs
+              ]
+
+    -- waitForProcess =<< System.Process.runProcess, but without closing the err handle
+    runProc cwd err exe args = do
+        (_, _, _, h) <- createProcess_ "runProc" (proc exe args){ cwd = Just cwd, std_err = UseHandle err }
+        waitForProcess h
+
+    cmd1 .&&. cmd2 = cmd1 >>= \case
+        ExitSuccess -> cmd2
+        e -> pure e
 
 -- | Notify the user that compilation failed and what was wrong.
 compileFailed :: Directories -> ExitCode -> IO ()
