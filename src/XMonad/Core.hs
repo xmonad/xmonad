@@ -26,7 +26,7 @@ module XMonad.Core (
     StateExtension(..), ExtensionClass(..), ConfExtension(..),
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
-    getAtom, spawn, spawnPID, xfork, recompile, trace, whenJust, whenX,
+    getAtom, spawn, spawnPID, xfork, xmessage, recompile, trace, whenJust, whenX,
     getXMonadDir, getXMonadCacheDir, getXMonadDataDir, stateFileName, binFileName,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, atom_WM_TAKE_FOCUS, withWindowAttributes,
     ManageHook, Query(..), runQuery, Directories'(..), Directories, getDirectories,
@@ -54,6 +54,7 @@ import System.Posix.IO
 import System.Posix.Types (ProcessID)
 import System.Process
 import System.Directory
+import System.Environment (setEnv)
 import System.Exit
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras (getWindowAttributes, WindowAttributes, Event)
@@ -453,6 +454,17 @@ xfork x = io . forkProcess . finally nullStdin $ do
         dupTo fd stdInput
         closeFd fd
 
+-- | Use @xmessage@ to show information to the user.
+xmessage :: MonadIO m => String -> m ()
+xmessage msg = void . xfork $ do
+    setEnv "LC_ALL" "C.UTF-8"
+    executeFile "xmessage" True
+        [ "-default", "okay"
+        , "-xrm", "*international:true"
+        , "-xrm", "*fontSet:-*-fixed-medium-r-normal-*-18-*-*-*-*-*-*-*,-*-fixed-*-*-*-*-18-*-*-*-*-*-*-*,-*-*-*-*-*-*-18-*-*-*-*-*-*-*"
+        , msg
+        ] Nothing
+
 -- | This is basically a map function, running a function in the 'X' monad on
 -- each workspace with the output of that function being the modified workspace.
 runOnWorkspaces :: (WindowSpace -> X WindowSpace) -> X ()
@@ -644,14 +656,7 @@ compileFailed dirs status = do
     -- nb, the ordering of printing, then forking, is crucial due to
     -- lazy evaluation
     trace msg
-    void $ forkProcess $ executeFile "xmessage" True ["-default", "okay", replaceUnicode msg] Nothing
-  where
-    -- Replace some of the unicode symbols GHC uses in its output
-    replaceUnicode = map $ \c -> case c of
-        '\8226' -> '*'  -- •
-        '\8216' -> '`'  -- ‘
-        '\8217' -> '`'  -- ’
-        _ -> c
+    xmessage msg
 
 -- | Recompile the xmonad configuration file when any of the following apply:
 --
