@@ -154,4 +154,4 @@ each pull request contains just one commit.
 [xmonad-testing]: https://github.com/xmonad/xmonad-testing
 [x11]: https://github.com/xmonad/X11
 [ml]: https://mail.haskell.org/cgi-bin/mailman/listinfo/xmonad
-[xmonad-doc-developing]: http://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Doc-Developing.html
+[xmonad-doc-developing]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Doc-Developing.html

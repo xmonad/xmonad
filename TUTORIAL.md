@@ -1244,20 +1244,20 @@ either :)
 [GNU Image Manipulation Program]: https://www.gimp.org/
 [Basic Desktop Environment Integration]: https://wiki.haskell.org/Xmonad/Basic_Desktop_Environment_Integration
 
-[Hacks]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Util-Hacks.html
-[PP record]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Hooks-DynamicLog.html#t:PP
+[Hacks]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Util-Hacks.html
+[PP record]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Hooks-DynamicLog.html#t:PP
 [INSTALL.md]: INSTALL.md
 [XMonad.Config]: https://github.com/xmonad/xmonad/blob/master/src/XMonad/Config.hs
-[XMonad.ManageHook]: https://hackage.haskell.org/package/xmonad/docs/XMonad-ManageHook.html
-[XMonad.Util.Loggers]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Util-Loggers.html
-[XMonad.Util.EZConfig]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Util-EZConfig.html
-[XMonad.Layout.Renamed]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Layout-Renamed.html
-[XMonad.Layout.Magnifier]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Layout-Magnifier.html
-[XMonad.Doc.Contributing]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Doc-Configuring.html
-[XMonad.Hooks.EwmhDesktops]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Hooks-EwmhDesktops.html
-[XMonad.Layout.ThreeColumns]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Layout-ThreeColumns.html
-[XMonad.Hooks.ManageHelpers]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Hooks-ManageHelpers.html
-[XMonad.Util.ClickableWorkspaces]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Util-ClickableWorkspaces.html
+[XMonad.ManageHook]: https://xmonad.github.io/xmonad-docs/xmonad/XMonad-ManageHook.html
+[XMonad.Util.Loggers]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Util-Loggers.html
+[XMonad.Util.EZConfig]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Util-EZConfig.html
+[XMonad.Layout.Renamed]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Layout-Renamed.html
+[XMonad.Layout.Magnifier]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Layout-Magnifier.html
+[XMonad.Doc.Contributing]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Doc-Configuring.html
+[XMonad.Hooks.EwmhDesktops]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Hooks-EwmhDesktops.html
+[XMonad.Layout.ThreeColumns]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Layout-ThreeColumns.html
+[XMonad.Hooks.ManageHelpers]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Hooks-ManageHelpers.html
+[XMonad.Util.ClickableWorkspaces]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Util-ClickableWorkspaces.html
 
 [xmobar]: https://xmobar.org/
 [battery]: https://github.com/jaor/xmobar/blob/master/doc/plugins.org#batteryp-dirs-args-refreshrate
