@@ -146,6 +146,8 @@ jobs:
           echo "package xmonad" >> cabal.project
           echo "    ghc-options: -Werror=missing-methods" >> cabal.project
           cat >> cabal.project <<EOF
+          optimization: False
+
           package xmonad
             flags: +pedantic
           EOF
