@@ -21,8 +21,8 @@ module XMonad.Core (
     X, WindowSet, WindowSpace, WorkspaceId,
     ScreenId(..), ScreenDetail(..), XState(..),
     XConf(..), XConfig(..), LayoutClass(..),
-    Layout(..), readsLayout, Typeable, Message,
-    SomeMessage(..), fromMessage, LayoutMessages(..),
+    Layout(..), readsLayout, Typeable, Message, doMessage,
+    SomeMessage(..), fromMessage, toMessage, LayoutMessages(..),
     StateExtension(..), ExtensionClass(..), ConfExtension(..),
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
@@ -350,6 +350,13 @@ class (Show (layout a), Typeable layout) => LayoutClass layout a where
     description :: layout a -> String
     description      = show
 
+-- | Handle a message like 'handleMessage', except:
+-- * automatically wrap the message in 'SomeMessage' when necessary
+-- * print a message and return 'Nothing' when 'handleMessage' throws an error
+doMessage :: (LayoutClass layout a, Message message)
+          => layout a -> message -> X (Maybe (layout a))
+doMessage layout = userCodeDef Nothing . handleMessage layout . toMessage
+
 instance LayoutClass Layout Window where
     runLayout (Workspace i (Layout l) ms) r = fmap (fmap Layout) `fmap` runLayout (Workspace i l ms) r
     doLayout (Layout l) r s  = fmap (fmap Layout) `fmap` doLayout l r s
@@ -365,12 +372,18 @@ instance Show (Layout a) where show (Layout l) = show l
 --
 -- User-extensible messages must be a member of this class.
 --
-class Typeable a => Message a
+class Typeable a => Message a where
+    someMessage :: a -> SomeMessage -- NOT EXPORTED; use `toMessage`
+    someMessage = SomeMessage
 
 -- |
 -- A wrapped value of some type in the 'Message' class.
 --
 data SomeMessage = forall a. Message a => SomeMessage a
+    deriving (Typeable)
+
+instance Message SomeMessage where
+    someMessage = id
 
 -- |
 -- And now, unwrap a given, unknown 'Message' type, performing a (dynamic)
@@ -378,6 +391,11 @@ data SomeMessage = forall a. Message a => SomeMessage a
 --
 fromMessage :: Message m => SomeMessage -> Maybe m
 fromMessage (SomeMessage m) = cast m
+
+-- |
+-- Wrap a message in 'SomeMessage' when necessary.
+toMessage :: Message a => a -> SomeMessage
+toMessage = someMessage
 
 -- X Events are valid Messages.
 instance Message Event
