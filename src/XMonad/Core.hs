@@ -351,8 +351,9 @@ class (Show (layout a), Typeable layout) => LayoutClass layout a where
     description      = show
 
 -- | Handle a message like 'handleMessage', except:
--- * automatically wrap the message in 'SomeMessage' when necessary
--- * print a message and return 'Nothing' when 'handleMessage' throws an error
+--
+--    * automatically wrap the message in 'SomeMessage' when necessary
+--    * print a message and return 'Nothing' when 'handleMessage' throws an error
 doMessage :: (LayoutClass layout a, Message message)
           => layout a -> message -> X (Maybe (layout a))
 doMessage layout = userCodeDef Nothing . handleMessage layout . toMessage
