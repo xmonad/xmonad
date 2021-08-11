@@ -376,17 +376,20 @@ instance Show (Layout a) where show (Layout l) = show l
 --
 class Typeable a => Message a where
     someMessage :: a -> SomeMessage -- NOT EXPORTED; use `toMessage`
-    someMessage = Message
+    someMessage = AMessage
 
 -- |
 -- A wrapped value of some type in the 'Message' class.
 --
-data SomeMessage = forall a. Message a => Message a
+data SomeMessage = forall a. Message a => AMessage a
     deriving (Typeable)
 
+-- |
+-- A smart constructor for wrapping any instance of the 'Message' class.
 pattern SomeMessage :: () => forall a. Message a => a -> SomeMessage
-pattern SomeMessage x <- Message x
+pattern SomeMessage x <- AMessage x
     where SomeMessage x = toMessage x
+{-# COMPLETE SomeMessage #-}
 
 instance Message SomeMessage where
     someMessage = id
@@ -396,7 +399,7 @@ instance Message SomeMessage where
 -- type check on the result.
 --
 fromMessage :: Message m => SomeMessage -> Maybe m
-fromMessage (Message m) = cast m
+fromMessage (SomeMessage m) = cast m
 
 -- |
 -- Wrap a message in 'SomeMessage' when necessary.
