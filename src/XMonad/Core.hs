@@ -1,6 +1,7 @@
 {-# LANGUAGE ExistentialQuantification, FlexibleInstances, GeneralizedNewtypeDeriving,
              MultiParamTypeClasses, TypeSynonymInstances, DeriveDataTypeable,
-             LambdaCase, NamedFieldPuns, DeriveTraversable #-}
+             LambdaCase, NamedFieldPuns, DeriveTraversable,
+             PatternSynonyms #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -22,7 +23,7 @@ module XMonad.Core (
     ScreenId(..), ScreenDetail(..), XState(..),
     XConf(..), XConfig(..), LayoutClass(..),
     Layout(..), readsLayout, Typeable, Message, doMessage,
-    SomeMessage(..), fromMessage, toMessage, LayoutMessages(..),
+    SomeMessage(SomeMessage), fromMessage, LayoutMessages(..),
     StateExtension(..), ExtensionClass(..), ConfExtension(..),
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
@@ -375,13 +376,17 @@ instance Show (Layout a) where show (Layout l) = show l
 --
 class Typeable a => Message a where
     someMessage :: a -> SomeMessage -- NOT EXPORTED; use `toMessage`
-    someMessage = SomeMessage
+    someMessage = Message
 
 -- |
 -- A wrapped value of some type in the 'Message' class.
 --
-data SomeMessage = forall a. Message a => SomeMessage a
+data SomeMessage = forall a. Message a => Message a
     deriving (Typeable)
+
+pattern SomeMessage :: () => forall a. Message a => a -> SomeMessage
+pattern SomeMessage x <- Message x
+    where SomeMessage x = toMessage x
 
 instance Message SomeMessage where
     someMessage = id
@@ -391,7 +396,7 @@ instance Message SomeMessage where
 -- type check on the result.
 --
 fromMessage :: Message m => SomeMessage -> Maybe m
-fromMessage (SomeMessage m) = cast m
+fromMessage (Message m) = cast m
 
 -- |
 -- Wrap a message in 'SomeMessage' when necessary.
