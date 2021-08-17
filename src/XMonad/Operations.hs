@@ -480,7 +480,7 @@ writeStateToFile = do
         wsData   = W.mapLayout show . windowset
         extState = catMaybes . map maybeShow . M.toList . extensibleState
 
-    path  <- stateFileName
+    path <- asks $ stateFileName . directories
     stateData <- gets (\s -> StateFile (wsData s) (extState s))
     catchIO (writeFile path $ show stateData)
 
@@ -488,7 +488,7 @@ writeStateToFile = do
 -- return that state.  The state file is removed after reading it.
 readStateFile :: (LayoutClass l Window, Read (l Window)) => XConfig l -> X (Maybe XState)
 readStateFile xmc = do
-    path <- stateFileName
+    path <- asks $ stateFileName . directories
 
     -- I'm trying really hard here to make sure we read the entire
     -- contents of the file before it is removed from the file system.

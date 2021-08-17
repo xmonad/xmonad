@@ -29,6 +29,10 @@
     In the cases of 1. and 3., the build script or executable is
     expected to be in the config dir.
 
+    Additionally, the xmonad config binary and intermediate object files were
+    moved to the cache directory (only relevant if using XDG or
+    `XMONAD_CACHE_DIR`).
+
   * Change `ScreenDetail` to a newtype and make `RationalRect` strict in
     its contents.
 
@@ -52,6 +56,14 @@
 
   * `DestroyWindowEvent` is now broadcasted to layouts to let them know
     window-specific resources can be discarded.
+
+  * Recompilation now detects `stack.yaml` (can be a symlink) alongside
+    `xmonad.hs` and switches to using `stack ghc`. We also updated INSTALL.md
+    with instructions for cabal-install that lead to correct recompilation.
+
+    Deprecation warnings during recompilation are no longer suppressed to make
+    it easier for us to clean up the codebase. These can still be suppressed
+    manually using an `OPTIONS_GHC` pragma with `-Wno-deprecations`.
 
 ## 0.15 (September 30, 2018)
 
