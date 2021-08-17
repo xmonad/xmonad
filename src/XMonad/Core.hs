@@ -351,14 +351,6 @@ class (Show (layout a), Typeable layout) => LayoutClass layout a where
     description :: layout a -> String
     description      = show
 
--- | Handle a message like 'handleMessage', except:
---
---    * automatically wrap the message in 'SomeMessage' when necessary
---    * print a message and return 'Nothing' when 'handleMessage' throws an error
-doMessage :: (LayoutClass layout a, Message message)
-          => layout a -> message -> X (Maybe (layout a))
-doMessage layout = userCodeDef Nothing . handleMessage layout . toMessage
-
 instance LayoutClass Layout Window where
     runLayout (Workspace i (Layout l) ms) r = fmap (fmap Layout) `fmap` runLayout (Workspace i l ms) r
     doLayout (Layout l) r s  = fmap (fmap Layout) `fmap` doLayout l r s
@@ -388,11 +380,19 @@ data SomeMessage = forall a. Message a => AMessage a
 -- A smart constructor for wrapping any instance of the 'Message' class.
 pattern SomeMessage :: () => forall a. Message a => a -> SomeMessage
 pattern SomeMessage x <- AMessage x
-    where SomeMessage x = toMessage x
+    where SomeMessage x = someMessage x
 {-# COMPLETE SomeMessage #-}
 
 instance Message SomeMessage where
     someMessage = id
+
+-- | Handle a message like 'handleMessage', except:
+--
+--    * automatically wrap the message in 'SomeMessage' when necessary
+--    * print a message and return 'Nothing' when 'handleMessage' throws an error
+doMessage :: (LayoutClass layout a, Message message)
+          => layout a -> message -> X (Maybe (layout a))
+doMessage layout = userCodeDef Nothing . handleMessage layout . SomeMessage
 
 -- |
 -- And now, unwrap a given, unknown 'Message' type, performing a (dynamic)
@@ -400,11 +400,6 @@ instance Message SomeMessage where
 --
 fromMessage :: Message m => SomeMessage -> Maybe m
 fromMessage (SomeMessage m) = cast m
-
--- |
--- Wrap a message in 'SomeMessage' when necessary.
-toMessage :: Message a => a -> SomeMessage
-toMessage = someMessage
 
 -- X Events are valid Messages.
 instance Message Event
