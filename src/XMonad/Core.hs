@@ -659,7 +659,7 @@ compile dirs method =
                 CompileGhc ->
                     run "ghc" ghcArgs
                 CompileStackGhc stackYaml ->
-                    run "stack" ["build", "--silent"] .&&.
+                    run "stack" ["build", "--silent", "--stack-yaml", stackYaml] .&&.
                     run "stack" ("ghc" : "--stack-yaml" : stackYaml : "--" : ghcArgs)
                 CompileScript script ->
                     run script [binFileName dirs]
