@@ -677,6 +677,8 @@ compile dirs method =
 
     -- waitForProcess =<< System.Process.runProcess, but without closing the err handle
     runProc cwd err exe args = do
+        hPutStrLn err $ unwords $ "$" : exe : args
+        hFlush err
         (_, _, _, h) <- createProcess_ "runProc" (proc exe args){ cwd = Just cwd, std_err = UseHandle err }
         waitForProcess h
 
