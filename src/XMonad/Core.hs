@@ -375,7 +375,7 @@ instance Show (Layout a) where show (Layout l) = show l
 -- User-extensible messages must be a member of this class.
 --
 class Typeable a => Message a where
-    someMessage :: a -> SomeMessage -- NOT EXPORTED; use `toMessage`
+    someMessage :: a -> SomeMessage -- NOT EXPORTED; use `SomeMessage`
     someMessage = AMessage
 
 -- |
