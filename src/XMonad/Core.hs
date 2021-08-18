@@ -374,7 +374,6 @@ class Typeable a => Message a where
 -- A wrapped value of some type in the 'Message' class.
 --
 data SomeMessage = forall a. Message a => AMessage a
-    deriving (Typeable)
 
 -- |
 -- A smart constructor for wrapping any instance of the 'Message' class.
