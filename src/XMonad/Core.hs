@@ -379,7 +379,7 @@ data SomeMessage = forall a. Message a => AMessage a
 -- A smart constructor for wrapping any instance of the 'Message' class.
 pattern SomeMessage :: () => forall a. Message a => a -> SomeMessage
 pattern SomeMessage x <- AMessage x
-    where SomeMessage x = someMessage x
+  where SomeMessage x = someMessage x
 {-# COMPLETE SomeMessage #-}
 
 instance Message SomeMessage where
