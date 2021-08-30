@@ -1,6 +1,13 @@
-{-# LANGUAGE ExistentialQuantification, FlexibleInstances, GeneralizedNewtypeDeriving,
-             MultiParamTypeClasses, TypeSynonymInstances, DeriveDataTypeable,
-             LambdaCase, NamedFieldPuns, DeriveTraversable #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -23,7 +30,7 @@ module XMonad.Core (
     XConf(..), XConfig(..), LayoutClass(..),
     Layout(..), readsLayout, Typeable, Message,
     SomeMessage(..), fromMessage, LayoutMessages(..),
-    StateExtension(..), ExtensionClass(..), ConfExtension(..),
+    StateExtension(..), ExtensionClass(..), ConfExtension(..), showExtType,
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
     getAtom, spawn, spawnPID, xfork, xmessage, recompile, trace, whenJust, whenX,
@@ -73,7 +80,7 @@ data XState = XState
     , waitingUnmap     :: !(M.Map Window Int)            -- ^ the number of expected UnmapEvents
     , dragging         :: !(Maybe (Position -> Position -> X (), X ()))
     , numberlockMask   :: !KeyMask                       -- ^ The numlock modifier
-    , extensibleState  :: !(M.Map String (Either String StateExtension))
+    , extensibleState  :: !(M.Map (Either String TypeRep) (Either String StateExtension))
     -- ^ stores custom state information.
     --
     -- The module "XMonad.Util.ExtensibleState" in xmonad-contrib
@@ -419,6 +426,20 @@ data StateExtension =
 
 -- | Existential type to store a config extension.
 data ConfExtension = forall a. Typeable a => ConfExtension a
+
+-- | Serialize extension type name.
+-- Produces a (more) unique representation than the Show instance of TypeRep
+-- which only includes type names but not module/package names. 'showExtType'
+-- adds modules names as well. Package names are omitted to support migration
+-- of extensible state during xmonad version upgrades.
+showExtType :: TypeRep -> String
+showExtType = ($ "") . showTypeRep
+  where
+    showTypeRep (splitTyConApp -> (tc, tas)) =
+        showParen (not (null tas)) $
+        showTyCon tc . foldr (\ta -> ((showChar ' ' . showTypeRep ta) .)) id tas
+    showTyCon tc =
+        showString (tyConModule tc) . showChar '.' . showString (tyConName tc)
 
 -- ---------------------------------------------------------------------
 -- | General utilities

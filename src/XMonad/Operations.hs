@@ -23,13 +23,13 @@ import qualified XMonad.StackSet as W
 import Data.Maybe
 import Data.Monoid          (Endo(..),Any(..))
 import Data.List            (nub, (\\), find)
+import Data.Bifunctor       (bimap)
 import Data.Bits            ((.|.), (.&.), complement, testBit)
 import Data.Function        (on)
 import Data.Ratio
 import qualified Data.Map as M
 import qualified Data.Set as S
 
-import Control.Arrow (second)
 import Control.Monad.Reader
 import Control.Monad.State
 import qualified Control.Exception as C
@@ -473,12 +473,12 @@ data StateFile = StateFile
 -- so that xmonad can resume with that state intact.
 writeStateToFile :: X ()
 writeStateToFile = do
-    let maybeShow (t, Right (PersistentExtension ext)) = Just (t, show ext)
-        maybeShow (t, Left str) = Just (t, str)
-        maybeShow _ = Nothing
+    let showExt (Right t, Right (PersistentExtension ext)) = Just (showExtType t, show ext)
+        showExt (Left t, Left str) = Just (t, str)
+        showExt _ = Nothing
 
         wsData   = W.mapLayout show . windowset
-        extState = catMaybes . map maybeShow . M.toList . extensibleState
+        extState = catMaybes . map showExt . M.toList . extensibleState
 
     path <- asks $ stateFileName . directories
     stateData <- gets (\s -> StateFile (wsData s) (extState s))
@@ -502,7 +502,7 @@ readStateFile xmc = do
       sf <- join sf'
 
       let winset = W.ensureTags layout (workspaces xmc) $ W.mapLayout (fromMaybe layout . maybeRead lreads) (sfWins sf)
-          extState = M.fromList . map (second Left) $ sfExt sf
+          extState = M.fromList . map (bimap Left Left) $ sfExt sf
 
       return XState { windowset       = winset
                     , numberlockMask  = 0
