@@ -459,7 +459,6 @@ xfork x = io . forkProcess . finally nullStdin $ do
 -- | Use @xmessage@ to show information to the user.
 xmessage :: MonadIO m => String -> m ()
 xmessage msg = void . xfork $ do
-    setEnv "LC_ALL" "C.UTF-8"
     executeFile "xmessage" True
         [ "-default", "okay"
         , "-xrm", "*international:true"
