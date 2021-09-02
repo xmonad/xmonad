@@ -65,6 +65,13 @@
     it easier for us to clean up the codebase. These can still be suppressed
     manually using an `OPTIONS_GHC` pragma with `-Wno-deprecations`.
 
+  * Extensible state type names no longer need to be unique, because the
+    `extensibleState` map in `XState` is now primarily keyed by the
+    machine-readable type representation rather than the human-readable type
+    name. Human-readable type names are still used for serialization of state
+    between restarts, and this representation now encodes module names as
+    well to avoid conflicts between types with equal names.
+
 ## 0.15 (September 30, 2018)
 
   * Reimplement `sendMessage` to deal properly with windowset changes made
