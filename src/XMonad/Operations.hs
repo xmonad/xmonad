@@ -455,8 +455,7 @@ filterMessageWithNoRefresh p a = updateLayoutsBy $ \ wrk ->
       else pure Nothing
 
 -- | Update the layouts of some workspaces.
-updateLayoutsBy :: MonadState XState m
-                => (WindowSpace -> m (Maybe (Layout Window))) -> m ()
+updateLayoutsBy :: (WindowSpace -> X (Maybe (Layout Window))) -> X ()
 updateLayoutsBy f = runOnWorkspaces' $ \ wrk ->
     maybe wrk (\ l' -> wrk{ W.layout = l' }) <$> f wrk
 
