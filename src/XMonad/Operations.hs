@@ -1,5 +1,4 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, PatternGuards, TypeSynonymInstances, NamedFieldPuns #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, PatternGuards #-}
 -- --------------------------------------------------------------------------
 -- |
 -- Module      :  XMonad.Operations
