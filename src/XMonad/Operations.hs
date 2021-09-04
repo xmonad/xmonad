@@ -1,5 +1,4 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, PatternGuards, TypeSynonymInstances, NamedFieldPuns #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, PatternGuards #-}
 -- --------------------------------------------------------------------------
 -- |
 -- Module      :  XMonad.Operations
@@ -10,11 +9,45 @@
 -- Stability   :  unstable
 -- Portability :  not portable, mtl, posix
 --
--- Operations.
+-- Operations. A module for functions that don't cleanly fit anywhere else.
 --
 -----------------------------------------------------------------------------
 
-module XMonad.Operations where
+module XMonad.Operations (
+    -- * Manage One Window
+    manage, unmanage, killWindow, kill, isClient,
+    setInitialProperties, setWMState, setWindowBorderWithFallback,
+    hide, reveal, tileWindow,
+    setTopFocus, focus, withFocused,
+
+    -- * Manage Windows
+    windows, refresh, rescreen, modifyWindowSet, windowBracket, windowBracket_, clearEvents, getCleanedScreenInfo,
+
+    -- * Keyboard and Mouse
+    cleanMask, extraModifiers,
+    mouseDrag, mouseMoveWindow, mouseResizeWindow,
+    setButtonGrab, setFocusX,
+
+    -- * Messages
+    sendMessage, broadcastMessage, sendMessageWithNoRefresh,
+
+    -- * Save and Restore State
+    StateFile (..), writeStateToFile, readStateFile, restart,
+
+    -- * Floating Layer
+    float, floatLocation,
+
+    -- * Window Size Hints
+    D, mkAdjust, applySizeHints, applySizeHints', applySizeHintsContents,
+    applyAspectHint, applyResizeIncHint, applyMaxSizeHint,
+
+    -- * Rectangles
+    containedIn, nubScreens, pointWithin, scaleRationalRect,
+
+    -- * Other Utilities
+    initColor, pointScreen, screenWorkspace,
+    setLayout, updateLayout,
+    ) where
 
 import XMonad.Core
 import XMonad.Layout (Full(..))
@@ -42,9 +75,10 @@ import Graphics.X11.Xinerama (getScreenInfo)
 import Graphics.X11.Xlib.Extras
 
 -- ---------------------------------------------------------------------
--- |
 -- Window manager operations
--- manage. Add a new window to be managed in the current workspace.
+
+-- |
+-- Add a new window to be managed in the current workspace.
 -- Bring it into focus.
 --
 -- Whether the window is already managed, or not, it is mapped, has its
@@ -71,7 +105,7 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
     g <- appEndo <$> userCodeDef (Endo id) (runQuery mh w)
     windows (g . f)
 
--- | unmanage. A window no longer exists, remove it from the window
+-- | A window no longer exists; remove it from the window
 -- list, on whatever workspace it is.
 --
 unmanage :: Window -> X ()
@@ -102,7 +136,7 @@ kill = withFocused killWindow
 -- ---------------------------------------------------------------------
 -- Managing windows
 
--- | windows. Modify the current window list with a pure function, and refresh
+-- | Modify the current window list with a pure function, and refresh
 windows :: (WindowSet -> WindowSet) -> X ()
 windows f = do
     XState { windowset = old } <- get
@@ -190,8 +224,10 @@ windowBracket p action = withWindowSet $ \old -> do
     windows         $ \_ -> new
   return a
 
--- | A version of @windowBracket@ that discards the return value, and handles an
--- @X@ action reporting its need for refresh via @Any@.
+-- | Perform an @X@ action. If it returns @Any True@, unwind the
+-- changes to the @WindowSet@ and replay them using @windows@. This is
+-- a version of @windowBracket@ that discards the return value and
+-- handles an @X@ action that reports its need for refresh via @Any@.
 windowBracket_ :: X Any -> X ()
 windowBracket_ = void . windowBracket getAny
 
@@ -201,14 +237,14 @@ scaleRationalRect (Rectangle sx sy sw sh) (W.RationalRect rx ry rw rh)
  = Rectangle (sx + scale sw rx) (sy + scale sh ry) (scale sw rw) (scale sh rh)
  where scale s r = floor (toRational s * r)
 
--- | setWMState.  set the WM_STATE property
+-- | Set a window's WM_STATE property.
 setWMState :: Window -> Int -> X ()
 setWMState w v = withDisplay $ \dpy -> do
     a <- atom_WM_STATE
     io $ changeProperty32 dpy w a a propModeReplace [fromIntegral v, fromIntegral none]
 
--- | Set the border color using the window's color map, if possible,
--- otherwise fallback to the color in @Pixel@.
+-- | Set the border color using the window's color map, if possible;
+-- otherwise fall back to the color in @Pixel@.
 setWindowBorderWithFallback :: Display -> Window -> String -> Pixel -> X ()
 setWindowBorderWithFallback dpy w color basic = io $
     C.handle fallback $ do
@@ -220,7 +256,7 @@ setWindowBorderWithFallback dpy w color basic = io $
     fallback e = do hPrint stderr e >> hFlush stderr
                     setWindowBorder dpy w basic
 
--- | hide. Hide a window by unmapping it, and setting Iconified.
+-- | Hide a window by unmapping it and setting Iconified.
 hide :: Window -> X ()
 hide w = whenX (gets (S.member w . mapped)) $ withDisplay $ \d -> do
     cMask <- asks $ clientMask . config
@@ -233,15 +269,15 @@ hide w = whenX (gets (S.member w . mapped)) $ withDisplay $ \d -> do
     modify (\s -> s { waitingUnmap = M.insertWith (+) w 1 (waitingUnmap s)
                     , mapped       = S.delete w (mapped s) })
 
--- | reveal. Show a window by mapping it and setting Normal
--- this is harmless if the window was already visible
+-- | Show a window by mapping it and setting Normal.
+-- This is harmless if the window was already visible.
 reveal :: Window -> X ()
 reveal w = withDisplay $ \d -> do
     setWMState w normalState
     io $ mapWindow d w
     whenX (isClient w) $ modify (\s -> s { mapped = S.insert w (mapped s) })
 
--- | Set some properties when we initially gain control of a window
+-- | Set some properties when we initially gain control of a window.
 setInitialProperties :: Window -> X ()
 setInitialProperties w = asks normalBorder >>= \nb -> withDisplay $ \d -> do
     setWMState w iconicState
@@ -252,7 +288,7 @@ setInitialProperties w = asks normalBorder >>= \nb -> withDisplay $ \d -> do
     -- required by the border setting in 'windows'
     io $ setWindowBorder d w nb
 
--- | refresh. Render the currently visible workspaces, as determined by
+-- | Render the currently visible workspaces, as determined by
 -- the 'StackSet'. Also, set focus to the focused window.
 --
 -- This is our 'view' operation (MVC), in that it pretty prints our model
@@ -261,7 +297,7 @@ setInitialProperties w = asks normalBorder >>= \nb -> withDisplay $ \d -> do
 refresh :: X ()
 refresh = windows id
 
--- | clearEvents.  Remove all events of a given type from the event queue.
+-- | Remove all events of a given type from the event queue.
 clearEvents :: EventMask -> X ()
 clearEvents mask = withDisplay $ \d -> io $ do
     sync d False
@@ -269,8 +305,8 @@ clearEvents mask = withDisplay $ \d -> io $ do
         more <- checkMaskEvent d mask p
         when more again -- beautiful
 
--- | tileWindow. Moves and resizes w such that it fits inside the given
--- rectangle, including its border.
+-- | Move and resize @w@ such that it fits inside the given rectangle,
+-- including its border.
 tileWindow :: Window -> Rectangle -> X ()
 tileWindow w r = withDisplay $ \d -> withWindowAttributes d w $ \wa -> do
     -- give all windows at least 1x1 pixels
@@ -297,13 +333,13 @@ containedIn r1@(Rectangle x1 y1 w1 h1) r2@(Rectangle x2 y2 w2 h2)
 nubScreens :: [Rectangle] -> [Rectangle]
 nubScreens xs = nub . filter (\x -> not $ any (x `containedIn`) xs) $ xs
 
--- | Cleans the list of screens according to the rules documented for
+-- | Clean the list of screens according to the rules documented for
 -- nubScreens.
 getCleanedScreenInfo :: MonadIO m => Display -> m [Rectangle]
 getCleanedScreenInfo = io .  fmap nubScreens . getScreenInfo
 
--- | rescreen.  The screen configuration may have changed (due to
--- xrandr), update the state and refresh the screen, and reset the gap.
+-- | The screen configuration may have changed (due to -- xrandr),
+-- update the state and refresh the screen, and reset the gap.
 rescreen :: X ()
 rescreen = do
     xinesc <- withDisplay getCleanedScreenInfo
@@ -317,7 +353,7 @@ rescreen = do
 
 -- ---------------------------------------------------------------------
 
--- | setButtonGrab. Tell whether or not to intercept clicks on a given window
+-- | Tell whether or not to intercept clicks on a given window
 setButtonGrab :: Bool -> Window -> X ()
 setButtonGrab grab w = do
     pointerMode <- asks $ \c -> if clickJustFocuses (config c)
@@ -403,24 +439,31 @@ sendMessage a = windowBracket_ $ do
 
 -- | Send a message to all layouts, without refreshing.
 broadcastMessage :: Message a => a -> X ()
-broadcastMessage a = withWindowSet $ \ws -> do
-   let c = W.workspace . W.current $ ws
-       v = map W.workspace . W.visible $ ws
-       h = W.hidden ws
-   mapM_ (sendMessageWithNoRefresh a) (c : v ++ h)
+broadcastMessage = filterMessageWithNoRefresh (const True)
 
 -- | Send a message to a layout, without refreshing.
-sendMessageWithNoRefresh :: Message a => a -> W.Workspace WorkspaceId (Layout Window) Window -> X ()
+sendMessageWithNoRefresh :: Message a => a -> WindowSpace -> X ()
 sendMessageWithNoRefresh a w =
-    handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing >>=
-    updateLayout  (W.tag w)
+    filterMessageWithNoRefresh (((==) `on` W.tag) w) a
 
--- | Update the layout field of a workspace
+-- | Send a message to the layouts of some workspaces, without refreshing.
+filterMessageWithNoRefresh :: Message a => (WindowSpace -> Bool) -> a -> X ()
+filterMessageWithNoRefresh p a = modifyLayouts $ \wrk ->
+    if p wrk
+      then userCodeDef Nothing $ W.layout wrk `handleMessage` SomeMessage a
+      else pure Nothing
+
+-- | Modify the layouts of some workspaces.
+modifyLayouts :: (WindowSpace -> X (Maybe (Layout Window))) -> X ()
+modifyLayouts f = runOnWorkspaces $ \ wrk ->
+    maybe wrk (\l -> wrk{ W.layout = l }) <$> f wrk
+
+-- | Update the layout field of a workspace.
 updateLayout :: WorkspaceId -> Maybe (Layout Window) -> X ()
 updateLayout i ml = whenJust ml $ \l ->
     runOnWorkspaces $ \ww -> return $ if W.tag ww == i then ww { W.layout = l} else ww
 
--- | Set the layout of the currently viewed workspace
+-- | Set the layout of the currently viewed workspace.
 setLayout :: Layout Window -> X ()
 setLayout l = do
     ss@(W.StackSet { W.current = c@(W.Screen { W.workspace = ws })}) <- gets windowset
@@ -430,7 +473,7 @@ setLayout l = do
 ------------------------------------------------------------------------
 -- Utilities
 
--- | Return workspace visible on screen 'sc', or 'Nothing'.
+-- | Return workspace visible on screen @sc@, or 'Nothing'.
 screenWorkspace :: ScreenId -> X (Maybe WorkspaceId)
 screenWorkspace sc = withWindowSet $ return . W.lookupWorkspace sc
 
@@ -438,7 +481,7 @@ screenWorkspace sc = withWindowSet $ return . W.lookupWorkspace sc
 withFocused :: (Window -> X ()) -> X ()
 withFocused f = withWindowSet $ \w -> whenJust (W.peek w) f
 
--- | 'True' if window is under management by us
+-- | Is the window is under management by xmonad?
 isClient :: Window -> X Bool
 isClient w = withWindowSet $ return . W.member w
 
@@ -449,13 +492,13 @@ extraModifiers = do
     nlm <- gets numberlockMask
     return [0, nlm, lockMask, nlm .|. lockMask ]
 
--- | Strip numlock\/capslock from a mask
+-- | Strip numlock\/capslock from a mask.
 cleanMask :: KeyMask -> X KeyMask
 cleanMask km = do
     nlm <- gets numberlockMask
     return (complement (nlm .|. lockMask) .&. km)
 
--- | Get the 'Pixel' value for a named color
+-- | Get the 'Pixel' value for a named color.
 initColor :: Display -> String -> IO (Maybe Pixel)
 initColor dpy c = C.handle (\(C.SomeException _) -> return Nothing) $
     (Just . color_pixel . fst) <$> allocNamedColor dpy colormap c
@@ -521,8 +564,8 @@ readStateFile xmc = do
     readStrict :: Handle -> IO String
     readStrict h = hGetContents h >>= \s -> length s `seq` return s
 
--- | @restart name resume@. Attempt to restart xmonad by executing the program
--- @name@.  If @resume@ is 'True', restart with the current window state.
+-- | @restart name resume@ attempts to restart xmonad by executing the program
+-- @name@. If @resume@ is 'True', restart with the current window state.
 -- When executing another window manager, @resume@ should be 'False'.
 restart :: String -> Bool -> X ()
 restart prog resume = do
@@ -532,10 +575,10 @@ restart prog resume = do
     catchIO (executeFile prog True [] Nothing)
 
 ------------------------------------------------------------------------
--- | Floating layer support
+-- Floating layer support
 
 -- | Given a window, find the screen it is located on, and compute
--- the geometry of that window wrt. that screen.
+-- the geometry of that window WRT that screen.
 floatLocation :: Window -> X (ScreenId, W.RationalRect)
 floatLocation w =
     catchX go $ do
@@ -619,7 +662,7 @@ mouseDrag f done = do
                     clearEvents pointerMotionMask
                     return z
 
--- | drag the window under the cursor with the mouse while it is dragged
+-- | Drag the window under the cursor with the mouse while it is dragged.
 mouseMoveWindow :: Window -> X ()
 mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     wa <- io $ getWindowAttributes d w
@@ -633,7 +676,7 @@ mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
               )
               (float w)
 
--- | resize the window under the cursor with the mouse while it is dragged
+-- | Resize the window under the cursor with the mouse while it is dragged.
 mouseResizeWindow :: Window -> X ()
 mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     wa <- io $ getWindowAttributes d w
@@ -648,8 +691,9 @@ mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
               (float w)
 
 -- ---------------------------------------------------------------------
--- | Support for window size hints
+-- Support for window size hints
 
+-- | An alias for a (width, height) pair
 type D = (Dimension, Dimension)
 
 -- | Given a window, build an adjuster function that will reduce the given
@@ -677,7 +721,7 @@ applySizeHintsContents :: Integral a => SizeHints -> (a, a) -> D
 applySizeHintsContents sh (w, h) =
     applySizeHints' sh (fromIntegral $ max 1 w, fromIntegral $ max 1 h)
 
--- | XXX comment me
+-- | Use X11 size hints to scale a pair of dimensions.
 applySizeHints' :: SizeHints -> D -> D
 applySizeHints' sh =
       maybe id applyMaxSizeHint                   (sh_max_size   sh)
