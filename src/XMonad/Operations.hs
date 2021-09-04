@@ -448,15 +448,15 @@ sendMessageWithNoRefresh a w =
 
 -- | Send a message to the layouts of some workspaces, without refreshing.
 filterMessageWithNoRefresh :: Message a => (WindowSpace -> Bool) -> a -> X ()
-filterMessageWithNoRefresh p a = updateLayoutsBy $ \ wrk ->
+filterMessageWithNoRefresh p a = modifyLayouts $ \wrk ->
     if p wrk
       then userCodeDef Nothing $ W.layout wrk `handleMessage` SomeMessage a
       else pure Nothing
 
--- | Update the layouts of some workspaces.
-updateLayoutsBy :: (WindowSpace -> X (Maybe (Layout Window))) -> X ()
-updateLayoutsBy f = runOnWorkspaces $ \ wrk ->
-    maybe wrk (\ l' -> wrk{ W.layout = l' }) <$> f wrk
+-- | Modify the layouts of some workspaces.
+modifyLayouts :: (WindowSpace -> X (Maybe (Layout Window))) -> X ()
+modifyLayouts f = runOnWorkspaces $ \ wrk ->
+    maybe wrk (\l -> wrk{ W.layout = l }) <$> f wrk
 
 -- | Update the layout field of a workspace.
 updateLayout :: WorkspaceId -> Maybe (Layout Window) -> X ()
