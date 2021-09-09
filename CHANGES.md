@@ -2,6 +2,9 @@
 
 ## unknown (unknown)
 
+  * Adds `withUnfocused` function to `XMonad.Operations`, allowing for
+    `X` operations to be applied to all unfocused windows.
+
   * Fixed a bug when using multiple screens with different dimensions,
     causing some floating windows to be smaller/larger than the size they
     requested.

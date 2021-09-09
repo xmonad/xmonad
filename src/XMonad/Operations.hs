@@ -21,7 +21,7 @@ module XMonad.Operations (
     setTopFocus, focus, withFocused,
 
     -- * Manage Windows
-    windows, refresh, rescreen, modifyWindowSet, windowBracket, windowBracket_, clearEvents, getCleanedScreenInfo,
+    windows, refresh, rescreen, modifyWindowSet, windowBracket, windowBracket_, clearEvents, getCleanedScreenInfo, withUnfocused,
 
     -- * Keyboard and Mouse
     cleanMask, extraModifiers,
@@ -480,6 +480,13 @@ screenWorkspace sc = withWindowSet $ return . W.lookupWorkspace sc
 -- | Apply an 'X' operation to the currently focused window, if there is one.
 withFocused :: (Window -> X ()) -> X ()
 withFocused f = withWindowSet $ \w -> whenJust (W.peek w) f
+
+-- | Apply an 'X' operation to all unfocused windows, if there are any.
+withUnfocused :: (Window -> X ()) -> X ()
+withUnfocused f = withWindowSet $ \ws ->
+    whenJust (W.peek ws) $ \w ->
+        let unfocusedWindows = filter (/= w) $ W.index ws
+        in mapM_ f unfocusedWindows
 
 -- | Is the window is under management by xmonad?
 isClient :: Window -> X Bool
