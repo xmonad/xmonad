@@ -55,6 +55,7 @@ import Data.Traversable (for)
 import Data.Time.Clock (UTCTime)
 import Data.Default.Class
 import System.Environment (lookupEnv)
+import Data.List (isInfixOf, intercalate, (\\))
 import System.FilePath
 import System.IO
 import System.Info
@@ -69,7 +70,6 @@ import System.Exit
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras (getWindowAttributes, WindowAttributes, Event)
 import Data.Typeable
-import Data.List (isInfixOf, (\\))
 import Data.Maybe (isJust,fromMaybe)
 import Data.Monoid (Ap(..))
 
@@ -576,21 +576,31 @@ srcFileName, libFileName :: Directories -> FilePath
 srcFileName Directories{ cfgDir } = cfgDir </> "xmonad.hs"
 libFileName Directories{ cfgDir } = cfgDir </> "lib"
 
-buildScriptFileName, stackYamlFileName :: Directories -> FilePath
+buildScriptFileName, stackYamlFileName, nixFlakeFileName, nixDefaultFileName :: Directories -> FilePath
 buildScriptFileName Directories{ cfgDir } = cfgDir </> "build"
 stackYamlFileName   Directories{ cfgDir } = cfgDir </> "stack.yaml"
+nixFlakeFileName    Directories{ cfgDir } = cfgDir </> "flake.nix"
+nixDefaultFileName  Directories{ cfgDir } = cfgDir </> "default.nix"
 
 -- | Compilation method for xmonad configuration.
-data Compile = CompileGhc | CompileStackGhc FilePath | CompileScript FilePath
+data Compile
+  = CompileGhc
+  | CompileStackGhc FilePath
+  | CompileNixFlake
+  | CompileNixDefault
+  | CompileScript FilePath
     deriving (Show)
 
 -- | Detect compilation method by looking for known file names in xmonad
 -- configuration directory.
 detectCompile :: Directories -> IO Compile
-detectCompile dirs = tryScript <|> tryStack <|> useGhc
+detectCompile dirs =
+  tryScript <|> tryStack <|> tryNixFlake <|> tryNixDefault <|> useGhc
   where
     buildScript = buildScriptFileName dirs
     stackYaml = stackYamlFileName dirs
+    flakeNix = nixFlakeFileName dirs
+    defaultNix = nixDefaultFileName dirs
 
     tryScript = do
         guard =<< doesFileExist buildScript
@@ -604,6 +614,18 @@ detectCompile dirs = tryScript <|> tryStack <|> useGhc
             trace $ "Suggested resolution to use it: chmod u+x " <> show buildScript
             empty
 
+    tryNixFlake = do
+      guard =<< doesFileExist flakeNix
+      canonNixFlake <- canonicalizePath flakeNix
+      trace $ "XMonad will use nix flake at " <> show canonNixFlake <> " to recompile"
+      pure CompileNixFlake
+
+    tryNixDefault = do
+      guard =<< doesFileExist defaultNix
+      canonNixDefault <- canonicalizePath defaultNix
+      trace $ "XMonad will use nix file at " <> show canonNixDefault <> " to recompile"
+      pure CompileNixDefault
+
     tryStack = do
         guard =<< doesFileExist stackYaml
         canonStackYaml <- canonicalizePath stackYaml
@@ -611,11 +633,18 @@ detectCompile dirs = tryScript <|> tryStack <|> useGhc
         pure $ CompileStackGhc canonStackYaml
 
     useGhc = do
-        trace $ "XMonad will use ghc to recompile, because neither "
-                <> show buildScript <> " nor " <> show stackYaml <> " exists."
+        trace $ "XMonad will use ghc to recompile, because none of "
+                <> intercalate ", "
+                     [ show buildScript
+                     , show stackYaml
+                     , show flakeNix
+                     , show defaultNix
+                     ] <> " exist."
         pure CompileGhc
 
-    isExecutable f = E.catch (executable <$> getPermissions f) (\(SomeException _) -> return False)
+-- | Determine whether or not the file found at the provided filepath is executable.
+isExecutable :: FilePath -> IO Bool
+isExecutable f = E.catch (executable <$> getPermissions f) (\(SomeException _) -> return False)
 
 -- | Should we recompile xmonad configuration? Is it newer than the compiled
 -- binary?
@@ -640,6 +669,8 @@ shouldCompile dirs CompileStackGhc{} = do
     if binT < stackYamlT
         then True <$ trace "XMonad recompiling because some files have changed."
         else shouldCompile dirs CompileGhc
+shouldCompile _dirs CompileNixFlake{} = True <$ trace "XMonad recompiling because flake recompilation is being used."
+shouldCompile _dirs CompileNixDefault{} = True <$ trace "XMonad recompiling because nix recompilation is being used."
 shouldCompile _dirs CompileScript{} =
     True <$ trace "XMonad recompiling because a custom build script is being used."
 
@@ -659,6 +690,10 @@ compile dirs method =
                 CompileStackGhc stackYaml ->
                     run "stack" ["build", "--silent", "--stack-yaml", stackYaml] .&&.
                     run "stack" ("ghc" : "--stack-yaml" : stackYaml : "--" : ghcArgs)
+                CompileNixFlake ->
+                    run "nix" ["build"] >>= andCopyFromResultDir
+                CompileNixDefault ->
+                    run "nix-build" [] >>= andCopyFromResultDir
                 CompileScript script ->
                     run script [binFileName dirs]
   where
@@ -672,6 +707,21 @@ compile dirs method =
               , "-outputdir", buildDirName dirs
               , "-o", binFileName dirs
               ]
+    andCopyFromResultDir exitCode = do
+      if exitCode == ExitSuccess then copyFromResultDir else return exitCode
+    ifM c i e = do
+      cond <- c
+      if cond then i else e
+    findM p = foldr (\x -> ifM (p x) (pure $ Just x)) (pure Nothing)
+    catchAny :: IO a -> (SomeException -> IO a) -> IO a
+    catchAny = E.catch
+    copyFromResultDir = do
+      let binaryDirectory = cfgDir dirs </> "result" </> "bin"
+      binFiles <- map (binaryDirectory </>) <$> catchAny (listDirectory binaryDirectory) (\_ -> return [])
+      mfilepath <- findM isExecutable binFiles
+      case mfilepath of
+        Just filepath -> copyFile filepath (binFileName dirs) >> return ExitSuccess
+        Nothing -> return $ ExitFailure 1
 
     -- waitForProcess =<< System.Process.runProcess, but without closing the err handle
     runProc cwd err exe args = do
