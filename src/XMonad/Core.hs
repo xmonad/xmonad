@@ -470,9 +470,9 @@ xmessage msg = void . xfork $ do
 runOnWorkspaces :: (WindowSpace -> X WindowSpace) -> X ()
 runOnWorkspaces job = do
     ws <- gets windowset
+    h <- mapM job $ hidden ws
     c:v <- mapM (\s -> (\w -> s { workspace = w}) <$> job (workspace s))
              $ current ws : visible ws
-    h <- mapM job $ hidden ws
     modify $ \s -> s { windowset = ws { current = c, visible = v, hidden = h } }
 
 -- | All the directories that xmonad will use.  They will be used for

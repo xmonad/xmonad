@@ -65,11 +65,6 @@
     it easier for us to clean up the codebase. These can still be suppressed
     manually using an `OPTIONS_GHC` pragma with `-Wno-deprecations`.
 
-  * `runOnWorkspaces` changed to first run the action on the current
-    workspace, then the visible workspaces and then hidden, to match the order
-    of processing messages in `broadcastMessage`. Previously,
-    `runOnWorkspaces` processed the hidden workspaces first.
-
   * Added `withUnfocused` function to `XMonad.Operations`, allowing for
     `X` operations to be applied to unfocused windows.
 
