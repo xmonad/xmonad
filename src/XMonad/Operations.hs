@@ -18,10 +18,11 @@ module XMonad.Operations (
     manage, unmanage, killWindow, kill, isClient,
     setInitialProperties, setWMState, setWindowBorderWithFallback,
     hide, reveal, tileWindow,
-    setTopFocus, focus, withFocused,
+    setTopFocus, focus,
 
     -- * Manage Windows
-    windows, refresh, rescreen, modifyWindowSet, windowBracket, windowBracket_, clearEvents, getCleanedScreenInfo, withUnfocused,
+    windows, refresh, rescreen, modifyWindowSet, windowBracket, windowBracket_, clearEvents, getCleanedScreenInfo,
+    withFocused, withUnfocused,
 
     -- * Keyboard and Mouse
     cleanMask, extraModifiers,
@@ -481,7 +482,7 @@ screenWorkspace sc = withWindowSet $ return . W.lookupWorkspace sc
 withFocused :: (Window -> X ()) -> X ()
 withFocused f = withWindowSet $ \w -> whenJust (W.peek w) f
 
--- | Apply an 'X' operation to all unfocused windows, if there are any.
+-- | Apply an 'X' operation to all unfocused windows on the current workspace, if there are any.
 withUnfocused :: (Window -> X ()) -> X ()
 withUnfocused f = withWindowSet $ \ws ->
     whenJust (W.peek ws) $ \w ->

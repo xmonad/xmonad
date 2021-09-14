@@ -2,9 +2,6 @@
 
 ## unknown (unknown)
 
-  * Adds `withUnfocused` function to `XMonad.Operations`, allowing for
-    `X` operations to be applied to all unfocused windows.
-
   * Fixed a bug when using multiple screens with different dimensions,
     causing some floating windows to be smaller/larger than the size they
     requested.
@@ -72,6 +69,9 @@
     workspace, then the visible workspaces and then hidden, to match the order
     of processing messages in `broadcastMessage`. Previously,
     `runOnWorkspaces` processed the hidden workspaces first.
+
+  * Added `withUnfocused` function to `XMonad.Operations`, allowing for
+    `X` operations to be applied to unfocused windows.
 
 ## 0.15 (September 30, 2018)
 
