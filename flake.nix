@@ -10,7 +10,7 @@
       haskellPackages = prev.haskellPackages.override (old: {
         overrides = prev.lib.composeExtensions (old.overrides or (_: _: {}))
         (hself: hsuper: {
-          xmonad = hself.callCabal2nix "xmonad" (git-ignore-nix.gitIgnoreSource ./.) { };
+          xmonad = hself.callCabal2nix "xmonad" (git-ignore-nix.lib.gitignoreSource ./.) { };
         });
       });
     };
