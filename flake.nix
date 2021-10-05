@@ -6,13 +6,18 @@
   };
   outputs = { self, flake-utils, nixpkgs, git-ignore-nix }:
   let
-    overlay = final: prev: {
-      haskellPackages = prev.haskellPackages.override (old: {
-        overrides = prev.lib.composeExtensions (old.overrides or (_: _: {}))
-        (hself: hsuper: {
-          xmonad = hself.callCabal2nix "xmonad" (git-ignore-nix.gitIgnoreSource ./.) { };
-        });
+    fn = prev: (old: {
+        overrides =
+        (prev.lib.composeExtensions (old.overrides or (_: _: {}))
+          (hself: hsuper: {
+            xmonad = hself.callCabal2nix "xmonad" (git-ignore-nix.gitIgnoreSource ./.) { };
+          })
+        );
       });
+    overlay = final: prev: {
+      ghcWithHoogle = prev.ghcWithHoogle.override (fn prev);
+      ghcWithPackages = prev.ghcWithPackages.override (fn prev);
+      haskellPackages = prev.haskellPackages.override (fn prev);
     };
     overlays = [ overlay ];
   in flake-utils.lib.eachDefaultSystem (system:
