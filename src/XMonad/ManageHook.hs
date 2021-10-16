@@ -61,11 +61,15 @@ infixr 3 <&&>, <||>
 
 -- | '&&' lifted to a 'Monad'.
 (<&&>) :: Monad m => m Bool -> m Bool -> m Bool
-(<&&>) = liftM2 (&&)
+(<&&>) x y = ifM x y (pure False)
 
 -- | '||' lifted to a 'Monad'.
 (<||>) :: Monad m => m Bool -> m Bool -> m Bool
-(<||>) = liftM2 (||)
+(<||>) x y = ifM x (pure True) y
+
+-- | If-then-else lifted to a 'Monad'.
+ifM :: Monad m => m Bool -> m a -> m a -> m a
+ifM mb t f = mb >>= \b -> if b then t else f
 
 -- | Return the window title.
 title :: Query String
