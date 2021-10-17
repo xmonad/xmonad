@@ -68,6 +68,11 @@
   * Added `withUnfocused` function to `XMonad.Operations`, allowing for
     `X` operations to be applied to unfocused windows.
 
+  * Made `(<&&>)` and `(<||>)` non-strict in their right operand; i.e.,
+    these operators now implement short-circuit evaluation so the right
+    operand is evaluated only if the left operand does not suffice to
+    determine the result.
+
 ## 0.15 (September 30, 2018)
 
   * Reimplement `sendMessage` to deal properly with windowset changes made
