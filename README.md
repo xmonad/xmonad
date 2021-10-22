@@ -1,8 +1,42 @@
-# xmonad: A Tiling Window Manager
+<p align="center">
+  <a href="https://xmonad.org/">
+    <img alt="XMonad logo" src="https://xmonad.org/images/logo-wrapped.svg" height=150>
+  </a>
+</p>
+<p align="center">
+  <a href="https://hackage.haskell.org/package/xmonad">
+    <img alt="Hackage" src="https://img.shields.io/hackage/v/xmonad?logo=haskell">
+  </a>
+  <a href="https://github.com/xmonad/xmonad/blob/readme/LICENSE">
+    <img alt="License" src="https://img.shields.io/github/license/xmonad/xmonad">
+  </a>
+  <a href="https://haskell.org/">
+    <img alt="Made in Haskell" src="https://img.shields.io/badge/Made%20in-Haskell-%235e5086?logo=haskell">
+  </a>
+  <br>
+  <a href="https://github.com/xmonad/xmonad/actions/workflows/stack.yml">
+    <img alt="Stack" src="https://img.shields.io/github/workflow/status/xmonad/xmonad/Stack?label=Stack&logo=githubactions&logoColor=white">
+  </a>
+  <a href="https://github.com/xmonad/xmonad/actions/workflows/haskell-ci.yml">
+    <img alt="Cabal" src="https://img.shields.io/github/workflow/status/xmonad/xmonad/Haskell-CI?label=Cabal&logo=githubactions&logoColor=white">
+  </a>
+  <a href="https://github.com/xmonad/xmonad/actions/workflows/nix.yml">
+    <img alt="Nix" src="https://img.shields.io/github/workflow/status/xmonad/xmonad/Nix?label=Nix&logo=githubactions&logoColor=white">
+  </a>
+  <br>
+  <a href="https://github.com/sponsors/xmonad">
+    <img alt="GitHub Sponsors" src="https://img.shields.io/github/sponsors/xmonad?label=GitHub%20Sponsors&logo=githubsponsors">
+  </a>
+  <a href="https://opencollective.com/xmonad">
+    <img alt="Open Collective" src="https://img.shields.io/opencollective/all/xmonad?label=Open%20Collective&logo=opencollective">
+  </a>
+</p>
 
-![Stack Tests](https://github.com/xmonad/xmonad/workflows/Stack%20Tests/badge.svg)
+# xmonad
 
-[xmonad][] is a tiling window manager for X. Windows are arranged
+**A tiling window manager for X11.**
+
+[XMonad][web:xmonad] is a tiling window manager for X11. Windows are arranged
 automatically to tile the screen without gaps or overlap, maximising
 screen use. Window manager features are accessible from the keyboard:
 a mouse is optional. xmonad is written, configured and extensible in
@@ -12,121 +46,74 @@ dynamically, and different layouts may be used on each
 workspace. Xinerama is fully supported, allowing windows to be tiled
 on several physical screens.
 
-## Quick Start
+This repository contains the [xmonad][hackage:xmonad] package, a minimal,
+stable, yet extensible core. It is accompanied by
+[xmonad-contrib][gh:xmonad-contrib], a library of hundreds of additional
+community-maintained tiling algorithms and extension modules. The two combined
+make for a powerful X11 window-manager with endless customization
+possibilities. They are, quite literally, libraries for creating your own
+window manager.
 
-  * From hackage:
+## Installation
 
-        cabal update
-        cabal install xmonad xmonad-contrib
+For installation and configuration instructions, please see:
 
-  * Alternatively, build from source using the following repositories:
+ * [downloading and installing xmonad][web:download]
+ * [installing latest xmonad snapshot from git][web:install]
+ * [configuring xmonad][web:tutorial]
 
-    - <https://github.com/xmonad/xmonad>
+If you run into any trouble, consult our [documentation][web:documentation] or
+ask the [community][web:community] for help.
 
-    - <https://github.com/xmonad/xmonad-contrib>
+## Contributing
 
-For the full story, read on.
+We welcome all forms of contributions:
 
-## Building
+ * [bug reports and feature ideas][gh:xmonad:issues]
+   (also to [xmonad-contrib][gh:xmonad-contrib:issues])
+ * [bug fixes, new features, new extensions][gh:xmonad:pulls]
+   (usually to [xmonad-contrib][gh:xmonad-contrib:pulls])
+ * documentation fixes and improvements: [xmonad][gh:xmonad],
+   [xmonad-contrib][gh:xmonad-contrib], [xmonad-web][gh:xmonad-web]
+ * helping others in the [community][web:community]
+ * financial support: [GitHub Sponsors][gh:xmonad:sponsors],
+   [Open Collective][opencollective:xmonad]
 
-Building is quite straightforward, and requires a basic Haskell toolchain.
-On many systems xmonad is available as a binary package in your
-package system (e.g. on Debian or Gentoo). If at all possible, use this
-in preference to a source build, as the dependency resolution will be
-simpler.
-
-For tool-specific guides see [INSTALL.md](./INSTALL.md).
-
-We'll now walk through the complete list of toolchain dependencies.
-
-  * GHC: the Glasgow Haskell Compiler
-
-    You first need a Haskell compiler. Your distribution's package
-    system will have binaries of GHC (the Glasgow Haskell Compiler),
-    the compiler we use, so install that first. If your operating
-    system's package system doesn't provide a binary version of GHC
-    and the `cabal-install` tool, you can install both using the
-    [Haskell Platform][platform].
-
-    It shouldn't be necessary to compile GHC from source -- every common
-    system has a pre-build binary version.  However, if you want to
-    build from source, the following links will be helpful:
-
-      - GHC: <http://haskell.org/ghc/>
-
-      - Cabal: <http://haskell.org/cabal/download.html>
-
-  * X11 libraries:
-
-    Since you're building an X application, you'll need the C X11
-    library headers. On many platforms, these come pre-installed. For
-    others, such as Debian, you can get them from your package manager:
-
-        # for xmonad
-        $ apt-get install libx11-dev libxinerama-dev libxext-dev libxrandr-dev libxss-dev
-
-        # for xmonad-contrib
-        $ apt-get install libxft-dev
-
-Then build and install with:
-
-    $ cabal install
-
-## Running xmonad
-
-If you built XMonad using `cabal` then add:
-
-    exec $HOME/.cabal/bin/xmonad
-
-to the last line of your `.xsession` or `.xinitrc` file.
-
-## Configuring
-
-There is a full tutorial available in [TUTORIAL.md](./TUTORIAL.md).
-Additionally, see the [CONFIG](./CONFIG) document, as well as the
-[example configuration file][example-config].
-
-## XMonadContrib
-
-There are many extensions to xmonad available in the XMonadContrib
-(xmc) library. Examples include an ion3-like tabbed layout, a
-prompt/program launcher, and various other useful modules.
-XMonadContrib is available at:
-
-  * Latest release: <http://hackage.haskell.org/package/xmonad-contrib>
-
-  * Git version: <https://github.com/xmonad/xmonad-contrib>
-
-## Other Useful Programs
-
-A nicer xterm replacement, that supports resizing better:
-
-  * urxvt: <http://software.schmorp.de/pkg/rxvt-unicode.html>
-
-For custom status bars:
-
-  * xmobar: <http://hackage.haskell.org/package/xmobar>
-
-  * taffybar: <https://github.com/travitch/taffybar>
-
-  * dzen: <https://github.com/robm/dzen>
-
-For a program dispatch menu:
-
-  * [XMonad.Prompt.Shell][xmc-prompt-shell]: (from [XMonadContrib][])
-
-  * dmenu: <https://tools.suckless.org/dmenu/>
-
-  * gmrun: (in your package system)
+Please do read the [CONTRIBUTING][gh:xmonad:contributing] document for more
+information about bug reporting and code contributions. For a brief overview
+of the architecture and code conventions, see the [documentation for the
+`XMonad.Doc.Developing` module][doc:developing]. If in doubt, [talk to
+us][web:community].
 
 ## Authors
 
-  * Spencer Janssen
-  * Don Stewart
-  * Jason Creighton
+Started in 2007 by [Spencer Janssen][gh:spencerjanssen], [Don
+Stewart][gh:donsbot] and [Jason Creighton][gh:JasonCreighton], the
+[XMonad][web:xmonad] project lives on thanks to [new generations of
+maintainers][gh:xmonad:maintainers] and [dozens of
+contributors][gh:xmonad:contributors].
 
-[xmonad]: http://xmonad.org
-[xmonadcontrib]: https://hackage.haskell.org/package/xmonad-contrib
-[xmc-prompt-shell]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Prompt-Shell.html
-[platform]: http://haskell.org/platform/
-[example-config]: https://github.com/xmonad/xmonad-contrib/blob/master/XMonad/Config/Example.hs
+[gh:spencerjanssen]: https://github.com/spencerjanssen
+[gh:donsbot]: https://github.com/donsbot
+[gh:JasonCreighton]: https://github.com/JasonCreighton
+
+[doc:developing]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Doc-Developing.html
+[gh:xmonad-contrib:issues]: https://github.com/xmonad/xmonad-contrib/issues
+[gh:xmonad-contrib:pulls]: https://github.com/xmonad/xmonad-contrib/pulls
+[gh:xmonad-contrib]: https://github.com/xmonad/xmonad-contrib
+[gh:xmonad-web]: https://github.com/xmonad/xmonad-web
+[gh:xmonad:contributing]: https://github.com/xmonad/xmonad/blob/master/CONTRIBUTING.md
+[gh:xmonad:contributors]: https://github.com/xmonad/xmonad/graphs/contributors
+[gh:xmonad:issues]: https://github.com/xmonad/xmonad/issues
+[gh:xmonad:maintainers]: https://github.com/xmonad/xmonad/blob/master/MAINTAINERS.md
+[gh:xmonad:pulls]: https://github.com/xmonad/xmonad/pulls
+[gh:xmonad:sponsors]: https://github.com/sponsors/xmonad
+[gh:xmonad]: https://github.com/xmonad/xmonad
+[hackage:xmonad]: https://hackage.haskell.org/package/xmonad
+[opencollective:xmonad]: https://opencollective.com/xmonad
+[web:community]: https://xmonad.org/community.html
+[web:documentation]: https://xmonad.org/documentation.html
+[web:download]: https://xmonad.org/download.html
+[web:install]: https://xmonad.org/INSTALL.html
+[web:tutorial]: https://xmonad.org/TUTORIAL.html
+[web:xmonad]: https://xmonad.org/
