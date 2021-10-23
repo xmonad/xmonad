@@ -37,6 +37,8 @@
 
   * Don Stewart [GitHub](https://github.com/donsbot), [Twitter](https://twitter.com/donsbot)
 
+  * Jason Creighton [GitHub](https://github.com/JasonCreighton)
+
   * David Roundy [GitHub](https://github.com/droundy)
 
   * Daniel Schoepe [GitHub](https://github.com/dschoepe)

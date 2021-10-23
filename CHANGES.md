@@ -1,6 +1,6 @@
 # Change Log / Release Notes
 
-## unknown (unknown)
+## 0.17.0 (October ??, 2021)
 
   * Fixed a bug when using multiple screens with different dimensions,
     causing some floating windows to be smaller/larger than the size they
