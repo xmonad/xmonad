@@ -20,6 +20,8 @@ jobs:
             ghc: 8.8.4
           - resolver: lts-17
             ghc: 8.10.4
+          - resolver: lts-18
+            ghc: 8.10.7
 
     steps:
       - name: Clone project
@@ -43,7 +45,8 @@ jobs:
             #
 
       - name: Install GHC
-        # use system ghc in stack, don't waste GH Actions cache space
+        # use system ghc (if available) in stack, don't waste GH Actions cache space
+        continue-on-error: true
         run: |
           set -ex
           sudo apt install -y ghc-${{ matrix.ghc }}
