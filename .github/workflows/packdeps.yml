@@ -1,0 +1,40 @@
+name: Packdeps
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run every Saturday
+    - cron: '0 3 * * 6'
+
+jobs:
+  packdeps:
+    name: Packdeps
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone project
+        uses: actions/checkout@v2
+      - name: Setup Haskell
+        uses: haskell/actions/setup@v1
+        with:
+          # packdeps doesn't build with newer as of 2021-10
+          ghc-version: '8.8'
+      - name: Install packdeps
+        run: |
+          set -ex
+          echo "$HOME/.cabal/bin" >> $GITHUB_PATH
+          cabal install packdeps
+      - name: Check package bounds (all)
+        continue-on-error: true
+        run: |
+          set -ex
+          packdeps \
+            --exclude X11 \
+            *.cabal
+      - name: Check package bounds (preferred)
+        run: |
+          set -ex
+          packdeps \
+            --preferred \
+            --exclude X11 \
+            *.cabal
