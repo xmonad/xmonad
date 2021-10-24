@@ -34,7 +34,6 @@ bug-reports:        https://github.com/xmonad/xmonad/issues
 build-type:         Simple
 extra-source-files: README.md
                     CHANGES.md
-                    CONFIG
                     CONTRIBUTING.md
                     INSTALL.md
                     MAINTAINERS.md
