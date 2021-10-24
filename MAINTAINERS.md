@@ -78,10 +78,9 @@ When the time comes to release another version of xmonad and xmonad-contrib:
 
      If the manpage changes, wait for the CI to rebuild the rendered outputs.
 
-  3. Check dependency bounds. In particular, [packdeps][] can be used to check
-     if any new versions are excluded by the upper bounds specified.
-     Also, make sure that `tested-with:` covers several recent releases of
-     GHC, and that `.github/workflows/stack.yml` tests with several recent
+  3. Make sure that `tested-with:` covers several recent releases of GHC, that
+     `.github/workflows/haskell-ci.yml` had been updated to test all these GHC
+     versions and that `.github/workflows/stack.yml` tests with several recent
      revisions of [Stackage][] LTS.
 
   4. Create a release on GitHub:
@@ -105,9 +104,12 @@ When the time comes to release another version of xmonad and xmonad-contrib:
 
   7. Post announcement to:
 
+     - [xmonad.org website](https://github.com/xmonad/xmonad-web/tree/gh-pages/news/_posts)
      - [XMonad mailing list](https://mail.haskell.org/mailman/listinfo/xmonad)
      - [Haskell Cafe](https://mail.haskell.org/cgi-bin/mailman/listinfo/haskell-cafe)
      - [Haskell Discourse](https://discourse.haskell.org/)
+     - [Twitter](https://twitter.com/xmonad)
+     - [Reddit](https://www.reddit.com/r/xmonad/)
 
      See [old announcements][old-announce] for inspiration.
 
