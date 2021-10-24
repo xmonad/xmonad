@@ -37,7 +37,6 @@ extra-source-files: README.md
                     CONTRIBUTING.md
                     INSTALL.md
                     MAINTAINERS.md
-                    STYLE
                     TUTORIAL.md
                     man/xmonad.1.markdown
                     man/xmonad.1

@@ -70,6 +70,34 @@ Here are some tips for getting your changes merged into xmonad:
   * Make sure you read the section on rebasing and squashing commits
     below.
 
+## Style guidelines
+
+Below are some common style guidelines that all of the core modules
+follow.  Before submitting a pull request, make sure that your code does
+as well!
+
+  * Comment every top level function (particularly exported functions),
+    and provide a type signature; use Haddock syntax in the comments.
+
+  * Follow the coding style of the module that you are making changes to
+    (`n` spaces for indentation, where to break long type signatures, …)
+
+  * New code should not introduce any new warnings.  If you don't
+    compile your changes via stack or cabal, make sure to compile with
+    `-Wall -Werror -fno-warn-unused-do-bind -fwarn-tabs`.
+
+  * Likewise, your code should be free of [hlint] warnings; this is also
+    enforced in our GitHub CI.
+
+  * Partial functions are to be avoided: the window manager should not
+    crash, so do not call `error` or `undefined`
+
+  * Any pure function added to the core should have QuickCheck
+    properties precisely defining its behavior.
+
+  * New modules should identify the author, and be submitted under the
+    same license as xmonad (BSD3 license).
+
 ## Rebasing and Squashing Commits
 
 Under no circumstances should you ever merge the master branch into
@@ -149,6 +177,7 @@ each pull request contains just one commit.
      $ git push --force-with-lease
      ```
 
+[hlint]: https://github.com/ndmitchell/hlint
 [xmonad]: https://github.com/xmonad/xmonad
 [xmonad-contrib]: https://github.com/xmonad/xmonad-contrib
 [xmonad-testing]: https://github.com/xmonad/xmonad-testing
