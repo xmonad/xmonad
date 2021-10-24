@@ -34,9 +34,11 @@ Awesome!  Here are a few things to keep in mind:
     nontrivial changes to xmonad.  There are a couple of ways you can
     chat with us:
 
-    - Post a message to the [mailing list][ml].
+    - Join the [`#xmonad` IRC channel] on `irc.libera.chat` or the
+      official [matrix channel], which is linked to IRC.  This is the
+      preferred (and fastest!) way to get into contact with us.
 
-    - Join the `#xmonad` IRC channel on `irc.libera.chat`.
+    - Post a message to the [mailing list][ml].
 
   * [XMonad.Doc.Developing][xmonad-doc-developing] is a great
     resource to get an overview of xmonad.  Make sure to also check
@@ -184,3 +186,5 @@ each pull request contains just one commit.
 [x11]: https://github.com/xmonad/X11
 [ml]: https://mail.haskell.org/cgi-bin/mailman/listinfo/xmonad
 [xmonad-doc-developing]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Doc-Developing.html
+[`#xmonad` IRC channel]: https://web.libera.chat/#xmonad
+[matrix channel]: https://matrix.to/#/#xmonad:matrix.org
