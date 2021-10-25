@@ -72,7 +72,7 @@ Here are some tips for getting your changes merged into xmonad:
   * Make sure you read the section on rebasing and squashing commits
     below.
 
-## Style guidelines
+## Style Guidelines
 
 Below are some common style guidelines that all of the core modules
 follow.  Before submitting a pull request, make sure that your code does
@@ -84,9 +84,11 @@ as well!
   * Follow the coding style of the module that you are making changes to
     (`n` spaces for indentation, where to break long type signatures, …)
 
-  * New code should not introduce any new warnings.  If you don't
-    compile your changes via stack or cabal, make sure to compile with
-    `-Wall -Werror -fno-warn-unused-do-bind -fwarn-tabs`.
+  * New code should not introduce any new warnings.  If you want to
+    check this yourself before submitting a pull request, there is the
+    `pedantic` flag, which is enforced in our CI.  You can enable it by
+    building your changes with `stack build --flag xmonad:pedantic` or
+    `cabal build --flag pedantic`.
 
   * Likewise, your code should be free of [hlint] warnings; this is also
     enforced in our GitHub CI.
