@@ -61,9 +61,10 @@ Here are some tips for getting your changes merged into xmonad:
   * Your changes should include relevant entries in the `CHANGES.md`
     file.  Help us communicate changes to the community.
 
-  * Make sure you test your changes using the [xmonad-testing][]
-    repository.  Include a new configuration file that shows off your
-    changes if possible by creating a PR on that repository as well.
+  * Make sure you test your changes against the most recent commit of
+    [xmonad][] (and [xmonad-contrib][], if you're contributing there).
+    If you're adding a new module or functionality, make sure to add an
+    example in the documentation and in the PR description.
 
   * Make sure you run the automated tests.  Both [xmonad-contrib][]
     and [xmonad][] have test-suites that you could run with

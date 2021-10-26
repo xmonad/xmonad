@@ -9,6 +9,7 @@ behind them.
 
   - [ ] I've confirmed these changes don't belong in xmonad-contrib instead
 
-  - [ ] I tested my changes with [xmonad-testing](https://github.com/xmonad/xmonad-testing)
+  - [ ] I've considered how to best test these changes (property, unit,
+        manually, ...) and concluded: XXX
 
   - [ ] I updated the `CHANGES.md` file
