@@ -70,8 +70,11 @@ Here are some tips for getting your changes merged into xmonad:
     and [xmonad][] have test-suites that you could run with
     `stack test` for example.
 
-  * Make sure you read the section on rebasing and squashing commits
-    below.
+  * When committing, try to follow existing practices.  For more
+    information on what good commit messages look like, see [How to
+    Write a Git Commit Message][commit-cbeams] and the [Kernel
+    documentation][commit-kernel] about committing logical changes
+    separately.
 
 ## Style Guidelines
 
@@ -103,85 +106,6 @@ as well!
   * New modules should identify the author, and be submitted under the
     same license as xmonad (BSD3 license).
 
-## Rebasing and Squashing Commits
-
-Under no circumstances should you ever merge the master branch into
-your feature branch.  This makes it nearly impossible to review your
-changes and we *will not accept your PR* if you do this.
-
-Instead of merging you should rebase your changes on top of the master
-branch.  If a core team member asks you to "rebase your changes" this
-is what they are talking about.
-
-It's also helpful to squash all of your commits so that your pull
-request only contains a single commit.  Again, this makes it easier to
-review your changes and identify the changes later on in the Git
-history.
-
-### How to Rebase Your Changes
-
-The goal of rebasing is to bring recent changes from the master branch
-into your feature branch.  This often helps resolve conflicts where
-you have changed a file that also changed in a recently merged pull
-request (i.e. the `CHANGES.md` file).  Here is how you do that.
-
-  1. Make sure that you have a `git remote` configured for the main
-     repository.  I like to call this remote `upstream`:
-     ```shell
-     $ git remote add upstream https://github.com/xmonad/xmonad-contrib.git
-     ```
-
-  2. Pull from upstream and rewrite your changes on top of master.  For
-     this to work you should not have any modified files in your
-     working directory.  Run these commands from within your feature
-     branch (the branch you are asking to be merged):
-
-     ```shell
-     $ git fetch --all
-     $ git pull --rebase upstream master
-     ```
-
-  3. If the rebase was successful you can now push your feature branch
-     back to GitHub.  You need to force the push since your commits
-     have been rewritten and have new IDs:
-
-     ```shell
-     $ git push --force-with-lease
-     ```
-
-  4. Your pull request should now be conflict-free and only contain the
-     changes that you actually made.
-
-### How to Squash Commits
-
-The goal of squashing commits is to produce a clean Git history where
-each pull request contains just one commit.
-
-  1. Use `git log` to see how many commits you are including in your
-     pull request.  (If you've already submitted your pull request you
-     can see this in the GitHub interface.)
-
-  2. Rebase all of those commits into a single commit.  Assuming you
-     want to squash the last four (4) commits into a single commit:
-     ```shell
-     $ git rebase -i HEAD~4
-     ```
-
-  3. Git will open your editor and display the commits you are
-     rebasing with the word "pick" in front of them.
-
-  4. Leave the first listed commit as "pick" and change the remaining
-     commits from "pick" to "squash".
-
-  5. Save the file and exit your editor.  Git will create a new commit
-     and open your editor so you can modify the commit message.
-
-  6. If everything was successful you can push your changed history
-     back up to GitHub:
-     ```shell
-     $ git push --force-with-lease
-     ```
-
 [hlint]: https://github.com/ndmitchell/hlint
 [xmonad]: https://github.com/xmonad/xmonad
 [xmonad-contrib]: https://github.com/xmonad/xmonad-contrib
@@ -191,3 +115,5 @@ each pull request contains just one commit.
 [xmonad-doc-developing]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Doc-Developing.html
 [`#xmonad` IRC channel]: https://web.libera.chat/#xmonad
 [matrix channel]: https://matrix.to/#/#xmonad:matrix.org
+[commit-cbeams]: https://cbea.ms/git-commit/
+[commit-kernel]: https://www.kernel.org/doc/html/v4.10/process/submitting-patches.html#separate-your-changes
