@@ -106,6 +106,16 @@ as well!
   * New modules should identify the author, and be submitted under the
     same license as xmonad (BSD3 license).
 
+## Keep rocking!
+
+xmonad is a passion project created and maintained by the community.
+We'd love for you to maintain your own contributed modules (approve
+changes from other contributors, review code, etc.).  However, before
+we'd be comfortable adding you to the [xmonad GitHub
+organization][xmonad-gh-org] we need to trust that you have sufficient
+knowledge of Haskell and git; and have a way of chatting with you ([IRC,
+Matrix, etc.][community]).
+
 [hlint]: https://github.com/ndmitchell/hlint
 [xmonad]: https://github.com/xmonad/xmonad
 [xmonad-contrib]: https://github.com/xmonad/xmonad-contrib
@@ -117,3 +127,5 @@ as well!
 [matrix channel]: https://matrix.to/#/#xmonad:matrix.org
 [commit-cbeams]: https://cbea.ms/git-commit/
 [commit-kernel]: https://www.kernel.org/doc/html/v4.10/process/submitting-patches.html#separate-your-changes
+[community]: https://xmonad.org/community.html
+[xmonad-gh-org]: https://github.com/xmonad
