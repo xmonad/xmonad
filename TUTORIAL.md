@@ -20,15 +20,6 @@ the ability to magnify stack windows via [XMonad.Layout.Magnifier]:
 
 So let's get started!
 
-NOTE: `xmonad 0.17` and `xmonad-contrib 0.17` are obviously not released
-yet.  But don't worry, if you're reading this then you're already a beta
-tester :) Since this guide is supposed to work on older versions of
-xmonad as well this is no problem however; please report any
-incompatibilities you notice and state the version of xmonad and
-xmonad-contrib that you tried to use.  If you use the git versions of
-xmonad and xmonad-contrib, you should be able to follow everything just
-fine.
-
 ## Preliminaries
 
 First you'll want to install xmonad.  You can either do this with your
