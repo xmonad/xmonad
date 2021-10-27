@@ -43,7 +43,7 @@ extra-source-files: README.md
                     man/xmonad.1.html
                     man/xmonad.hs
                     util/hpcReport.sh
-cabal-version:      >= 1.8
+cabal-version:      1.12
 
 source-repository head
   type:     git
