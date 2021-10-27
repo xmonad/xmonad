@@ -38,12 +38,12 @@ package manager, you will need to `xmonad --recompile` _every time_ a
 Haskell dependency is updated—else xmonad may fail to start when you
 want to log in!
 
-We're going to assume xmonad version `0.17` and xmonad-contrib version
-`0.17` here, though most of these steps should work with older versions
-as well.  When we get to the relevant parts, will point you to
+We're going to assume xmonad version `0.17.0` and xmonad-contrib version
+`0.17.0` here, though most of these steps should work with older
+versions as well.  When we get to the relevant parts, will point you to
 alternatives that work with at least xmonad version `0.15` and
 xmonad-contrib version `0.16`.  This will usually be accompanied by a
-big "_IF YOU ARE ON A VERSION `< 0.17`_", so don't worry about missing
+big "_IF YOU ARE ON A VERSION `< 0.17.0`_", so don't worry about missing
 it!
 
 Throughout the tutorial we will use, for keybindings, a syntax very akin
@@ -379,7 +379,7 @@ effect (and some applications, like chromium, will misbehave and need
 some [Hacks] to make this work), we will also add the relevant function
 to get "proper" fullscreen behaviour here.
 
-_IF YOU ARE ON A VERSION `< 0.17`_: The `ewmhFullscreen` function does
+_IF YOU ARE ON A VERSION `< 0.17.0`_: The `ewmhFullscreen` function does
   not exist in these versions.  Instead of it, you can try to add
   `fullscreenEventHook` to your `handleEventHook` to achieve similar
   functionality (how to do this is explained in the documentation of
@@ -438,7 +438,7 @@ import XMonad.Hooks.StatusBar
 import XMonad.Hooks.StatusBar.PP
 ```
 
-_IF YOU ARE ON A VERSION `< 0.17`_: The `XMonad.Hooks.StatusBar` and
+_IF YOU ARE ON A VERSION `< 0.17.0`_: The `XMonad.Hooks.StatusBar` and
   `XMonad.Hooks.StatusBar.PP` modules don't exist yet.  You can find
   everything you need in the `XMonad.Hooks.DynamicLog` module, so remove
   these two imports.
@@ -450,7 +450,7 @@ main :: IO ()
 main = xmonad $ ewmhFullscreen $ ewmh $ xmobarProp $ myConfig
 ```
 
-_IF YOU ARE ON A VERSION `< 0.17`_: The `xmobarProp` function does not
+_IF YOU ARE ON A VERSION `< 0.17.0`_: The `xmobarProp` function does not
   exist in these versions.  Instead of it, use `xmobar` via
   `main = xmonad . ewmh =<< xmobar myConfig` and carefully read the part
   about pipes later on (`xmobar` uses pipes to make xmobar talk to
@@ -538,9 +538,9 @@ when things are not being read!  For this reason we have to use
 `XMonadLog` instead of `StdinReader` in our xmobar.  There's also an
 `UnsafeXMonadLog` available, should you want to send actions to xmobar
 (this is useful, for example, for [XMonad.Util.ClickableWorkspaces],
-which is a new feature in `0.17`).
+which is a new feature in `0.17.0`).
 
-_IF YOU ARE ON A VERSION `< 0.17`_: As discussed above, the `xmobar`
+_IF YOU ARE ON A VERSION `< 0.17.0`_: As discussed above, the `xmobar`
   function uses pipes, so you actually do want to use the `StdinReader`.
   Simply replace _all_ occurences of `XMonadLog` with `StdinReader`
   below (don't forget the template!)
@@ -660,7 +660,7 @@ main = xmonad
      $ myConfig
 ```
 
-_IF YOU ARE ON A VERSION `< 0.17`_: `xmobar` has a similar definition,
+_IF YOU ARE ON A VERSION `< 0.17.0`_: `xmobar` has a similar definition,
   relying on `statusBar` alone: `xmobar = statusBar "xmobar" xmobarPP
     toggleStrutsKey`.  Sadly, the `defToggleStrutsKey` function is not yet
   exported, so you will have to define it yourself:
