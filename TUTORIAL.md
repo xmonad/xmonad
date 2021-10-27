@@ -1222,7 +1222,7 @@ either :)
 [log]: https://ircbrowse.tomsmeding.com/browse/lcxmonad
 [EWMH]: https://specifications.freedesktop.org/wm-spec/wm-spec-1.3.html
 [ICCCM]: https://tronche.com/gui/x/icccm/
-[webchat]: https://kiwiirc.com/nextclient/irc.libera.chat/?#xmonad
+[webchat]: https://web.libera.chat/#xmonad
 [about xmonad]: https://xmonad.org/about.html
 [shell variable]: https://www.shellscript.sh/variables1.html
 [xmonad-testing]: https://github.com/xmonad/xmonad-testing
