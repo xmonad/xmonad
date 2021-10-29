@@ -83,19 +83,21 @@ When the time comes to release another version of xmonad and xmonad-contrib:
      versions and that `.github/workflows/stack.yml` tests with several recent
      revisions of [Stackage][] LTS.
 
-  4. Create a release on GitHub:
-
-     - https://github.com/xmonad/xmonad/releases/new
-     - https://github.com/xmonad/xmonad-contrib/releases/new
-
-     CI will upload a release candidate to Hackage. Check again that
-     everything looks good. To publish a final release, run the CI workflow
-     once again with the correct version number:
+  4. Trigger the Haskell-CI workflow and fill in the candidate version number.
+     This will upload a release candidate to Hackage.
 
      - https://github.com/xmonad/xmonad/actions/workflows/haskell-ci.yml
      - https://github.com/xmonad/xmonad-contrib/actions/workflows/haskell-ci.yml
 
-     See [haskell-ci-hackage.patch][] for details about the release infrastructure.
+     Check that everything looks good. If not, push fixes and do another
+     candidate. When everything's ready, create a release on GitHub:
+
+     - https://github.com/xmonad/xmonad/releases/new
+     - https://github.com/xmonad/xmonad-contrib/releases/new
+
+     CI will automatically upload the final release to Hackage.
+
+     See [haskell-ci-hackage.patch][] for details about the Hackage automation.
 
   5. Update the website:
 
