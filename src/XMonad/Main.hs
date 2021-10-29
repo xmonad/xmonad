@@ -193,12 +193,12 @@ launch initxmc drs = do
 
     xinesc <- getCleanedScreenInfo dpy
 
-    nbc    <- do v            <- initColor dpy $ normalBorderColor  xmc
-                 ~(Just nbc_) <- initColor dpy $ normalBorderColor Default.def
+    nbc    <- do v         <- initColor dpy $ normalBorderColor  xmc
+                 Just nbc_ <- initColor dpy $ normalBorderColor Default.def
                  return (fromMaybe nbc_ v)
 
     fbc    <- do v <- initColor dpy $ focusedBorderColor xmc
-                 ~(Just fbc_)  <- initColor dpy $ focusedBorderColor Default.def
+                 Just fbc_ <- initColor dpy $ focusedBorderColor Default.def
                  return (fromMaybe fbc_ v)
 
     hSetBuffering stdout NoBuffering
