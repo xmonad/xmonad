@@ -22,9 +22,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        # releases to Hackage are final and cannot be reverted, thus require
-        # manual entry of version as a poor man's mistake avoidance
-        description: version (must match version in cabal file)
+        description: candidate version (must match version in cabal file)
 jobs:
   linux:
     name: Haskell-CI - Linux - ${{ matrix.compiler }}
@@ -246,7 +244,7 @@ jobs:
         with:
           path: ${{ github.workspace }}/haddock/*-docs.tar.gz
       - name: hackage upload (candidate)
-        if: matrix.upload && github.event_name == 'release'
+        if: matrix.upload && github.event_name == 'workflow_dispatch' && github.event.inputs.version != ''
         run: |
           set -ex
           PACKAGE_VERSION="${PACKAGE_VERSION#v}"
@@ -268,9 +266,9 @@ jobs:
         env:
           HACKAGE_API_KEY: ${{ secrets.HACKAGE_API_KEY }}
           PACKAGE_NAME: ${{ github.event.repository.name }}
-          PACKAGE_VERSION: ${{ github.event.release.tag_name }}
+          PACKAGE_VERSION: ${{ github.event.inputs.version }}
       - name: hackage upload (release)
-        if: matrix.upload && github.event_name == 'workflow_dispatch'
+        if: matrix.upload && github.event_name == 'release'
         run: |
           set -ex
           PACKAGE_VERSION="${PACKAGE_VERSION#v}"
@@ -292,4 +290,4 @@ jobs:
         env:
           HACKAGE_API_KEY: ${{ secrets.HACKAGE_API_KEY }}
           PACKAGE_NAME: ${{ github.event.repository.name }}
-          PACKAGE_VERSION: ${{ github.event.inputs.version }}
+          PACKAGE_VERSION: ${{ github.event.release.tag_name }}
