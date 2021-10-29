@@ -45,7 +45,7 @@ set in GitHub repository secrets.
            - compiler: ghc-8.10.4
              compilerKind: ghc
              compilerVersion: 8.10.4
-@@ -209,8 +217,66 @@
+@@ -209,8 +217,80 @@
            ${CABAL} -vnormal check
        - name: haddock
          run: |
@@ -67,48 +67,62 @@ set in GitHub repository secrets.
 +          path: ${{ github.workspace }}/haddock/*-docs.tar.gz
 +      - name: hackage upload (candidate)
 +        if: matrix.upload && github.event_name == 'workflow_dispatch' && github.event.inputs.version != ''
++        shell: bash
 +        run: |
 +          set -ex
 +          PACKAGE_VERSION="${PACKAGE_VERSION#v}"
-+          curl \
-+            --silent --show-error --fail \
-+            --header "Accept: text/plain" \
-+            --header "Authorization: X-ApiKey $HACKAGE_API_KEY" \
-+            --form package=@"${GITHUB_WORKSPACE}/sdist/${PACKAGE_NAME}-${PACKAGE_VERSION}.tar.gz" \
-+            https://hackage.haskell.org/packages/candidates/
-+          curl \
-+            --silent --show-error --fail \
-+            -X PUT \
-+            --header "Accept: text/plain" \
-+            --header "Authorization: X-ApiKey $HACKAGE_API_KEY" \
-+            --header "Content-Type: application/x-tar" \
-+            --header "Content-Encoding: gzip" \
-+            --data-binary @"${GITHUB_WORKSPACE}/haddock/${PACKAGE_NAME}-${PACKAGE_VERSION}-docs.tar.gz" \
-+            https://hackage.haskell.org/package/${PACKAGE_NAME}-${PACKAGE_VERSION}/candidate/docs
++          res=$(
++            curl \
++              --silent --show-error --output /dev/stderr --write-out '%{http_code}' \
++              --header "Accept: text/plain" \
++              --header "Authorization: X-ApiKey $HACKAGE_API_KEY" \
++              --form package=@"${GITHUB_WORKSPACE}/sdist/${PACKAGE_NAME}-${PACKAGE_VERSION}.tar.gz" \
++              https://hackage.haskell.org/packages/candidates/
++          )
++          [[ $res == 2?? ]]  # TODO: --fail-with-body once curl 7.76.0 is available
++          res=$(
++            curl \
++              --silent --show-error --output /dev/stderr --write-out '%{http_code}' \
++              -X PUT \
++              --header "Accept: text/plain" \
++              --header "Authorization: X-ApiKey $HACKAGE_API_KEY" \
++              --header "Content-Type: application/x-tar" \
++              --header "Content-Encoding: gzip" \
++              --data-binary @"${GITHUB_WORKSPACE}/haddock/${PACKAGE_NAME}-${PACKAGE_VERSION}-docs.tar.gz" \
++              https://hackage.haskell.org/package/${PACKAGE_NAME}-${PACKAGE_VERSION}/candidate/docs
++          )
++          [[ $res == 2?? ]]
 +        env:
 +          HACKAGE_API_KEY: ${{ secrets.HACKAGE_API_KEY }}
 +          PACKAGE_NAME: ${{ github.event.repository.name }}
 +          PACKAGE_VERSION: ${{ github.event.inputs.version }}
 +      - name: hackage upload (release)
 +        if: matrix.upload && github.event_name == 'release'
++        shell: bash
 +        run: |
 +          set -ex
 +          PACKAGE_VERSION="${PACKAGE_VERSION#v}"
-+          curl \
-+            --silent --show-error --fail \
-+            --header "Accept: text/plain" \
-+            --header "Authorization: X-ApiKey $HACKAGE_API_KEY" \
-+            --form package=@"${GITHUB_WORKSPACE}/sdist/${PACKAGE_NAME}-${PACKAGE_VERSION}.tar.gz" \
-+            https://hackage.haskell.org/packages/
-+          curl \
-+            --silent --show-error --fail \
-+            -X PUT \
-+            --header "Accept: text/plain" \
-+            --header "Authorization: X-ApiKey $HACKAGE_API_KEY" \
-+            --header "Content-Type: application/x-tar" \
-+            --header "Content-Encoding: gzip" \
-+            --data-binary @"${GITHUB_WORKSPACE}/haddock/${PACKAGE_NAME}-${PACKAGE_VERSION}-docs.tar.gz" \
-+            https://hackage.haskell.org/package/${PACKAGE_NAME}-${PACKAGE_VERSION}/docs
++          res=$(
++            curl \
++              --silent --show-error --output /dev/stderr --write-out '%{http_code}' \
++              --header "Accept: text/plain" \
++              --header "Authorization: X-ApiKey $HACKAGE_API_KEY" \
++              --form package=@"${GITHUB_WORKSPACE}/sdist/${PACKAGE_NAME}-${PACKAGE_VERSION}.tar.gz" \
++              https://hackage.haskell.org/packages/
++          )
++          [[ $res == 2?? ]]  # TODO: --fail-with-body once curl 7.76.0 is available
++          res=$(
++            curl \
++              --silent --show-error --output /dev/stderr --write-out '%{http_code}' \
++              -X PUT \
++              --header "Accept: text/plain" \
++              --header "Authorization: X-ApiKey $HACKAGE_API_KEY" \
++              --header "Content-Type: application/x-tar" \
++              --header "Content-Encoding: gzip" \
++              --data-binary @"${GITHUB_WORKSPACE}/haddock/${PACKAGE_NAME}-${PACKAGE_VERSION}-docs.tar.gz" \
++              https://hackage.haskell.org/package/${PACKAGE_NAME}-${PACKAGE_VERSION}/docs
++          )
++          [[ $res == 2?? ]]
 +        env:
 +          HACKAGE_API_KEY: ${{ secrets.HACKAGE_API_KEY }}
 +          PACKAGE_NAME: ${{ github.event.repository.name }}
