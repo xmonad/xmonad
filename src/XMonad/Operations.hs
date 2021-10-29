@@ -254,8 +254,7 @@ setWindowBorderWithFallback dpy w color basic = io $
       setWindowBorder dpy w pixel
   where
     fallback :: C.SomeException -> IO ()
-    fallback e = do hPrint stderr e >> hFlush stderr
-                    setWindowBorder dpy w basic
+    fallback _ = setWindowBorder dpy w basic
 
 -- | Hide a window by unmapping it and setting Iconified.
 hide :: Window -> X ()
