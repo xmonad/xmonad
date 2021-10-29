@@ -35,6 +35,11 @@ jobs:
     strategy:
       matrix:
         include:
+          - compiler: ghc-9.2.1
+            compilerKind: ghc
+            compilerVersion: 9.2.1
+            setup-method: ghcup
+            allow-failure: false
           - compiler: ghc-9.0.1
             compilerKind: ghc
             compilerVersion: 9.0.1
@@ -67,13 +72,23 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends gnupg ca-certificates dirmngr curl git software-properties-common libtinfo5
-          apt-add-repository -y 'ppa:hvr/ghc'
-          apt-get update
-          apt-get install -y "$HCNAME" libx11-dev libxext-dev libxinerama-dev libxrandr-dev libxss-dev
-          mkdir -p "$HOME/.ghcup/bin"
-          curl -sL https://downloads.haskell.org/ghcup/0.1.17.3/x86_64-linux-ghcup-0.1.17.3 > "$HOME/.ghcup/bin/ghcup"
-          chmod a+x "$HOME/.ghcup/bin/ghcup"
-          "$HOME/.ghcup/bin/ghcup" install cabal 3.6.2.0
+          if [ "${{ matrix.setup-method }}" = ghcup ]; then
+            mkdir -p "$HOME/.ghcup/bin"
+            curl -sL https://downloads.haskell.org/ghcup/0.1.17.3/x86_64-linux-ghcup-0.1.17.3 > "$HOME/.ghcup/bin/ghcup"
+            chmod a+x "$HOME/.ghcup/bin/ghcup"
+            "$HOME/.ghcup/bin/ghcup" install ghc "$HCVER"
+            "$HOME/.ghcup/bin/ghcup" install cabal 3.6.2.0
+            apt-get update
+            apt-get install -y libx11-dev libxext-dev libxinerama-dev libxrandr-dev libxss-dev
+          else
+            apt-add-repository -y 'ppa:hvr/ghc'
+            apt-get update
+            apt-get install -y "$HCNAME" libx11-dev libxext-dev libxinerama-dev libxrandr-dev libxss-dev
+            mkdir -p "$HOME/.ghcup/bin"
+            curl -sL https://downloads.haskell.org/ghcup/0.1.17.3/x86_64-linux-ghcup-0.1.17.3 > "$HOME/.ghcup/bin/ghcup"
+            chmod a+x "$HOME/.ghcup/bin/ghcup"
+            "$HOME/.ghcup/bin/ghcup" install cabal 3.6.2.0
+          fi
         env:
           HCKIND: ${{ matrix.compilerKind }}
           HCNAME: ${{ matrix.compiler }}
@@ -85,11 +100,20 @@ jobs:
           echo "CABAL_DIR=$HOME/.cabal" >> "$GITHUB_ENV"
           echo "CABAL_CONFIG=$HOME/.cabal/config" >> "$GITHUB_ENV"
           HCDIR=/opt/$HCKIND/$HCVER
-          HC=$HCDIR/bin/$HCKIND
-          echo "HC=$HC" >> "$GITHUB_ENV"
-          echo "HCPKG=$HCDIR/bin/$HCKIND-pkg" >> "$GITHUB_ENV"
-          echo "HADDOCK=$HCDIR/bin/haddock" >> "$GITHUB_ENV"
-          echo "CABAL=$HOME/.ghcup/bin/cabal-3.6.2.0 -vnormal+nowrap" >> "$GITHUB_ENV"
+          if [ "${{ matrix.setup-method }}" = ghcup ]; then
+            HC=$HOME/.ghcup/bin/$HCKIND-$HCVER
+            echo "HC=$HC" >> "$GITHUB_ENV"
+            echo "HCPKG=$HOME/.ghcup/bin/$HCKIND-pkg-$HCVER" >> "$GITHUB_ENV"
+            echo "HADDOCK=$HOME/.ghcup/bin/haddock-$HCVER" >> "$GITHUB_ENV"
+            echo "CABAL=$HOME/.ghcup/bin/cabal-3.6.2.0 -vnormal+nowrap" >> "$GITHUB_ENV"
+          else
+            HC=$HCDIR/bin/$HCKIND
+            echo "HC=$HC" >> "$GITHUB_ENV"
+            echo "HCPKG=$HCDIR/bin/$HCKIND-pkg" >> "$GITHUB_ENV"
+            echo "HADDOCK=$HCDIR/bin/haddock" >> "$GITHUB_ENV"
+            echo "CABAL=$HOME/.ghcup/bin/cabal-3.6.2.0 -vnormal+nowrap" >> "$GITHUB_ENV"
+          fi
+
           HCNUMVER=$(${HC} --numeric-version|perl -ne '/^(\d+)\.(\d+)\.(\d+)(\.(\d+))?$/; print(10000 * $1 + 100 * $2 + ($3 == 0 ? $5 != 1 : $3))')
           echo "HCNUMVER=$HCNUMVER" >> "$GITHUB_ENV"
           echo "ARG_TESTS=--enable-tests" >> "$GITHUB_ENV"
