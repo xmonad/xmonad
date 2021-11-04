@@ -156,18 +156,13 @@ newtype ScreenDetail = SD { screenRect :: Rectangle }
 -- instantiated on 'XConf' and 'XState' automatically.
 --
 newtype X a = X (ReaderT XConf (StateT XState IO) a)
-    deriving (Functor, Monad, MonadFail, MonadIO, MonadState XState, MonadReader XConf)
-
-instance Applicative X where
-  pure = return
-  (<*>) = ap
+    deriving (Functor, Applicative, Monad, MonadFail, MonadIO, MonadState XState, MonadReader XConf)
 
 instance Semigroup a => Semigroup (X a) where
     (<>) = liftM2 (<>)
 
 instance (Monoid a) => Monoid (X a) where
-    mempty  = return mempty
-    mappend = liftM2 mappend
+    mempty = pure mempty
 
 instance Default a => Default (X a) where
     def = return def
@@ -183,8 +178,7 @@ instance Semigroup a => Semigroup (Query a) where
     (<>) = liftM2 (<>)
 
 instance Monoid a => Monoid (Query a) where
-    mempty  = return mempty
-    mappend = liftM2 mappend
+    mempty = pure mempty
 
 instance Default a => Default (Query a) where
     def = return def

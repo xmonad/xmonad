@@ -58,6 +58,8 @@ import Data.Foldable (foldr, toList)
 import Data.Maybe   (listToMaybe,isJust,fromMaybe)
 import qualified Data.List as L (deleteBy,find,splitAt,filter,nub)
 import Data.List ( (\\) )
+import qualified Data.List.NonEmpty as NE
+import Data.List.NonEmpty (NonEmpty((:|)))
 import qualified Data.Map  as M (Map,insert,delete,empty)
 
 -- $intro
@@ -208,10 +210,11 @@ abort x = error $ "xmonad: StackSet: " ++ x
 -- Xinerama: Virtual workspaces are assigned to physical screens, starting at 0.
 --
 new :: (Integral s) => l -> [i] -> [sd] -> StackSet i l a s sd
-new l wids m | not (null wids) && length m <= length wids && not (null m)
-  = StackSet cur visi unseen M.empty
-  where (seen,unseen) = L.splitAt (length m) $ map (\i -> Workspace i l Nothing) wids
-        (cur:visi)    = [ Screen i s sd |  (i, s, sd) <- zip3 seen [0..] m ]
+new l (wid:wids) (m:ms) | length ms <= length wids
+  = StackSet cur visi (map ws unseen) M.empty
+  where ws i = Workspace i l Nothing
+        (seen, unseen) = L.splitAt (length ms) wids
+        cur:visi = Screen (ws wid) 0 m : [ Screen (ws i) s sd | (i, s, sd) <- zip3 seen [1..] ms ]
                 -- now zip up visibles with their screen id
 new _ _ _ = abort "non-positive argument to StackSet.new"
 
@@ -366,7 +369,7 @@ swapDown  = modify' (reverseStack . swapUp' . reverseStack)
 -- 'Stack' rather than an entire 'StackSet'.
 focusUp', focusDown' :: Stack a -> Stack a
 focusUp' (Stack t (l:ls) rs) = Stack l ls (t:rs)
-focusUp' (Stack t []     rs) = Stack x xs [] where (x:xs) = reverse (t:rs)
+focusUp' (Stack t []     rs) = Stack x xs [] where (x :| xs) = NE.reverse (t :| rs)
 focusDown'                   = reverseStack . focusUp' . reverseStack
 
 swapUp' :: Stack a -> Stack a
@@ -522,8 +525,8 @@ sink w s = s { floating = M.delete w (floating s) }
 -- Focus stays with the item moved.
 swapMaster :: StackSet i l a s sd -> StackSet i l a s sd
 swapMaster = modify' $ \c -> case c of
-    Stack _ [] _  -> c    -- already master.
-    Stack t ls rs -> Stack t [] (xs ++ x : rs) where (x:xs) = reverse ls
+    Stack _ []     _  -> c    -- already master.
+    Stack t (l:ls) rs -> Stack t [] (xs ++ x : rs) where (x :| xs) = NE.reverse (l :| ls)
 
 -- natural! keep focus, move current to the top, move top to current.
 
@@ -539,8 +542,8 @@ shiftMaster = modify' $ \c -> case c of
 -- | /O(s)/. Set focus to the master window.
 focusMaster :: StackSet i l a s sd -> StackSet i l a s sd
 focusMaster = modify' $ \c -> case c of
-    Stack _ [] _  -> c
-    Stack t ls rs -> Stack x [] (xs ++ t : rs) where (x:xs) = reverse ls
+    Stack _ []     _  -> c
+    Stack t (l:ls) rs -> Stack x [] (xs ++ t : rs) where (x :| xs) = NE.reverse (l :| ls)
 
 --
 -- ---------------------------------------------------------------------
