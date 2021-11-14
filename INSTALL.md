@@ -47,6 +47,7 @@ $ sudo dnf install \
 ``` console
 $ sudo pacman -S \
 > git \
+> xorg-server xorg-apps xorg-xinit xorg-xmessage \
 > libx11 libxft libxinerama libxrandr libxss \
 > pkgconf
 ```
