@@ -10,9 +10,9 @@
 
   * Sibi Prabakaran [GitHub][psibi], [Twitter][twitter:psibi], IRC: `sibi`
 
-  * slotThe [GitHub][slotThe], IRC: `Solid`
-
   * Tomáš Janoušek [GitHub][liskin], [Twitter][twitter:liskin], IRC: `liskin`, [GPG][gpg:liskin]
+
+  * Tony Zorman [GitHub][slotThe], IRC: `Solid`, [GPG][gpg:slotThe]
 
 [geekosaur]: https://github.com/geekosaur
 [byorgey]: https://github.com/byorgey
@@ -22,6 +22,7 @@
 [slotThe]: https://github.com/slotThe
 
 [gpg:liskin]: https://github.com/liskin.gpg
+[gpg:slotThe]: https://github.com/slotThe.gpg
 
 [twitter:dmwit]: https://twitter.com/dmwit13
 [twitter:psibi]: https://twitter.com/psibi
