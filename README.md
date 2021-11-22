@@ -30,6 +30,13 @@
   <a href="https://opencollective.com/xmonad">
     <img alt="Open Collective" src="https://img.shields.io/opencollective/all/xmonad?label=Open%20Collective&logo=opencollective">
   </a>
+  <br>
+  <a href="https://web.libera.chat/#xmonad">
+    <img alt="Chat on #xmonad@irc.libera.chat" src="https://img.shields.io/badge/%23%20chat-on%20libera-brightgreen">
+  </a>
+  <a href="https://matrix.to/#/#xmonad:matrix.org">
+    <img alt="Chat on #xmonad:matrix.org" src="https://img.shields.io/matrix/xmonad:matrix.org?logo=matrix">
+  </a>
 </p>
 
 # xmonad
