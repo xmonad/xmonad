@@ -2,6 +2,10 @@
 
 ## unknown
 
+### Enhancements
+
+  * Added custom cursor shapes for resizing and moving windows.
+
 ## 0.17.0 (October 27, 2021)
 
 ### Enhancements

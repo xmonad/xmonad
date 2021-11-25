@@ -654,14 +654,20 @@ float w = do
 
 -- | Accumulate mouse motion events
 mouseDrag :: (Position -> Position -> X ()) -> X () -> X ()
-mouseDrag f done = do
+mouseDrag = mouseDragCursor Nothing
+
+-- | Like 'mouseDrag', but with the ability to specify a custom cursor
+-- shape.
+mouseDragCursor :: Maybe Glyph -> (Position -> Position -> X ()) -> X () -> X ()
+mouseDragCursor cursorGlyph f done = do
     drag <- gets dragging
     case drag of
         Just _ -> return () -- error case? we're already dragging
         Nothing -> do
             XConf { theRoot = root, display = d } <- ask
-            io $ grabPointer d root False (buttonReleaseMask .|. pointerMotionMask)
-                    grabModeAsync grabModeAsync none none currentTime
+            io $ do cursor <- maybe (pure none) (createFontCursor d) cursorGlyph
+                    grabPointer d root False (buttonReleaseMask .|. pointerMotionMask)
+                      grabModeAsync grabModeAsync none cursor currentTime
             modify $ \s -> s { dragging = Just (motion, cleanup) }
  where
     cleanup = do
@@ -679,7 +685,9 @@ mouseMoveWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     (_, _, _, ox', oy', _, _, _) <- io $ queryPointer d w
     let ox = fromIntegral ox'
         oy = fromIntegral oy'
-    mouseDrag (\ex ey -> do
+    mouseDragCursor
+              (Just xC_fleur)
+              (\ex ey -> do
                   io $ moveWindow d w (fromIntegral (fromIntegral (wa_x wa) + (ex - ox)))
                                       (fromIntegral (fromIntegral (wa_y wa) + (ey - oy)))
                   float w
@@ -692,12 +700,13 @@ mouseResizeWindow w = whenX (isClient w) $ withDisplay $ \d -> do
     wa <- io $ getWindowAttributes d w
     sh <- io $ getWMNormalHints d w
     io $ warpPointer d none w 0 0 0 0 (fromIntegral (wa_width wa)) (fromIntegral (wa_height wa))
-    mouseDrag (\ex ey -> do
+    mouseDragCursor
+              (Just xC_bottom_right_corner)
+              (\ex ey -> do
                  io $ resizeWindow d w `uncurry`
                     applySizeHintsContents sh (ex - fromIntegral (wa_x wa),
                                                ey - fromIntegral (wa_y wa))
                  float w)
-
               (float w)
 
 -- ---------------------------------------------------------------------
