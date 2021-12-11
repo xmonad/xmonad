@@ -25,7 +25,7 @@ author:             Spencer Janssen, Don Stewart, Adam Vogt, David Roundy, Jason
                     Jens Petersen, Joey Hess, Jonne Ransijn, Josh Holland, Khudyakov Alexey,
                     Klaus Weidner, Michael G. Sloan, Mikkel Christiansen, Nicolas Dudebout,
                     Ondřej Súkup, Paul Hebble, Shachaf Ben-Kiki, Siim Põder, Tim McIver,
-                    Trevor Elliott, Wouter Swierstra, Conrad Irwin, Tim Thelion
+                    Trevor Elliott, Wouter Swierstra, Conrad Irwin, Tim Thelion, Tony Zorman
 maintainer:         xmonad@haskell.org
 tested-with:        GHC == 8.4.4 || == 8.6.5 || == 8.8.4 || == 8.10.4 || == 9.0.1 || == 9.2.1
 category:           System
