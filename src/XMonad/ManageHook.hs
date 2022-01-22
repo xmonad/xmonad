@@ -27,7 +27,7 @@ import Control.Monad.Reader
 import Data.Maybe
 import Data.Monoid
 import qualified XMonad.StackSet as W
-import XMonad.Operations (floatLocation, reveal)
+import XMonad.Operations (floatLocation, reveal, isFixedSizeOrTransient)
 
 -- | Lift an 'X' action to a 'Query'.
 liftX :: X a -> Query a
@@ -108,11 +108,7 @@ getStringProperty d w p = do
 
 -- | Return whether the window will be a floating window or not
 willFloat :: Query Bool
-willFloat = ask >>= \w -> liftX $ withDisplay $ \d -> do
-  sh <- io $ getWMNormalHints d w
-  let isFixedSize = isJust (sh_min_size sh) && sh_min_size sh == sh_max_size sh
-  isTransient <- isJust <$> io (getTransientForHint d w)
-  return (isFixedSize || isTransient)
+willFloat = ask >>= \w -> liftX $ withDisplay $ \d -> isFixedSizeOrTransient d w
 
 -- | Modify the 'WindowSet' with a pure function.
 doF :: (s -> s) -> Query (Endo s)
