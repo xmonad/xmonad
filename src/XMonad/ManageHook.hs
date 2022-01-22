@@ -106,6 +106,14 @@ getStringProperty d w p = do
   md <- io $ getWindowProperty8 d a w
   return $ fmap (map (toEnum . fromIntegral)) md
 
+-- | Return whether the window will be a floating window or not
+willFloat :: Query Bool
+willFloat = ask >>= \w -> liftX $ withDisplay $ \d -> do
+  sh <- io $ getWMNormalHints d w
+  let isFixedSize = isJust (sh_min_size sh) && sh_min_size sh == sh_max_size sh
+  isTransient <- isJust <$> io (getTransientForHint d w)
+  return (isFixedSize || isTransient)
+
 -- | Modify the 'WindowSet' with a pure function.
 doF :: (s -> s) -> Query (Endo s)
 doF = return . Endo
