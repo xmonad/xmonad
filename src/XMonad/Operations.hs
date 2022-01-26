@@ -18,7 +18,7 @@ module XMonad.Operations (
     manage, unmanage, killWindow, kill, isClient,
     setInitialProperties, setWMState, setWindowBorderWithFallback,
     hide, reveal, tileWindow,
-    setTopFocus, focus,
+    setTopFocus, focus, isFixedSizeOrTransient,
 
     -- * Manage Windows
     windows, refresh, rescreen, modifyWindowSet, windowBracket, windowBracket_, clearEvents, getCleanedScreenInfo,
@@ -78,6 +78,16 @@ import Graphics.X11.Xlib.Extras
 -- ---------------------------------------------------------------------
 -- Window manager operations
 
+-- | Detect whether a window has fixed size or is transient. This check
+-- can be used to determine whether the window should be floating or not
+--
+isFixedSizeOrTransient :: Display -> Window -> X Bool
+isFixedSizeOrTransient d w = do
+  sh <- io $ getWMNormalHints d w
+  let isFixedSize = isJust (sh_min_size sh) && sh_min_size sh == sh_max_size sh
+  isTransient <- isJust <$> io (getTransientForHint d w)
+  return (isFixedSize || isTransient)
+
 -- |
 -- Add a new window to be managed in the current workspace.
 -- Bring it into focus.
@@ -87,10 +97,8 @@ import Graphics.X11.Xlib.Extras
 --
 manage :: Window -> X ()
 manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
-    sh <- io $ getWMNormalHints d w
 
-    let isFixedSize = sh_min_size sh /= Nothing && sh_min_size sh == sh_max_size sh
-    isTransient <- isJust <$> io (getTransientForHint d w)
+    shouldFloat <- isFixedSizeOrTransient d w
 
     rr <- snd `fmap` floatLocation w
     -- ensure that float windows don't go over the edge of the screen
@@ -98,7 +106,7 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
                                               = W.RationalRect (0.5 - wid/2) (0.5 - h/2) wid h
         adjust r = r
 
-        f ws | isFixedSize || isTransient = W.float w (adjust rr) . W.insertUp w . W.view i $ ws
+        f ws | shouldFloat                = W.float w (adjust rr) . W.insertUp w . W.view i $ ws
              | otherwise                  = W.insertUp w ws
             where i = W.tag $ W.workspace $ W.current ws
 
