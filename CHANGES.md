@@ -6,6 +6,11 @@
 
   * Added custom cursor shapes for resizing and moving windows.
 
+### Bug Fixes
+
+  * Fixed border color of windows with alpha channel. Now all windows have the
+    same opaque border color.
+
 ## 0.17.0 (October 27, 2021)
 
 ### Enhancements
