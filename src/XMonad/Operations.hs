@@ -83,10 +83,10 @@ import Graphics.X11.Xlib.Extras
 --
 isFixedSizeOrTransient :: Display -> Window -> X Bool
 isFixedSizeOrTransient d w = do
-  sh <- io $ getWMNormalHints d w
-  let isFixedSize = isJust (sh_min_size sh) && sh_min_size sh == sh_max_size sh
-  isTransient <- isJust <$> io (getTransientForHint d w)
-  return (isFixedSize || isTransient)
+    sh <- io $ getWMNormalHints d w
+    let isFixedSize = isJust (sh_min_size sh) && sh_min_size sh == sh_max_size sh
+    isTransient <- isJust <$> io (getTransientForHint d w)
+    return (isFixedSize || isTransient)
 
 -- |
 -- Add a new window to be managed in the current workspace.
@@ -106,8 +106,8 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
                                               = W.RationalRect (0.5 - wid/2) (0.5 - h/2) wid h
         adjust r = r
 
-        f ws | shouldFloat                = W.float w (adjust rr) . W.insertUp w . W.view i $ ws
-             | otherwise                  = W.insertUp w ws
+        f ws | shouldFloat = W.float w (adjust rr) . W.insertUp w . W.view i $ ws
+             | otherwise   = W.insertUp w ws
             where i = W.tag $ W.workspace $ W.current ws
 
     mh <- asks (manageHook . config)
