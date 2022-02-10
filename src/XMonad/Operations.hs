@@ -56,8 +56,8 @@ import qualified XMonad.StackSet as W
 
 import Data.Maybe
 import Data.Monoid          (Endo(..),Any(..))
-import Data.List            (nub, (\\), find)
-import Data.Bits            ((.|.), (.&.), complement, testBit)
+import Data.List            (nub, (\\), find, foldl', subsequences)
+import Data.Bits            ((.|.), (.&.), complement, bit, testBit, clearBit, countTrailingZeros)
 import Data.Function        (on)
 import Data.Ratio
 import qualified Data.Map as M
@@ -500,17 +500,20 @@ isClient :: Window -> X Bool
 isClient w = withWindowSet $ return . W.member w
 
 -- | Combinations of extra modifier masks we need to grab keys\/buttons for.
--- (numlock and capslock)
+-- (by default numlock and capslock, can be overridden in 'stripModMask')
 extraModifiers :: X [KeyMask]
 extraModifiers = do
-    nlm <- gets numberlockMask
-    return [0, nlm, lockMask, nlm .|. lockMask ]
+    smm <- join $ asks $ stripModMask . config
+    return $ map (foldl' (.|.) 0) (subsequences (bits smm))
+  where
+    bits 0 = []
+    bits n = let b = countTrailingZeros n in bit b : bits (n `clearBit` b)
 
--- | Strip numlock\/capslock from a mask.
+-- | Strip 'stripModMask' (by default numlock\/capslock) from a mask.
 cleanMask :: KeyMask -> X KeyMask
 cleanMask km = do
-    nlm <- gets numberlockMask
-    return (complement (nlm .|. lockMask) .&. km)
+    smm <- join $ asks $ stripModMask . config
+    return (complement smm .&. km)
 
 -- | Set the 'Pixel' alpha value to 255.
 setPixelSolid :: Pixel -> Pixel
