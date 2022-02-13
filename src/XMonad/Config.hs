@@ -69,7 +69,7 @@ defaultModMask = mod1Mask
 
 -- | 'stripModMask' lets you specify which modifiers are irrelevant for key
 -- bindings. The default is Num Lock and Caps Lock. You will need to override
--- this if you wish to only strip Caps Lock if you need to bind numpad keys
+-- this if you wish to only strip Caps Lock; e.g., if you need to bind numpad keys
 -- but only when Num Lock is off (or on). Another use case is adding
 -- 'mod5Mask' to the list of stripped/irrelevant modifiers.
 defaultStripModMask :: X KeyMask
