@@ -41,6 +41,7 @@ import qualified XMonad.StackSet as W
 import Control.Monad.State (gets)
 import Data.Bits ((.|.))
 import Data.Default.Class
+import Data.Functor ((<&>))
 import Data.Monoid
 import qualified Data.Map as M
 import System.Exit
@@ -72,8 +73,8 @@ defaultModMask = mod1Mask
 -- this if you wish to only strip Caps Lock; e.g., if you need to bind numpad keys
 -- but only when Num Lock is off (or on). Another use case is adding
 -- 'mod5Mask' to the list of stripped/irrelevant modifiers.
-defaultStripModMask :: X KeyMask
-defaultStripModMask = gets ((lockMask .|.) . numberlockMask)
+defaultStripModMask :: X [KeyMask]
+defaultStripModMask = gets numberlockMask <&> \numLockMask -> [lockMask, numLockMask]
 
 -- | Width of the window border in pixels.
 --
