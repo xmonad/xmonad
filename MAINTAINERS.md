@@ -72,19 +72,24 @@ When the time comes to release another version of xmonad and xmonad-contrib:
   2. Review documentation files and make sure they are accurate:
 
      - [`README.md`](README.md)
-     - [`CHANGES.md`](CHANGES.md)
+     - [`CHANGES.md`](CHANGES.md) (bump version, set date)
      - [`INSTALL.md`](INSTALL.md)
      - [`man/xmonad.1.markdown.in`](man/xmonad.1.markdown.in)
      - [haddocks](https://xmonad.github.io/xmonad-docs/)
 
      If the manpage changes, wait for the CI to rebuild the rendered outputs.
 
-  3. Make sure that `tested-with:` covers several recent releases of GHC, that
+  3. Update the website:
+
+     - Draft a [new release announcement][web-announce].
+     - Check install instructions, guided tour, keybindings cheat sheet, …
+
+  4. Make sure that `tested-with:` covers several recent releases of GHC, that
      `.github/workflows/haskell-ci.yml` had been updated to test all these GHC
      versions and that `.github/workflows/stack.yml` tests with several recent
      revisions of [Stackage][] LTS.
 
-  4. Trigger the Haskell-CI workflow and fill in the candidate version number.
+  5. Trigger the Haskell-CI workflow and fill in the candidate version number.
      This will upload a release candidate to Hackage.
 
      - https://github.com/xmonad/xmonad/actions/workflows/haskell-ci.yml
@@ -99,11 +104,6 @@ When the time comes to release another version of xmonad and xmonad-contrib:
      CI will automatically upload the final release to Hackage.
 
      See [haskell-ci-hackage.patch][] for details about the Hackage automation.
-
-  5. Update the website:
-
-     - Post a [new release announcement][web-announce]
-     - Check install instructions, guided tour, keybindings cheat sheet, …
 
   6. Post announcement to:
 
