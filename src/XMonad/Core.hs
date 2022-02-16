@@ -571,21 +571,23 @@ srcFileName, libFileName :: Directories -> FilePath
 srcFileName Directories{ cfgDir } = cfgDir </> "xmonad.hs"
 libFileName Directories{ cfgDir } = cfgDir </> "lib"
 
-buildScriptFileName, stackYamlFileName :: Directories -> FilePath
-buildScriptFileName Directories{ cfgDir } = cfgDir </> "build"
-stackYamlFileName   Directories{ cfgDir } = cfgDir </> "stack.yaml"
+buildScriptFileName, stackYamlFileName, cabalProjectFileName :: Directories -> FilePath
+buildScriptFileName  Directories{ cfgDir } = cfgDir </> "build"
+stackYamlFileName    Directories{ cfgDir } = cfgDir </> "stack.yaml"
+cabalProjectFileName Directories{ cfgDir } = cfgDir </> "cabal.project"
 
 -- | Compilation method for xmonad configuration.
-data Compile = CompileGhc | CompileStackGhc FilePath | CompileScript FilePath
+data Compile = CompileGhc | CompileCabalGhc FilePath | CompileStackGhc FilePath | CompileScript FilePath
     deriving (Show)
 
 -- | Detect compilation method by looking for known file names in xmonad
 -- configuration directory.
 detectCompile :: Directories -> IO Compile
-detectCompile dirs = tryScript <|> tryStack <|> useGhc
+detectCompile dirs = tryScript <|> tryStack <|> tryCabal <|> useGhc
   where
     buildScript = buildScriptFileName dirs
     stackYaml = stackYamlFileName dirs
+    cabalProject = cabalProjectFileName dirs
 
     tryScript = do
         guard =<< doesFileExist buildScript
@@ -604,6 +606,12 @@ detectCompile dirs = tryScript <|> tryStack <|> useGhc
         canonStackYaml <- canonicalizePath stackYaml
         trace $ "XMonad will use stack ghc --stack-yaml " <> show canonStackYaml <> " to recompile."
         pure $ CompileStackGhc canonStackYaml
+
+    tryCabal = do
+        guard =<< doesFileExist cabalProject
+        canonCabalProject <- canonicalizePath cabalProject
+        trace $ "XMonad will use cabal exec ghc --project-file=" <> show canonCabalProject <> " to recompile."
+        pure $ CompileCabalGhc canonCabalProject
 
     useGhc = do
         trace $ "XMonad will use ghc to recompile, because neither "
@@ -629,6 +637,12 @@ shouldCompile dirs CompileGhc = do
         cs <- prep <$> E.catch (getDirectoryContents t) (\(SomeException _) -> return [])
         ds <- filterM doesDirectoryExist cs
         concat . ((cs \\ ds):) <$> mapM allFiles ds
+shouldCompile dirs CompileCabalGhc{} = do
+    cabalProjectT <- getModTime (cabalProjectFileName dirs)
+    binT <- getModTime (binFileName dirs)
+    if binT < cabalProjectT
+        then True <$ trace "XMonad recompiling because some files have changed."
+        else shouldCompile dirs CompileGhc
 shouldCompile dirs CompileStackGhc{} = do
     stackYamlT <- getModTime (stackYamlFileName dirs)
     binT <- getModTime (binFileName dirs)
@@ -650,6 +664,9 @@ compile dirs method =
             case method of
                 CompileGhc ->
                     run "ghc" ghcArgs
+                CompileCabalGhc cabalProject ->
+                    run "cabal" ["build", "-v0", "--project-file=" ++ cabalProject] .&&.
+                    run "cabal" ("exec" : "ghc" : ("--project-file=" ++ cabalProject) : "--" : ghcArgs)
                 CompileStackGhc stackYaml ->
                     run "stack" ["build", "--silent", "--stack-yaml", stackYaml] .&&.
                     run "stack" ("ghc" : "--stack-yaml" : stackYaml : "--" : ghcArgs)
