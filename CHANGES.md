@@ -4,6 +4,9 @@
 
 ### Enhancements
 
+  * Added support for automated builds using cabal, if a `cabal.project`
+    file is present. This mirrors the existing stack support.
+
   * Added custom cursor shapes for resizing and moving windows.
 
 ### Bug Fixes
