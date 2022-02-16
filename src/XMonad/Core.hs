@@ -665,7 +665,7 @@ compile dirs method =
                 CompileGhc ->
                     run "ghc" ghcArgs
                 CompileCabalGhc cabalProject ->
-                    run "cabal" ["build", "-v0", "--project-file=" ++ cabalProject] .&&.
+                    run "cabal" ["build", "all", "-v0", "--project-file=" ++ cabalProject] .&&.
                     run "cabal" ("exec" : "ghc" : ("--project-file=" ++ cabalProject) : "--" : ghcArgs)
                 CompileStackGhc stackYaml ->
                     run "stack" ["build", "--silent", "--stack-yaml", stackYaml] .&&.
