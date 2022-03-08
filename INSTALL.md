@@ -52,6 +52,16 @@ $ sudo pacman -S \
 > pkgconf
 ```
 
+#### Void
+
+``` console
+$ sudo xbps-install \
+> git \
+> ncurses-libtinfo-libs ncurses-libtinfo-devel \
+> libX11-devel libXft-devel libXinerama-devel libXrandr-devel libXScrnSaver-devel \
+> pkg-config
+```
+
 ## Preparation
 
 We'll use the [XDG] directory specifications here, meaning our
