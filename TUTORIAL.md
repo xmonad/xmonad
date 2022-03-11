@@ -54,7 +54,7 @@ in our case `M` will not necessarily mean Alt (also called `Meta`), but
 to Super instead (I will show you how to do this below).
 
 This guide should work for any GNU/Linux distribution and even for BSD
-folks.  Because debian-based distributions are still rather popular, we
+folks.  Because Debian-based distributions are still rather popular, we
 will give you the `apt` commands when it comes to installing software.
 If you use another distribution, just substitute the appropriate
 commands for your system.
@@ -247,7 +247,7 @@ import XMonad.Layout.ThreeColumns
 to the top of our configuration file.  Most modules have a lot of
 accompanying text and usage examples in them—so while the type
 signatures may seem scary, don't be afraid to look up the
-[xmonad-contrib documentation] on hackage!
+[xmonad-contrib documentation] on Hackage!
 
 Next we just need to tell xmonad that we want to use that particular
 layout.  To do this, there is the `layoutHook`.  Let's use the default
@@ -965,9 +965,9 @@ class name to float by defining the following manageHook:
 myManageHook = (className =? "Gimp" --> doFloat)
 ```
 
-Say we also want to float all dialogs.  This is easy with the `isDialog`
-function from [XMonad.Hooks.ManageHelpers] (which you should import) and
-a little modification to the `myManageHook` function:
+Say we also want to float all dialog windows.  This is easy with the
+`isDialog` function from [XMonad.Hooks.ManageHelpers] (which you should
+import) and a little modification to the `myManageHook` function:
 
 ``` haskell
 myManageHook :: ManageHook
@@ -1113,7 +1113,7 @@ Config { overrideRedirect = False
        }
 ```
 
-For an explanation of the battery commands used above, see xmobars
+For an explanation of the battery commands used above, see xmobar's
 [battery] documentation.
 
 You can also specify workspaces in the same way and feed them to xmobar
