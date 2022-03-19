@@ -38,13 +38,13 @@ set in GitHub repository secrets.
    linux:
      name: Haskell-CI - Linux - ${{ matrix.compiler }}
 @@ -31,6 +38,7 @@
-             compilerVersion: 9.0.1
-             setup-method: hvr-ppa
+             compilerVersion: 9.0.2
+             setup-method: ghcup
              allow-failure: false
 +            upload: true
-           - compiler: ghc-8.10.4
+           - compiler: ghc-8.10.7
              compilerKind: ghc
-             compilerVersion: 8.10.4
+             compilerVersion: 8.10.7
 @@ -209,8 +217,80 @@
            ${CABAL} -vnormal check
        - name: haddock

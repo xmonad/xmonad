@@ -8,9 +8,9 @@
 #
 # For more information, see https://github.com/haskell-CI/haskell-ci
 #
-# version: 0.13.20211030
+# version: 0.14.3
 #
-# REGENDATA ("0.13.20211030",["github","cabal.project"])
+# REGENDATA ("0.14.3",["github","cabal.project"])
 #
 name: Haskell-CI
 on:
@@ -27,27 +27,29 @@ jobs:
   linux:
     name: Haskell-CI - Linux - ${{ matrix.compiler }}
     runs-on: ubuntu-18.04
+    timeout-minutes:
+      60
     container:
       image: buildpack-deps:bionic
     continue-on-error: ${{ matrix.allow-failure }}
     strategy:
       matrix:
         include:
-          - compiler: ghc-9.2.1
+          - compiler: ghc-9.2.2
             compilerKind: ghc
-            compilerVersion: 9.2.1
+            compilerVersion: 9.2.2
             setup-method: ghcup
             allow-failure: false
-          - compiler: ghc-9.0.1
+          - compiler: ghc-9.0.2
             compilerKind: ghc
-            compilerVersion: 9.0.1
-            setup-method: hvr-ppa
+            compilerVersion: 9.0.2
+            setup-method: ghcup
             allow-failure: false
             upload: true
-          - compiler: ghc-8.10.4
+          - compiler: ghc-8.10.7
             compilerKind: ghc
-            compilerVersion: 8.10.4
-            setup-method: hvr-ppa
+            compilerVersion: 8.10.7
+            setup-method: ghcup
             allow-failure: false
           - compiler: ghc-8.8.4
             compilerKind: ghc
@@ -72,7 +74,7 @@ jobs:
           apt-get install -y --no-install-recommends gnupg ca-certificates dirmngr curl git software-properties-common libtinfo5
           if [ "${{ matrix.setup-method }}" = ghcup ]; then
             mkdir -p "$HOME/.ghcup/bin"
-            curl -sL https://downloads.haskell.org/ghcup/0.1.17.3/x86_64-linux-ghcup-0.1.17.3 > "$HOME/.ghcup/bin/ghcup"
+            curl -sL https://downloads.haskell.org/ghcup/0.1.17.5/x86_64-linux-ghcup-0.1.17.5 > "$HOME/.ghcup/bin/ghcup"
             chmod a+x "$HOME/.ghcup/bin/ghcup"
             "$HOME/.ghcup/bin/ghcup" install ghc "$HCVER"
             "$HOME/.ghcup/bin/ghcup" install cabal 3.6.2.0
@@ -83,7 +85,7 @@ jobs:
             apt-get update
             apt-get install -y "$HCNAME" libx11-dev libxext-dev libxinerama-dev libxrandr-dev libxss-dev
             mkdir -p "$HOME/.ghcup/bin"
-            curl -sL https://downloads.haskell.org/ghcup/0.1.17.3/x86_64-linux-ghcup-0.1.17.3 > "$HOME/.ghcup/bin/ghcup"
+            curl -sL https://downloads.haskell.org/ghcup/0.1.17.5/x86_64-linux-ghcup-0.1.17.5 > "$HOME/.ghcup/bin/ghcup"
             chmod a+x "$HOME/.ghcup/bin/ghcup"
             "$HOME/.ghcup/bin/ghcup" install cabal 3.6.2.0
           fi
@@ -144,6 +146,10 @@ jobs:
             prefix: $CABAL_DIR
           repository hackage.haskell.org
             url: http://hackage.haskell.org/
+          EOF
+          cat >> $CABAL_CONFIG <<EOF
+          program-default-options
+            ghc-options: $GHCJOBS +RTS -M3G -RTS
           EOF
           cat $CABAL_CONFIG
       - name: versions
