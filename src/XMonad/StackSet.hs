@@ -94,21 +94,20 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 --    resulting data structure will share as much of its components with
 --    the old structure as possible.
 --
---      Oleg Kiselyov, 27 Apr 2005, haskell\@, "Zipper as a delimited continuation"
+--      <https://mail.haskell.org/pipermail/haskell/2005-April/015769.html Oleg Kiselyov, 27 Apr 2005, haskell\@, "Zipper as a delimited continuation">
 --
 -- We use the zipper to keep track of the focused workspace and the
 -- focused window on each workspace, allowing us to have correct focus
 -- by construction. We closely follow Huet's original implementation:
 --
---      G. Huet, /Functional Pearl: The Zipper/,
---      1997, J. Functional Programming 75(5):549-554.
--- and:
---      R. Hinze and J. Jeuring, /Functional Pearl: The Web/.
+--      <https://www.st.cs.uni-saarland.de/edu/seminare/2005/advanced-fp/docs/huet-zipper.pdf G. Huet, Functional Pearl: The Zipper; 1997, J. Functional Programming 75(5):549–554>
+--
+-- and
+--
+--      <https://dspace.library.uu.nl/handle/1874/2532 R. Hinze and J. Jeuring, Functional Pearl: Weaving a Web>
 --
 -- and Conor McBride's zipper differentiation paper.
--- Another good reference is:
---
---      The Zipper, Haskell wikibook
+-- Another good reference is: <https://wiki.haskell.org/Zipper The Zipper, Haskell wikibook>
 
 -- $xinerama
 -- Xinerama in X11 lets us view multiple virtual workspaces
@@ -314,7 +313,7 @@ integrate :: Stack a -> [a]
 integrate (Stack x l r) = reverse l ++ x : r
 
 -- |
--- /O(n)/ Flatten a possibly empty stack into a list.
+-- /O(n)/. Flatten a possibly empty stack into a list.
 integrate' :: Maybe (Stack a) -> [a]
 integrate' = maybe [] integrate
 
