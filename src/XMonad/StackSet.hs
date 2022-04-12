@@ -346,32 +346,44 @@ filter p (Stack f ls rs) = case L.filter p (f:rs) of
 index :: StackSet i l a s sd -> [a]
 index = with [] integrate
 
--- |
--- /O(1), O(w) on the wrapping case/.
---
--- focusUp, focusDown. Move the window focus up or down the stack,
--- wrapping if we reach the end. The wrapping should model a 'cycle'
--- on the current stack. The 'master' window, and window order,
+-- | /O(1), O(w) on the wrapping case/. Move the window focus up the
+-- stack, wrapping if we reach the end. The wrapping should model a
+-- @cycle@ on the current stack. The @master@ window and window order
 -- are unaffected by movement of focus.
---
--- swapUp, swapDown, swap the neighbour in the stack ordering, wrapping
--- if we reach the end. Again the wrapping model should 'cycle' on
--- the current stack.
---
-focusUp, focusDown, swapUp, swapDown :: StackSet i l a s sd -> StackSet i l a s sd
+focusUp :: StackSet i l a s sd -> StackSet i l a s sd
 focusUp   = modify' focusUp'
+
+-- | /O(1), O(w) on the wrapping case/. Like 'focusUp', but move the
+-- window focus down the stack.
+focusDown :: StackSet i l a s sd -> StackSet i l a s sd
 focusDown = modify' focusDown'
 
+-- | /O(1), O(w) on the wrapping case/. Swap the upwards (left)
+-- neighbour in the stack ordering, wrapping if we reach the end. Much
+-- like for 'focusUp' and 'focusDown', the wrapping model should 'cycle'
+-- on the current stack.
+swapUp :: StackSet i l a s sd -> StackSet i l a s sd
 swapUp    = modify' swapUp'
+
+-- | /O(1), O(w) on the wrapping case/. Like 'swapUp', but for swapping
+-- the downwards (right) neighbour.
+swapDown :: StackSet i l a s sd -> StackSet i l a s sd
 swapDown  = modify' (reverseStack . swapUp' . reverseStack)
 
--- | Variants of 'focusUp' and 'focusDown' that work on a
+-- | A variant of 'focusUp' with the same asymptotics that works on a
 -- 'Stack' rather than an entire 'StackSet'.
-focusUp', focusDown' :: Stack a -> Stack a
+focusUp' :: Stack a -> Stack a
 focusUp' (Stack t (l:ls) rs) = Stack l ls (t:rs)
-focusUp' (Stack t []     rs) = Stack x xs [] where (x :| xs) = NE.reverse (t :| rs)
-focusDown'                   = reverseStack . focusUp' . reverseStack
+focusUp' (Stack t []     rs) = Stack x xs []
+  where (x :| xs) = NE.reverse (t :| rs)
 
+-- | A variant of 'focusDown' with the same asymptotics that works on a
+-- 'Stack' rather than an entire 'StackSet'.
+focusDown' :: Stack a -> Stack a
+focusDown' = reverseStack . focusUp' . reverseStack
+
+-- | A variant of 'spawUp' with the same asymptotics that works on a
+-- 'Stack' rather than an entire 'StackSet'.
 swapUp' :: Stack a -> Stack a
 swapUp'  (Stack t (l:ls) rs) = Stack t ls (l:rs)
 swapUp'  (Stack t []     rs) = Stack t (reverse rs) []
