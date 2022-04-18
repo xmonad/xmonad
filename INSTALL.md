@@ -356,6 +356,15 @@ exec stack ghc --  \
 
 Don't forget to mark the file as `+x`: `chmod +x build`!
 
+Some example build scripts for `stack` and `cabal` are provided in the
+`xmonad-contrib` distribution. You can see those online in the
+[scripts/build][] directory. You might wish to use these if you have
+special dependencies for your `xmonad.hs`, especially with cabal as
+you must use a cabal file and often a `cabal.project` to specify them;
+`cabal install --lib` above generally isn't enough, and when it is
+it can be difficult to keep track of when you want to replicate your
+configuration on another system.
+
 #### Don't Recompile on Every Startup
 
 By default, xmonad always recompiles itself when a build script is used
@@ -387,3 +396,4 @@ executable will also be within that directory and not in
 [ghcup]: https://www.haskell.org/ghcup/
 [what xmonad would do]: https://github.com/xmonad/xmonad/blob/master/src/XMonad/Core.hs#L659-L667
 [Hackage]: https://hackage.haskell.org/
+[scripts/build]: https://github.com/xmonad/xmonad-contrib/blob/master/scripts/build
