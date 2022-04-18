@@ -55,17 +55,17 @@ jobs:
       - name: Refresh caches once a month
         id: cache-date
         # GHA writes caches on the first miss and then never updates them again;
-        # force updating the cache at least once a month
+        # force updating the cache at least once a month. Additionally, the
+        # date is prefixed with an epoch number to let us manually refresh the
+        # cache when needed. This is a workaround for https://github.com/actions/cache/issues/2
         run: |
-          echo "::set-output name=date::$(date +%Y-%m)"
+          echo "::set-output name=date::1-$(date +%Y-%m)"
 
       - name: Cache Haskell package metadata
         uses: actions/cache@v2
         with:
           path: ~/.stack/pantry
           key: stack-pantry-${{ runner.os }}-${{ steps.cache-date.outputs.date }}
-          restore-keys: |
-            stack-pantry-${{ runner.os }}-
 
       - name: Cache Haskell dependencies
         uses: actions/cache@v2
@@ -78,7 +78,6 @@ jobs:
           restore-keys: |
             stack-${{ runner.os }}-${{ matrix.resolver }}-${{ steps.cache-date.outputs.date }}-${{ hashFiles('stack.yaml') }}-
             stack-${{ runner.os }}-${{ matrix.resolver }}-${{ steps.cache-date.outputs.date }}-
-            stack-${{ runner.os }}-${{ matrix.resolver }}-
 
       - name: Update hackage index
         # always update index to prevent the shared ~/.stack/pantry cache from being empty
