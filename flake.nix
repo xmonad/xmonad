@@ -7,9 +7,15 @@
   };
   outputs = { self, flake-utils, nixpkgs, unstable, git-ignore-nix }:
   let
-    fromHOL = hol: final: prev: with prev.lib; with attrsets;
-      setAttrByPath [ "haskellPackages" ]
-        ((getAttrFromPath [ "haskellPackages" ] prev).override (old: {
+    hpath = { prefix ? null, compiler ? null }:
+      (if prefix == null then [] else [ prefix ]) ++
+      (if compiler == null
+       then [ "haskellPackages" ]
+       else [ "haskell" "packages" compiler ]
+      );
+    fromHOL = hol: comp: final: prev: with prev.lib; with attrsets;
+      setAttrByPath (hpath comp)
+        ((getAttrFromPath (hpath comp) prev).override (old: {
           overrides = composeExtensions (old.overrides or (_: _: {}))
             (hol final prev);
         }));
@@ -21,7 +27,7 @@
         (hself.callCabal2nix "xmonad"
           (git-ignore-nix.lib.gitignoreSource ./.) { });
       };
-    overlay = fromHOL hoverlay;
+    overlay = fromHOL hoverlay { };
     overlays = [ overlay ];
   in flake-utils.lib.eachDefaultSystem (system:
   let pkgs = import nixpkgs { inherit system overlays; };
@@ -31,5 +37,5 @@
       packages = p: [ p.xmonad ];
     };
     defaultPackage = pkgs.haskellPackages.xmonad;
-  }) // { inherit overlay overlays; lib = { inherit fromHOL; }; };
+  }) // { inherit hoverlay overlay overlays; lib = { inherit hpath fromHOL; }; };
 }
