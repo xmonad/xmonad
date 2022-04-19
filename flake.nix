@@ -29,6 +29,41 @@
       };
     overlay = fromHOL hoverlay { };
     overlays = [ overlay ];
+    nixosModule = { config, pkgs, lib, ... }: with lib; with attrsets;
+      let
+        cfg = config.services.xserver.windowManager.xmonad.flake;
+        comp = { inherit (cfg) prefix compiler; };
+      in {
+        options = {
+          services.xserver.windowManager.xmonad.flake = with types; {
+            enable = mkEnableOption "flake";
+            prefix = mkOption {
+              default = null;
+              type = nullOr string;
+              example = literalExpression "\"unstable\"";
+              description = ''
+                Specify a nested alternative <literal>pkgs</literal> by attrName.
+              '';
+            };
+            compiler = mkOption {
+              default = null;
+              type = nullOr string;
+              example = literalExpression "\"ghc922\"";
+              description = ''
+                Which compiler to build xmonad with.
+                Must be an attribute of <literal>pkgs.haskell.packages</literal>.
+                Sets <option>xmonad.haskellPackages</option> to match.
+              '';
+            };
+          };
+        };
+        config = mkIf cfg.enable {
+          nixpkgs.overlays = [ (fromHOL hoverlay comp) ];
+          services.xserver.windowManager.xmonad.haskellPackages =
+            getAttrFromPath (hpath comp) pkgs;
+        };
+      };
+    nixosModules = [ nixosModule ];
   in flake-utils.lib.eachDefaultSystem (system:
   let pkgs = import nixpkgs { inherit system overlays; };
   in
@@ -37,5 +72,8 @@
       packages = p: [ p.xmonad ];
     };
     defaultPackage = pkgs.haskellPackages.xmonad;
-  }) // { inherit hoverlay overlay overlays; lib = { inherit hpath fromHOL; }; };
+  }) // {
+    inherit hoverlay overlay overlays nixosModule nixosModules;
+    lib = { inherit hpath fromHOL; };
+  };
 }
