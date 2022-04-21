@@ -1,4 +1,5 @@
-# This file is maintained by @IvanMalison (github)
+# This file is maintained by @IvanMalison and @LSLeary (github)
+# See xmonad-contrib/NIX.md for an overview of module usage.
 {
   inputs = {
     flake-utils.url = github:numtide/flake-utils;
