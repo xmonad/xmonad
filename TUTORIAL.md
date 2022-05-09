@@ -1121,13 +1121,15 @@ via the property (e.g. have `"<fn=1>\xf120</fn>"` as one of your
 workspace names).
 
 As an example how this would look like in a real configuration, you can
-look at [Liskin's], [slotThe's], or [TheMC47's] xmobar configuration.
-Do note that the last two are Haskell-based and thus may be a little
-hard to understand for newcomers.
+look at [Liskin's old][liskin-xmobarrc-old], [Liskin's current][liskin-xmobarrc],
+[slotThe's][slotThe-xmobarrc], or [TheMC47's][TheMC47-xmobarrc] xmobar
+configuration. Do note that the last three are Haskell-based and thus may
+be a little hard to understand for newcomers.
 
-[Liskin's]: https://github.com/liskin/dotfiles/blob/home/.xmobarrc
-[TheMC47's]: https://github.com/TheMC47/dotfiles/tree/master/xmobar/xmobarrc
-[slotThe's]: https://gitlab.com/slotThe/dotfiles/-/blob/master/xmobar/.config/xmobarrc/src/xmobarrc.hs
+[liskin-xmobarrc-old]: https://github.com/liskin/dotfiles/blob/75dfc057c33480ee9d3300d4d02fb79a986ef3a5/.xmobarrc
+[liskin-xmobarrc]: https://github.com/liskin/dotfiles/blob/home/.xmonad/xmobar.hs
+[TheMC47-xmobarrc]: https://github.com/TheMC47/dotfiles/tree/master/xmobar/xmobarrc
+[slotThe-xmobarrc]: https://gitlab.com/slotThe/dotfiles/-/blob/master/xmobar/.config/xmobarrc/src/xmobarrc.hs
 
 ### Renaming Layouts
 
