@@ -2,7 +2,7 @@
 
 ## The XMonad Core Team
 
-  * Brandon S Allbery [GitHub][geekosaur], IRC: `geekosaur`
+  * Brandon S Allbery [GitHub][geekosaur], IRC: `geekosaur`, [GPG][gpg:geekosaur]
 
   * Brent Yorgey [GitHub][byorgey], IRC: `byorgey`
 
@@ -21,6 +21,7 @@
 [liskin]: https://github.com/liskin
 [slotThe]: https://github.com/slotThe
 
+[gpg:geekosaur]: https://github.com/geekosaur.gpg
 [gpg:liskin]: https://github.com/liskin.gpg
 [gpg:slotThe]: https://github.com/slotThe.gpg
 
