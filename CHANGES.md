@@ -6,6 +6,10 @@
 
   * Added custom cursor shapes for resizing and moving windows.
 
+  * Added `stripModMask` to allow customizing which modifiers are irrelevant
+    for key bindings. Useful for binding numpad keys only when Num Lock is
+    off, or to make Mod5 irrelevant in addition to the default Num/Caps Lock.
+
 ### Bug Fixes
 
   * Fixed border color of windows with alpha channel. Now all windows have the

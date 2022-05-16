@@ -38,8 +38,10 @@ import XMonad.Layout
 import XMonad.Operations
 import XMonad.ManageHook
 import qualified XMonad.StackSet as W
+import Control.Monad.State (gets)
 import Data.Bits ((.|.))
 import Data.Default.Class
+import Data.Functor ((<&>))
 import Data.Monoid
 import qualified Data.Map as M
 import System.Exit
@@ -58,13 +60,21 @@ import Graphics.X11.Xlib.Extras
 workspaces :: [WorkspaceId]
 workspaces = map show [1 .. 9 :: Int]
 
--- | modMask lets you specify which modkey you want to use. The default
+-- | 'modMask' lets you specify which modkey you want to use. The default
 -- is mod1Mask ("left alt").  You may also consider using mod3Mask
 -- ("right alt"), which does not conflict with emacs keybindings. The
 -- "windows key" is usually mod4Mask.
 --
 defaultModMask :: KeyMask
 defaultModMask = mod1Mask
+
+-- | 'stripModMask' lets you specify which modifiers are irrelevant for key
+-- bindings. The default is Num Lock and Caps Lock. You will need to override
+-- this if you wish to only strip Caps Lock; e.g., if you need to bind numpad keys
+-- but only when Num Lock is off (or on). Another use case is adding
+-- 'mod5Mask' to the list of stripped/irrelevant modifiers.
+defaultStripModMask :: X [KeyMask]
+defaultStripModMask = gets numberlockMask <&> \numLockMask -> [lockMask, numLockMask]
 
 -- | Width of the window border in pixels.
 --
@@ -264,6 +274,7 @@ instance (a ~ Choose Tall (Choose (Mirror Tall) Full)) => Default (XConfig a) wh
     , XMonad.normalBorderColor  = normalBorderColor
     , XMonad.focusedBorderColor = focusedBorderColor
     , XMonad.modMask            = defaultModMask
+    , XMonad.stripModMask       = defaultStripModMask
     , XMonad.keys               = keys
     , XMonad.logHook            = logHook
     , XMonad.startupHook        = startupHook

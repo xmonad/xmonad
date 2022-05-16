@@ -111,6 +111,7 @@ data XConfig l = XConfig
                                                  -- event hooks in most cases.
     , workspaces         :: ![String]            -- ^ The list of workspaces' names
     , modMask            :: !KeyMask             -- ^ the mod modifier
+    , stripModMask       :: !(X [KeyMask])       -- ^ Modifiers to ignore in key bindings. Default: num/caps lock.
     , keys               :: !(XConfig Layout -> M.Map (ButtonMask,KeySym) (X ()))
                                                  -- ^ The key binding: a map from key presses and actions
     , mouseBindings      :: !(XConfig Layout -> M.Map (ButtonMask, Button) (Window -> X ()))
