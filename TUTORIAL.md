@@ -187,8 +187,8 @@ example, but that will change soon enough so it's worth introducing it
 here as well.
 
 What if we wanted to add other keybindings?  Say you also want to bind
-`M-S-z` to lock your screen with the screensaver, `M-S-=` to take a
-snapshot of one window, and `M-]` to spawn Firefox.  This can be
+`M-S-z` to lock your screen with the screensaver, `M-C-s` to take a
+snapshot of one window, and `M-f` to spawn Firefox.  This can be
 achieved with the `additionalKeysP` function from the
 [XMonad.Util.EZConfig] module—luckily we already have it imported!  Our
 config file, starting with `main`, now looks like:
@@ -200,8 +200,8 @@ main = xmonad $ def
     }
   `additionalKeysP`
     [ ("M-S-z", spawn "xscreensaver-command -lock")
-    , ("M-S-=", unGrab *> spawn "scrot -s"        )
-    , ("M-]"  , spawn "firefox"                   )
+    , ("M-C-s", unGrab *> spawn "scrot -s"        )
+    , ("M-f"  , spawn "firefox"                   )
     ]
 ```
 
@@ -313,8 +313,8 @@ main = xmonad $ def
     }
   `additionalKeysP`
     [ ("M-S-z", spawn "xscreensaver-command -lock")
-    , ("M-S-=", unGrab *> spawn "scrot -s"        )
-    , ("M-]"  , spawn "firefox"                   )
+    , ("M-C-s", unGrab *> spawn "scrot -s"        )
+    , ("M-f"  , spawn "firefox"                   )
     ]
 ```
 
@@ -396,8 +396,8 @@ main = xmonad $ ewmhFullscreen $ ewmh $ def
     }
   `additionalKeysP`
     [ ("M-S-z", spawn "xscreensaver-command -lock")
-    , ("M-S-=", unGrab *> spawn "scrot -s"        )
-    , ("M-]"  , spawn "firefox"                   )
+    , ("M-C-s", unGrab *> spawn "scrot -s"        )
+    , ("M-f"  , spawn "firefox"                   )
     ]
 ```
 
@@ -420,8 +420,8 @@ myConfig = def
     }
   `additionalKeysP`
     [ ("M-S-z", spawn "xscreensaver-command -lock")
-    , ("M-S-=", unGrab *> spawn "scrot -s"        )
-    , ("M-]"  , spawn "firefox"                   )
+    , ("M-C-s", unGrab *> spawn "scrot -s"        )
+    , ("M-f"  , spawn "firefox"                   )
     ]
 ```
 
@@ -989,8 +989,8 @@ myConfig = def
     }
   `additionalKeysP`
     [ ("M-S-z", spawn "xscreensaver-command -lock")
-    , ("M-S-=", unGrab *> spawn "scrot -s"        )
-    , ("M-]"  , spawn "firefox"                   )
+    , ("M-C-s", unGrab *> spawn "scrot -s"        )
+    , ("M-f"  , spawn "firefox"                   )
     ]
 ```
 
@@ -1032,8 +1032,8 @@ myConfig = def
     }
   `additionalKeysP`
     [ ("M-S-z", spawn "xscreensaver-command -lock")
-    , ("M-S-=", unGrab *> spawn "scrot -s"        )
-    , ("M-]"  , spawn "firefox"                   )
+    , ("M-C-s", unGrab *> spawn "scrot -s"        )
+    , ("M-f"  , spawn "firefox"                   )
     ]
 
 myManageHook :: ManageHook
