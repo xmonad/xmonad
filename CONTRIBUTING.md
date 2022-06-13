@@ -86,7 +86,7 @@ as well!
     and provide a type signature; use Haddock syntax in the comments.
 
   * Follow the coding style of the module that you are making changes to
-    (`n` spaces for indentation, where to break long type signatures, …)
+    (`n` spaces for indentation, where to break long type signatures, …).
 
   * New code should not introduce any new warnings.  If you want to
     check this yourself before submitting a pull request, there is the
@@ -98,7 +98,7 @@ as well!
     enforced in our GitHub CI.
 
   * Partial functions are to be avoided: the window manager should not
-    crash, so do not call `error` or `undefined`
+    crash, so do not call `error` or `undefined`.
 
   * Any pure function added to the core should have QuickCheck
     properties precisely defining its behavior.
