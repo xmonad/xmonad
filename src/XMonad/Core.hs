@@ -1,6 +1,7 @@
 {-# LANGUAGE ExistentialQuantification, FlexibleInstances, GeneralizedNewtypeDeriving,
              MultiParamTypeClasses, TypeSynonymInstances, DeriveDataTypeable,
-             LambdaCase, NamedFieldPuns, DeriveTraversable #-}
+             LambdaCase, NamedFieldPuns, DeriveTraversable,
+             PatternSynonyms #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -21,8 +22,8 @@ module XMonad.Core (
     X, WindowSet, WindowSpace, WorkspaceId,
     ScreenId(..), ScreenDetail(..), XState(..),
     XConf(..), XConfig(..), LayoutClass(..),
-    Layout(..), readsLayout, Typeable, Message,
-    SomeMessage(..), fromMessage, LayoutMessages(..),
+    Layout(..), readsLayout, Typeable, Message, doMessage,
+    SomeMessage(SomeMessage), fromMessage, LayoutMessages(..),
     StateExtension(..), ExtensionClass(..), ConfExtension(..),
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
@@ -358,12 +359,32 @@ instance Show (Layout a) where show (Layout l) = show l
 --
 -- User-extensible messages must be a member of this class.
 --
-class Typeable a => Message a
+class Typeable a => Message a where
+    someMessage :: a -> SomeMessage -- NOT EXPORTED; use `SomeMessage`
+    someMessage = AMessage
 
 -- |
 -- A wrapped value of some type in the 'Message' class.
 --
-data SomeMessage = forall a. Message a => SomeMessage a
+data SomeMessage = forall a. Message a => AMessage a
+
+-- |
+-- A smart constructor for wrapping any instance of the 'Message' class.
+pattern SomeMessage :: () => forall a. Message a => a -> SomeMessage
+pattern SomeMessage x <- AMessage x
+  where SomeMessage x = someMessage x
+{-# COMPLETE SomeMessage #-}
+
+instance Message SomeMessage where
+    someMessage = id
+
+-- | Handle a message like 'handleMessage', except:
+--
+--    * automatically wrap the message in 'SomeMessage' when necessary
+--    * print a message and return 'Nothing' when 'handleMessage' throws an error
+doMessage :: (LayoutClass layout a, Message message)
+          => layout a -> message -> X (Maybe (layout a))
+doMessage layout = userCodeDef Nothing . handleMessage layout . SomeMessage
 
 -- |
 -- And now, unwrap a given, unknown 'Message' type, performing a (dynamic)
