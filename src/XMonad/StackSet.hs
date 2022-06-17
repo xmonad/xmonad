@@ -240,7 +240,7 @@ view i s
 
     | otherwise = s -- not a member of the stackset
 
-  where equating f = \x y -> f x == f y
+  where equating f x y = f x == f y
 
     -- 'Catch'ing this might be hard. Relies on monotonically increasing
     -- workspace tags defined in 'new'

@@ -41,11 +41,11 @@ import Control.Applicative ((<|>), empty)
 import Control.Monad.Fail
 import Control.Monad.State
 import Control.Monad.Reader
+import Control.Monad (void)
 import Data.Semigroup
 import Data.Traversable (for)
 import Data.Time.Clock (UTCTime)
 import Data.Default.Class
-import Data.List (isInfixOf)
 import System.FilePath
 import System.IO
 import System.Info
@@ -60,7 +60,7 @@ import System.Exit
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Extras (getWindowAttributes, WindowAttributes, Event)
 import Data.Typeable
-import Data.List ((\\))
+import Data.List (isInfixOf, (\\))
 import Data.Maybe (isJust,fromMaybe)
 
 import qualified Data.Map as M
@@ -431,7 +431,7 @@ catchIO f = io (f `E.catch` \(SomeException e) -> hPrint stderr e >> hFlush stde
 --
 -- Note this function assumes your locale uses utf8.
 spawn :: MonadIO m => String -> m ()
-spawn x = spawnPID x >> return ()
+spawn x = void $ spawnPID x
 
 -- | Like 'spawn', but returns the 'ProcessID' of the launched application
 spawnPID :: MonadIO m => String -> m ProcessID
