@@ -87,14 +87,12 @@ usage :: IO ()
 usage = do
     self <- getProgName
     putStr . unlines $
-        concat ["Usage: ", self, " [OPTION]"] :
-        "Options:" :
-        "  --help                       Print this message" :
-        "  --version                    Print the version number" :
-        "  --recompile                  Recompile your xmonad.hs" :
-        "  --replace                    Replace the running window manager with xmonad" :
-        "  --restart                    Request a running xmonad process to restart" :
-        []
+         [concat ["Usage: ", self, " [OPTION]"], "Options:",
+         "  --help                       Print this message",
+         "  --version                    Print the version number",
+         "  --recompile                  Recompile your xmonad.hs",
+         "  --replace                    Replace the running window manager with xmonad",
+         "  --restart                    Request a running xmonad process to restart"]
 
 -- | Build the xmonad configuration file with ghc, then execute it.
 -- If there are no errors, this function does not return.  An
@@ -330,7 +328,7 @@ handle e@(DestroyWindowEvent {ev_window = w}) = do
 -- it is synthetic or we are not expecting an unmap notification from a window.
 handle (UnmapEvent {ev_window = w, ev_send_event = synthetic}) = whenX (isClient w) $ do
     e <- gets (fromMaybe 0 . M.lookup w . waitingUnmap)
-    if (synthetic || e == 0)
+    if synthetic || e == 0
         then unmanage w
         else modify (\s -> s { waitingUnmap = M.update mpred w (waitingUnmap s) })
  where mpred 1 = Nothing
@@ -428,7 +426,7 @@ handle event@(PropertyEvent { ev_event_type = t, ev_atom = a })
 
 handle e@ClientMessageEvent { ev_message_type = mt } = do
     a <- getAtom "XMONAD_RESTART"
-    if (mt == a)
+    if mt == a
         then restart "xmonad" True
         else broadcastMessage e
 

@@ -66,6 +66,7 @@ import qualified Data.Set as S
 import Control.Arrow (second)
 import Control.Monad.Reader
 import Control.Monad.State
+import Control.Monad (void)
 import qualified Control.Exception as C
 
 import System.IO
@@ -136,7 +137,7 @@ killWindow w = withDisplay $ \d -> do
                 setEventType ev clientMessage
                 setClientMessageEvent ev w wmprot 32 wmdelt currentTime
                 sendEvent d w False noEventMask ev
-        else killClient d w >> return ()
+        else void (killClient d w)
 
 -- | Kill the currently focused client.
 kill :: X ()
@@ -417,7 +418,7 @@ setFocusX w = withWindowSet $ \ws -> do
     currevt <- asks currentEvent
     let inputHintSet = wmh_flags hints `testBit` inputHintBit
 
-    when ((inputHintSet && wmh_input hints) || (not inputHintSet)) $
+    when (inputHintSet && wmh_input hints || not inputHintSet) $
       io $ do setInputFocus dpy w revertToPointerRoot 0
     when (wmtf `elem` protocols) $
       io $ allocaXEvent $ \ev -> do
@@ -425,7 +426,7 @@ setFocusX w = withWindowSet $ \ws -> do
         setClientMessageEvent ev w wmprot 32 wmtf $ maybe currentTime event_time currevt
         sendEvent dpy w False noEventMask ev
         where event_time ev =
-                if (ev_event_type ev) `elem` timedEvents then
+                if ev_event_type ev `elem` timedEvents then
                   ev_time ev
                 else
                   currentTime
@@ -514,12 +515,12 @@ cleanMask km = do
 
 -- | Set the 'Pixel' alpha value to 255.
 setPixelSolid :: Pixel -> Pixel
-setPixelSolid p = (p .|. 0xff000000)
+setPixelSolid p = p .|. 0xff000000
 
 -- | Get the 'Pixel' value for a named color.
 initColor :: Display -> String -> IO (Maybe Pixel)
 initColor dpy c = C.handle (\(C.SomeException _) -> return Nothing) $
-    (Just . setPixelSolid . color_pixel . fst) <$> allocNamedColor dpy colormap c
+    Just . setPixelSolid . color_pixel . fst <$> allocNamedColor dpy colormap c
     where colormap = defaultColormap dpy (defaultScreen dpy)
 
 ------------------------------------------------------------------------
@@ -539,7 +540,7 @@ writeStateToFile = do
         maybeShow _ = Nothing
 
         wsData   = W.mapLayout show . windowset
-        extState = catMaybes . map maybeShow . M.toList . extensibleState
+        extState = mapMaybe maybeShow . M.toList . extensibleState
 
     path <- asks $ stateFileName . directories
     stateData <- gets (\s -> StateFile (wsData s) (extState s))
@@ -602,7 +603,7 @@ floatLocation w =
     catchX go $ do
       -- Fallback solution if `go' fails.  Which it might, since it
       -- calls `getWindowAttributes'.
-      sc <- W.current <$> gets windowset
+      sc <- gets $ W.current . windowset
       return (W.screen sc, W.RationalRect 0 0 1 1)
 
   where fi x = fromIntegral x
