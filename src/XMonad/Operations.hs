@@ -258,7 +258,7 @@ setWindowBorderWithFallback :: Display -> Window -> String -> Pixel -> X ()
 setWindowBorderWithFallback dpy w color basic = io $
     C.handle fallback $ do
       wa <- getWindowAttributes dpy w
-      pixel <- setPixelSolid . color_pixel . fst <$> allocNamedColor dpy (wa_colormap wa) color
+      pixel <- color_pixel . fst <$> allocNamedColor dpy (wa_colormap wa) color
       setWindowBorder dpy w pixel
   where
     fallback :: C.SomeException -> IO ()
@@ -512,14 +512,10 @@ cleanMask km = do
     nlm <- gets numberlockMask
     return (complement (nlm .|. lockMask) .&. km)
 
--- | Set the 'Pixel' alpha value to 255.
-setPixelSolid :: Pixel -> Pixel
-setPixelSolid p = (p .|. 0xff000000)
-
 -- | Get the 'Pixel' value for a named color.
 initColor :: Display -> String -> IO (Maybe Pixel)
 initColor dpy c = C.handle (\(C.SomeException _) -> return Nothing) $
-    (Just . setPixelSolid . color_pixel . fst) <$> allocNamedColor dpy colormap c
+    (Just . color_pixel . fst) <$> allocNamedColor dpy colormap c
     where colormap = defaultColormap dpy (defaultScreen dpy)
 
 ------------------------------------------------------------------------
