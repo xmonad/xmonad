@@ -38,3 +38,12 @@ jobs:
             --preferred \
             --exclude X11 \
             *.cabal
+
+  workflow-keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Re-enable workflow
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api -X PUT repos/${{ github.repository }}/actions/workflows/packdeps.yml/enable
