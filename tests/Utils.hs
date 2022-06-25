@@ -12,8 +12,8 @@ hidden_spaces x = map workspace (visible x) ++ hidden x
 -- normalise workspace list
 normal s = s { hidden = sortBy g (hidden s), visible = sortBy f (visible s) }
     where
-        f = \a b -> tag (workspace a) `compare` tag (workspace b)
-        g = \a b -> tag a `compare` tag b
+        f a b = tag (workspace a) `compare` tag (workspace b)
+        g a b = tag a `compare` tag b
 
 
 noOverlaps []  = True

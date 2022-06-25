@@ -32,8 +32,8 @@ prop_focusWindow_master (NonNegative n) (x :: T) =
                    in index (focusWindow (s !! i) x) == index x
 
 -- shifting focus is trivially reversible
-prop_focus_left  (x :: T) = (focusUp  (focusDown x)) == x
-prop_focus_right (x :: T) = (focusDown (focusUp  x)) ==  x
+prop_focus_left  (x :: T) = focusUp  (focusDown x) == x
+prop_focus_right (x :: T) = focusDown (focusUp  x) == x
 
 -- focus master is idempotent
 prop_focusMaster_idem (x :: T) = focusMaster x == focusMaster (focusMaster x)
@@ -47,9 +47,9 @@ prop_focusWindow_works (NonNegative (n :: Int)) (x :: T) =
                    in (focus . fromJust . stack . workspace . current) (focusWindow (s !! i) x) == (s !! i)
 
 -- rotation through the height of a stack gets us back to the start
-prop_focus_all_l (x :: T) = (foldr (const focusUp) x [1..n]) == x
+prop_focus_all_l (x :: T) = foldr (const focusUp) x [1..n] == x
   where n = length (index x)
-prop_focus_all_r (x :: T) = (foldr (const focusDown) x [1..n]) == x
+prop_focus_all_r (x :: T) = foldr (const focusDown) x [1..n] == x
   where n = length (index x)
 
 -- prop_rotate_all (x :: T) = f (f x) == f x

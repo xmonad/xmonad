@@ -53,8 +53,8 @@ prop_aspect_hint_shrink hint (w,h) = case applyAspectHint hint (w,h) of
 -- the desired range
 prop_aspect_fits =
     forAll ((,,,) <$> pos <*> pos <*> pos <*> pos) $ \ (x,y,a,b) ->
-    let f v = applyAspectHint ((x, y+a), (x+b, y)) v
-    in  and [ noOverflows (*) x (y+a), noOverflows (*) (x+b) y ]
+    let f = applyAspectHint ((x, y+a), (x+b, y))
+    in  noOverflows (*) x (y+a) && noOverflows (*) (x+b) y
             ==> f (x,y) == (x,y)
 
   where pos = choose (0, 65535)

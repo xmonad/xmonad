@@ -27,7 +27,7 @@ prop_shift_reversible (x :: T) = do
 -- shiftMaster
 
 -- focus/local/idempotent same as swapMaster:
-prop_shift_master_focus (x :: T) = peek x == (peek $ shiftMaster x)
+prop_shift_master_focus (x :: T) = peek x == peek (shiftMaster x)
 prop_shift_master_local (x :: T) = hidden_spaces x == hidden_spaces (shiftMaster x)
 prop_shift_master_idempotent (x :: T) = shiftMaster (shiftMaster x) == shiftMaster x
 -- ordering is constant modulo the focused window:
@@ -57,14 +57,14 @@ prop_shift_win_fix_current = do
   x <- arbitrary `suchThat` \(x' :: T) ->
          -- Invariant, otherWindows are NOT in the current workspace.
          let otherWindows = allWindows x' L.\\ index x'
-         in  length(tags x') >= 2 && length(otherWindows) >= 1
+         in  length (tags x') >= 2 && not (null otherWindows)
   -- Sadly we have to construct `otherWindows` again, for the actual StackSet
   -- that got chosen.
   let otherWindows = allWindows x L.\\ index x
   -- We know such tag must exists, due to the precondition
   n <- arbitraryTag x `suchThat` (/= currentTag x)
   -- we know length is >= 1, from above precondition
-  idx <- choose(0, length(otherWindows) - 1)
+  idx <- choose (0, length otherWindows - 1)
   let w = otherWindows !! idx
-  return $ (current $ x) == (current $ shiftWin n w x)
+  return $ current x == current (shiftWin n w x)
 

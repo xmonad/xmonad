@@ -64,7 +64,7 @@ prop_delete_focus_not_end = do
        -- last one in the stack.
        `suchThat` \(x' :: T) ->
          let currWins = index x'
-         in length (currWins) >= 2 && peek x' /= Just (last currWins)
+         in length currWins >= 2 && peek x' /= Just (last currWins)
   -- This is safe, as we know there are >= 2 windows
   let Just n = peek x
   return $ peek (delete n x) == peek (focusDown x)

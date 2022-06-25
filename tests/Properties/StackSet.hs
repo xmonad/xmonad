@@ -58,7 +58,7 @@ invariant (s :: T) = and
 --  inBounds  = and [ w >=0 && w < size s | (w,sc) <- M.assocs (screens s) ]
 
 monotonic []       = True
-monotonic (x:[])   = True
+monotonic [x]      = True
 monotonic (x:y:zs) | x == y-1  = monotonic (y:zs)
                    | otherwise = False
 
@@ -126,7 +126,7 @@ prop_empty (EmptyStackSet x) =
 prop_empty_current (EmptyStackSet x) = currentTag x == head (tags x)
 
 -- no windows will be a member of an empty workspace
-prop_member_empty i (EmptyStackSet x) = member i x == False
+prop_member_empty i (EmptyStackSet x) = not (member i x)
 
 -- peek either yields nothing on the Empty workspace, or Just a valid window
 prop_member_peek (x :: T) =
