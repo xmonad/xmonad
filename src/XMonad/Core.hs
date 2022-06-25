@@ -5,6 +5,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -39,7 +40,7 @@ module XMonad.Core (
 import XMonad.StackSet hiding (modify)
 
 import Prelude
-import Control.Exception (fromException, try, bracket, bracket_, throw, finally, SomeException(..))
+import Control.Exception (fromException, try, bracket_, throw, finally, SomeException(..))
 import qualified Control.Exception as E
 import Control.Applicative ((<|>), empty)
 import Control.Monad.Fail
@@ -176,7 +177,7 @@ newtype Query a = Query (ReaderT Window X a)
     deriving (Functor, Applicative, Monad, MonadReader Window, MonadIO)
 
 runQuery :: Query a -> Window -> X a
-runQuery (Query m) w = runReaderT m w
+runQuery (Query m) = runReaderT m
 
 instance Semigroup a => Semigroup (Query a) where
     (<>) = liftM2 (<>)
@@ -199,7 +200,7 @@ catchX job errcase = do
     st <- get
     c <- ask
     (a, s') <- io $ runX c st job `E.catch` \e -> case fromException e of
-                        Just x -> throw e `const` (x `asTypeOf` ExitSuccess)
+                        Just (_ :: ExitCode) -> throw e
                         _ -> do hPrint stderr e; runX c st errcase
     put s'
     return a
@@ -207,12 +208,12 @@ catchX job errcase = do
 -- | Execute the argument, catching all exceptions.  Either this function or
 -- 'catchX' should be used at all callsites of user customized code.
 userCode :: X a -> X (Maybe a)
-userCode a = catchX (Just `liftM` a) (return Nothing)
+userCode a = catchX (Just <$> a) (return Nothing)
 
 -- | Same as userCode but with a default argument to return instead of using
 -- Maybe, provided for convenience.
 userCodeDef :: a -> X a -> X a
-userCodeDef defValue a = fromMaybe defValue `liftM` userCode a
+userCodeDef defValue a = fromMaybe defValue <$> userCode a
 
 -- ---------------------------------------------------------------------
 -- Convenient wrappers to state
@@ -233,7 +234,7 @@ withWindowAttributes dpy win f = do
 
 -- | True if the given window is the root window
 isRoot :: Window -> X Bool
-isRoot w = (w==) <$> asks theRoot
+isRoot w = asks $ (w ==) . theRoot
 
 -- | Wrapper for the common case of atom internment
 getAtom :: String -> X Atom
@@ -649,7 +650,7 @@ getModTime f = E.catch (Just <$> getModificationTime f) (\(SomeException _) -> r
 compile :: Directories -> Compile -> IO ExitCode
 compile dirs method =
     bracket_ uninstallSignalHandlers installSignalHandlers $
-        bracket (openFile (errFileName dirs) WriteMode) hClose $ \err -> do
+        withFile (errFileName dirs) WriteMode $ \err -> do
             let run = runProc (cfgDir dirs) err
             case method of
                 CompileGhc ->

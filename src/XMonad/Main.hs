@@ -503,7 +503,7 @@ grabButtons = do
     io $ ungrabButton dpy anyButton anyModifier rootw
     ems <- extraModifiers
     ba <- asks buttonActions
-    mapM_ (\(m,b) -> mapM_ (grab b . (m .|.)) ems) (M.keys $ ba)
+    mapM_ (\(m,b) -> mapM_ (grab b . (m .|.)) ems) (M.keys ba)
 
 -- | @replace@ to signals compliant window managers to exit.
 replace :: Display -> ScreenNumber -> Window -> IO ()
