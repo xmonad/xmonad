@@ -1,5 +1,3 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  XMonad.ManageHook
@@ -8,7 +6,6 @@
 --
 -- Maintainer  :  spencerjanssen@gmail.com
 -- Stability   :  unstable
--- Portability :  not portable, uses cunning newtype deriving
 --
 -- An EDSL for ManageHooks
 --
