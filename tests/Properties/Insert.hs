@@ -46,7 +46,7 @@ prop_insert_delete x = do
 
 -- inserting n elements increases current stack size by n
 prop_size_insert is (EmptyStackSet x) =
-        size (foldr insertUp x ws ) ==  (length ws)
+        size (foldr insertUp x ws) == length ws
   where
     ws   = nub is
     size = length . index

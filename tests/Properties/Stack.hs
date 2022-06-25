@@ -1,6 +1,10 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+
+#ifdef VERSION_quickcheck_classes
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+#endif
+
 module Properties.Stack where
 
 import Test.QuickCheck
@@ -24,7 +28,7 @@ import Test.QuickCheck.Classes (
 -- windows kept in the zipper
 prop_index_length (x :: T) =
     case stack . workspace . current $ x of
-        Nothing   -> length (index x) == 0
+        Nothing -> null (index x)
         Just it -> length (index x) == length (focus it : up it ++ down it)
 
 
@@ -43,7 +47,7 @@ prop_allWindowsMember (NonEmptyWindowsStackSet x) = do
       -- which is a key component in this test (together with member).
   let ws = allWindows x
   -- We know that there are at least 1 window in a NonEmptyWindowsStackSet.
-  idx <- choose(0, (length ws) - 1)
+  idx <- choose (0, length ws - 1)
   return $ member (ws!!idx) x
 
 
@@ -56,8 +60,8 @@ prop_filter_order (x :: T) =
 -- differentiate should return Nothing if the list is empty or Just stack, with
 -- the first element of the list is current, and the rest of the list is down.
 prop_differentiate xs =
-        if null xs then differentiate xs == Nothing
-                   else (differentiate xs) == Just (Stack (head xs) [] (tail xs))
+        if null xs then isNothing (differentiate xs)
+                   else differentiate xs == Just (Stack (head xs) [] (tail xs))
     where _ = xs :: [Int]
 
 

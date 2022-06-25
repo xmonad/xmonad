@@ -29,6 +29,6 @@ prop_purelayout_full rect = do
 
 -- what happens when we send an IncMaster message to Full --- Nothing
 prop_sendmsg_full (NonNegative k) =
-         isNothing (Full `pureMessage` (SomeMessage (IncMasterN k)))
+         isNothing (Full `pureMessage` SomeMessage (IncMasterN k))
 
 prop_desc_full = description Full == show Full

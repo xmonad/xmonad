@@ -1,4 +1,10 @@
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, PatternGuards, LambdaCase #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
 -- --------------------------------------------------------------------------
 -- |
 -- Module      :  XMonad.Operations
@@ -66,6 +72,7 @@ import qualified Data.Set as S
 import Control.Arrow (second)
 import Control.Monad.Reader
 import Control.Monad.State
+import Control.Monad (void)
 import qualified Control.Exception as C
 
 import System.IO
@@ -136,7 +143,7 @@ killWindow w = withDisplay $ \d -> do
                 setEventType ev clientMessage
                 setClientMessageEvent ev w wmprot 32 wmdelt currentTime
                 sendEvent d w False noEventMask ev
-        else killClient d w >> return ()
+        else void (killClient d w)
 
 -- | Kill the currently focused client.
 kill :: X ()
@@ -187,7 +194,7 @@ windows f = do
 
         let m   = W.floating ws
             flt = [(fw, scaleRationalRect viewrect r)
-                    | fw <- filter (flip M.member m) (W.index this)
+                    | fw <- filter (`M.member` m) (W.index this)
                     , Just r <- [M.lookup fw m]]
             vs = flt ++ rs
 
@@ -213,7 +220,7 @@ windows f = do
     -- all windows that are no longer in the windowset are marked as
     -- withdrawn, it is important to do this after the above, otherwise 'hide'
     -- will overwrite withdrawnState with iconicState
-    mapM_ (flip setWMState withdrawnState) (W.allWindows old \\ W.allWindows ws)
+    mapM_ (`setWMState` withdrawnState) (W.allWindows old \\ W.allWindows ws)
 
     isMouseFocused <- asks mouseFocused
     unless isMouseFocused $ clearEvents enterWindowMask
@@ -229,8 +236,8 @@ windowBracket :: (a -> Bool) -> X a -> X a
 windowBracket p action = withWindowSet $ \old -> do
   a <- action
   when (p a) . withWindowSet $ \new -> do
-    modifyWindowSet $ \_ -> old
-    windows         $ \_ -> new
+    modifyWindowSet $ const old
+    windows         $ const new
   return a
 
 -- | Perform an @X@ action. If it returns @Any True@, unwind the
@@ -417,7 +424,7 @@ setFocusX w = withWindowSet $ \ws -> do
     currevt <- asks currentEvent
     let inputHintSet = wmh_flags hints `testBit` inputHintBit
 
-    when ((inputHintSet && wmh_input hints) || (not inputHintSet)) $
+    when (inputHintSet && wmh_input hints || not inputHintSet) $
       io $ do setInputFocus dpy w revertToPointerRoot 0
     when (wmtf `elem` protocols) $
       io $ allocaXEvent $ \ev -> do
@@ -425,7 +432,7 @@ setFocusX w = withWindowSet $ \ws -> do
         setClientMessageEvent ev w wmprot 32 wmtf $ maybe currentTime event_time currevt
         sendEvent dpy w False noEventMask ev
         where event_time ev =
-                if (ev_event_type ev) `elem` timedEvents then
+                if ev_event_type ev `elem` timedEvents then
                   ev_time ev
                 else
                   currentTime
@@ -438,7 +445,7 @@ setFocusX w = withWindowSet $ \ws -> do
 -- layout the windows, in which case changes are handled through a refresh.
 sendMessage :: Message a => a -> X ()
 sendMessage a = windowBracket_ $ do
-    w <- W.workspace . W.current <$> gets windowset
+    w <- gets $ W.workspace . W.current . windowset
     ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
     whenJust ml' $ \l' ->
         modifyWindowSet $ \ws -> ws { W.current = (W.current ws)
@@ -473,9 +480,9 @@ updateLayout i ml = whenJust ml $ \l ->
 -- | Set the layout of the currently viewed workspace.
 setLayout :: Layout Window -> X ()
 setLayout l = do
-    ss@(W.StackSet { W.current = c@(W.Screen { W.workspace = ws })}) <- gets windowset
+    ss@W.StackSet{ W.current = c@W.Screen{ W.workspace = ws }} <- gets windowset
     handleMessage (W.layout ws) (SomeMessage ReleaseResources)
-    windows $ const $ ss {W.current = c { W.workspace = ws { W.layout = l } } }
+    windows $ const $ ss{ W.current = c{ W.workspace = ws{ W.layout = l } } }
 
 ------------------------------------------------------------------------
 -- Utilities
@@ -515,7 +522,7 @@ cleanMask km = do
 -- | Get the 'Pixel' value for a named color.
 initColor :: Display -> String -> IO (Maybe Pixel)
 initColor dpy c = C.handle (\(C.SomeException _) -> return Nothing) $
-    (Just . color_pixel . fst) <$> allocNamedColor dpy colormap c
+    Just . color_pixel . fst <$> allocNamedColor dpy colormap c
     where colormap = defaultColormap dpy (defaultScreen dpy)
 
 ------------------------------------------------------------------------
@@ -535,7 +542,7 @@ writeStateToFile = do
         maybeShow _ = Nothing
 
         wsData   = W.mapLayout show . windowset
-        extState = catMaybes . map maybeShow . M.toList . extensibleState
+        extState = mapMaybe maybeShow . M.toList . extensibleState
 
     path <- asks $ stateFileName . directories
     stateData <- gets (\s -> StateFile (wsData s) (extState s))
@@ -598,11 +605,10 @@ floatLocation w =
     catchX go $ do
       -- Fallback solution if `go' fails.  Which it might, since it
       -- calls `getWindowAttributes'.
-      sc <- W.current <$> gets windowset
+      sc <- gets $ W.current . windowset
       return (W.screen sc, W.RationalRect 0 0 1 1)
 
-  where fi x = fromIntegral x
-        go = withDisplay $ \d -> do
+  where go = withDisplay $ \d -> do
           ws <- gets windowset
           wa <- io $ getWindowAttributes d w
           let bw = (fromIntegral . wa_border_width) wa
@@ -627,6 +633,9 @@ floatLocation w =
                   else W.RationalRect (0.5 - width/2) (0.5 - height/2) width height
 
           return (W.screen sc, rr)
+
+        fi :: (Integral a, Num b) => a -> b
+        fi = fromIntegral
 
 -- | Given a point, determine the screen (if any) that contains it.
 pointScreen :: Position -> Position
@@ -726,7 +735,7 @@ mkAdjust w = withDisplay $ \d -> liftIO $ do
     sh <- getWMNormalHints d w
     wa <- C.try $ getWindowAttributes d w
     case wa of
-         Left  err -> const (return id) (err :: C.SomeException)
+         Left (_ :: C.SomeException) -> return id
          Right wa' ->
             let bw = fromIntegral $ wa_border_width wa'
             in  return $ applySizeHints bw sh

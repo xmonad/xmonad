@@ -1,4 +1,6 @@
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, PatternGuards, TypeSynonymInstances, DeriveDataTypeable, LambdaCase, MultiWayIf #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PatternGuards #-}
 
 -- --------------------------------------------------------------------------
 -- |
@@ -39,7 +41,7 @@ import Data.Maybe (fromMaybe)
 data Resize     = Shrink | Expand
 
 -- | Increase the number of clients in the master pane.
-data IncMasterN = IncMasterN !Int
+newtype IncMasterN = IncMasterN Int
 
 instance Message Resize
 instance Message IncMasterN
@@ -199,8 +201,8 @@ choose (Choose d l r) d' ml      mr = f lr
                     (CL, CR) -> (hide l'  , return r')
                     (CR, CL) -> (return l', hide r'  )
                     (_ , _ ) -> (return l', return r')
-    f (x,y)  = fmap Just $ liftM2 (Choose d') x y
-    hide x   = fmap (fromMaybe x) $ handle x Hide
+    f (x,y)  = Just <$> liftM2 (Choose d') x y
+    hide x   = fromMaybe x <$> handle x Hide
 
 instance (LayoutClass l a, LayoutClass r a) => LayoutClass (Choose l r) a where
     runLayout (W.Workspace i (Choose CL l r) ms) =

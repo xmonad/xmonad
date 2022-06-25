@@ -36,7 +36,7 @@ instance (Integral i, Integral s, Eq a, Arbitrary a, Arbitrary l, Arbitrary sd)
       -- Pick a random window "number" in each workspace, to give focus.
       focus <- sequence [ if null windows
                           then return Nothing
-                          else liftM Just $ choose (0, length windows - 1)
+                          else Just <$> choose (0, length windows - 1)
                         | windows <- wsWindows ]
 
       let tags = [1 .. fromIntegral numWs]
@@ -80,7 +80,7 @@ newtype NonEmptyWindowsStackSet = NonEmptyWindowsStackSet T
 
 instance Arbitrary NonEmptyWindowsStackSet where
   arbitrary =
-    NonEmptyWindowsStackSet `fmap` (arbitrary `suchThat` (not . null . allWindows))
+    NonEmptyWindowsStackSet <$> (arbitrary `suchThat` (not . null . allWindows))
 
 instance Arbitrary Rectangle where
     arbitrary = Rectangle <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
@@ -99,7 +99,7 @@ newtype NonEmptyNubList a = NonEmptyNubList [a]
     deriving ( Eq, Ord, Show, Read )
 
 instance (Eq a, Arbitrary a) => Arbitrary (NonEmptyNubList a) where
-  arbitrary   = NonEmptyNubList `fmap` ((liftM nub arbitrary) `suchThat` (not . null))
+  arbitrary = NonEmptyNubList <$> ((nub <$> arbitrary) `suchThat` (not . null))
 
 
 
@@ -116,7 +116,7 @@ arbitraryTag :: T -> Gen Tag
 arbitraryTag x = do
   let ts = tags x
   -- There must be at least 1 workspace, thus at least 1 tag.
-  idx <- choose (0, (length ts) - 1)
+  idx <- choose (0, length ts - 1)
   return $ ts!!idx
 
 -- | Pull out an arbitrary window from a StackSet that is guaranteed to have a
@@ -136,5 +136,5 @@ arbitraryWindow :: NonEmptyWindowsStackSet -> Gen Window
 arbitraryWindow (NonEmptyWindowsStackSet x) = do
   let ws = allWindows x
   -- We know that there are at least 1 window in a NonEmptyWindowsStackSet.
-  idx <- choose(0, (length ws) - 1)
+  idx <- choose (0, length ws - 1)
   return $ ws!!idx

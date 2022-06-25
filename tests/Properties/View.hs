@@ -37,7 +37,7 @@ prop_view_local  (x :: T) = do
 -- view is idempotent
 prop_view_idem (x :: T) = do
     n <- arbitraryTag x
-    return $ view n (view n x) == (view n x)
+    return $ view n (view n x) == view n x
 
 -- view is reversible, though shuffles the order of hidden/visible
 prop_view_reversible (x :: T) = do

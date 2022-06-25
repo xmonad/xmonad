@@ -35,7 +35,7 @@ prop_greedyView_local  (x :: T) = do
 -- greedyView is idempotent
 prop_greedyView_idem (x :: T) = do
   n <- arbitraryTag x
-  return $ greedyView n (greedyView n x) == (greedyView n x)
+  return $ greedyView n (greedyView n x) == greedyView n x
 
 -- greedyView is reversible, though shuffles the order of hidden/visible
 prop_greedyView_reversible (x :: T) = do

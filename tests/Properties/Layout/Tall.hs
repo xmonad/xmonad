@@ -29,12 +29,12 @@ prop_tile_non_overlap rect windows nmaster = noOverlaps (tile pct rect nmaster w
 
 -- splitting horizontally yields sensible results
 prop_split_horizontal (NonNegative n) x =
-      (noOverflows (+) (rect_x x) (rect_width x)) ==>
+      noOverflows (+) (rect_x x) (rect_width x) ==>
         sum (map rect_width xs) == rect_width x
      &&
-        all (== rect_height x) (map rect_height xs)
+        all (\s -> rect_height s == rect_height x) xs
      &&
-        (map rect_x xs) == (sort $ map rect_x xs)
+        map rect_x xs == sort (map rect_x xs)
 
     where
         xs = splitHorizontally n x
@@ -72,7 +72,7 @@ prop_shrink_tall (NonNegative n) (Positive delta) (NonNegative frac) =
         -- remaining fraction should shrink
     where
          l1                   = Tall n delta frac
-         Just l2@(Tall n' delta' frac') = l1 `pureMessage` (SomeMessage Shrink)
+         Just l2@(Tall n' delta' frac') = l1 `pureMessage` SomeMessage Shrink
         --  pureMessage :: layout a -> SomeMessage -> Maybe (layout a)
 
 
@@ -93,7 +93,7 @@ prop_expand_tall (NonNegative n)
     where
          frac                 = min 1 (n1 % d1)
          l1                   = Tall n delta frac
-         Just l2@(Tall n' delta' frac') = l1 `pureMessage` (SomeMessage Expand)
+         Just l2@(Tall n' delta' frac') = l1 `pureMessage` SomeMessage Expand
         --  pureMessage :: layout a -> SomeMessage -> Maybe (layout a)
 
 -- what happens when we send an IncMaster message to Tall
@@ -102,7 +102,7 @@ prop_incmaster_tall (NonNegative n) (Positive delta) (NonNegative frac)
        delta == delta'  && frac == frac' && n' == n + k
     where
          l1                   = Tall n delta frac
-         Just l2@(Tall n' delta' frac') = l1 `pureMessage` (SomeMessage (IncMasterN k))
+         Just l2@(Tall n' delta' frac') = l1 `pureMessage` SomeMessage (IncMasterN k)
         --  pureMessage :: layout a -> SomeMessage -> Maybe (layout a)
 
 
