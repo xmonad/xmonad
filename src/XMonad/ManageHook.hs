@@ -58,11 +58,11 @@ infixr 3 <&&>, <||>
 
 -- | '&&' lifted to a 'Monad'.
 (<&&>) :: Monad m => m Bool -> m Bool -> m Bool
-(<&&>) x y = ifM x y (pure False)
+x <&&> y = ifM x y (pure False)
 
 -- | '||' lifted to a 'Monad'.
 (<||>) :: Monad m => m Bool -> m Bool -> m Bool
-(<||>) x = ifM x (pure True)
+x <||> y = ifM x (pure True) y
 
 -- | If-then-else lifted to a 'Monad'.
 ifM :: Monad m => m Bool -> m a -> m a -> m a
