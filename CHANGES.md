@@ -13,6 +13,13 @@
   * Fixed border color of windows with alpha channel. Now all windows have the
     same opaque border color.
 
+  * Change the main loop to try to avoid [GHC bug 21708] on systems
+    running GHC 9.2 up to version 9.2.3. The issue has been fixed in
+    [GHC 9.2.4] and all later releases.
+
+[GHC bug 21708]: https://gitlab.haskell.org/ghc/ghc/-/issues/21708
+[GHC 9.2.4]: https://discourse.haskell.org/t/ghc-9-2-4-released/4851
+
 ## 0.17.0 (October 27, 2021)
 
 ### Enhancements
