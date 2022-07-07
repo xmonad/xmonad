@@ -33,7 +33,7 @@ module XMonad.Operations (
     -- * Keyboard and Mouse
     cleanMask, extraModifiers,
     mouseDrag, mouseMoveWindow, mouseResizeWindow,
-    setButtonGrab, setFocusX,
+    setButtonGrab, setFocusX, cacheNumlockMask, mkGrabs,
 
     -- * Messages
     sendMessage, broadcastMessage, sendMessageWithNoRefresh,
@@ -63,7 +63,7 @@ import qualified XMonad.StackSet as W
 import Data.Maybe
 import Data.Monoid          (Endo(..),Any(..))
 import Data.List            (nub, (\\), find)
-import Data.Bits            ((.|.), (.&.), complement, testBit)
+import Data.Bits            ((.|.), (.&.), complement, setBit, testBit)
 import Data.Function        (on)
 import Data.Ratio
 import qualified Data.Map as M
@@ -437,6 +437,40 @@ setFocusX w = withWindowSet $ \ws -> do
                 else
                   currentTime
               timedEvents = [ keyPress, keyRelease, buttonPress, buttonRelease, enterNotify, leaveNotify, selectionRequest ]
+
+cacheNumlockMask :: X ()
+cacheNumlockMask = do
+    dpy <- asks display
+    ms <- io $ getModifierMapping dpy
+    xs <- sequence [ do ks <- io $ keycodeToKeysym dpy kc 0
+                        if ks == xK_Num_Lock
+                            then return (setBit 0 (fromIntegral m))
+                            else return (0 :: KeyMask)
+                   | (m, kcs) <- ms, kc <- kcs, kc /= 0
+                   ]
+    modify (\s -> s { numberlockMask = foldr (.|.) 0 xs })
+
+-- | Given a list of keybindings, turn the given 'KeySym's into actual
+-- 'KeyCode's and prepare them for grabbing.
+mkGrabs :: [(KeyMask, KeySym)] -> X [(KeyMask, KeyCode)]
+mkGrabs ks = withDisplay $ \dpy -> do
+    let (minCode, maxCode) = displayKeycodes dpy
+        allCodes = [fromIntegral minCode .. fromIntegral maxCode]
+    -- build a map from keysyms to lists of keysyms (doing what
+    -- XGetKeyboardMapping would do if the X11 package bound it)
+    syms <- forM allCodes $ \code -> io (keycodeToKeysym dpy code 0)
+    let -- keycodeToKeysym returns noSymbol for all unbound keycodes,
+        -- and we don't want to grab those whenever someone accidentally
+        -- uses def :: KeySym
+        keysymMap = M.delete noSymbol $
+            M.fromListWith (++) (zip syms [[code] | code <- allCodes])
+        keysymToKeycodes sym = M.findWithDefault [] sym keysymMap
+    extraMods <- extraModifiers
+    pure [ (mask .|. extraMod, keycode)
+         | (mask, sym) <- ks
+         , keycode     <- keysymToKeycodes sym
+         , extraMod    <- extraMods
+         ]
 
 ------------------------------------------------------------------------
 -- Message handling

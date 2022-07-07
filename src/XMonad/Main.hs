@@ -21,6 +21,7 @@ import System.Locale.SetLocale
 import qualified Control.Exception as E
 import Data.Bits
 import Data.List ((\\))
+import Data.Foldable (traverse_)
 import Data.Function
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -244,7 +245,7 @@ launch initxmc drs = do
             let extst = maybe M.empty extensibleState serializedSt
             modify (\s -> s {extensibleState = extst})
 
-            setNumlockMask
+            cacheNumlockMask
             grabKeys
             grabButtons
 
@@ -342,7 +343,7 @@ handle (UnmapEvent {ev_window = w, ev_send_event = synthetic}) = whenX (isClient
 handle e@(MappingNotifyEvent {}) = do
     io $ refreshKeyboardMapping e
     when (ev_request e `elem` [mappingKeyboard, mappingModifier]) $ do
-        setNumlockMask
+        cacheNumlockMask
         grabKeys
 
 -- handle button release, which may finish dragging.
@@ -461,38 +462,14 @@ scan dpy rootw = do
         skip :: E.SomeException -> IO Bool
         skip _ = return False
 
-setNumlockMask :: X ()
-setNumlockMask = do
-    dpy <- asks display
-    ms <- io $ getModifierMapping dpy
-    xs <- sequence [ do
-                        ks <- io $ keycodeToKeysym dpy kc 0
-                        if ks == xK_Num_Lock
-                            then return (setBit 0 (fromIntegral m))
-                            else return (0 :: KeyMask)
-                        | (m, kcs) <- ms, kc <- kcs, kc /= 0]
-    modify (\s -> s { numberlockMask = foldr (.|.) 0 xs })
-
 -- | Grab the keys back
 grabKeys :: X ()
 grabKeys = do
     XConf { display = dpy, theRoot = rootw } <- ask
-    let grab kc m = io $ grabKey dpy kc m rootw True grabModeAsync grabModeAsync
-        (minCode, maxCode) = displayKeycodes dpy
-        allCodes = [fromIntegral minCode .. fromIntegral maxCode]
     io $ ungrabKey dpy anyKey anyModifier rootw
-    ks <- asks keyActions
-    -- build a map from keysyms to lists of keysyms (doing what
-    -- XGetKeyboardMapping would do if the X11 package bound it)
-    syms <- forM allCodes $ \code -> io (keycodeToKeysym dpy code 0)
-    let keysymMap' = M.fromListWith (++) (zip syms [[code] | code <- allCodes])
-    -- keycodeToKeysym returns noSymbol for all unbound keycodes, and we don't
-    -- want to grab those whenever someone accidentally uses def :: KeySym
-    let keysymMap = M.delete noSymbol keysymMap'
-    let keysymToKeycodes sym = M.findWithDefault [] sym keysymMap
-    forM_ (M.keys ks) $ \(mask,sym) ->
-         forM_ (keysymToKeycodes sym) $ \kc ->
-              mapM_ (grab kc . (mask .|.)) =<< extraModifiers
+    let grab :: (KeyMask, KeyCode) -> X ()
+        grab (km, kc) = io $ grabKey dpy kc km rootw True grabModeAsync grabModeAsync
+    traverse_ grab =<< mkGrabs =<< asks (M.keys . keyActions)
 
 -- | Grab the buttons
 grabButtons :: X ()
