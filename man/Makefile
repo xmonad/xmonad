@@ -9,3 +9,6 @@ xmonad.1: xmonad.1.markdown
 
 xmonad.1.html: xmonad.1.markdown
 	pandoc --from=markdown --to=html --standalone --table-of-contents --output=$@ $<
+
+clean:
+	rm xmonad.1.markdown xmonad.1 xmonad.1.html
