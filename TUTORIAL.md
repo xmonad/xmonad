@@ -592,14 +592,14 @@ Config { overrideRedirect = False
 ```
 
 First, we set the font to use for the bar, as well as the colors.  The
-position options are documented well on the [xmobar home page] or,
-alternatively, in the [quick-start.org] on GitHub.  The particular
-option of `TopW L 90` says to put the bar in the upper left of the
-screen, and make it consume 90% of the width of the screen (we need to
-leave a little bit of space for `trayer-srg`).  If you're up for it—and
-this really requires more shell-scripting than Haskell knowledge—you can
-also try to seamlessly embed trayer into xmobar by using
-[trayer-padding-icon.sh] and following the advice given in that thread.
+position options are documented well in xmobar's [quick-start.org].  The
+particular option of `TopW L 90` says to put the bar in the upper left
+of the screen, and make it consume 90% of the width of the screen (we
+need to leave a little bit of space for `trayer-srg`).  If you're up for
+it—and this really requires more shell-scripting than Haskell
+knowledge—you can also try to seamlessly embed trayer into xmobar by
+using [trayer-padding-icon.sh] and following the advice given in that
+thread.
 
 In the commands list you, well, define commands.  Commands are the
 pieces that generate the content to be displayed in your bar.  These
@@ -1232,7 +1232,7 @@ either :)
 [xmonad guided tour]: https://xmonad.org/tour.html
 [xmonad mailing list]: https://mail.haskell.org/mailman/listinfo/xmonad
 [xmonad's GitHub page]: https://github.com/xmonad/xmonad
-[trayer-padding-icon.sh]: https://github.com/jaor/xmobar/issues/239#issuecomment-233206552
+[trayer-padding-icon.sh]: https://codeberg.org/xmobar/xmobar/issues/239#issuecomment-537931
 [xmonad-contrib documentation]: https://hackage.haskell.org/package/xmonad-contrib
 [GNU Image Manipulation Program]: https://www.gimp.org/
 [Basic Desktop Environment Integration]: https://wiki.haskell.org/Xmonad/Basic_Desktop_Environment_Integration
@@ -1253,14 +1253,13 @@ either :)
 [XMonad.Util.ClickableWorkspaces]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Util-ClickableWorkspaces.html
 
 [xmobar]: https://xmobar.org/
-[battery]: https://github.com/jaor/xmobar/blob/master/doc/plugins.org#batteryp-dirs-args-refreshrate
-[xmobar.hs]: https://github.com/jaor/xmobar/blob/master/examples/xmobar.hs
+[battery]: https://codeberg.org/xmobar/xmobar/src/branch/master/doc/plugins.org#batteryp-dirs-args-refreshrate
+[xmobar.hs]: https://codeberg.org/xmobar/xmobar/src/branch/master/examples/xmobar.hs
 [Wikipedia page]: https://en.wikipedia.org/wiki/ICAO_airport_code#Prefixes
-[quick-start.org]: https://github.com/jaor/xmobar/blob/master/doc/quick-start.org#configuration-options
+[quick-start.org]: https://codeberg.org/xmobar/xmobar/src/branch/master/doc/quick-start.org#configuration-options
 [jao's xmobar.hs]: https://codeberg.org/jao/xmobar-config
-[weather monitor]: https://github.com/jaor/xmobar/blob/master/doc/plugins.org#weather-monitors
-[xmobar home page]: https://xmobar.org/
-[xmobar's `Installation` section]: https://github.com/jaor/xmobar#installation
+[weather monitor]: https://codeberg.org/xmobar/xmobar/src/branch/master/doc/plugins.org#weather-monitors
+[xmobar's `Installation` section]: https://codeberg.org/xmobar/xmobar#installation
 
 [Haskell]: https://www.haskell.org/
 [trayer-srg]: https://github.com/sargon/trayer-srg
