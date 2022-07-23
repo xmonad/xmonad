@@ -51,6 +51,7 @@ import Data.Semigroup
 import Data.Traversable (for)
 import Data.Time.Clock (UTCTime)
 import Data.Default.Class
+import System.Environment (lookupEnv)
 import System.FilePath
 import System.IO
 import System.Info
@@ -457,7 +458,8 @@ xfork x = io . forkProcess . finally nullStdin $ do
 -- | Use @xmessage@ to show information to the user.
 xmessage :: MonadIO m => String -> m ()
 xmessage msg = void . xfork $ do
-    executeFile "xmessage" True
+    xmessageBin <- fromMaybe "xmessage" <$> liftIO (lookupEnv "XMONAD_XMESSAGE")
+    executeFile xmessageBin True
         [ "-default", "okay"
         , "-xrm", "*international:true"
         , "-xrm", "*fontSet:-*-fixed-medium-r-normal-*-18-*-*-*-*-*-*-*,-*-fixed-*-*-*-*-18-*-*-*-*-*-*-*,-*-*-*-*-*-*-18-*-*-*-*-*-*-*"
@@ -653,8 +655,9 @@ compile dirs method =
         withFile (errFileName dirs) WriteMode $ \err -> do
             let run = runProc (cfgDir dirs) err
             case method of
-                CompileGhc ->
-                    run "ghc" ghcArgs
+                CompileGhc -> do
+                    ghc <- fromMaybe "ghc" <$> lookupEnv "XMONAD_GHC"
+                    run ghc ghcArgs
                 CompileStackGhc stackYaml ->
                     run "stack" ["build", "--silent", "--stack-yaml", stackYaml] .&&.
                     run "stack" ("ghc" : "--stack-yaml" : stackYaml : "--" : ghcArgs)

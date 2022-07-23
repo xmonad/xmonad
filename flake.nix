@@ -20,13 +20,10 @@
           overrides = composeExtensions (old.overrides or (_: _: {}))
             (hol final prev);
         }));
-    patch = unstable
-          + "/pkgs/development/haskell-modules/patches/xmonad_0_17_0-nix.patch";
     hoverlay = final: prev: hself: hsuper:
       with prev.haskell.lib.compose; {
-      xmonad = appendPatch patch
-        (hself.callCabal2nix "xmonad"
-          (git-ignore-nix.lib.gitignoreSource ./.) { });
+        xmonad = hself.callCabal2nix "xmonad"
+          (git-ignore-nix.lib.gitignoreSource ./.) { };
       };
     overlay = fromHOL hoverlay { };
     overlays = [ overlay ];
