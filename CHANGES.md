@@ -6,6 +6,8 @@
 
   * Added custom cursor shapes for resizing and moving windows.
 
+  * Exported `cacheNumlockMask` and `mkGrabs` from `XMonad.Operations`.
+
 ### Bug Fixes
 
   * Fixed border color of windows with alpha channel. Now all windows have the
