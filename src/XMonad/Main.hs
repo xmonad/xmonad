@@ -267,10 +267,11 @@ launch initxmc drs = do
             userCode $ startupHook initxmc
 
             rrData <- io $ xrrQueryExtension dpy
-            let rrUpdate = when (isJust rrData) . void . xrrUpdateConfiguration
 
             -- main loop, for all you HOF/recursion fans out there.
-            forever $ prehandle =<< io (nextEvent dpy e >> rrUpdate e >> getEvent e)
+            -- forever $ prehandle =<< io (nextEvent dpy e >> rrUpdate e >> getEvent e)
+            -- sadly, 9.2.{1,2,3} join points mishandle the above and trash the heap (see #389)
+            mainLoop dpy e rrData
 
     return ()
       where
@@ -281,6 +282,8 @@ launch initxmc drs = do
                       in local (\c -> c { mousePosition = mouse, currentEvent = Just e }) (handleWithHook e)
         evs = [ keyPress, keyRelease, enterNotify, leaveNotify
               , buttonPress, buttonRelease]
+        rrUpdate e r = when (isJust r) (void (xrrUpdateConfiguration e))
+        mainLoop d e r = io (nextEvent d e >> rrUpdate e r >> getEvent e) >>= prehandle >> mainLoop d e r
 
 
 -- | Runs handleEventHook from the configuration and runs the default handler
