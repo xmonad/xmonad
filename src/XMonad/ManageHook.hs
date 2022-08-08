@@ -80,7 +80,8 @@ title = ask >>= \w -> liftX $ do
                           return $ if null l then "" else head l
     io $ bracket getProp (xFree . tp_value) extract `E.catch` \(SomeException _) -> return ""
 
--- | Return the application name.
+-- | Return the application name; i.e., the /first/ string returned by
+-- @WM_CLASS@.
 appName :: Query String
 appName = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resName $ io $ getClassHint d w)
 
@@ -88,7 +89,8 @@ appName = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resName $ io $ getClas
 resource :: Query String
 resource = appName
 
--- | Return the resource class.
+-- | Return the resource class; i.e., the /second/ string returned by
+-- @WM_CLASS@.
 className :: Query String
 className = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resClass $ io $ getClassHint d w)
 
