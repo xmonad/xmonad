@@ -1254,7 +1254,7 @@ either :)
 
 [xmobar]: https://xmobar.org/
 [battery]: https://codeberg.org/xmobar/xmobar/src/branch/master/doc/plugins.org#batteryp-dirs-args-refreshrate
-[xmobar.hs]: https://codeberg.org/xmobar/xmobar/src/branch/master/examples/xmobar.hs
+[xmobar.hs]: https://codeberg.org/xmobar/xmobar/src/branch/master/etc/xmobar.hs
 [Wikipedia page]: https://en.wikipedia.org/wiki/ICAO_airport_code#Prefixes
 [quick-start.org]: https://codeberg.org/xmobar/xmobar/src/branch/master/doc/quick-start.org#configuration-options
 [jao's xmobar.hs]: https://codeberg.org/jao/xmobar-config
