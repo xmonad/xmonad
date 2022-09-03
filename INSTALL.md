@@ -101,8 +101,8 @@ This will give you the latest `HEAD`; if you want you can also check
 out a tagged release, e.g.:
 
 ``` console
-$ git clone --branch v0.15 https://github.com/xmonad/xmonad
-$ git clone --branch v0.16 https://github.com/xmonad/xmonad-contrib
+$ git clone --branch v0.17.1 https://github.com/xmonad/xmonad
+$ git clone --branch v0.17.1 https://github.com/xmonad/xmonad-contrib
 ```
 
 (Sources and binaries don't usually go into `~/.config`.  In our case,
