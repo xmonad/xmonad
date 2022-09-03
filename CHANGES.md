@@ -1,6 +1,6 @@
 # Change Log / Release Notes
 
-## unknown
+## 0.17.1 (September 3, 2021)
 
 ### Enhancements
 
