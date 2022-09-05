@@ -27,3 +27,6 @@ tags
 /cabal.sandbox.config
 /dist-newstyle/
 /dist/
+
+# nix artifacts
+result

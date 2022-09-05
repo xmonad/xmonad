@@ -15,17 +15,26 @@
        else [ "haskell" "packages" compiler ]
       );
     fromHOL = hol: comp: final: prev: with prev.lib; with attrsets;
-      setAttrByPath (hpath comp)
-        ((getAttrFromPath (hpath comp) prev).override (old: {
+      let
+        path   = hpath comp;
+        root   = head path;
+        branch = tail path;
+        hpkgs' = (getAttrFromPath path prev).override (old: {
           overrides = composeExtensions (old.overrides or (_: _: {}))
             (hol final prev);
-        }));
+        });
+      in {
+        ${root} = recursiveUpdate prev.${root} (setAttrByPath branch hpkgs');
+      };
     hoverlay = final: prev: hself: hsuper:
       with prev.haskell.lib.compose; {
         xmonad = hself.callCabal2nix "xmonad"
           (git-ignore-nix.lib.gitignoreSource ./.) { };
       };
-    overlay = fromHOL hoverlay { };
+    defComp = if builtins.pathExists ./comp.nix
+      then import ./comp.nix
+      else { };
+    overlay = fromHOL hoverlay defComp;
     overlays = [ overlay ];
     nixosModule = { config, pkgs, lib, ... }: with lib; with attrsets;
       let
@@ -64,12 +73,28 @@
     nixosModules = [ nixosModule ];
   in flake-utils.lib.eachDefaultSystem (system:
   let pkgs = import nixpkgs { inherit system overlays; };
+      hpkg = pkgs.lib.attrsets.getAttrFromPath (hpath defComp) pkgs;
   in
   rec {
-    devShell = pkgs.haskellPackages.shellFor {
+    devShell = hpkg.shellFor {
       packages = p: [ p.xmonad ];
     };
-    defaultPackage = pkgs.haskellPackages.xmonad;
+    defaultPackage = hpkg.xmonad;
+    # An auxiliary NixOS module that modernises the standard xmonad NixOS module
+    # and wrapper script used, replacing them with versions from unstable.
+    # Currently, due to the NIX_GHC --> XMONAD_GHC env var change, this is
+    # necessary in order for Mod-q recompilation to work out-of-the-box.
+    modernise =
+      let
+        xmonadModFile = "services/x11/window-managers/xmonad.nix";
+        unpkgs = import unstable { inherit system; };
+        replaceWrapper = _: _:
+          { xmonad-with-packages = unpkgs.xmonad-with-packages; };
+      in {
+        disabledModules = [ xmonadModFile ];
+        imports = [ (unstable + "/nixos/modules/" + xmonadModFile) ];
+        nixpkgs.overlays = [ replaceWrapper ];
+      };
   }) // {
     inherit hoverlay overlay overlays nixosModule nixosModules;
     lib = { inherit hpath fromHOL; };
