@@ -379,11 +379,15 @@ effect (and some applications, like chromium, will misbehave and need
 some [Hacks] to make this work), we will also add the relevant function
 to get "proper" fullscreen behaviour here.
 
+---
+
 _IF YOU ARE ON A VERSION `< 0.17.0`_: The `ewmhFullscreen` function does
   not exist in these versions.  Instead of it, you can try to add
   `fullscreenEventHook` to your `handleEventHook` to achieve similar
   functionality (how to do this is explained in the documentation of
   [XMonad.Hooks.EwmhDesktops]).
+
+---
 
 To use the two combinators, we compose them with the `xmonad` function
 in the following way:
@@ -430,7 +434,7 @@ Much better!
 ## Make XMonad and Xmobar Talk to Each Other
 
 Onto the main dish.  First, we have to import the necessary modules.
-Add the following to your list of imports:
+Add the following to your list of imports
 
 ``` haskell
 import XMonad.Hooks.DynamicLog
@@ -438,23 +442,27 @@ import XMonad.Hooks.StatusBar
 import XMonad.Hooks.StatusBar.PP
 ```
 
-_IF YOU ARE ON A VERSION `< 0.17.0`_: The `XMonad.Hooks.StatusBar` and
-  `XMonad.Hooks.StatusBar.PP` modules don't exist yet.  You can find
-  everything you need in the `XMonad.Hooks.DynamicLog` module, so remove
-  these two imports.
-
-Replace your `main` function above with:
+and replace your `main` function above with:
 
 ``` haskell
 main :: IO ()
 main = xmonad $ ewmhFullscreen $ ewmh $ xmobarProp $ myConfig
 ```
 
-_IF YOU ARE ON A VERSION `< 0.17.0`_: The `xmobarProp` function does not
-  exist in these versions.  Instead of it, use `xmobar` via
-  `main = xmonad . ewmh =<< xmobar myConfig` and carefully read the part
-  about pipes later on (`xmobar` uses pipes to make xmobar talk to
-  xmonad).
+---
+
+_IF YOU ARE ON A VERSION `< 0.17.0`_: The `XMonad.Hooks.StatusBar` and
+  `XMonad.Hooks.StatusBar.PP` modules don't exist yet.  You can find
+  everything you need in the `XMonad.Hooks.DynamicLog` module, so remove
+  these two imports.
+
+  Further, the `xmobarProp` function does not exist in older versions.
+  Instead of it, use `xmobar` via `main = xmonad . ewmh =<< xmobar
+  myConfig` and carefully read the part about pipes later on (`xmobar`
+  uses pipes to make xmobar talk to xmonad).  Do note the lack of
+  `ewmhFullscreen`, as explained above!
+
+---
 
 As a quick side-note, we could have also written
 
@@ -540,10 +548,14 @@ when things are not being read!  For this reason we have to use
 (this is useful, for example, for [XMonad.Util.ClickableWorkspaces],
 which is a new feature in `0.17.0`).
 
+---
+
 _IF YOU ARE ON A VERSION `< 0.17.0`_: As discussed above, the `xmobar`
   function uses pipes, so you actually do want to use the `StdinReader`.
   Simply replace _all_ occurences of `XMonadLog` with `StdinReader`
   below (don't forget the template!)
+
+---
 
 ## Configuring Xmobar
 
@@ -660,6 +672,8 @@ main = xmonad
      $ myConfig
 ```
 
+---
+
 _IF YOU ARE ON A VERSION `< 0.17.0`_: `xmobar` has a similar definition,
   relying on `statusBar` alone: `xmobar = statusBar "xmobar" xmobarPP
     toggleStrutsKey`.  Sadly, the `defToggleStrutsKey` function is not yet
@@ -674,6 +688,8 @@ main = xmonad
     toggleStrutsKey :: XConfig Layout -> (KeyMask, KeySym)
     toggleStrutsKey XConfig{ modMask = m } = (m, xK_b)
 ```
+
+---
 
 The `defToggleStrutsKey` here is just the key with which you can toggle
 the bar; it is bound to `M-b`.  If you want to change this, you can also
@@ -771,12 +787,16 @@ myXmobarPP = def
     lowWhite = xmobarColor "#bbbbbb" ""
 ```
 
+---
+
 _IF YOU ARE ON A VERSION `< 0.17`_: Both `logTitles` and `xmobarBorder`
   are not available yet, so you will have to remove them.  As an
   alternative to `xmobarBorder`, a common way to "mark" the currently
   focused workspace is by using brackets; you can try something like
   `ppCurrent = wrap (blue "[") (blue "]")` and see if you like it.  Also
   read the bit about `ppOrder` further down!
+
+---
 
 That's a lot!  But don't worry, take a deep breath and remind yourself
 of what you read above in the documentation of the [PP record].  Even if
