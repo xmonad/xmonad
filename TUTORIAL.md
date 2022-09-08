@@ -668,7 +668,6 @@ _IF YOU ARE ON A VERSION `< 0.17.0`_: `xmobar` has a similar definition,
 ``` haskell
 main :: IO ()
 main = xmonad
-     . ewmhFullscreen
      . ewmh
    =<< statusBar "xmobar" def toggleStrutsKey myConfig
   where
