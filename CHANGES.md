@@ -6,6 +6,10 @@
 
 ### Enhancements
 
+* Exported `sendRestart` and `sendReplace` from `XMonad.Operations`.
+
+* Exported `buildLaunch` from `XMonad.Main`.
+
 ### Bug Fixes
 
 ## 0.17.1 (September 3, 2022)
