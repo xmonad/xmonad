@@ -37,6 +37,7 @@ module XMonad.Operations (
 
     -- * Messages
     sendMessage, broadcastMessage, sendMessageWithNoRefresh,
+    sendRestart, sendReplace,
 
     -- * Save and Restore State
     StateFile (..), writeStateToFile, readStateFile, restart,
@@ -517,6 +518,59 @@ setLayout l = do
     ss@W.StackSet{ W.current = c@W.Screen{ W.workspace = ws }} <- gets windowset
     handleMessage (W.layout ws) (SomeMessage ReleaseResources)
     windows $ const $ ss{ W.current = c{ W.workspace = ws{ W.layout = l } } }
+
+-- | Signal xmonad to restart itself.
+sendRestart :: IO ()
+sendRestart = do
+    dpy <- openDisplay ""
+    rw  <- rootWindow dpy $ defaultScreen dpy
+    xmonad_restart <- internAtom dpy "XMONAD_RESTART" False
+    allocaXEvent $ \e -> do
+        setEventType e clientMessage
+        setClientMessageEvent' e rw xmonad_restart 32 []
+        sendEvent dpy rw False structureNotifyMask e
+    sync dpy False
+
+-- | Signal compliant window managers to exit.
+sendReplace :: IO ()
+sendReplace = do
+    dpy <- openDisplay ""
+    let dflt = defaultScreen dpy
+    rootw <- rootWindow dpy dflt
+    replace dpy dflt rootw
+
+-- | Signal compliant window managers to exit.
+replace :: Display -> ScreenNumber -> Window -> IO ()
+replace dpy dflt rootw = do
+    -- check for other WM
+    wmSnAtom <- internAtom dpy ("WM_S" ++ show dflt) False
+    currentWmSnOwner <- xGetSelectionOwner dpy wmSnAtom
+    when (currentWmSnOwner /= 0) $ do
+        -- prepare to receive destroyNotify for old WM
+        selectInput dpy currentWmSnOwner structureNotifyMask
+
+        -- create off-screen window
+        netWmSnOwner <- allocaSetWindowAttributes $ \attributes -> do
+            set_override_redirect attributes True
+            set_event_mask attributes propertyChangeMask
+            let screen = defaultScreenOfDisplay dpy
+                visual = defaultVisualOfScreen screen
+                attrmask = cWOverrideRedirect .|. cWEventMask
+            createWindow dpy rootw (-100) (-100) 1 1 0 copyFromParent copyFromParent visual attrmask attributes
+
+        -- try to acquire wmSnAtom, this should signal the old WM to terminate
+        xSetSelectionOwner dpy wmSnAtom netWmSnOwner currentTime
+
+        -- SKIPPED: check if we acquired the selection
+        -- SKIPPED: send client message indicating that we are now the WM
+
+        -- wait for old WM to go away
+        fix $ \again -> do
+            evt <- allocaXEvent $ \event -> do
+                windowEvent dpy currentWmSnOwner structureNotifyMask event
+                get_EventType event
+
+            when (evt /= destroyNotify) again
 
 ------------------------------------------------------------------------
 -- Utilities
