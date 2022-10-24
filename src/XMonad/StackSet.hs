@@ -26,6 +26,16 @@ module XMonad.StackSet (
         -- $focus
 
         StackSet(..), Workspace(..), Screen(..), Stack(..), RationalRect(..),
+        -- * Lenses
+        -- $lenses
+        -- ** StackSet Lenses
+        currentL, visibleL, hiddenL, floatingL,
+        -- ** Screen Lenses
+        workspaceL, screenL, screenDetailL,
+        -- ** Workspace Lenses
+        tagL, layoutL, stackL,
+        -- ** Stack Lenses
+        focusL, upL, downL,
         -- *  Construction
         -- $construction
         new, view, greedyView,
@@ -61,7 +71,7 @@ import Data.List ( (\\) )
 import qualified Data.List.NonEmpty as NE
 import Data.List.NonEmpty (NonEmpty((:|)))
 import qualified Data.Map  as M (Map,insert,delete,empty)
-
+import Lens.Micro (Lens')
 -- $intro
 --
 -- The 'StackSet' data type encodes a window manager abstraction. The
@@ -192,6 +202,59 @@ instance Traversable Stack where
             <$> forwards (traverse (Backwards . f) (up s))
             <*> f (focus s)
             <*> traverse f (down s)
+
+--Lenses
+-- $lenses
+--  These are a series of Lenses used for easy data manipulation for nested records in the 'StackSet' and nested types. 
+--  They work the same as any other Lens. Documentation on how they are used can be found on the <https://en.wikibooks.org/wiki/Haskell/Lenses_and_functional_references Haskell Wikibooks>
+
+--StackSet Lenses
+-- |  'current'
+currentL :: Lens' (StackSet i l a sid sd) (Screen i l a sid sd)
+currentL f s@StackSet{current = current'} = (\x -> s { current = x }) <$> f current'
+-- |  'visible'
+visibleL :: Lens' (StackSet i l a sid sd) [Screen i l a sid sd]
+visibleL f s@StackSet{visible = visible'} = (\x -> s { visible = x}) <$> f visible'
+-- |  'hidden'
+hiddenL :: Lens' (StackSet i l a sid sd) [Workspace i l a]
+hiddenL f s@StackSet{hidden = hidden'} = (\x -> s { hidden = x}) <$> f hidden'
+-- | 'floating'
+floatingL :: Lens' (StackSet i l a sid sd) (M.Map a RationalRect)
+floatingL f s@StackSet{floating = floating'} = (\x -> s { floating = x}) <$> f floating'
+
+-- Screen Lenses
+-- |  'workspace'
+workspaceL :: Lens' (Screen i l a sid sd) (Workspace i l a)
+workspaceL f s@Screen{workspace = workspace'} = (\x -> s { workspace = x}) <$> f workspace'
+-- | 'screen'
+screenL :: Lens' (Screen i l a sid sd) sid
+screenL f s@Screen{screen = screen'} = (\x -> s { screen = x}) <$> f screen'
+-- | 'screenDetail'
+screenDetailL :: Lens' (Screen i l a sid sd) sd
+screenDetailL f s@Screen{screenDetail = screenDetail'} = (\x -> s { screenDetail = x}) <$> f screenDetail'
+
+-- Workspace Lenses
+-- | 'tag'
+tagL :: Lens' (Workspace i l a) i
+tagL f w@Workspace {tag = tag'} = (\x -> w {tag = x}) <$> f tag'
+-- |  'layout'
+layoutL :: Lens' (Workspace i l a) l
+layoutL f w@Workspace {layout = layout'} = (\x -> w {layout = x}) <$> f layout'
+-- | 'stack'
+stackL :: Lens' (Workspace i l a) (Maybe (Stack a))
+stackL f w@Workspace {stack = stack' } = (\x -> w {stack = x}) <$> f stack'
+
+
+-- Stack Lens
+-- | 'focus'
+focusL :: Lens' (Stack a) a
+focusL f s@Stack { focus = focus' } = (\x -> s {focus = x}) <$> f focus'
+-- | 'up'
+upL :: Lens' (Stack a) [a]
+upL f s@Stack { up = up' } = (\x -> s {up = x}) <$> f up'
+-- | 'down'
+downL :: Lens' (Stack a) [a]
+downL f s@Stack { down = down' } = (\x -> s {down = x}) <$> f down'
 
 -- | this function indicates to catch that an error is expected
 abort :: String -> a
