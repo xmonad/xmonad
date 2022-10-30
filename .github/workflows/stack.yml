@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Clone project
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Prepare apt sources
         run: |
@@ -49,13 +49,13 @@ jobs:
           date +date=1-%Y-%m >> $GITHUB_OUTPUT
 
       - name: Cache Haskell package metadata
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.stack/pantry
           key: stack-pantry-${{ runner.os }}-${{ steps.cache-date.outputs.date }}
 
       - name: Cache Haskell dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.stack/*
