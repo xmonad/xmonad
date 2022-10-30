@@ -12,16 +12,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - resolver: lts-12
-            ghc: 8.4.4
-          - resolver: lts-14
-            ghc: 8.6.5
-          - resolver: lts-16
-            ghc: 8.8.4
-          - resolver: lts-18
-            ghc: 8.10.7
-          - resolver: lts-19
-            ghc: 9.0.2
+          - resolver: lts-12  # GHC 8.4
+          - resolver: lts-14  # GHC 8.6
+          - resolver: lts-16  # GHC 8.8
+          - resolver: lts-18  # GHC 8.10
+          - resolver: lts-19  # GHC 9.0
 
     steps:
       - name: Clone project
@@ -43,14 +38,6 @@ jobs:
             libxrandr-dev \
             libxss-dev \
             #
-
-      - name: Install GHC
-        # use system ghc (if available) in stack, don't waste GH Actions cache space
-        continue-on-error: true
-        run: |
-          set -ex
-          sudo apt install -y ghc-${{ matrix.ghc }}
-          echo /opt/ghc/${{ matrix.ghc }}/bin >> $GITHUB_PATH
 
       - name: Refresh caches once a month
         id: cache-date
