@@ -59,7 +59,7 @@ jobs:
         # date is prefixed with an epoch number to let us manually refresh the
         # cache when needed. This is a workaround for https://github.com/actions/cache/issues/2
         run: |
-          echo "::set-output name=date::1-$(date +%Y-%m)"
+          date +date=1-%Y-%m >> $GITHUB_OUTPUT
 
       - name: Cache Haskell package metadata
         uses: actions/cache@v2
