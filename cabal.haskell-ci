@@ -5,11 +5,6 @@ apt:
   libxrandr-dev
   libxss-dev
 
-hlint: True
-hlint-job: 9.0.2
-hlint-yaml: .hlint.yaml
-hlint-version: ==3.4.*
-
 github-patches:
   .github/workflows/haskell-ci-hackage.patch
 
@@ -17,3 +12,6 @@ raw-project
   optimization: False
   package xmonad
     flags: +pedantic
+
+-- avoid --haddock-all which overwrites *-docs.tar.gz with tests docs
+haddock-components: libs

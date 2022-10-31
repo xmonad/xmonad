@@ -12,20 +12,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - resolver: lts-12
-            ghc: 8.4.4
-          - resolver: lts-14
-            ghc: 8.6.5
-          - resolver: lts-16
-            ghc: 8.8.4
-          - resolver: lts-18
-            ghc: 8.10.7
-          - resolver: lts-19
-            ghc: 9.0.2
+          - resolver: lts-12  # GHC 8.4
+          - resolver: lts-14  # GHC 8.6
+          - resolver: lts-16  # GHC 8.8
+          - resolver: lts-18  # GHC 8.10
+          - resolver: lts-19  # GHC 9.0
 
     steps:
       - name: Clone project
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Prepare apt sources
         run: |
@@ -44,14 +39,6 @@ jobs:
             libxss-dev \
             #
 
-      - name: Install GHC
-        # use system ghc (if available) in stack, don't waste GH Actions cache space
-        continue-on-error: true
-        run: |
-          set -ex
-          sudo apt install -y ghc-${{ matrix.ghc }}
-          echo /opt/ghc/${{ matrix.ghc }}/bin >> $GITHUB_PATH
-
       - name: Refresh caches once a month
         id: cache-date
         # GHA writes caches on the first miss and then never updates them again;
@@ -59,16 +46,16 @@ jobs:
         # date is prefixed with an epoch number to let us manually refresh the
         # cache when needed. This is a workaround for https://github.com/actions/cache/issues/2
         run: |
-          echo "::set-output name=date::1-$(date +%Y-%m)"
+          date +date=1-%Y-%m >> $GITHUB_OUTPUT
 
       - name: Cache Haskell package metadata
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.stack/pantry
           key: stack-pantry-${{ runner.os }}-${{ steps.cache-date.outputs.date }}
 
       - name: Cache Haskell dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.stack/*
