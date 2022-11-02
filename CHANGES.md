@@ -10,6 +10,8 @@
 
 * Exported `buildLaunch` from `XMonad.Main`.
 
+* `Tall` does not draw windows with zero area.
+
 ### Bug Fixes
 
 ## 0.17.1 (September 3, 2022)
