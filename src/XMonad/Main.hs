@@ -26,6 +26,7 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Control.Monad.Reader
 import Control.Monad.State
+import Control.Monad (filterM, guard, unless, void, when)
 import Data.Maybe (fromMaybe, isJust)
 import Data.Monoid (getAll)
 

@@ -44,9 +44,10 @@ import Control.Exception (fromException, try, bracket_, throw, finally, SomeExce
 import qualified Control.Exception as E
 import Control.Applicative ((<|>), empty)
 import Control.Monad.Fail
+import Control.Monad.Fix (fix)
 import Control.Monad.State
 import Control.Monad.Reader
-import Control.Monad (void)
+import Control.Monad (filterM, guard, liftM2, void, when)
 import Data.Semigroup
 import Data.Traversable (for)
 import Data.Time.Clock (UTCTime)

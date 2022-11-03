@@ -71,9 +71,10 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 
 import Control.Arrow (second)
+import Control.Monad.Fix (fix)
 import Control.Monad.Reader
 import Control.Monad.State
-import Control.Monad (void)
+import Control.Monad (forM, forM_, guard, join, unless, void, when)
 import qualified Control.Exception as C
 
 import System.IO
