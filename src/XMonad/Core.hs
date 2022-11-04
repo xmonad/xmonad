@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -452,7 +453,11 @@ xfork x = io . forkProcess . finally nullStdin $ do
                 x
  where
     nullStdin = do
+#if MIN_VERSION_unix(2,8,0)
+        fd <- openFd "/dev/null" ReadOnly defaultFileFlags
+#else
         fd <- openFd "/dev/null" ReadOnly Nothing defaultFileFlags
+#endif
         dupTo fd stdInput
         closeFd fd
 
