@@ -11,8 +11,9 @@ import XMonad.Layout
 
 import Graphics.X11.Xlib.Types (Rectangle(..))
 
-import Data.Maybe
+import Control.Applicative
 import Data.List (sort)
+import Data.Maybe
 import Data.Ratio
 
 ------------------------------------------------------------------------
@@ -26,6 +27,22 @@ prop_tile_fullscreen rect = tile pct rect 1 1 == [rect]
 prop_tile_non_overlap rect windows nmaster = noOverlaps (tile pct rect nmaster windows)
   where _ = rect :: Rectangle
         pct = 3 % 100
+
+-- with a ratio of 1, no stack windows are drawn of there is at least
+-- one master window around.
+prop_tile_max_ratio = extremeRatio 1 drop
+
+-- with a ratio of 0, no master windows are drawn at all if there are
+-- any stack windows around.
+prop_tile_min_ratio = extremeRatio 0 take
+
+extremeRatio amount getRects rect = do
+    w@(NonNegative windows) <- arbitrary `suchThat` (> NonNegative 0)
+    NonNegative nmaster     <- arbitrary `suchThat` (< w)
+    let tiled = tile amount rect nmaster windows
+    pure $ if   nmaster == 0
+           then prop_tile_non_overlap rect windows nmaster
+           else all ((== 0) . rect_width) $ getRects nmaster tiled
 
 -- splitting horizontally yields sensible results
 prop_split_horizontal (NonNegative n) x =
@@ -49,13 +66,20 @@ prop_split_vertical (r :: Rational) x =
 
 
 -- pureLayout works.
-prop_purelayout_tall n r1 r2 rect = do
+prop_purelayout_tall n d r rect = do
   x <- (arbitrary :: Gen T) `suchThat` (isJust . peek)
-  let layout = Tall n r1 r2
+  let layout = Tall n d r
       st = fromJust . stack . workspace . current $ x
       ts = pureLayout layout rect st
+      ntotal = length (index x)
   return $
-        length ts == length (index x)
+       (if r == 0 then
+          -- (<=) for Bool is the logical implication
+          (0 <= n && n <= ntotal) <= (length ts == ntotal - n)
+        else if r == 1 then
+          (0 <= n && n <= ntotal) <= (length ts == n)
+        else
+          length ts == ntotal)
       &&
         noOverlaps (map snd ts)
       &&
