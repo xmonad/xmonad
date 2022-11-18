@@ -1,9 +1,5 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-
-#ifdef VERSION_quickcheck_classes
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-#endif
 
 module Properties.Stack where
 
@@ -15,13 +11,11 @@ import qualified XMonad.StackSet as S (filter)
 
 import Data.Maybe
 
-#ifdef VERSION_quickcheck_classes
 import Data.Proxy
 import Test.QuickCheck.Classes (
     Laws (lawsTypeclass, lawsProperties), Proxy1 (Proxy1),
     foldableLaws, traversableLaws,
     )
-#endif
 
 
 -- The list returned by index should be the same length as the actual
@@ -65,7 +59,6 @@ prop_differentiate xs =
     where _ = xs :: [Int]
 
 
-#ifdef VERSION_quickcheck_classes
 -- Check type class laws of 'Data.Foldable.Foldable' and 'Data.Traversable.Traversable'.
 newtype TestStack a = TestStack (Stack a)
     deriving (Eq, Read, Show, Foldable, Functor)
@@ -82,6 +75,3 @@ prop_laws_Stack = format (foldableLaws p) <> format (traversableLaws p)
     p = Proxy :: Proxy TestStack
     format laws = [ ("Stack: " <> lawsTypeclass laws <> ": " <> name, prop)
                   | (name, prop) <- lawsProperties laws ]
-#else
-prop_laws_Stack = []
-#endif

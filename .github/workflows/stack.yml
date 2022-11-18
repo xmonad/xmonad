@@ -12,7 +12,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - resolver: lts-12  # GHC 8.4
           - resolver: lts-14  # GHC 8.6
           - resolver: lts-16  # GHC 8.8
           - resolver: lts-18  # GHC 8.10

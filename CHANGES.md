@@ -4,6 +4,8 @@
 
 ### Breaking Changes
 
+* Dropped support for GHC 8.4.
+
 ### Enhancements
 
 * Exported `sendRestart` and `sendReplace` from `XMonad.Operations`.
