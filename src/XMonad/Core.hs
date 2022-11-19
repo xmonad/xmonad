@@ -7,6 +7,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE DerivingVia #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -48,7 +49,7 @@ import Control.Monad.Fail
 import Control.Monad.Fix (fix)
 import Control.Monad.State
 import Control.Monad.Reader
-import Control.Monad (filterM, guard, liftM2, void, when)
+import Control.Monad (filterM, guard, void, when)
 import Data.Semigroup
 import Data.Traversable (for)
 import Data.Time.Clock (UTCTime)
@@ -70,6 +71,7 @@ import Graphics.X11.Xlib.Extras (getWindowAttributes, WindowAttributes, Event)
 import Data.Typeable
 import Data.List (isInfixOf, (\\))
 import Data.Maybe (isJust,fromMaybe)
+import Data.Monoid (Ap(..))
 
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -165,12 +167,7 @@ newtype ScreenDetail = SD { screenRect :: Rectangle }
 --
 newtype X a = X (ReaderT XConf (StateT XState IO) a)
     deriving (Functor, Applicative, Monad, MonadFail, MonadIO, MonadState XState, MonadReader XConf)
-
-instance Semigroup a => Semigroup (X a) where
-    (<>) = liftM2 (<>)
-
-instance (Monoid a) => Monoid (X a) where
-    mempty = pure mempty
+    deriving (Semigroup, Monoid) via Ap (ReaderT XConf (StateT XState IO)) a
 
 instance Default a => Default (X a) where
     def = return def
@@ -178,15 +175,10 @@ instance Default a => Default (X a) where
 type ManageHook = Query (Endo WindowSet)
 newtype Query a = Query (ReaderT Window X a)
     deriving (Functor, Applicative, Monad, MonadReader Window, MonadIO)
+    deriving (Semigroup, Monoid) via Ap (ReaderT Window X) a
 
 runQuery :: Query a -> Window -> X a
 runQuery (Query m) = runReaderT m
-
-instance Semigroup a => Semigroup (Query a) where
-    (<>) = liftM2 (<>)
-
-instance Monoid a => Monoid (Query a) where
-    mempty = pure mempty
 
 instance Default a => Default (Query a) where
     def = return def
