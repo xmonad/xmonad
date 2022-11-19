@@ -167,7 +167,7 @@ newtype ScreenDetail = SD { screenRect :: Rectangle }
 --
 newtype X a = X (ReaderT XConf (StateT XState IO) a)
     deriving (Functor, Applicative, Monad, MonadFail, MonadIO, MonadState XState, MonadReader XConf)
-    deriving (Semigroup, Monoid) via Ap (ReaderT XConf (StateT XState IO)) a
+    deriving (Semigroup, Monoid) via Ap X a
 
 instance Default a => Default (X a) where
     def = return def
@@ -175,7 +175,7 @@ instance Default a => Default (X a) where
 type ManageHook = Query (Endo WindowSet)
 newtype Query a = Query (ReaderT Window X a)
     deriving (Functor, Applicative, Monad, MonadReader Window, MonadIO)
-    deriving (Semigroup, Monoid) via Ap (ReaderT Window X) a
+    deriving (Semigroup, Monoid) via Ap Query a
 
 runQuery :: Query a -> Window -> X a
 runQuery (Query m) = runReaderT m
