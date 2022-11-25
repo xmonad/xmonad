@@ -117,7 +117,12 @@ When the time comes to release another version of xmonad and xmonad-contrib:
 
      See [old announcements][old-announce] ([even older][older-announce]) for inspiration.
 
-  7. Bump version for development (add `.9`) and prepare fresh sections in
+  7. Trigger xmonad-docs build to generate and persist docs for the just
+     released version:
+
+     - https://github.com/xmonad/xmonad-docs/actions/workflows/stack.yml
+
+  8. Bump version for development (add `.9`) and prepare fresh sections in
      [`CHANGES.md`](CHANGES.md).
 
 [packdeps]: https://hackage.haskell.org/package/packdeps
