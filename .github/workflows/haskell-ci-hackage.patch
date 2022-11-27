@@ -57,12 +57,12 @@ set in GitHub repository secrets.
            $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks all
 +      - name: upload artifacts (sdist)
 +        if: matrix.upload
-+        uses: actions/upload-artifact@v2
++        uses: actions/upload-artifact@v3
 +        with:
 +          path: ${{ github.workspace }}/sdist/*.tar.gz
 +      - name: upload artifacts (haddock)
 +        if: matrix.upload
-+        uses: actions/upload-artifact@v2
++        uses: actions/upload-artifact@v3
 +        with:
 +          path: ${{ github.workspace }}/haddock/*-docs.tar.gz
 +      - name: hackage upload (candidate)
