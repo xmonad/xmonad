@@ -15,7 +15,7 @@ jobs:
       - name: Clone project
         uses: actions/checkout@v3
       - name: Setup Haskell
-        uses: haskell/actions/setup@v1
+        uses: haskell/actions/setup@v2
         with:
           # packdeps doesn't build with newer as of 2021-10
           ghc-version: '8.8'
