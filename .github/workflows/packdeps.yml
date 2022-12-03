@@ -23,6 +23,7 @@ jobs:
         run: |
           set -ex
           echo "$HOME/.cabal/bin" >> $GITHUB_PATH
+          cd  # go somewhere without a cabal.project
           cabal install packdeps
       - name: Check package bounds (all)
         continue-on-error: true
