@@ -28,7 +28,7 @@ module XMonad.Operations (
     setTopFocus, focus, isFixedSizeOrTransient,
 
     -- * Manage Windows
-    windows, respace, refresh, norefresh, handleRefresh, rescreen,
+    windows, respace, refresh, norefresh, handleRefresh, rendered, rescreen,
     modifyWindowSet, windowBracket, windowBracket_,
     clearEvents, getCleanedScreenInfo,
     withFocused, withUnfocused,
@@ -63,6 +63,7 @@ module XMonad.Operations (
 import XMonad.Core
 import XMonad.Layout (Full(..))
 import qualified XMonad.StackSet as W
+import XMonad.Internal.Operations (rendered, unsafeLogView)
 
 import Data.Maybe
 import Data.Monoid          (Endo(..),Any(..))
@@ -173,19 +174,17 @@ respace i f = do
     else   ww
   when (i `elem` visibles) refresh
 
--- Handle an optional change to the model, rendering the currently visible
--- workspaces, as determined by the 'StackSet'. Also, set focus to the focused
--- window.
+-- Handle any changes to the model, rendering the currently visible workspaces,
+-- as determined by the 'StackSet'. Also, set focus to the focused window.
 --
 -- This is our 'view' operation (MVC), in that it pretty prints our model
 -- with X calls.
 --
-render :: (WindowSet -> WindowSet) -> X ()
-render f = do
-    XState { windowset = old } <- get
+render :: X ()
+render = withWindowSet \ws -> do
+    old <- rendered
     let oldvisible = concatMap (W.integrate' . W.stack . W.workspace) $ W.current old : W.visible old
         newwindows = W.allWindows ws \\ W.allWindows old
-        ws = f old
     XConf { display = d , normalBorder = nbc, focusedBorder = fbc } <- ask
 
     mapM_ setInitialProperties newwindows
@@ -251,6 +250,7 @@ render f = do
 
     isMouseFocused <- asks mouseFocused
     unless isMouseFocused $ clearEvents enterWindowMask
+    unsafeLogView
     asks (logHook . config) >>= userCodeDef ()
 
 -- | Modify the @WindowSet@ in state with no special handling.
@@ -260,21 +260,10 @@ modifyWindowSet = norefresh . windows
 
 -- | Perform an @X@ action, updating the view if it's no longer consistent with
 -- the model.
---
--- __Warning__: This function does not support nesting, and consquently cannot
--- be used safely inside keybindings or any other user hook. Indeed, in its
--- current incarnation, @handleRefresh@ shouldn't be exposed at all.
--- However, making it internal would require us to move it (and @render@) into
--- "XMonad.Main" and deny any prospective extension the right to refresh.
--- As such, another solution is in the works.
---
 handleRefresh :: X a -> X a
-handleRefresh action = norefresh . withWindowSet $ \old -> do
+handleRefresh action = norefresh do
   (a, Any dev) <- listen action
-  when dev . withWindowSet $ \new -> do
-    windows (const old)
-    render  (const new)
-  return a
+  when dev render $> a
 
 -- | Perform an @X@ action and check its return value against a predicate @p@.
 -- Request a refresh iff @p@ holds.

@@ -64,6 +64,8 @@ library
                    XMonad.Operations
                    XMonad.StackSet
   other-modules:   Paths_xmonad
+                   XMonad.Internal.Core
+                   XMonad.Internal.Operations
   hs-source-dirs:  src
   build-depends:   base                  >= 4.11 && < 5
                  , X11                   >= 1.10 && < 1.11

@@ -34,6 +34,7 @@ import Data.Monoid (getAll)
 import Graphics.X11.Xlib hiding (refreshKeyboardMapping)
 import Graphics.X11.Xlib.Extras
 
+import XMonad.Internal.Core (unsafeMakeInternal)
 import XMonad.Core
 import qualified XMonad.Config as Default
 import XMonad.StackSet (new, floating, member)
@@ -192,7 +193,9 @@ launch initxmc drs = do
         initialWinset = let padToLen n xs = take (max n (length xs)) $ xs ++ repeat ""
             in new layout (padToLen (length xinesc) (workspaces xmc)) $ map SD xinesc
 
-        cf = XConf
+    int <- unsafeMakeInternal initialWinset
+
+    let cf = XConf
             { display       = dpy
             , config        = xmc
             , theRoot       = rootw
@@ -204,6 +207,7 @@ launch initxmc drs = do
             , mousePosition = Nothing
             , currentEvent  = Nothing
             , directories   = drs
+            , internal      = int
             }
 
         st = XState

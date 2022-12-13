@@ -39,6 +39,7 @@ module XMonad.Core (
     ManageHook, Query(..), runQuery, Directories'(..), Directories, getDirectories,
   ) where
 
+import XMonad.Internal.Core (Internal)
 import XMonad.StackSet hiding (modify)
 
 import Prelude
@@ -106,6 +107,7 @@ data XConf = XConf
                                       -- the event currently being processed
     , currentEvent :: !(Maybe Event)  -- ^ event currently being processed
     , directories  :: !Directories    -- ^ directories to use
+    , internal     :: !(Internal WindowSet) -- ^ a hiding place for internals
     }
 
 -- todo, better name
