@@ -251,7 +251,6 @@ render = withWindowSet \ws -> do
     isMouseFocused <- asks mouseFocused
     unless isMouseFocused $ clearEvents enterWindowMask
     unsafeLogView
-    asks (logHook . config) >>= userCodeDef ()
 
 -- | Modify the @WindowSet@ in state with no special handling.
 {-# DEPRECATED modifyWindowSet "Use `windows` and `norefresh`." #-}
@@ -263,7 +262,10 @@ modifyWindowSet = norefresh . windows
 handleRefresh :: X a -> X a
 handleRefresh action = norefresh do
   (a, Any dev) <- listen action
-  when dev render $> a
+  when dev do
+    asks (logHook . config) >>= userCodeDef ()
+    render
+  pure a
 
 -- | Perform an @X@ action and check its return value against a predicate @p@.
 -- Request a refresh iff @p@ holds.

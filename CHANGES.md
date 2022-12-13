@@ -16,6 +16,8 @@
 
     * Extended `XConf` with a new `internal` field.
 
+    * The log hook now runs *before* the layout and other refresh IO.
+
 * Dropped support for GHC 8.4.
 
 ### Enhancements
@@ -26,6 +28,10 @@
 
     * New operations: `norefresh`, `handleRefresh`, `respace`,
       `messageWorkspace` and `rendered`.
+
+    * The log hook may now make changes to the windowset and have those changes
+      handled seamlessly by the accompanying refresh, at no risk of infinite
+      recursion.
 
 * Exported `sendRestart` and `sendReplace` from `XMonad.Operations`.
 
