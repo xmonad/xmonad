@@ -176,7 +176,7 @@ newtype X a = X (RWST XConf Any XState IO a)
 instance Default a => Default (X a) where
     def = return def
 
-type ManageHook = Query (Endo WindowSet)
+type ManageHook = Query ()
 newtype Query a = Query (ReaderT Window X a)
     deriving (Functor, Applicative, Monad, MonadReader Window, MonadIO)
     deriving (Semigroup, Monoid) via Ap Query a

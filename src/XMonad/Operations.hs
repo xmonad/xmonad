@@ -66,7 +66,7 @@ import qualified XMonad.StackSet as W
 import XMonad.Internal.Operations (rendered, unsafeLogView)
 
 import Data.Maybe
-import Data.Monoid          (Endo(..),Any(..))
+import Data.Monoid          (Any(..))
 import Data.List            (nub, (\\), find)
 import Data.Bits            ((.|.), (.&.), complement, setBit, testBit)
 import Data.Function        (on)
@@ -123,10 +123,10 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
 
         f | shouldFloat = W.float w (adjust rr)
           | otherwise   = id
+    windows (f . W.insertUp w)
 
     mh <- asks (manageHook . config)
-    g <- appEndo <$> userCodeDef (Endo id) (runQuery mh w)
-    windows (g . f . W.insertUp w)
+    userCodeDef () (runQuery mh w)
 
 -- | A window no longer exists; remove it from the window
 -- list, on whatever workspace it is.
