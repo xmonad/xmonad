@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE BlockArguments #-}
 
 ----------------------------------------------------------------------------
 -- |
@@ -234,18 +235,20 @@ launch initxmc drs = do
 
             ws <- io $ scan dpy rootw
 
-            -- bootstrap the windowset, Operations.windows will identify all
-            -- the windows in winset as new and set initial properties for
-            -- those windows.  Remove all windows that are no longer top-level
-            -- children of the root, they may have disappeared since
-            -- restarting.
-            let winset = maybe initialWinset windowset serializedSt
-            windows . const . foldr W.delete winset $ W.allWindows winset \\ ws
+            handleRefresh do
+              -- bootstrap the windowset, Operations.windows will identify all
+              -- the windows in winset as new and set initial properties for
+              -- those windows.  Remove all windows that are no longer top-level
+              -- children of the root, they may have disappeared since
+              -- restarting.
+              let winset = maybe initialWinset windowset serializedSt
+              windows . const . foldr W.delete winset
+                      $ W.allWindows winset \\ ws
 
-            -- manage the as-yet-unmanaged windows
-            mapM_ manage (ws \\ W.allWindows winset)
+              -- manage the as-yet-unmanaged windows
+              mapM_ manage (ws \\ W.allWindows winset)
 
-            userCode $ startupHook initxmc
+              userCode $ startupHook initxmc
 
             rrData <- io $ xrrQueryExtension dpy
 
@@ -270,7 +273,7 @@ launch initxmc drs = do
 -- | Runs handleEventHook from the configuration and runs the default handler
 -- function if it returned True.
 handleWithHook :: Event -> X ()
-handleWithHook e = do
+handleWithHook e = handleRefresh do
   evHook <- asks (handleEventHook . config)
   whenX (userCodeDef True $ getAll `fmap` evHook e) (handle e)
 

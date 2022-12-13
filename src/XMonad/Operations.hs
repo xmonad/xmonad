@@ -27,7 +27,8 @@ module XMonad.Operations (
     setTopFocus, focus, isFixedSizeOrTransient,
 
     -- * Manage Windows
-    windows, refresh, rescreen, modifyWindowSet, windowBracket, windowBracket_, clearEvents, getCleanedScreenInfo,
+    windows, refresh, norefresh, handleRefresh, rescreen, modifyWindowSet,
+    windowBracket, windowBracket_, clearEvents, getCleanedScreenInfo,
     withFocused, withUnfocused,
 
     -- * Keyboard and Mouse
@@ -66,6 +67,7 @@ import Data.Monoid          (Endo(..),Any(..))
 import Data.List            (nub, (\\), find)
 import Data.Bits            ((.|.), (.&.), complement, setBit, testBit)
 import Data.Function        (on)
+import Data.Functor         ((<&>), ($>))
 import Data.Ratio
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -73,6 +75,7 @@ import qualified Data.Set as S
 import Control.Arrow (second)
 import Control.Monad.Fix (fix)
 import Control.Monad.Reader
+import Control.Monad.Writer
 import Control.Monad.State
 import Control.Monad (forM, forM_, guard, join, unless, void, when)
 import qualified Control.Exception as C
@@ -157,6 +160,18 @@ kill = withFocused killWindow
 -- | Modify the current window list with a pure function, and refresh
 windows :: (WindowSet -> WindowSet) -> X ()
 windows f = do
+  modifyWindowSet f
+  refresh
+
+-- Handle an optional change to the model, rendering the currently visible
+-- workspaces, as determined by the 'StackSet'. Also, set focus to the focused
+-- window.
+--
+-- This is our 'view' operation (MVC), in that it pretty prints our model
+-- with X calls.
+--
+render :: (WindowSet -> WindowSet) -> X ()
+render f = do
     XState { windowset = old } <- get
     let oldvisible = concatMap (W.integrate' . W.stack . W.workspace) $ W.current old : W.visible old
         newwindows = W.allWindows ws \\ W.allWindows old
@@ -232,20 +247,34 @@ windows f = do
 modifyWindowSet :: (WindowSet -> WindowSet) -> X ()
 modifyWindowSet f = modify $ \xst -> xst { windowset = f (windowset xst) }
 
--- | Perform an @X@ action and check its return value against a predicate p.
--- If p holds, unwind changes to the @WindowSet@ and replay them using @windows@.
-windowBracket :: (a -> Bool) -> X a -> X a
-windowBracket p action = withWindowSet $ \old -> do
-  a <- action
-  when (p a) . withWindowSet $ \new -> do
-    modifyWindowSet $ const old
-    windows         $ const new
+-- | Perform an @X@ action, updating the view if it's no longer consistent with
+-- the model.
+--
+-- __Warning__: This function does not support nesting, and consquently cannot
+-- be used safely inside keybindings or any other user hook. Indeed, in its
+-- current incarnation, @handleRefresh@ shouldn't be exposed at all.
+-- However, making it internal would require us to move it (and @render@) into
+-- "XMonad.Main" and deny any prospective extension the right to refresh.
+-- As such, another solution is in the works.
+--
+handleRefresh :: X a -> X a
+handleRefresh action = norefresh . withWindowSet $ \old -> do
+  (a, Any dev) <- listen action
+  when dev . withWindowSet $ \new -> do
+    modifyWindowSet (const old)
+    render          (const new)
   return a
 
--- | Perform an @X@ action. If it returns @Any True@, unwind the
--- changes to the @WindowSet@ and replay them using @windows@. This is
--- a version of @windowBracket@ that discards the return value and
--- handles an @X@ action that reports its need for refresh via @Any@.
+-- | Perform an @X@ action and check its return value against a predicate @p@.
+-- Request a refresh iff @p@ holds.
+windowBracket :: (a -> Bool) -> X a -> X a
+windowBracket p act = do
+  a <- norefresh act
+  when (p a) refresh $> a
+
+-- | Perform an @X@ action. If it returns @Any True@, request a refresh.
+-- This is a version of @windowBracket@ that discards the return value and
+-- handles an @X@ action that checks its own predicate internally.
 windowBracket_ :: X Any -> X ()
 windowBracket_ = void . windowBracket getAny
 
@@ -305,14 +334,14 @@ setInitialProperties w = asks normalBorder >>= \nb -> withDisplay $ \d -> do
     -- required by the border setting in 'windows'
     io $ setWindowBorder d w nb
 
--- | Render the currently visible workspaces, as determined by
--- the 'StackSet'. Also, set focus to the focused window.
---
--- This is our 'view' operation (MVC), in that it pretty prints our model
--- with X calls.
---
+-- | Declare a deviation of the model from the view, hence request the view be
+--   refreshed.
 refresh :: X ()
-refresh = windows id
+refresh = tell (Any True)
+
+-- | Catch and discard any 'refresh' requests issued by an action.
+norefresh :: X a -> X a
+norefresh act = pass $ act <&> \a -> (a, mempty)
 
 -- | Remove all events of a given type from the event queue.
 clearEvents :: EventMask -> X ()
