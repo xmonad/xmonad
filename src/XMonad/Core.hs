@@ -47,10 +47,9 @@ import qualified Control.Exception as E
 import Control.Applicative ((<|>), empty)
 import Control.Monad.Fail
 import Control.Monad.Fix (fix)
-import Control.Monad.State
+import Control.Monad.RWS
 import Control.Monad.Reader
 import Control.Monad (filterM, guard, void, when)
-import Data.Semigroup
 import Data.Traversable (for)
 import Data.Time.Clock (UTCTime)
 import Data.Default.Class
@@ -157,16 +156,19 @@ newtype ScreenDetail = SD { screenRect :: Rectangle }
 
 ------------------------------------------------------------------------
 
--- | The X monad, 'ReaderT' and 'StateT' transformers over 'IO'
--- encapsulating the window manager configuration and state,
--- respectively.
+-- | The X monad; 'RWST' transformer over 'IO' encapsulating the window manager
+-- configuration, model--view deviation and state, respectively.
 --
--- Dynamic components may be retrieved with 'get', static components
--- with 'ask'. With newtype deriving we get readers and state monads
--- instantiated on 'XConf' and 'XState' automatically.
+-- Dynamic components may be retrieved with 'get' and 'listen', static
+-- components with 'ask'. With newtype deriving we get readers, writers and
+-- state monads instantiated on 'XConf', 'Any' and 'XState' automatically.
 --
-newtype X a = X (ReaderT XConf (StateT XState IO) a)
-    deriving (Functor, Applicative, Monad, MonadFail, MonadIO, MonadState XState, MonadReader XConf)
+newtype X a = X (RWST XConf Any XState IO a)
+    deriving
+      ( Functor, Applicative, Monad, MonadFail, MonadIO
+      , MonadReader XConf, MonadWriter Any, MonadState XState
+      , MonadRWS XConf Any XState
+      )
     deriving (Semigroup, Monoid) via Ap X a
 
 instance Default a => Default (X a) where
@@ -184,9 +186,9 @@ instance Default a => Default (Query a) where
     def = return def
 
 -- | Run the 'X' monad, given a chunk of 'X' monad code, and an initial state
--- Return the result, and final state
-runX :: XConf -> XState -> X a -> IO (a, XState)
-runX c st (X a) = runStateT (runReaderT a c) st
+-- Return the result, final state and model--view deviation.
+runX :: XConf -> XState -> X a -> IO (a, XState, Any)
+runX c st (X rwsa) = runRWST rwsa c st
 
 -- | Run in the 'X' monad, and in case of exception, and catch it and log it
 -- to stderr, and run the error case.
@@ -194,9 +196,10 @@ catchX :: X a -> X a -> X a
 catchX job errcase = do
     st <- get
     c <- ask
-    (a, s') <- io $ runX c st job `E.catch` \e -> case fromException e of
+    (a, s', mvd) <- io $ runX c st job `E.catch` \e -> case fromException e of
                         Just (_ :: ExitCode) -> throw e
                         _ -> do hPrint stderr e; runX c st errcase
+    tell mvd
     put s'
     return a
 
