@@ -120,13 +120,12 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
                                               = W.RationalRect (0.5 - wid/2) (0.5 - h/2) wid h
         adjust r = r
 
-        f ws | shouldFloat = W.float w (adjust rr) . W.insertUp w . W.view i $ ws
-             | otherwise   = W.insertUp w ws
-            where i = W.tag $ W.workspace $ W.current ws
+        f | shouldFloat = W.float w (adjust rr)
+          | otherwise   = id
 
     mh <- asks (manageHook . config)
     g <- appEndo <$> userCodeDef (Endo id) (runQuery mh w)
-    windows (g . f)
+    windows (g . f . W.insertUp w)
 
 -- | A window no longer exists; remove it from the window
 -- list, on whatever workspace it is.
@@ -524,12 +523,7 @@ mkGrabs ks = withDisplay $ \dpy -> do
 -- layout the windows, in which case changes are handled through a refresh.
 sendMessage :: Message a => a -> X ()
 sendMessage a = do
-    w <- gets $ W.workspace . W.current . windowset
-    ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
-    whenJust ml' $ \l' ->
-        windows \ws -> ws { W.current = (W.current ws)
-                                { W.workspace = (W.workspace $ W.current ws)
-                                  { W.layout = l' }}}
+    gets (W.workspace . W.current . windowset) >>= messageWorkspace a
 
 -- | Send a message to all layouts.
 broadcastMessage :: Message a => a -> X ()
@@ -560,9 +554,9 @@ updateLayout i ml = whenJust ml \l ->
 -- | Set the layout of the currently viewed workspace.
 setLayout :: Layout Window -> X ()
 setLayout l = do
-    ss@W.StackSet{ W.current = c@W.Screen{ W.workspace = ws }} <- gets windowset
-    handleMessage (W.layout ws) (SomeMessage ReleaseResources)
-    windows $ const $ ss{ W.current = c{ W.workspace = ws{ W.layout = l } } }
+    sendMessage ReleaseResources
+    ct <- gets (W.currentTag . windowset)
+    updateLayout ct (Just l)
 
 -- | Signal xmonad to restart itself.
 sendRestart :: IO ()
