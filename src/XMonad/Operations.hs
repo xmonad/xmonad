@@ -124,6 +124,8 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
         f | shouldFloat = W.float w (adjust rr)
           | otherwise   = id
 
+    setInitialProperties w
+
     mh <- asks (manageHook . config)
     g <- appEndo <$> userCodeDef (Endo id) (runQuery mh w)
     windows (g . f . W.insertUp w)
@@ -186,8 +188,6 @@ render = withWindowSet \ws -> do
     let oldvisible = concatMap (W.integrate' . W.stack . W.workspace) $ W.current old : W.visible old
         newwindows = W.allWindows ws \\ W.allWindows old
     XConf { display = d , normalBorder = nbc, focusedBorder = fbc } <- ask
-
-    mapM_ setInitialProperties newwindows
 
     whenJust (W.peek old) $ \otherw -> do
       nbs <- asks (normalBorderColor . config)

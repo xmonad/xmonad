@@ -33,6 +33,8 @@
       handled seamlessly by the accompanying refresh, at no risk of infinite
       recursion.
 
+    * Window properties may now be set directly in `ManageHook`.
+
 * Exported `sendRestart` and `sendReplace` from `XMonad.Operations`.
 
 * Exported `buildLaunch` from `XMonad.Main`.

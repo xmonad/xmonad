@@ -21,7 +21,7 @@ module XMonad.Main (xmonad, buildLaunch, launch) where
 import System.Locale.SetLocale
 import qualified Control.Exception as E
 import Data.Bits
-import Data.List ((\\))
+import Data.List (partition, (\\))
 import Data.Foldable (traverse_)
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -240,17 +240,18 @@ launch initxmc drs = do
             ws <- io $ scan dpy rootw
 
             handleRefresh do
-              -- bootstrap the windowset, Operations.windows will identify all
-              -- the windows in winset as new and set initial properties for
-              -- those windows.  Remove all windows that are no longer top-level
-              -- children of the root, they may have disappeared since
+              -- Bootstrap the windowset. Remove all windows that are no longer
+              -- top-level children of the root, they may have disappeared since
               -- restarting.
               let winset = maybe initialWinset windowset serializedSt
-              windows . const . foldr W.delete winset
-                      $ W.allWindows winset \\ ws
+                  (lostWins, keptWins, newWins) = venn (W.allWindows winset) ws
+              windows $ const (foldr W.delete winset lostWins)
+
+              -- reset the initial properties of the already-managed windows
+              mapM_ setInitialProperties keptWins
 
               -- manage the as-yet-unmanaged windows
-              mapM_ manage (ws \\ W.allWindows winset)
+              mapM_ manage newWins
 
               userCode $ startupHook initxmc
 
@@ -272,6 +273,8 @@ launch initxmc drs = do
               , buttonPress, buttonRelease]
         rrUpdate e r = when (isJust r) (void (xrrUpdateConfiguration e))
         mainLoop d e r = io (nextEvent d e >> rrUpdate e r >> getEvent e) >>= prehandle >> mainLoop d e r
+        venn l r = (lEx, int, r \\ int)
+          where (int, lEx) = partition (`elem` r) l
 
 
 -- | Runs handleEventHook from the configuration and runs the default handler
