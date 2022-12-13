@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -52,6 +53,7 @@ import Control.Monad.RWS
 import Control.Monad.Reader
 import Control.Monad (filterM, guard, void, when)
 import Data.Traversable (for)
+import Data.Foldable (for_)
 import Data.Time.Clock (UTCTime)
 import Data.Default.Class
 import System.Environment (lookupEnv)
@@ -219,11 +221,11 @@ userCodeDef defValue a = fromMaybe defValue <$> userCode a
 -- Convenient wrappers to state
 
 -- | Run a monad action with the current display settings
-withDisplay :: (Display -> X a) -> X a
+withDisplay :: MonadReader XConf m => (Display -> m a) -> m a
 withDisplay   f = asks display >>= f
 
 -- | Run a monadic action with the current stack set
-withWindowSet :: (WindowSet -> X a) -> X a
+withWindowSet :: MonadState XState m => (WindowSet -> m a) -> m a
 withWindowSet f = gets windowset >>= f
 
 -- | Safely access window attributes.
@@ -233,7 +235,7 @@ withWindowAttributes dpy win f = do
     catchX (whenJust wa f) (return ())
 
 -- | True if the given window is the root window
-isRoot :: Window -> X Bool
+isRoot :: MonadReader XConf m => Window -> m Bool
 isRoot w = asks $ (w ==) . theRoot
 
 -- | Wrapper for the common case of atom internment
@@ -471,11 +473,11 @@ xmessage msg = void . xfork $ do
 
 -- | This is basically a map function, running a function in the 'X' monad on
 -- each workspace with the output of that function being the modified workspace.
-runOnWorkspaces :: (WindowSpace -> X WindowSpace) -> X ()
+runOnWorkspaces :: MonadState XState m => (WindowSpace -> m WindowSpace) -> m ()
 runOnWorkspaces job = do
     ws <- gets windowset
     h <- mapM job $ hidden ws
-    c:v <- mapM (\s -> (\w -> s { workspace = w}) <$> job (workspace s))
+    ~(c:v) <- mapM (\s -> (\w -> s { workspace = w}) <$> job (workspace s))
              $ current ws : visible ws
     modify $ \s -> s { windowset = ws { current = c, visible = v, hidden = h } }
 
@@ -755,11 +757,11 @@ recompile dirs force = io $ do
         pure True
 
 -- | Conditionally run an action, using a @Maybe a@ to decide.
-whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
-whenJust mg f = maybe (return ()) f mg
+whenJust :: Applicative m => Maybe a -> (a -> m ()) -> m ()
+whenJust = for_
 
--- | Conditionally run an action, using a 'X' event to decide
-whenX :: X Bool -> X () -> X ()
+-- | Conditionally run an action, using an 'm' action to decide
+whenX :: Monad m => m Bool -> m () -> m ()
 whenX a f = a >>= \b -> when b f
 
 -- | A 'trace' for the 'X' monad. Logs a string to stderr. The result may

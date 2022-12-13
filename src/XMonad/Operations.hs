@@ -77,9 +77,7 @@ import qualified Data.Set as S
 
 import Control.Arrow (second)
 import Control.Monad.Fix (fix)
-import Control.Monad.Reader
-import Control.Monad.Writer
-import Control.Monad.State
+import Control.Monad.RWS
 import Control.Monad (forM, forM_, guard, join, unless, void, when)
 import qualified Control.Exception as C
 
@@ -131,7 +129,7 @@ manage w = whenX (not <$> isClient w) $ withDisplay $ \d -> do
 -- | A window no longer exists; remove it from the window
 -- list, on whatever workspace it is.
 --
-unmanage :: Window -> X ()
+unmanage :: (MonadWriter Any m, MonadState XState m) => Window -> m ()
 unmanage = windows . W.delete
 
 -- | Kill the specified window. If we do kill it, we'll get a
@@ -160,13 +158,17 @@ kill = withFocused killWindow
 -- Managing windows
 
 -- | Modify the current window list with a pure function, and refresh
-windows :: (WindowSet -> WindowSet) -> X ()
+windows
+  :: (MonadWriter Any m, MonadState XState m)
+  => (WindowSet -> WindowSet) -> m ()
 windows f = do
   modify \xst -> xst{ windowset = f (windowset xst) }
   refresh
 
 -- | Modify a workspace with a pure function, refreshing if visible
-respace :: WorkspaceId -> (WindowSpace -> WindowSpace) -> X ()
+respace
+  :: (MonadWriter Any m, MonadState XState m)
+  => WorkspaceId -> (WindowSpace -> WindowSpace) -> m ()
 respace i f = do
   visibles <- gets (fmap (W.tag . W.workspace) . W.screens . windowset)
   runOnWorkspaces \ww -> pure if W.tag ww == i
@@ -338,11 +340,11 @@ setInitialProperties w = asks normalBorder >>= \nb -> withDisplay $ \d -> do
 
 -- | Declare a deviation of the model from the view, hence request the view be
 --   refreshed.
-refresh :: X ()
+refresh :: MonadWriter Any m => m ()
 refresh = tell (Any True)
 
 -- | Catch and discard any 'refresh' requests issued by an action.
-norefresh :: X a -> X a
+norefresh :: MonadWriter w m => m a -> m a
 norefresh act = pass $ act <&> \a -> (a, mempty)
 
 -- | Remove all events of a given type from the event queue.
@@ -424,7 +426,7 @@ setTopFocus = withWindowSet $ maybe (setFocusX =<< asks theRoot) setFocusX . W.p
 -- | Set focus explicitly to window 'w' if it is managed by us, or root.
 -- This happens if X notices we've moved the mouse (and perhaps moved
 -- the mouse to a new screen).
-focus :: Window -> X ()
+focus :: MonadRWS XConf Any XState m => Window -> m ()
 focus w = local (\c -> c { mouseFocused = True }) $ withWindowSet $ \s -> do
     let stag = W.tag . W.workspace
         curr = stag $ W.current s
@@ -536,7 +538,9 @@ messageWorkspace a w =
     updateLayout  (W.tag w)
 
 -- | Update the layout field of a workspace.
-updateLayout :: WorkspaceId -> Maybe (Layout Window) -> X ()
+updateLayout
+  :: (MonadState XState m, MonadWriter Any m)
+  => WorkspaceId -> Maybe (Layout Window) -> m ()
 updateLayout i ml = whenJust ml \l ->
   respace i \ww -> ww{ W.layout = l }
 
@@ -604,33 +608,33 @@ replace dpy dflt rootw = do
 -- Utilities
 
 -- | Return workspace visible on screen @sc@, or 'Nothing'.
-screenWorkspace :: ScreenId -> X (Maybe WorkspaceId)
+screenWorkspace :: MonadState XState m => ScreenId -> m (Maybe WorkspaceId)
 screenWorkspace sc = withWindowSet $ return . W.lookupWorkspace sc
 
 -- | Apply an 'X' operation to the currently focused window, if there is one.
-withFocused :: (Window -> X ()) -> X ()
+withFocused :: MonadState XState m => (Window -> m ()) -> m ()
 withFocused f = withWindowSet $ \w -> whenJust (W.peek w) f
 
 -- | Apply an 'X' operation to all unfocused windows on the current workspace, if there are any.
-withUnfocused :: (Window -> X ()) -> X ()
+withUnfocused :: MonadState XState m => (Window -> m ()) -> m ()
 withUnfocused f = withWindowSet $ \ws ->
     whenJust (W.peek ws) $ \w ->
         let unfocusedWindows = filter (/= w) $ W.index ws
         in mapM_ f unfocusedWindows
 
 -- | Is the window is under management by xmonad?
-isClient :: Window -> X Bool
+isClient :: MonadState XState m => Window -> m Bool
 isClient w = withWindowSet $ return . W.member w
 
 -- | Combinations of extra modifier masks we need to grab keys\/buttons for.
 -- (numlock and capslock)
-extraModifiers :: X [KeyMask]
+extraModifiers :: MonadState XState m => m [KeyMask]
 extraModifiers = do
     nlm <- gets numberlockMask
     return [0, nlm, lockMask, nlm .|. lockMask ]
 
 -- | Strip numlock\/capslock from a mask.
-cleanMask :: KeyMask -> X KeyMask
+cleanMask :: MonadState XState m => KeyMask -> m KeyMask
 cleanMask km = do
     nlm <- gets numberlockMask
     return (complement (nlm .|. lockMask) .&. km)
@@ -758,8 +762,8 @@ floatLocation w =
         fi = fromIntegral
 
 -- | Given a point, determine the screen (if any) that contains it.
-pointScreen :: Position -> Position
-            -> X (Maybe (W.Screen WorkspaceId (Layout Window) Window ScreenId ScreenDetail))
+pointScreen :: MonadState XState m => Position -> Position
+            -> m (Maybe (W.Screen WorkspaceId (Layout Window) Window ScreenId ScreenDetail))
 pointScreen x y = withWindowSet $ return . find p . W.screens
   where p = pointWithin x y . screenRect . W.screenDetail
 

@@ -16,6 +16,14 @@
 
     * Extended `XConf` with a new `internal` field.
 
+    * Newly generalised functions mean that bindings which previously type
+      checked without a signature may now require a pragma at the head of
+      `xmonad.hs` to do so.
+
+        ```haskell
+        {-# LANGUAGE FlexibleContexts #-}
+        ```
+
 * Dropped support for GHC 8.4.
 
 ### Enhancements
@@ -26,6 +34,8 @@
 
     * New operations: `norefresh`, `handleRefresh`, `respace`,
       `messageWorkspace` and `rendered`.
+
+    * Various operations have been generalised and are now pure.
 
 * Exported `sendRestart` and `sendReplace` from `XMonad.Operations`.
 
