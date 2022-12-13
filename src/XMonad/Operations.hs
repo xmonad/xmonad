@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE BlockArguments #-}
 
 -- --------------------------------------------------------------------------
 -- |
@@ -27,8 +28,9 @@ module XMonad.Operations (
     setTopFocus, focus, isFixedSizeOrTransient,
 
     -- * Manage Windows
-    windows, refresh, norefresh, handleRefresh, rescreen, modifyWindowSet,
-    windowBracket, windowBracket_, clearEvents, getCleanedScreenInfo,
+    windows, respace, refresh, norefresh, handleRefresh, rescreen,
+    modifyWindowSet, windowBracket, windowBracket_,
+    clearEvents, getCleanedScreenInfo,
     withFocused, withUnfocused,
 
     -- * Keyboard and Mouse
@@ -37,7 +39,7 @@ module XMonad.Operations (
     setButtonGrab, setFocusX, cacheNumlockMask, mkGrabs,
 
     -- * Messages
-    sendMessage, broadcastMessage, sendMessageWithNoRefresh,
+    sendMessage, messageWorkspace, broadcastMessage, sendMessageWithNoRefresh,
     sendRestart, sendReplace,
 
     -- * Save and Restore State
@@ -160,8 +162,17 @@ kill = withFocused killWindow
 -- | Modify the current window list with a pure function, and refresh
 windows :: (WindowSet -> WindowSet) -> X ()
 windows f = do
-  modifyWindowSet f
+  modify \xst -> xst{ windowset = f (windowset xst) }
   refresh
+
+-- | Modify a workspace with a pure function, refreshing if visible
+respace :: WorkspaceId -> (WindowSpace -> WindowSpace) -> X ()
+respace i f = do
+  visibles <- gets (fmap (W.tag . W.workspace) . W.screens . windowset)
+  runOnWorkspaces \ww -> pure if W.tag ww == i
+    then f ww
+    else   ww
+  when (i `elem` visibles) refresh
 
 -- Handle an optional change to the model, rendering the currently visible
 -- workspaces, as determined by the 'StackSet'. Also, set focus to the focused
@@ -189,7 +200,7 @@ render f = do
     -- notify non visibility
     let tags_oldvisible = map (W.tag . W.workspace) $ W.current old : W.visible old
         gottenhidden    = filter (flip elem tags_oldvisible . W.tag) $ W.hidden ws
-    mapM_ (sendMessageWithNoRefresh Hide) gottenhidden
+    mapM_ (messageWorkspace Hide) gottenhidden
 
     -- for each workspace, layout the currently visible workspaces
     let allscreens     = W.screens ws
@@ -244,8 +255,9 @@ render f = do
     asks (logHook . config) >>= userCodeDef ()
 
 -- | Modify the @WindowSet@ in state with no special handling.
+{-# DEPRECATED modifyWindowSet "Use `windows` and `norefresh`." #-}
 modifyWindowSet :: (WindowSet -> WindowSet) -> X ()
-modifyWindowSet f = modify $ \xst -> xst { windowset = f (windowset xst) }
+modifyWindowSet = norefresh . windows
 
 -- | Perform an @X@ action, updating the view if it's no longer consistent with
 -- the model.
@@ -261,12 +273,13 @@ handleRefresh :: X a -> X a
 handleRefresh action = norefresh . withWindowSet $ \old -> do
   (a, Any dev) <- listen action
   when dev . withWindowSet $ \new -> do
-    modifyWindowSet (const old)
-    render          (const new)
+    windows (const old)
+    render  (const new)
   return a
 
 -- | Perform an @X@ action and check its return value against a predicate @p@.
 -- Request a refresh iff @p@ holds.
+{-# DEPRECATED windowBracket "Use `norefresh` and `refresh`." #-}
 windowBracket :: (a -> Bool) -> X a -> X a
 windowBracket p act = do
   a <- norefresh act
@@ -275,6 +288,7 @@ windowBracket p act = do
 -- | Perform an @X@ action. If it returns @Any True@, request a refresh.
 -- This is a version of @windowBracket@ that discards the return value and
 -- handles an @X@ action that checks its own predicate internally.
+{-# DEPRECATED windowBracket_ "Use `norefresh` and `refresh`." #-}
 windowBracket_ :: X Any -> X ()
 windowBracket_ = void . windowBracket getAny
 
@@ -509,38 +523,39 @@ mkGrabs ks = withDisplay $ \dpy -> do
 -- | Throw a message to the current 'LayoutClass' possibly modifying how we
 -- layout the windows, in which case changes are handled through a refresh.
 sendMessage :: Message a => a -> X ()
-sendMessage a = windowBracket_ $ do
+sendMessage a = do
     w <- gets $ W.workspace . W.current . windowset
     ml' <- handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing
     whenJust ml' $ \l' ->
-        modifyWindowSet $ \ws -> ws { W.current = (W.current ws)
+        windows \ws -> ws { W.current = (W.current ws)
                                 { W.workspace = (W.workspace $ W.current ws)
                                   { W.layout = l' }}}
-    return (Any $ isJust ml')
 
--- | Send a message to all layouts, without refreshing.
+-- | Send a message to all layouts.
 broadcastMessage :: Message a => a -> X ()
-broadcastMessage a = withWindowSet $ \ws -> do
+broadcastMessage a = do
     -- this is O(n²), but we can't really fix this as there's code in
     -- xmonad-contrib that touches the windowset during handleMessage
     -- (returning Nothing for changes to not get overwritten), so we
     -- unfortunately need to do this one by one and persist layout states
     -- of each workspace separately)
-    let c = W.workspace . W.current $ ws
-        v = map W.workspace . W.visible $ ws
-        h = W.hidden ws
-    mapM_ (sendMessageWithNoRefresh a) (c : v ++ h)
+    gets (W.workspaces . windowset) >>= mapM_ (messageWorkspace a)
 
 -- | Send a message to a layout, without refreshing.
+{-# DEPRECATED sendMessageWithNoRefresh "Use `norefresh` and `messageWorkspace`." #-}
 sendMessageWithNoRefresh :: Message a => a -> WindowSpace -> X ()
-sendMessageWithNoRefresh a w =
+sendMessageWithNoRefresh a w = norefresh (messageWorkspace a w)
+
+-- | Message the given workspace.
+messageWorkspace :: Message a => a -> WindowSpace -> X ()
+messageWorkspace a w =
     handleMessage (W.layout w) (SomeMessage a) `catchX` return Nothing >>=
     updateLayout  (W.tag w)
 
 -- | Update the layout field of a workspace.
 updateLayout :: WorkspaceId -> Maybe (Layout Window) -> X ()
-updateLayout i ml = whenJust ml $ \l ->
-    runOnWorkspaces $ \ww -> return $ if W.tag ww == i then ww { W.layout = l} else ww
+updateLayout i ml = whenJust ml \l ->
+  respace i \ww -> ww{ W.layout = l }
 
 -- | Set the layout of the currently viewed workspace.
 setLayout :: Layout Window -> X ()
