@@ -4,6 +4,8 @@
 
 ### Breaking Changes
 
+* Deprecated `runOnWorkspaces`.
+
 * MVDT:
 
     * The type of `runX` has changed.
@@ -27,6 +29,8 @@
 * Dropped support for GHC 8.4.
 
 ### Enhancements
+
+* X.StackSet now provides `mapWorkspaces` and `traverseWorkspaces`.
 
 * MVDT:
 

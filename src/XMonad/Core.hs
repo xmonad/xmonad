@@ -9,6 +9,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE BlockArguments #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -473,13 +474,11 @@ xmessage msg = void . xfork $ do
 
 -- | This is basically a map function, running a function in the 'X' monad on
 -- each workspace with the output of that function being the modified workspace.
+{-# DEPRECATED runOnWorkspaces "Use `traverseWorkspaces`." #-}
 runOnWorkspaces :: MonadState XState m => (WindowSpace -> m WindowSpace) -> m ()
-runOnWorkspaces job = do
-    ws <- gets windowset
-    h <- mapM job $ hidden ws
-    ~(c:v) <- mapM (\s -> (\w -> s { workspace = w}) <$> job (workspace s))
-             $ current ws : visible ws
-    modify $ \s -> s { windowset = ws { current = c, visible = v, hidden = h } }
+runOnWorkspaces job = withWindowSet \ws -> do
+  ws' <- traverseWorkspaces job ws
+  modify \st -> st{ windowset = ws' }
 
 -- | All the directories that xmonad will use.  They will be used for
 -- the following purposes:

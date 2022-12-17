@@ -171,7 +171,7 @@ respace
   => WorkspaceId -> (WindowSpace -> WindowSpace) -> m ()
 respace i f = do
   visibles <- gets (fmap (W.tag . W.workspace) . W.screens . windowset)
-  runOnWorkspaces \ww -> pure if W.tag ww == i
+  norefresh . windows $ W.mapWorkspaces \ww -> if W.tag ww == i
     then f ww
     else   ww
   when (i `elem` visibles) refresh
