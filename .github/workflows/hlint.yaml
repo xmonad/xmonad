@@ -6,14 +6,14 @@ on:
 
 jobs:
   hlint:
-    runs-on: ubuntu-20.04  # FIXME
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
 
     - name: 'Set up HLint'
       uses: haskell/actions/hlint-setup@v2
       with:
-        version: '3.4.1'
+        version: '3.5'
 
     - name: 'Run HLint'
       uses: haskell/actions/hlint-run@v2
