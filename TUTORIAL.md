@@ -1271,7 +1271,7 @@ either :)
 [XMonad.Hooks.ManageHelpers]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Hooks-ManageHelpers.html
 [XMonad.Util.ClickableWorkspaces]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Util-ClickableWorkspaces.html
 
-[xmobar]: https://xmobar.org/
+[xmobar]: https://codeberg.org/xmobar/xmobar
 [battery]: https://codeberg.org/xmobar/xmobar/src/branch/master/doc/plugins.org#batteryp-dirs-args-refreshrate
 [xmobar.hs]: https://codeberg.org/xmobar/xmobar/src/branch/master/etc/xmobar.hs
 [Wikipedia page]: https://en.wikipedia.org/wiki/ICAO_airport_code#Prefixes
