@@ -123,7 +123,9 @@ Unless you already know which one you prefer, use Stack, which is easier.
 
 #### Install Stack
 
-The easiest way to get [stack] is probably via your system's package
+Probably one of the best ways to get [stack] is to use [GHCup], which is the main Haskell installer according to language's official [website][GHCup] and community [survey]. GHCup is [widely available] and is considered less error prone than other installation options.
+
+You can also use your system's package
 manager:
 
 ``` console
@@ -144,9 +146,6 @@ stack via its [documentation][stack]):
 ``` console
 $ curl -sSL https://get.haskellstack.org/ | sh
 ```
-
-Yet another way would be via [ghcup]; this is similar to installers like
-`rustup`, in case you prefer that.
 
 #### Create a New Project
 
@@ -222,7 +221,9 @@ be that you don't have the required C libraries installed.  See
 
 #### Install cabal-install
 
-The easiest way to get [cabal-install] is probably via your system's package
+Probably one of the best ways to get [cabal-install] is to use [GHCup], which is the main Haskell installer according to language's official [website][GHCup] and community [survey]. GHCup is [widely available] and is considered less error prone than other installation options.
+
+You can also use your system's package
 manager:
 
 ``` console
@@ -231,8 +232,7 @@ $ sudo dnf install cabal-install    # Fedora
 $ sudo pacman -S cabal-install      # Arch
 ```
 
-If your distribution does not package cabal-install, [ghcup][] is another
-option.  See also <https://www.haskell.org/cabal/#install-upgrade>.
+See also <https://www.haskell.org/cabal/#install-upgrade>.
 
 #### Create a New Project
 
@@ -393,7 +393,9 @@ executable will also be within that directory and not in
 [git]: https://git-scm.com/
 [stack]: https://docs.haskellstack.org/en/stable/README/
 [cabal-install]: https://www.haskell.org/cabal/
-[ghcup]: https://www.haskell.org/ghcup/
+[GHCup]: https://www.haskell.org/ghcup/
+[survey]: https://taylor.fausak.me/2022/11/18/haskell-survey-results/
+[widely available]: https://www.haskell.org/ghcup/install/#supported-platforms
 [what xmonad would do]: https://github.com/xmonad/xmonad/blob/master/src/XMonad/Core.hs#L659-L667
 [Hackage]: https://hackage.haskell.org/
 [scripts/build]: https://github.com/xmonad/xmonad-contrib/blob/master/scripts/build
