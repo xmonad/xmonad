@@ -704,6 +704,7 @@ floatLocation w =
 
   where go = withDisplay $ \d -> do
           ws <- gets windowset
+          sh <- io $ getWMNormalHints d w
           wa <- io $ getWindowAttributes d w
           let bw = (fromIntegral . wa_border_width) wa
           point_sc <- pointScreen (fi $ wa_x wa) (fi $ wa_y wa)
@@ -718,13 +719,14 @@ floatLocation w =
               sr = screenRect . W.screenDetail $ sc
               x = (fi (wa_x wa) - fi (rect_x sr)) % fi (rect_width sr)
               y = (fi (wa_y wa) - fi (rect_y sr)) % fi (rect_height sr)
-              width  = fi (wa_width  wa + bw*2) % fi (rect_width sr)
-              height = fi (wa_height wa + bw*2) % fi (rect_height sr)
+              (width, height) = applySizeHintsContents sh (wa_width wa, wa_height wa)
+              rwidth  = fi (width + bw*2) % fi (rect_width sr)
+              rheight = fi (height + bw*2) % fi (rect_height sr)
               -- adjust x/y of unmanaged windows if we ignored or didn't get pointScreen,
               -- it might be out of bounds otherwise
               rr = if managed || point_sc `sr_eq` Just sc
-                  then W.RationalRect x y width height
-                  else W.RationalRect (0.5 - width/2) (0.5 - height/2) width height
+                  then W.RationalRect x y rwidth rheight
+                  else W.RationalRect (0.5 - rwidth/2) (0.5 - rheight/2) rwidth rheight
 
           return (W.screen sc, rr)
 
