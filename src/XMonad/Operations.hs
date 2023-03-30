@@ -197,6 +197,7 @@ windows f = do
         let m   = W.floating ws
             flt = [(fw, scaleRationalRect viewrect r)
                     | fw <- filter (`M.member` m) (W.index this)
+                    , fw `notElem` vis
                     , Just r <- [M.lookup fw m]]
             vs = flt ++ rs
 
