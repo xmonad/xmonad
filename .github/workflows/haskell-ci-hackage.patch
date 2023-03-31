@@ -45,16 +45,19 @@ set in GitHub repository secrets.
            - compiler: ghc-8.10.7
              compilerKind: ghc
              compilerVersion: 8.10.7
-@@ -209,8 +217,80 @@
+@@ -237,7 +237,7 @@
            ${CABAL} -vnormal check
        - name: haddock
          run: |
--          $CABAL v2-haddock $ARG_COMPILER --with-haddock $HADDOCK $ARG_TESTS $ARG_BENCH all
+-          $CABAL v2-haddock --disable-documentation $ARG_COMPILER --with-haddock $HADDOCK $ARG_TESTS $ARG_BENCH all
 +          $CABAL v2-haddock $ARG_COMPILER --with-haddock $HADDOCK $ARG_TESTS $ARG_BENCH --haddock-for-hackage --builddir $GITHUB_WORKSPACE/haddock all
        - name: unconstrained build
          run: |
            rm -f cabal.project.local
-           $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks all
+@@ -248,3 +248,75 @@
+         with:
+           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ github.sha }}
+           path: ~/.cabal/store
 +      - name: upload artifacts (sdist)
 +        if: matrix.upload
 +        uses: actions/upload-artifact@v3
