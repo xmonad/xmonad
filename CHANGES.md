@@ -16,6 +16,12 @@
 
 ### Bug Fixes
 
+## 0.17.2 (April 2, 2023)
+
+### Bug Fixes
+
+  * Fixed the build with GHC 9.6.
+
 ## 0.17.1 (September 3, 2022)
 
 ### Enhancements
