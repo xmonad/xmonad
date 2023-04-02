@@ -4,7 +4,7 @@
 
 ### Bug Fixes
 
-  * Fixed the built with GHC 9.6.
+  * Fixed the build with GHC 9.6.
 
 ## 0.17.1 (September 3, 2022)
 
