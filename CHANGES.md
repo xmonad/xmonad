@@ -16,6 +16,9 @@
 
 ### Bug Fixes
 
+* Duplicated floats (e.g. from X.A.CopyToAll) no longer escape to inactive
+  screens.
+
 ## 0.17.2 (April 2, 2023)
 
 ### Bug Fixes
