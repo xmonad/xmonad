@@ -33,6 +33,9 @@
 
   * Exported `cacheNumlockMask` and `mkGrabs` from `XMonad.Operations`.
 
+  * Added `willFloat` function to `XMonad.ManageHooks` to detect whether the
+    (about to be) managed window will be a floating window or not.
+
 ### Bug Fixes
 
   * Fixed border color of windows with alpha channel. Now all windows have the
@@ -89,9 +92,6 @@
 
   * Added `withUnfocused` function to `XMonad.Operations`, allowing for `X`
     operations to be applied to unfocused windows.
-
-  * Added `willFloat` function to `XMonad.ManageHooks` to detect whether the
-    (about to be) managed window will be a floating window or not
 
 [these build scripts]: https://github.com/xmonad/xmonad-testing/tree/master/build-scripts
 
