@@ -236,17 +236,18 @@ See also <https://www.haskell.org/cabal/#install-upgrade>.
 
 #### Create a New Project
 
-Let's create a cabal project.  Since we're already in the correct
-directory (`~/.config/xmonad`) with `xmonad` and `xmonad-contrib`
-subdirectories, we'll instruct cabal to use them.  Create a file named
-`cabal.project` containing:
+If you want to use `xmonad` or `xmonad-contrib` from git, you will need a
+`cabal.project` file. If you want to use both from [Hackage][], you should
+skip this step.
+
+Create a file named `cabal.project` containing:
 
 ```
 packages: */*.cabal
 ```
 
-(If you skip this step, cabal will use the latest releases from [Hackage][]
-instead.)
+(If you do this step without using [git] checkouts, you will get an error from
+cabal in the next step. Simply remove `cabal.project` and try again.)
 
 #### Install Everything
 
