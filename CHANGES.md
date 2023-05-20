@@ -14,6 +14,10 @@
 
 * `Tall` does not draw windows with zero area.
 
+* `XMonad.Operations.floatLocation` now applies size hints. This means windows
+  will snap to these hints as soon as they're floated (mouse move, keybinding).
+  Previously that only happened on mouse resize.
+
 ### Bug Fixes
 
 * Duplicated floats (e.g. from X.A.CopyToAll) no longer escape to inactive
