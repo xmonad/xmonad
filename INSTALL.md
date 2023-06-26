@@ -256,7 +256,7 @@ libraries and then build the xmonad binary:
 
 ``` console
 $ cabal update
-$ cabal install --package-env=$HOME/.config/xmonad --lib xmonad xmonad-contrib
+$ cabal install --package-env=$HOME/.config/xmonad --lib base xmonad xmonad-contrib
 $ cabal install --package-env=$HOME/.config/xmonad xmonad
 ```
 
