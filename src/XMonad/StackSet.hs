@@ -106,7 +106,10 @@ import qualified Data.Map  as M (Map,insert,delete,empty)
 --
 --      <https://dspace.library.uu.nl/handle/1874/2532 R. Hinze and J. Jeuring, Functional Pearl: Weaving a Web>
 --
--- and Conor McBride's zipper differentiation paper.
+-- and
+--
+--      <http://strictlypositive.org/diff.pdf Conor McBride, The Derivative of a Regular Type is its Type of One-Hole Contexts>.
+--
 -- Another good reference is: <https://wiki.haskell.org/Zipper The Zipper, Haskell wikibook>
 
 -- $xinerama
