@@ -77,6 +77,11 @@ a live xmonad session in some capacity.  If you have set up your
 `~/.xinitrc` as directed in the xmonad guided tour, you should be good
 to go!  If not, just smack an `exec xmonad` at the bottom of that file.
 
+In particular, it might be a good idea to set a wallpaper beforehand.
+Otherwise, when switching workspaces or closing windows, you might start
+seeing "shadows" of windows that were there before, unable to interact
+with them.
+
 ## Installing Xmobar
 
 What we need to do now—provided we want to use a bar at all—is to
