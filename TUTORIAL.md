@@ -77,6 +77,11 @@ a live xmonad session in some capacity.  If you have set up your
 `~/.xinitrc` as directed in the xmonad guided tour, you should be good
 to go!  If not, just smack an `exec xmonad` at the bottom of that file.
 
+In particular, it might be a good idea to set a wallpaper beforehand.
+Otherwise, when switching workspaces or closing windows, you might start
+seeing "shadows" of windows that were there before, unable to interact
+with them.
+
 ## Installing Xmobar
 
 What we need to do now—provided we want to use a bar at all—is to
@@ -901,10 +906,10 @@ apt-get install nm-applet feh xfce4-power-manager
 
 First, configure xscreensaver how you like it with the
 `xscreensaver-demo` command.  Now, we will set these things up in
-`~/.xinitrc` (we could also do most of this in xmonad's `startupHook`,
-but `~/.xinitrc` is perhaps more standard).  If you want to use xmonad
-with a desktop environment, see [Basic Desktop Environment Integration]
-for how to do this.
+`~/.xinitrc`.  If you want to use XMonad with a desktop environment, see
+[Basic Desktop Environment Integration] for how to do this.  For a
+version using XMonad's built in functionality instead, see the [next
+section][using-the-startupHook].
 
 Your `~/.xinitrc` may wind up looking like this:
 
@@ -951,6 +956,38 @@ Mission accomplished!
 
 Of course substitute the wallpaper for one of your own.  If you like the
 one used above, you can find it [here](https://i.imgur.com/9MQHuZx.png).
+
+### Using the `startupHook`
+
+Instead of the `.xinitrc` file, one can also use XMonad's built in
+`startupHook` in order to auto start programs.  The
+[XMonad.Util.SpawnOnce] library is perfect for this use case, allowing
+programs to start only once, and not with every invocation of `M-q`!
+
+This requires but a small change in `myConfig`:
+
+``` haskell
+-- import XMonad.Util.SpawnOnce (spawnOnce)
+
+myConfig = def
+    { modMask     = mod4Mask       -- Rebind Mod to the Super key
+    , layoutHook  = myLayout       -- Use custom layouts
+    , startupHook = myStartupHook
+    }
+  `additionalKeysP`
+    [ ("M-S-z", spawn "xscreensaver-command -lock")
+    , ("M-C-s", unGrab *> spawn "scrot -s"        )
+    , ("M-f"  , spawn "firefox"                   )
+    ]
+
+myStartupHook :: X ()
+myStartupHook = do
+  spawnOnce "trayer --edge top --align right --SetDockType true \
+            \--SetPartialStrut true --expand true --width 10 \
+            \--transparent true --tint 0x5f5f5f --height 18"
+  spawnOnce "feh --bg-fill --no-fehbg ~/.wallpapers/haskell-red-noise.png"
+  -- … and so on …
+```
 
 ## Final Touches
 
@@ -1257,19 +1294,20 @@ either :)
 [Basic Desktop Environment Integration]: https://wiki.haskell.org/Xmonad/Basic_Desktop_Environment_Integration
 
 [Hacks]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Util-Hacks.html
-[PP record]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Hooks-DynamicLog.html#t:PP
 [INSTALL.md]: INSTALL.md
+[PP record]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Hooks-DynamicLog.html#t:PP
 [XMonad.Config]: https://github.com/xmonad/xmonad/blob/master/src/XMonad/Config.hs
-[XMonad.ManageHook]: https://xmonad.github.io/xmonad-docs/xmonad/XMonad-ManageHook.html
-[XMonad.Util.Loggers]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Util-Loggers.html
-[XMonad.Util.EZConfig]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Util-EZConfig.html
-[XMonad.Layout.Renamed]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Layout-Renamed.html
-[XMonad.Layout.Magnifier]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Layout-Magnifier.html
 [XMonad.Doc.Contributing]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Doc-Configuring.html
 [XMonad.Hooks.EwmhDesktops]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Hooks-EwmhDesktops.html
-[XMonad.Layout.ThreeColumns]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Layout-ThreeColumns.html
 [XMonad.Hooks.ManageHelpers]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Hooks-ManageHelpers.html
+[XMonad.Layout.Magnifier]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Layout-Magnifier.html
+[XMonad.Layout.Renamed]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Layout-Renamed.html
+[XMonad.Layout.ThreeColumns]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Layout-ThreeColumns.html
+[XMonad.ManageHook]: https://xmonad.github.io/xmonad-docs/xmonad/XMonad-ManageHook.html
 [XMonad.Util.ClickableWorkspaces]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Util-ClickableWorkspaces.html
+[XMonad.Util.EZConfig]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Util-EZConfig.html
+[XMonad.Util.Loggers]: https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Util-Loggers.html
+[XMonad.Util.SpawnOnce]: https://hackage.haskell.org/package/xmonad-contrib/docs/XMonad-Util-SpawnOnce.html
 
 [xmobar]: https://codeberg.org/xmobar/xmobar
 [battery]: https://codeberg.org/xmobar/xmobar/src/branch/master/doc/plugins.org#batteryp-dirs-args-refreshrate
