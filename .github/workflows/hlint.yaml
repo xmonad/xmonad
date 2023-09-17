@@ -11,12 +11,12 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: 'Set up HLint'
-      uses: haskell/actions/hlint-setup@v2
+      uses: haskell-actions/hlint-setup@v2
       with:
         version: '3.5'
 
     - name: 'Run HLint'
-      uses: haskell/actions/hlint-run@v2
+      uses: haskell-actions/hlint-run@v2
       with:
         path: '.'
         fail-on: status
