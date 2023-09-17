@@ -268,7 +268,7 @@ myLayout = tiled ||| Mirror tiled ||| Full
 ```
 
 The so-called `where`-clause above simply consists of local declarations
-that might clutter things up where they all declared at the top-level
+that might clutter things up were they all declared at the top-level
 like this
 
 ``` haskell
