@@ -33,7 +33,7 @@ module XMonad.Core (
     StateExtension(..), ExtensionClass(..), ConfExtension(..),
     runX, catchX, userCode, userCodeDef, io, catchIO, installSignalHandlers, uninstallSignalHandlers,
     withDisplay, withWindowSet, isRoot, runOnWorkspaces,
-    getAtom, spawn, spawnPID, xfork, xmessage, recompile, trace, whenJust, whenX,
+    getAtom, spawn, spawnPID, xfork, xmessage, recompile, trace, whenJust, whenX, ifM,
     getXMonadDir, getXMonadCacheDir, getXMonadDataDir, stateFileName, binFileName,
     atom_WM_STATE, atom_WM_PROTOCOLS, atom_WM_DELETE_WINDOW, atom_WM_TAKE_FOCUS, withWindowAttributes,
     ManageHook, Query(..), runQuery, Directories'(..), Directories, getDirectories,
@@ -415,9 +415,13 @@ data StateExtension =
 data ConfExtension = forall a. Typeable a => ConfExtension a
 
 -- ---------------------------------------------------------------------
--- | General utilities
---
--- Lift an 'IO' action into the 'X' monad
+-- General utilities
+
+-- | If-then-else lifted to a 'Monad'.
+ifM :: Monad m => m Bool -> m a -> m a -> m a
+ifM mb t f = mb >>= \b -> if b then t else f
+
+-- | Lift an 'IO' action into the 'X' monad
 io :: MonadIO m => IO a -> m a
 io = liftIO
 
@@ -709,9 +713,6 @@ compile dirs method =
               ]
     andCopyFromResultDir exitCode = do
       if exitCode == ExitSuccess then copyFromResultDir else return exitCode
-    ifM c i e = do
-      cond <- c
-      if cond then i else e
     findM p = foldr (\x -> ifM (p x) (pure $ Just x)) (pure Nothing)
     catchAny :: IO a -> (SomeException -> IO a) -> IO a
     catchAny = E.catch
