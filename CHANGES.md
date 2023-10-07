@@ -18,6 +18,9 @@
   will snap to these hints as soon as they're floated (mouse move, keybinding).
   Previously that only happened on mouse resize.
 
+* Recompilation now detects `flake.nix` and `default.nix` (can be a
+  symlink) and switches to using `nix build` as appropriate.
+
 ### Bug Fixes
 
 * Duplicated floats (e.g. from X.A.CopyToAll) no longer escape to inactive
