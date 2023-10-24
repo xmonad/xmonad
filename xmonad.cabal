@@ -129,5 +129,8 @@ test-suite properties
                 , xmonad
   default-language: Haskell2010
 
+  if impl(ghc > 9.8)
+    ghc-options:   -Wno-x-partial
+
   if flag(pedantic)
     ghc-options:   -Werror
