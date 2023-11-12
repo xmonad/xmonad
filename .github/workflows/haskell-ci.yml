@@ -40,6 +40,7 @@ jobs:
             compilerVersion: 9.8.1
             setup-method: ghcup
             allow-failure: false
+            upload: true
           - compiler: ghc-9.6.3
             compilerKind: ghc
             compilerVersion: 9.6.3
@@ -60,7 +61,6 @@ jobs:
             compilerVersion: 9.0.2
             setup-method: ghcup
             allow-failure: false
-            upload: true
           - compiler: ghc-8.10.7
             compilerKind: ghc
             compilerVersion: 8.10.7
@@ -245,6 +245,10 @@ jobs:
           cd ${PKGDIR_xmonad} || false
           ${CABAL} -vnormal check
       - name: haddock
+        run: |
+          $CABAL v2-haddock --disable-documentation $ARG_COMPILER --with-haddock $HADDOCK $ARG_TESTS $ARG_BENCH all
+      - name: haddock for hackage
+        if: matrix.upload
         run: |
           $CABAL v2-haddock $ARG_COMPILER --with-haddock $HADDOCK $ARG_TESTS $ARG_BENCH --haddock-for-hackage --builddir $GITHUB_WORKSPACE/haddock all
       - name: unconstrained build
