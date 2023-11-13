@@ -37,24 +37,26 @@ set in GitHub repository secrets.
  jobs:
    linux:
      name: Haskell-CI - Linux - ${{ matrix.compiler }}
-@@ -31,6 +38,7 @@
-             compilerVersion: 9.0.2
+@@ -33,6 +40,7 @@
+             compilerVersion: 9.8.1
              setup-method: ghcup
              allow-failure: false
 +            upload: true
-           - compiler: ghc-8.10.7
+           - compiler: ghc-9.6.3
              compilerKind: ghc
-             compilerVersion: 8.10.7
-@@ -237,7 +237,7 @@
-           ${CABAL} -vnormal check
+             compilerVersion: 9.6.3
+@@ -257,6 +265,10 @@
        - name: haddock
          run: |
--          $CABAL v2-haddock --disable-documentation $ARG_COMPILER --with-haddock $HADDOCK $ARG_TESTS $ARG_BENCH all
+           $CABAL v2-haddock --disable-documentation $ARG_COMPILER --with-haddock $HADDOCK $ARG_TESTS $ARG_BENCH all
++      - name: haddock for hackage
++        if: matrix.upload
++        run: |
 +          $CABAL v2-haddock $ARG_COMPILER --with-haddock $HADDOCK $ARG_TESTS $ARG_BENCH --haddock-for-hackage --builddir $GITHUB_WORKSPACE/haddock all
        - name: unconstrained build
          run: |
            rm -f cabal.project.local
-@@ -248,3 +248,75 @@
+@@ -267,3 +279,75 @@
          with:
            key: ${{ runner.os }}-${{ matrix.compiler }}-${{ github.sha }}
            path: ~/.cabal/store
