@@ -33,7 +33,7 @@ module XMonad.Operations (
     -- * Keyboard and Mouse
     cleanMask, extraModifiers,
     mouseDrag, mouseMoveWindow, mouseResizeWindow,
-    setButtonGrab, setFocusX, cacheNumlockMask, mkGrabs,
+    setButtonGrab, setFocusX, cacheNumlockMask, mkGrabs, unGrab,
 
     -- * Messages
     sendMessage, broadcastMessage, sendMessageWithNoRefresh,
@@ -474,6 +474,28 @@ mkGrabs ks = withDisplay $ \dpy -> do
          , keycode     <- keysymToKeycodes sym
          , extraMod    <- extraMods
          ]
+
+-- | Release XMonad's keyboard grab, so other grabbers can do their thing.
+--
+-- Start a keyboard action with this if it is going to run something
+-- that needs to do a keyboard, pointer, or server grab. For example,
+--
+-- > , ((modm .|. controlMask, xK_p), unGrab >> spawn "scrot")
+--
+-- (Other examples are certain screen lockers and "gksu".)
+-- This avoids needing to insert a pause/sleep before running the
+-- command.
+--
+-- XMonad retains the keyboard grab during key actions because if they
+-- use a submap, they need the keyboard to be grabbed, and if they had
+-- to assert their own grab then the asynchronous nature of X11 allows
+-- race conditions between XMonad, other clients, and the X server that
+-- would cause keys to sometimes be "leaked" to the focused window.
+unGrab :: X ()
+unGrab = withDisplay $ \d -> io $ do
+    ungrabKeyboard d currentTime
+    ungrabPointer  d currentTime
+    sync d False
 
 ------------------------------------------------------------------------
 -- Message handling
