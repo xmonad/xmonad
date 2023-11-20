@@ -74,11 +74,15 @@
   in flake-utils.lib.eachDefaultSystem (system:
   let pkgs = import nixpkgs { inherit system overlays; };
       hpkg = pkgs.lib.attrsets.getAttrFromPath (hpath defComp) pkgs;
+      modifyDevShell =
+        if builtins.pathExists ./develop.nix
+        then import ./develop.nix
+        else _: x: x;
   in
   rec {
-    devShell = hpkg.shellFor {
+    devShell = hpkg.shellFor (modifyDevShell pkgs {
       packages = p: [ p.xmonad ];
-    };
+    });
     defaultPackage = hpkg.xmonad;
     # An auxiliary NixOS module that modernises the standard xmonad NixOS module
     # and wrapper script used, replacing them with versions from unstable.
