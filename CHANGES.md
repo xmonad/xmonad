@@ -21,6 +21,10 @@
 * Recompilation now detects `flake.nix` and `default.nix` (can be a
   symlink) and switches to using `nix build` as appropriate.
 
+* Added `unGrab` to `XMonad.Operations`; this releases XMonad's passive
+  keyboard grab, so other applications (like `scrot`) can do their
+  thing.
+
 ### Bug Fixes
 
 * Duplicated floats (e.g. from X.A.CopyToAll) no longer escape to inactive
