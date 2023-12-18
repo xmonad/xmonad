@@ -263,12 +263,12 @@ jobs:
           path: ~/.cabal/store
       - name: upload artifacts (sdist)
         if: matrix.upload
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: ${{ github.workspace }}/sdist/*.tar.gz
       - name: upload artifacts (haddock)
         if: matrix.upload
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: ${{ github.workspace }}/haddock/*-docs.tar.gz
       - name: hackage upload (candidate)
