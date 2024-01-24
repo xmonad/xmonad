@@ -51,7 +51,7 @@ infix 0 -->
 p --> f = p >>= \b -> if b then f else return mempty
 
 -- | @q =? x@. if the result of @q@ equals @x@, return 'True'.
-(=?) :: Eq a => Query a -> a -> Query Bool
+(=?) :: (Functor f, Eq a) => f a -> a -> f Bool
 q =? x = fmap (== x) q
 
 infixr 3 <&&>, <||>

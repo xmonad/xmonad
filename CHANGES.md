@@ -4,9 +4,42 @@
 
 ### Breaking Changes
 
+* Deprecated `runOnWorkspaces`.
+
+* MVDT:
+
+    * The type of `runX` has changed.
+
+    * `windows` no longer performs an immediate refresh, but requests one.
+      That request is handled by `handleRefresh`.
+
+    * Deprecated `modifyWindowSet`, `windowBracket`, `windowBracket_` and
+      `sendMessageWithNoRefresh`.
+
+    * Extended `XConf` with a new `internal` field.
+
+    * Newly generalised functions mean that bindings which previously type
+      checked without a signature may now require a pragma at the head of
+      `xmonad.hs` to do so.
+
+        ```haskell
+        {-# LANGUAGE FlexibleContexts #-}
+        ```
+
 * Dropped support for GHC 8.4.
 
 ### Enhancements
+
+* X.StackSet now provides `mapWorkspaces` and `traverseWorkspaces`.
+
+* MVDT:
+
+    * X actions can now be combined without performing spurious refreshes.
+
+    * New operations: `norefresh`, `handleRefresh`, `respace`,
+      `messageWorkspace` and `rendered`.
+
+    * Various operations have been generalised and are now pure.
 
 * Exported `sendRestart` and `sendReplace` from `XMonad.Operations`.
 

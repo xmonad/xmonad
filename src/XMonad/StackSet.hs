@@ -41,6 +41,7 @@ module XMonad.StackSet (
         -- * Modifying the stackset
         -- $modifyStackset
         insertUp, delete, delete', filter,
+        mapWorkspaces, traverseWorkspaces,
         -- * Setting the master window
         -- $settingMW
         swapUp, swapDown, swapMaster, shiftMaster, modify, modify', float, sink, -- needed by users
@@ -54,6 +55,8 @@ module XMonad.StackSet (
 
 import Prelude hiding (filter)
 import Control.Applicative.Backwards (Backwards (Backwards, forwards))
+import Data.Functor ((<&>))
+import Data.Functor.Identity
 import Data.Foldable (foldr, toList)
 import Data.Maybe   (listToMaybe,isJust,fromMaybe)
 import qualified Data.List as L (deleteBy,find,splitAt,filter,nub)
@@ -519,6 +522,24 @@ delete' w s = s { current = removeFromScreen        (current s)
                 , hidden  = map removeFromWorkspace (hidden  s) }
     where removeFromWorkspace ws = ws { stack = stack ws >>= filter (/=w) }
           removeFromScreen scr   = scr { workspace = removeFromWorkspace (workspace scr) }
+
+-- | Map over the 'Workspace's of a 'StackSet'.
+mapWorkspaces
+  :: (Workspace i l a        -> Workspace i' l' a)
+  ->  StackSet  i l a sid sd -> StackSet  i' l' a sid sd
+mapWorkspaces f = runIdentity . traverseWorkspaces (Identity . f)
+
+-- | 'traverse' the 'Workspace's of a 'StackSet'.
+traverseWorkspaces
+  :: Applicative f
+  => (Workspace i l a        -> f (Workspace i' l' a))
+  ->  StackSet  i l a sid sd -> f (StackSet  i' l' a sid sd)
+traverseWorkspaces f s = StackSet
+  <$>          onScreen (current  s)
+  <*> traverse onScreen (visible  s)
+  <*> traverse f        (hidden   s)
+  <*> pure              (floating s)
+  where onScreen scr = f (workspace scr) <&> \w -> scr{ workspace = w }
 
 ------------------------------------------------------------------------
 
