@@ -4,9 +4,34 @@
 
 ### Breaking Changes
 
+* MVDT:
+
+    * The type of `runX` has changed.
+
+    * `windows` no longer performs an immediate refresh, but requests one.
+      That request is handled by `handleRefresh`.
+
+    * Deprecated `modifyWindowSet`, `windowBracket`, `windowBracket_` and
+      `sendMessageWithNoRefresh`.
+
+    * Extended `XConf` with a new `internal` field.
+
+    * The log hook now runs *before* the layout and other refresh IO.
+
 * Dropped support for GHC 8.4.
 
 ### Enhancements
+
+* MVDT:
+
+    * X actions can now be combined without performing spurious refreshes.
+
+    * New operations: `norefresh`, `handleRefresh`, `respace`,
+      `messageWorkspace` and `rendered`.
+
+    * The log hook may now make changes to the windowset and have those changes
+      handled seamlessly by the accompanying refresh, at no risk of infinite
+      recursion.
 
 * Exported `sendRestart` and `sendReplace` from `XMonad.Operations`.
 
