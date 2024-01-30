@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE BlockArguments #-}
 
 ----------------------------------------------------------------------------
 -- |
@@ -20,7 +21,7 @@ module XMonad.Main (xmonad, buildLaunch, launch) where
 import System.Locale.SetLocale
 import qualified Control.Exception as E
 import Data.Bits
-import Data.List ((\\))
+import Data.List (partition, (\\))
 import Data.Foldable (traverse_)
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -33,6 +34,7 @@ import Data.Monoid (getAll)
 import Graphics.X11.Xlib hiding (refreshKeyboardMapping)
 import Graphics.X11.Xlib.Extras
 
+import XMonad.Internal.Core (unsafeMakeInternal)
 import XMonad.Core
 import qualified XMonad.Config as Default
 import XMonad.StackSet (new, floating, member)
@@ -191,7 +193,9 @@ launch initxmc drs = do
         initialWinset = let padToLen n xs = take (max n (length xs)) $ xs ++ repeat ""
             in new layout (padToLen (length xinesc) (workspaces xmc)) $ map SD xinesc
 
-        cf = XConf
+    int <- unsafeMakeInternal initialWinset
+
+    let cf = XConf
             { display       = dpy
             , config        = xmc
             , theRoot       = rootw
@@ -203,6 +207,7 @@ launch initxmc drs = do
             , mousePosition = Nothing
             , currentEvent  = Nothing
             , directories   = drs
+            , internal      = int
             }
 
         st = XState
@@ -234,18 +239,21 @@ launch initxmc drs = do
 
             ws <- io $ scan dpy rootw
 
-            -- bootstrap the windowset, Operations.windows will identify all
-            -- the windows in winset as new and set initial properties for
-            -- those windows.  Remove all windows that are no longer top-level
-            -- children of the root, they may have disappeared since
-            -- restarting.
-            let winset = maybe initialWinset windowset serializedSt
-            windows . const . foldr W.delete winset $ W.allWindows winset \\ ws
+            handleRefresh do
+              -- Bootstrap the windowset. Remove all windows that are no longer
+              -- top-level children of the root, they may have disappeared since
+              -- restarting.
+              let winset = maybe initialWinset windowset serializedSt
+                  (lostWins, keptWins, newWins) = venn (W.allWindows winset) ws
+              windows $ const (foldr W.delete winset lostWins)
 
-            -- manage the as-yet-unmanaged windows
-            mapM_ manage (ws \\ W.allWindows winset)
+              -- reset the initial properties of the already-managed windows
+              mapM_ setInitialProperties keptWins
 
-            userCode $ startupHook initxmc
+              -- manage the as-yet-unmanaged windows
+              mapM_ manage newWins
+
+              userCode $ startupHook initxmc
 
             rrData <- io $ xrrQueryExtension dpy
 
@@ -265,12 +273,14 @@ launch initxmc drs = do
               , buttonPress, buttonRelease]
         rrUpdate e r = when (isJust r) (void (xrrUpdateConfiguration e))
         mainLoop d e r = io (nextEvent d e >> rrUpdate e r >> getEvent e) >>= prehandle >> mainLoop d e r
+        venn l r = (lEx, int, r \\ int)
+          where (int, lEx) = partition (`elem` r) l
 
 
 -- | Runs handleEventHook from the configuration and runs the default handler
 -- function if it returned True.
 handleWithHook :: Event -> X ()
-handleWithHook e = do
+handleWithHook e = handleRefresh do
   evHook <- asks (handleEventHook . config)
   whenX (userCodeDef True $ getAll `fmap` evHook e) (handle e)
 
