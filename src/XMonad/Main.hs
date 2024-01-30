@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE BlockArguments #-}
 
 ----------------------------------------------------------------------------
 -- |
@@ -33,6 +34,7 @@ import Data.Monoid (getAll)
 import Graphics.X11.Xlib hiding (refreshKeyboardMapping)
 import Graphics.X11.Xlib.Extras
 
+import XMonad.Internal.Core (unsafeMakeInternal)
 import XMonad.Core
 import qualified XMonad.Config as Default
 import XMonad.StackSet (new, floating, member)
@@ -191,7 +193,9 @@ launch initxmc drs = do
         initialWinset = let padToLen n xs = take (max n (length xs)) $ xs ++ repeat ""
             in new layout (padToLen (length xinesc) (workspaces xmc)) $ map SD xinesc
 
-        cf = XConf
+    int <- unsafeMakeInternal initialWinset
+
+    let cf = XConf
             { display       = dpy
             , config        = xmc
             , theRoot       = rootw
@@ -203,6 +207,7 @@ launch initxmc drs = do
             , mousePosition = Nothing
             , currentEvent  = Nothing
             , directories   = drs
+            , internal      = int
             }
 
         st = XState
@@ -234,18 +239,20 @@ launch initxmc drs = do
 
             ws <- io $ scan dpy rootw
 
-            -- bootstrap the windowset, Operations.windows will identify all
-            -- the windows in winset as new and set initial properties for
-            -- those windows.  Remove all windows that are no longer top-level
-            -- children of the root, they may have disappeared since
-            -- restarting.
-            let winset = maybe initialWinset windowset serializedSt
-            windows . const . foldr W.delete winset $ W.allWindows winset \\ ws
+            handleRefresh do
+              -- bootstrap the windowset, Operations.windows will identify all
+              -- the windows in winset as new and set initial properties for
+              -- those windows.  Remove all windows that are no longer top-level
+              -- children of the root, they may have disappeared since
+              -- restarting.
+              let winset = maybe initialWinset windowset serializedSt
+              windows . const . foldr W.delete winset
+                      $ W.allWindows winset \\ ws
 
-            -- manage the as-yet-unmanaged windows
-            mapM_ manage (ws \\ W.allWindows winset)
+              -- manage the as-yet-unmanaged windows
+              mapM_ manage (ws \\ W.allWindows winset)
 
-            userCode $ startupHook initxmc
+              userCode $ startupHook initxmc
 
             rrData <- io $ xrrQueryExtension dpy
 
@@ -270,7 +277,7 @@ launch initxmc drs = do
 -- | Runs handleEventHook from the configuration and runs the default handler
 -- function if it returned True.
 handleWithHook :: Event -> X ()
-handleWithHook e = do
+handleWithHook e = handleRefresh do
   evHook <- asks (handleEventHook . config)
   whenX (userCodeDef True $ getAll `fmap` evHook e) (handle e)
 

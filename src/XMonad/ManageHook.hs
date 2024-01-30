@@ -21,10 +21,12 @@ import Graphics.X11.Xlib (Display, Window, internAtom, wM_NAME)
 import Control.Exception (bracket, SomeException(..))
 import qualified Control.Exception as E
 import Control.Monad.Reader
+import Control.Monad.State
 import Data.Maybe
-import Data.Monoid
+import qualified Data.Map as M
 import qualified XMonad.StackSet as W
-import XMonad.Operations (floatLocation, reveal, isFixedSizeOrTransient)
+import XMonad.Operations
+  (floatLocation, reveal, isFixedSizeOrTransient, windows)
 
 -- | Lift an 'X' action to a 'Query'.
 liftX :: X a -> Query a
@@ -102,12 +104,17 @@ getStringProperty d w p = do
   return $ fmap (map (toEnum . fromIntegral)) md
 
 -- | Return whether the window will be a floating window or not
+{-# DEPRECATED willFloat "Use isFloat." #-}
 willFloat :: Query Bool
 willFloat = ask >>= \w -> liftX $ withDisplay $ \d -> isFixedSizeOrTransient d w
 
+-- | Return whether the window is a floating window or not
+isFloat :: Query Bool
+isFloat = ask >>= \w -> liftX $ gets (M.member w . W.floating . windowset)
+
 -- | Modify the 'WindowSet' with a pure function.
-doF :: (s -> s) -> Query (Endo s)
-doF = return . Endo
+doF :: (WindowSet -> WindowSet) -> ManageHook
+doF = liftX . windows
 
 -- | Move the window to the floating layer.
 doFloat :: ManageHook

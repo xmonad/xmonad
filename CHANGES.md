@@ -4,9 +4,75 @@
 
 ### Breaking Changes
 
+* MVDT:
+
+    * The type of `runX` has changed.
+
+    * `windows` no longer performs an immediate refresh, but requests one.
+      That request is handled by `handleRefresh`.
+
+    * Deprecated `modifyWindowSet`, `windowBracket`, `windowBracket_` and
+      `sendMessageWithNoRefresh`.
+
+    * Extended `XConf` with a new `internal` field.
+
+    * The definition of the `ManageHook` type synonym has changed.
+
+    * The order of manage hook composition has been reversed, though the order
+      in which matching and `liftX` actions are performed has not.
+
+        As such, e.g.
+
+        ```haskell
+        manageHook = composeAll
+          [ test1 --> doSomething <> liftX someAction >> idHook
+          , test2 --> doThird <> doSecond <> doFirst
+          ]
+        ```
+
+        should be corrected to
+
+        ```haskell
+        manageHook = composeAll
+          [ test1 --> doSomething <> liftX someAction >> idHook
+          , test2 --> doFirst <> doSecond <> doThird
+          ]
+        ```
+
 * Dropped support for GHC 8.4.
 
 ### Enhancements
+
+* MVDT:
+
+    * X actions can now be combined without performing spurious refreshes.
+
+    * New operations: `norefresh`, `handleRefresh`, `respace`,
+      `messageWorkspace` and `rendered`.
+
+    * `ManageHook` supports new syntax.
+
+        Instead of, e.g.
+
+        ```haskell
+        manageHook = composeAll
+          [ test1 --> fooHook
+          , test2 --> barQueryAction >> idHook
+          , test3 --> fooHook <> bazHook <> quuxHook
+          ]
+        ```
+
+        you can now write
+
+        ```haskell
+        manageHook = do
+          test1 --> fooHook
+          test2 --> barQueryAction
+          test3 --> do
+            fooHook
+            bazHook
+            quuxHook
+        ```
 
 * Exported `sendRestart` and `sendReplace` from `XMonad.Operations`.
 

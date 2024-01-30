@@ -25,7 +25,8 @@ author:             Spencer Janssen, Don Stewart, Adam Vogt, David Roundy, Jason
                     Jens Petersen, Joey Hess, Jonne Ransijn, Josh Holland, Khudyakov Alexey,
                     Klaus Weidner, Michael G. Sloan, Mikkel Christiansen, Nicolas Dudebout,
                     Ondřej Súkup, Paul Hebble, Shachaf Ben-Kiki, Siim Põder, Tim McIver,
-                    Trevor Elliott, Wouter Swierstra, Conrad Irwin, Tim Thelion, Tony Zorman
+                    Trevor Elliott, Wouter Swierstra, Conrad Irwin, Tim Thelion, Tony Zorman,
+                    L. S. Leary
 maintainer:         xmonad@haskell.org
 tested-with:        GHC == 8.6.5 || == 8.8.4 || == 8.10.7 || == 9.0.2 || == 9.2.8 || == 9.4.8 || == 9.6.4 || == 9.8.1
 category:           System
@@ -64,6 +65,8 @@ library
                    XMonad.Operations
                    XMonad.StackSet
   other-modules:   Paths_xmonad
+                   XMonad.Internal.Core
+                   XMonad.Internal.Operations
   hs-source-dirs:  src
   build-depends:   base                  >= 4.11 && < 5
                  , X11                   >= 1.10 && < 1.11
