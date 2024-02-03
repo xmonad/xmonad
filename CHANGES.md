@@ -1,6 +1,6 @@
 # Change Log / Release Notes
 
-## _unreleased_
+## 0.18.0 (February 3, 2024)
 
 ### Breaking Changes
 
