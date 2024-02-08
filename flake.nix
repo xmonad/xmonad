@@ -46,7 +46,7 @@
             enable = mkEnableOption "flake";
             prefix = mkOption {
               default = null;
-              type = nullOr string;
+              type = nullOr str;
               example = literalExpression "\"unstable\"";
               description = ''
                 Specify a nested alternative <literal>pkgs</literal> by attrName.
@@ -54,7 +54,7 @@
             };
             compiler = mkOption {
               default = null;
-              type = nullOr string;
+              type = nullOr str;
               example = literalExpression "\"ghc922\"";
               description = ''
                 Which compiler to build xmonad with.
