@@ -40,10 +40,11 @@ jobs:
             *.cabal
 
   workflow-keepalive:
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
-      - name: Re-enable workflow
-        env:
+      - uses: liskin/gh-workflow-keepalive@v1
+        with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh api -X PUT repos/${{ github.repository }}/actions/workflows/packdeps.yml/enable
