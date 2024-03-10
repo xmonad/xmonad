@@ -38,13 +38,13 @@ package manager, you will need to `xmonad --recompile` _every time_ a
 Haskell dependency is updated—else xmonad may fail to start when you
 want to log in!
 
-We're going to assume xmonad version `0.17.0` and xmonad-contrib version
-`0.17.0` here, though most of these steps should work with older
-versions as well.  When we get to the relevant parts, will point you to
-alternatives that work with at least xmonad version `0.15` and
-xmonad-contrib version `0.16`.  This will usually be accompanied by a
-big "_IF YOU ARE ON A VERSION `< 0.17.0`_", so don't worry about missing
-it!
+We're going to assume xmonad version `>= 0.17.0` and xmonad-contrib
+version `>= 0.17.0` here, though most of these steps should work with
+older versions as well. When we get to the relevant parts, will point
+you to alternatives that work with at least xmonad version `0.15` and
+xmonad-contrib version `0.16`. This will usually be accompanied by big
+warning labels for the respective version bounds, so don't worry about
+missing it!
 
 Throughout the tutorial we will use, for keybindings, a syntax very akin
 to the [GNU Emacs conventions] for the same thing—so `C-x` means "hold
@@ -113,6 +113,8 @@ utility modules we will use.  At the very top of the file, write
 import XMonad
 
 import XMonad.Util.EZConfig
+-- NOTE: Only needed for versions < 0.18.0! For 0.18.0 and up, this is
+-- already included in the XMonad import and will give you a warning!
 import XMonad.Util.Ungrab
 ```
 
@@ -1066,6 +1068,9 @@ import XMonad.Hooks.StatusBar.PP
 
 import XMonad.Util.EZConfig
 import XMonad.Util.Loggers
+-- NOTE: Importing XMonad.Util.Ungrab is only necessary for versions
+-- < 0.18.0! For 0.18.0 and up, this is already included in the
+-- XMonad import and will generate a warning instead!
 import XMonad.Util.Ungrab
 
 import XMonad.Layout.Magnifier
