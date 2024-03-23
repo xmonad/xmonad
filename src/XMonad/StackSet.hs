@@ -179,6 +179,22 @@ data RationalRect = RationalRect !Rational !Rational !Rational !Rational
 -- structures, it is the differentiation of a [a], and integrating it
 -- back has a natural implementation used in 'index'.
 --
+-- Imagine you have a list of windows in this order:
+--
+-- > 1 2 3 4 <5> 6 7 8 9
+--
+-- Where @<5>@ is the currently focused window.
+-- Then the stack would look like this:
+--
+-- > Stack { focus = 5
+-- >       , up    = [4, 3, 2, 1]
+-- >       , down  = [6, 7, 8, 9] }
+--
+-- Note that @up@ is reversed. Both first elements of @up@ and @down@
+-- are the closest to the focused window. You can also think of @up@
+-- as moving to the /left/ side one-by-one from the focused window.
+-- So @down@ is moving to the /right/.
+--
 data Stack a = Stack { focus  :: !a        -- focused thing in this set
                      , up     :: [a]       -- clowns to the left
                      , down   :: [a] }     -- jokers to the right
