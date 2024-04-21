@@ -42,9 +42,9 @@ set in GitHub repository secrets.
              setup-method: ghcup
              allow-failure: false
 +            upload: true
-           - compiler: ghc-9.6.4
+           - compiler: ghc-9.6.5
              compilerKind: ghc
-             compilerVersion: 9.6.4
+             compilerVersion: 9.6.5
 @@ -257,6 +265,10 @@
        - name: haddock
          run: |
