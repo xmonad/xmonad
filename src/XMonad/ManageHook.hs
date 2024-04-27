@@ -94,7 +94,7 @@ className = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resClass $ io $ getC
 -- | A query that can return an arbitrary X property of type 'String',
 -- identified by name. Works for ASCII strings only. For the properties
 -- @_NET_WM_NAME@/@WM_NAME@ and @WM_CLASS@ the specialised variants 'title'
--- and 'appName'/'className' are prefered.
+-- and 'appName'/'className' are preferred.
 stringProperty :: String -> Query String
 stringProperty p = ask >>= (\w -> liftX $ withDisplay $ \d -> fromMaybe "" <$> getStringProperty d w p)
 
