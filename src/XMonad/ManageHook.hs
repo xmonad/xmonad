@@ -64,7 +64,8 @@ x <&&> y = ifM x y (pure False)
 (<||>) :: Monad m => m Bool -> m Bool -> m Bool
 x <||> y = ifM x (pure True) y
 
--- | Return the window title.
+-- | Return the window title; i.e., the string returned by @_NET_WM_NAME@,
+-- or failing that, the string returned by @WM_NAME@.
 title :: Query String
 title = ask >>= \w -> liftX $ do
     d <- asks display
@@ -91,7 +92,7 @@ className :: Query String
 className = ask >>= (\w -> liftX $ withDisplay $ \d -> fmap resClass $ io $ getClassHint d w)
 
 -- | A query that can return an arbitrary X property of type 'String',
---   identified by name.
+-- identified by name. Works for ASCII strings only.
 stringProperty :: String -> Query String
 stringProperty p = ask >>= (\w -> liftX $ withDisplay $ \d -> fromMaybe "" <$> getStringProperty d w p)
 
