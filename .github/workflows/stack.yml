@@ -18,6 +18,7 @@ jobs:
           - resolver: lts-19  # GHC 9.0
           - resolver: lts-20  # GHC 9.2
           - resolver: lts-21  # GHC 9.4
+          - resolver: lts-22  # GHC 9.6
 
     steps:
       - name: Clone project
