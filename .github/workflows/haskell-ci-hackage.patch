@@ -56,19 +56,24 @@ set in GitHub repository secrets.
        - name: unconstrained build
          run: |
            rm -f cabal.project.local
-@@ -267,3 +279,75 @@
+@@ -267,3 +279,80 @@
          with:
            key: ${{ runner.os }}-${{ matrix.compiler }}-${{ github.sha }}
            path: ~/.cabal/store
-+      - name: upload artifacts (sdist)
++      # must be separate artifacts because GitHub Actions are still broken:
++      # https://github.com/actions/upload-artifact/issues/441
++      # https://github.com/actions/upload-artifact/issues/457
++      - name: upload artifact (sdist)
 +        if: matrix.upload
-+        uses: actions/upload-artifact@v3
++        uses: actions/upload-artifact@v4
 +        with:
++          name: sdist
 +          path: ${{ github.workspace }}/sdist/*.tar.gz
-+      - name: upload artifacts (haddock)
++      - name: upload artifact (haddock)
 +        if: matrix.upload
-+        uses: actions/upload-artifact@v3
++        uses: actions/upload-artifact@v4
 +        with:
++          name: haddock
 +          path: ${{ github.workspace }}/haddock/*-docs.tar.gz
 +      - name: hackage upload (candidate)
 +        if: matrix.upload && github.event_name == 'workflow_dispatch' && github.event.inputs.version != ''
