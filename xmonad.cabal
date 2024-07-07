@@ -65,7 +65,7 @@ library
                    XMonad.StackSet
   other-modules:   Paths_xmonad
   hs-source-dirs:  src
-  build-depends:   base                  >= 4.11 && < 5
+  build-depends:   base                  >= 4.12 && < 5
                  , X11                   >= 1.10 && < 1.11
                  , containers
                  , data-default-class
