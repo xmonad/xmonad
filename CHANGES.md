@@ -8,6 +8,16 @@
 
 ### Bug Fixes
 
+### Other
+
+PR #404 (see last change in 0.17.1) has been reverted, because the affected
+compilers are (hopefully) no longer being used.
+
+All 9.0 releases of GHC, plus 9.2.1 and 9.2.2 have the join point bug.
+Note that 9.0.x is known to also have GC issues and is officially deprecated,
+and the only 9.2 release that should be used is 9.2.8. Additionally, GHC HQ
+doesn't support releases before 9.6.6.
+
 ## 0.18.0 (February 3, 2024)
 
 ### Breaking Changes
