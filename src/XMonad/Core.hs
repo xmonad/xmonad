@@ -523,35 +523,61 @@ type Directories = Directories' FilePath
 -- always assumed to be in @cfgDir@.
 --
 getDirectories :: IO Directories
-getDirectories = xmEnvDirs <|> xmDirs <|> xdgDirs
+getDirectories = do
+    dataDir <- mma xmEnvDataDir xmDataDir xdgDataDir
+    cfgDir <- mma xmEnvCfgDir xmCfgDir xdgCfgDir
+    cacheDir <- mma xmEnvCacheDir xmCacheDir xdgCacheDir
+    pure $ Directories { dataDir, cfgDir, cacheDir}
+
   where
+    mma fa fb fc = fa >>= \case
+        Just a -> pure a
+        Nothing -> fb >>= \case
+          Just b -> pure b
+          Nothing -> fc
+
     -- | Check for xmonad's environment variables first
-    xmEnvDirs :: IO Directories
-    xmEnvDirs = do
-        let xmEnvs = Directories{ dataDir  = "XMONAD_DATA_DIR"
-                                , cfgDir   = "XMONAD_CONFIG_DIR"
-                                , cacheDir = "XMONAD_CACHE_DIR"
-                                }
-        maybe empty pure . sequenceA =<< traverse getEnv xmEnvs
+    xmEnvDataDir, xmEnvCfgDir, xmEnvCacheDir :: IO (Maybe FilePath)
+    xmEnvDataDir  = getEnv "XMONAD_DATA_DIR"
+    xmEnvCfgDir   = getEnv "XMONAD_CONFIG_DIR"
+    xmEnvCacheDir = getEnv "XMONAD_CACHE_DIR"
+
+    -- this is a tiny bit inefficient, but it's not worth the extra complexity
 
     -- | Check whether the config file or a build script is in the
-    -- @~\/.xmonad@ directory
-    xmDirs :: IO Directories
-    xmDirs = do
+    xmDataDir, xmCfgDir, xmCacheDir :: IO (Maybe FilePath)
+    xmCfgDir = do
         xmDir <- getAppUserDataDirectory "xmonad"
         conf  <- doesFileExist $ xmDir </> "xmonad.hs"
+        pure $ if conf then Just xmDir else Nothing
+
+    xmCacheDir = do
+        xmDir <- getAppUserDataDirectory "xmonad"
         build <- doesFileExist $ xmDir </> "build"
+        pure $ if build then Just xmDir else Nothing
 
-        -- Place *everything* in ~/.xmonad if yes
-        guard $ conf || build
-        pure Directories{ dataDir = xmDir, cfgDir = xmDir, cacheDir = xmDir }
+    xmDataDir = do
+        cfgDir <- xmCfgDir
+        cacheDir <- xmCacheDir
+        -- only set it if one of the other two exist
+        if isJust cfgDir || isJust cacheDir
+            then Just <$> getAppUserDataDirectory "xmonad"
+            else pure Nothing
 
-    -- | Use XDG directories as a fallback
-    xdgDirs :: IO Directories
-    xdgDirs =
-        for Directories{ dataDir = XdgData, cfgDir = XdgConfig, cacheDir = XdgCache }
-            $ \dir -> do d <- getXdgDirectory dir "xmonad"
-                         d <$ createDirectoryIfMissing True d
+    xdgDataDir, xdgCfgDir, xdgCacheDir :: IO FilePath
+    xdgDataDir = do
+        dataDir <- getXdgDirectory XdgData "xmonad"
+        createDirectoryIfMissing True dataDir
+        pure  dataDir
+    xdgCfgDir = do
+        cfgDir <- getXdgDirectory XdgConfig "xmonad"
+        createDirectoryIfMissing True cfgDir
+        pure cfgDir
+    xdgCacheDir = do
+        cacheDir <- getXdgDirectory XdgCache "xmonad"
+        createDirectoryIfMissing True cacheDir
+        pure cacheDir
+
 
 -- | Return the path to the xmonad configuration directory.
 getXMonadDir :: X String
