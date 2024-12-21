@@ -8,6 +8,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -50,6 +51,7 @@ import Control.Monad.Fix (fix)
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Monad (filterM, guard, void, when)
+import Data.Char (isSpace)
 import Data.Semigroup
 import Data.Traversable (for)
 import Data.Time.Clock (UTCTime)
@@ -589,6 +591,7 @@ nixDefaultFileName  Directories{ cfgDir } = cfgDir </> "default.nix"
 -- | Compilation method for xmonad configuration.
 data Compile
   = CompileGhc
+  | CompileCabal
   | CompileStackGhc FilePath
   | CompileNixFlake
   | CompileNixDefault
@@ -599,7 +602,7 @@ data Compile
 -- configuration directory.
 detectCompile :: Directories -> IO Compile
 detectCompile dirs =
-  tryScript <|> tryStack <|> tryNixFlake <|> tryNixDefault <|> useGhc
+  tryScript <|> tryStack <|> tryNixFlake <|> tryNixDefault <|> tryCabal <|> useGhc
   where
     buildScript = buildScriptFileName dirs
     stackYaml = stackYamlFileName dirs
@@ -636,6 +639,16 @@ detectCompile dirs =
         trace $ "XMonad will use stack ghc --stack-yaml " <> show canonStackYaml <> " to recompile."
         pure $ CompileStackGhc canonStackYaml
 
+    tryCabal = let cwd = cfgDir dirs in listCabalFiles cwd >>= \ case
+        [] -> do
+            empty
+        [name] -> do
+            trace $ "XMonad will use " <> show name <> " to recompile."
+            pure CompileCabal
+        _ : _ : _ -> do
+            trace $ "XMonad will not use cabal, because there are multiple cabal files in " <> show cwd <> "."
+            empty
+
     useGhc = do
         trace $ "XMonad will use ghc to recompile, because none of "
                 <> intercalate ", "
@@ -643,8 +656,19 @@ detectCompile dirs =
                      , show stackYaml
                      , show flakeNix
                      , show defaultNix
-                     ] <> " exist."
+                     ] <> " nor a suitable .cabal file exist."
         pure CompileGhc
+
+listCabalFiles :: FilePath -> IO [FilePath]
+listCabalFiles dir = map (dir </>) . Prelude.filter isCabalFile <$> listFiles dir
+
+isCabalFile :: FilePath -> Bool
+isCabalFile file = case splitExtension file of
+    (name, ".cabal") -> not (null name)
+    _ -> False
+
+listFiles :: FilePath -> IO [FilePath]
+listFiles dir = getDirectoryContents dir >>= filterM (doesFileExist . (dir </>))
 
 -- | Determine whether or not the file found at the provided filepath is executable.
 isExecutable :: FilePath -> IO Bool
@@ -667,6 +691,7 @@ shouldCompile dirs CompileGhc = do
         cs <- prep <$> E.catch (getDirectoryContents t) (\(SomeException _) -> return [])
         ds <- filterM doesDirectoryExist cs
         concat . ((cs \\ ds):) <$> mapM allFiles ds
+shouldCompile _ CompileCabal = return True
 shouldCompile dirs CompileStackGhc{} = do
     stackYamlT <- getModTime (stackYamlFileName dirs)
     binT <- getModTime (binFileName dirs)
@@ -686,11 +711,17 @@ compile :: Directories -> Compile -> IO ExitCode
 compile dirs method =
     bracket_ uninstallSignalHandlers installSignalHandlers $
         withFile (errFileName dirs) WriteMode $ \err -> do
-            let run = runProc (cfgDir dirs) err
+            let run = runProc err
             case method of
                 CompileGhc -> do
                     ghc <- fromMaybe "ghc" <$> lookupEnv "XMONAD_GHC"
                     run ghc ghcArgs
+                CompileCabal -> run "cabal" ["build"] .&&. copyBinary
+                  where
+                    copyBinary :: IO ExitCode
+                    copyBinary = readProc err "cabal" ["-v0", "list-bin", "."] >>= \ case
+                        Left status -> return status
+                        Right (trim -> path) -> copyBinaryFrom path
                 CompileStackGhc stackYaml ->
                     run "stack" ["build", "--silent", "--stack-yaml", stackYaml] .&&.
                     run "stack" ("ghc" : "--stack-yaml" : stackYaml : "--" : ghcArgs)
@@ -701,6 +732,10 @@ compile dirs method =
                 CompileScript script ->
                     run script [binFileName dirs]
   where
+    cwd :: FilePath
+    cwd = cfgDir dirs
+
+    ghcArgs :: [String]
     ghcArgs = [ "--make"
               , "xmonad.hs"
               , "-i" -- only look in @lib@
@@ -711,26 +746,52 @@ compile dirs method =
               , "-outputdir", buildDirName dirs
               , "-o", binFileName dirs
               ]
+
+    andCopyFromResultDir :: ExitCode -> IO ExitCode
     andCopyFromResultDir exitCode = do
       if exitCode == ExitSuccess then copyFromResultDir else return exitCode
+
+    findM :: (Monad m, Foldable t) => (a -> m Bool) -> t a -> m (Maybe a)
     findM p = foldr (\x -> ifM (p x) (pure $ Just x)) (pure Nothing)
+
     catchAny :: IO a -> (SomeException -> IO a) -> IO a
     catchAny = E.catch
+
+    copyFromResultDir :: IO ExitCode
     copyFromResultDir = do
       let binaryDirectory = cfgDir dirs </> "result" </> "bin"
       binFiles <- map (binaryDirectory </>) <$> catchAny (listDirectory binaryDirectory) (\_ -> return [])
       mfilepath <- findM isExecutable binFiles
       case mfilepath of
-        Just filepath -> copyFile filepath (binFileName dirs) >> return ExitSuccess
+        Just filepath -> copyBinaryFrom filepath
         Nothing -> return $ ExitFailure 1
 
+    copyBinaryFrom :: FilePath -> IO ExitCode
+    copyBinaryFrom filepath = copyFile filepath (binFileName dirs) >> return ExitSuccess
+
     -- waitForProcess =<< System.Process.runProcess, but without closing the err handle
-    runProc cwd err exe args = do
-        hPutStrLn err $ unwords $ "$" : exe : args
-        hFlush err
-        (_, _, _, h) <- createProcess_ "runProc" (proc exe args){ cwd = Just cwd, std_err = UseHandle err }
+    runProc :: Handle -> String -> [String] -> IO ExitCode
+    runProc err exe args = do
+        (Nothing, Nothing, Nothing, h) <- createProcess_ "runProc" =<< mkProc err exe args
         waitForProcess h
 
+    readProc :: Handle -> String -> [String] -> IO (Either ExitCode String)
+    readProc err exe args = do
+        spec <- mkProc err exe args
+        (Nothing, Just out, Nothing, h) <- createProcess_ "readProc" spec{ std_out = CreatePipe }
+        result <- hGetContents out
+        hPutStr err result >> hFlush err
+        waitForProcess h >>= \ case
+            ExitSuccess -> return $ Right result
+            status -> return $ Left status
+
+    mkProc :: Handle -> FilePath -> [FilePath] -> IO CreateProcess
+    mkProc err exe args = do
+        hPutStrLn err $ unwords $ "$" : exe : args
+        hFlush err
+        return (proc exe args){ cwd = Just cwd, std_err = UseHandle err }
+
+    (.&&.) :: Monad m => m ExitCode -> m ExitCode -> m ExitCode
     cmd1 .&&. cmd2 = cmd1 >>= \case
         ExitSuccess -> cmd2
         e -> pure e
@@ -830,3 +891,6 @@ uninstallSignalHandlers = io $ do
     installHandler openEndedPipe Default Nothing
     installHandler sigCHLD Default Nothing
     return ()
+
+trim :: String -> String
+trim = reverse . dropWhile isSpace . reverse . dropWhile isSpace

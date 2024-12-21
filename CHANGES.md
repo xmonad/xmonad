@@ -4,6 +4,10 @@
 
 ### Breaking Changes
 
+ * Use `cabal` for `--recompile` if there is a `.cabal` file in the config
+   directory and none of `build`, `stack.yaml`, `flake.nix`, nor `default.nix`
+   exist.
+
 ### Enhancements
 
 ### Bug Fixes
