@@ -8,9 +8,9 @@
 #
 # For more information, see https://github.com/haskell-CI/haskell-ci
 #
-# version: 0.19.20250315
+# version: 0.19.20250327
 #
-# REGENDATA ("0.19.20250315",["github","cabal.project"])
+# REGENDATA ("0.19.20250327",["github","cabal.project"])
 #
 name: Haskell-CI
 on:
@@ -96,7 +96,7 @@ jobs:
       - name: Install GHCup
         run: |
           mkdir -p "$HOME/.ghcup/bin"
-          curl -sL https://downloads.haskell.org/ghcup/0.1.40.0/x86_64-linux-ghcup-0.1.40.0 > "$HOME/.ghcup/bin/ghcup"
+          curl -sL https://downloads.haskell.org/ghcup/0.1.50.1/x86_64-linux-ghcup-0.1.50.1 > "$HOME/.ghcup/bin/ghcup"
           chmod a+x "$HOME/.ghcup/bin/ghcup"
       - name: Install cabal-install
         run: |
