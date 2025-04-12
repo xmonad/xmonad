@@ -51,9 +51,9 @@ jobs:
             setup-method: ghcup
             allow-failure: false
             upload: true
-          - compiler: ghc-9.6.6
+          - compiler: ghc-9.6.7
             compilerKind: ghc
-            compilerVersion: 9.6.6
+            compilerVersion: 9.6.7
             setup-method: ghcup
             allow-failure: false
           - compiler: ghc-9.4.8
