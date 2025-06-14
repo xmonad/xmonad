@@ -1,6 +1,6 @@
 #!/usr/bin/env runhaskell
 
--- Reads markdown (man/xmonad.1.markdown) from stdin, subtitutes
+-- Reads markdown (man/xmonad.1.markdown) from stdin, substitutes
 -- ___KEYBINDINGS___ for key-binding definitions generated from
 -- src/XMonad/Config.hs, prints result to stdout.
 --

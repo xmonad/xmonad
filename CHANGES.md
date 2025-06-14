@@ -225,7 +225,7 @@ doesn't support releases before 9.6.6.
 
   * Compiles with GHC 8.4.1
 
-  * Restored compatability with GHC version prior to 8.0.1 by removing the
+  * Restored compatibility with GHC version prior to 8.0.1 by removing the
     dependency on directory version 1.2.3.
 
 

@@ -559,7 +559,7 @@ which is a new feature in `0.17.0`).
 
 _IF YOU ARE ON A VERSION `< 0.17.0`_: As discussed above, the `xmobar`
   function uses pipes, so you actually do want to use the `StdinReader`.
-  Simply replace _all_ occurences of `XMonadLog` with `StdinReader`
+  Simply replace _all_ occurrences of `XMonadLog` with `StdinReader`
   below (don't forget the template!)
 
 ---
@@ -627,7 +627,7 @@ defined a weather widget, a CPU widget, memory and swap widgets, a date,
 a volume indicator, and of course the data from xmonad via `XMonadLog`.
 
 The `EGPF` in the weather command is a particular station.  Replace both
-(!) occurences of it with your choice of ICAO weather stations.  For a
+(!) occurrences of it with your choice of ICAO weather stations.  For a
 list of ICAO codes you can visit the relevant [Wikipedia page].  You can
 of course monitor more than one if you like; see xmobar's [weather
 monitor] documentation for further details.
@@ -840,7 +840,7 @@ However, `logTitles` logs _all_ titles.  Naturally, we don't want to
 show the focused window twice and so we suppress it here by ignoring the
 third argument of `ppOrder` and not returning it.  The functions
 `formatFocused` and `formatUnfocused` should be relatively self
-explanitory—they decide how to format the focused resp. unfocused
+explanatory—they decide how to format the focused resp. unfocused
 windows.
 
 By the way, the `\ ... ->` syntax in there is Haskell's way to express a
