@@ -45,7 +45,7 @@ prop_shift_win_focus (x :: T) = do
       Nothing -> return True
       Just w  -> return $ shiftWin n w x == shift n x
 
--- shiftWin on a non-existant window is identity
+-- shiftWin on a non-existent window is identity
 prop_shift_win_indentity (x :: T) = do
     n <- arbitraryTag x
     w <- arbitrary `suchThat` \w' -> not (w' `member` x)
