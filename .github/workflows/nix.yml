@@ -16,6 +16,6 @@ jobs:
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Clone project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Build
         run: nix build --print-build-logs
