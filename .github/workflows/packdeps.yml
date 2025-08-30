@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Clone project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup Haskell
         uses: haskell-actions/setup@v2
         with:
