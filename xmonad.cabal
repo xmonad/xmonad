@@ -77,7 +77,9 @@ library
                  , time
                  , transformers          >= 0.3
                  , unix
-  ghc-options:     -funbox-strict-fields -Wall -Wno-unused-do-bind
+  ghc-options:     -funbox-strict-fields -Wall -Wno-unused-do-bind -Wincomplete-patterns -Wincomplete-uni-patterns
+  if impl(ghc > 8.8.4)
+    ghc-options:   -Wunused-packages
   default-language: Haskell2010
 
   -- Keep this in sync with the oldest version in 'tested-with'
@@ -128,6 +130,10 @@ test-suite properties
                 , containers
                 , xmonad
   default-language: Haskell2010
+
+  ghc-options:     -Wno-incomplete-patterns -Wno-incomplete-uni-patterns
+  if impl(ghc > 8.8.4)
+    ghc-options:   -Wno-unused-packages
 
   if impl(ghc > 9.8)
     ghc-options:   -Wno-x-partial
