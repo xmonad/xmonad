@@ -15,3 +15,6 @@ raw-project
 
 -- avoid --haddock-all which overwrites *-docs.tar.gz with tests docs
 haddock-components: libs
+
+error-unused-packages: False
+error-incomplete-patterns: False

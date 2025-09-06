@@ -216,7 +216,7 @@ new l (wid:wids) (m:ms) | length ms <= length wids
   = StackSet cur visi (map ws unseen) M.empty
   where ws i = Workspace i l Nothing
         (seen, unseen) = L.splitAt (length ms) wids
-        cur:visi = Screen (ws wid) 0 m : [ Screen (ws i) s sd | (i, s, sd) <- zip3 seen [1..] ms ]
+        cur:|visi = Screen (ws wid) 0 m :| [ Screen (ws i) s sd | (i, s, sd) <- zip3 seen [1..] ms ]
                 -- now zip up visibles with their screen id
 new _ _ _ = abort "non-positive argument to StackSet.new"
 
