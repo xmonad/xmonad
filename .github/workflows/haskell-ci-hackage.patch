@@ -19,14 +19,16 @@ set in GitHub repository secrets.
 
 --- .github/workflows/haskell-ci.yml.orig
 +++ .github/workflows/haskell-ci.yml
-@@ -14,8 +14,15 @@
+@@ -14,9 +14,16 @@
  #
  name: Haskell-CI
  on:
 -  - push
 -  - pull_request
+-  - merge_group
 +  push:
 +  pull_request:
++  merge_group:
 +  release:
 +    types:
 +      - published
