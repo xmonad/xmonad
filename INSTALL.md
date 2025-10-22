@@ -262,7 +262,7 @@ $ cabal install --package-env=$HOME/.config/xmonad xmonad
 
 This will create a GHC environment in `~/.config/xmonad` so that the libraries
 are available for recompilation of the config file, and also install the
-xmonad binary to `~/.cabal/bin/xmonad`.  Make sure you have that directory in
+xmonad binary to `~/.local/bin/xmonad`.  Make sure you have that directory in
 your `$PATH`!
 
 If you're getting build failures while building the `X11` package it may
