@@ -10,6 +10,11 @@
 
 ### Enhancements
 
+ * Addition of `PureLayout` typeclass for `Layout` types which can work without
+   any X communications. This is intended to allow XMonad's layouts to be used
+   in other pluggable windowing systems (e.g., `river` and its external tiling
+   support).
+
 ### Bug Fixes
 
 ### Other

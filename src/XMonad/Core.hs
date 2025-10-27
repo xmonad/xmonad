@@ -29,6 +29,7 @@ module XMonad.Core (
     X, WindowSet, WindowSpace, WorkspaceId,
     ScreenId(..), ScreenDetail(..), XState(..),
     XConf(..), XConfig(..), LayoutClass(..),
+    Pure(..), PureLayout(..),
     Layout(..), readsLayout, Typeable, Message,
     SomeMessage(..), fromMessage, LayoutMessages(..),
     StateExtension(..), ExtensionClass(..), ConfExtension(..),
@@ -168,7 +169,7 @@ newtype ScreenDetail = SD { screenRect :: Rectangle }
 -- instantiated on 'XConf' and 'XState' automatically.
 --
 newtype X a = X (ReaderT XConf (StateT XState IO) a)
-    deriving (Functor, Applicative, Monad, MonadFail, MonadIO, MonadState XState, MonadReader XConf)
+    deriving (Functor, Applicative, Monad, MonadFail, MonadIO, MonadState XState, MonadReader XConf) via ReaderT XConf (StateT XState IO)
     deriving (Semigroup, Monoid) via Ap X a
 
 instance Default a => Default (X a) where
@@ -255,6 +256,29 @@ data Layout a = forall l. (LayoutClass l a, Read (l a)) => Layout (l a)
 -- from a 'String'.
 readsLayout :: Layout a -> String -> [(Layout a, String)]
 readsLayout (Layout l) s = [(Layout (asTypeOf x l), rs) | (x, rs) <- reads s]
+
+newtype Pure l a = MkPure (l a)
+    deriving (Show, Typeable)
+
+class (Show (layout a), Typeable layout) => PureLayout layout a where
+
+    -- | This is a pure version of 'doLayout', for cases where we
+    -- don't need access to the 'X' monad to determine how to lay out
+    -- the windows, and we don't need to modify the layout itself.
+    pureLayout'  :: layout a -> Rectangle -> Stack a -> [(a, Rectangle)]
+    pureLayout' _ r s = [(focus s, r)]
+
+    -- | Respond to a message by (possibly) changing our layout, but
+    -- taking no other action.  If the layout changes, the screen will
+    -- be refreshed.
+    pureMessage' :: layout a -> SomeMessage -> Maybe (layout a)
+    pureMessage' _ _  = Nothing
+
+    -- | This should be a human-readable string that is used when
+    -- selecting layouts by name.  The default implementation is
+    -- 'show', which is in some cases a poor default.
+    description' :: layout a -> String
+    description'      = show
 
 -- | Every layout must be an instance of 'LayoutClass', which defines
 -- the basic layout operations along with a sensible default for each.
@@ -344,6 +368,11 @@ class (Show (layout a), Typeable layout) => LayoutClass layout a where
     -- 'show', which is in some cases a poor default.
     description :: layout a -> String
     description      = show
+
+instance (PureLayout layout a) => LayoutClass (Pure layout) a where
+    pureLayout (MkPure l) = pureLayout' l
+    pureMessage (MkPure l) = fmap MkPure . pureMessage' l
+    description (MkPure l) = description' l
 
 instance LayoutClass Layout Window where
     runLayout (Workspace i (Layout l) ms) r = fmap (fmap Layout) `fmap` runLayout (Workspace i l ms) r
