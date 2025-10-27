@@ -1,6 +1,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DerivingVia #-}
 
 -- --------------------------------------------------------------------------
 -- |
@@ -48,12 +50,10 @@ instance Message IncMasterN
 
 -- | Simple fullscreen mode. Renders the focused window fullscreen.
 data Full a = Full deriving (Show, Read)
+    -- deriving LayoutClass via (Pure Full)
 
 instance PureLayout Full a
-instance LayoutClass Full a where
-    pureLayout = pureLayout'
-    pureMessage = pureMessage
-    description = description'
+deriving via Pure Full a instance LayoutClass Full a
 
 -- | The builtin tiling mode of xmonad. Supports 'Shrink', 'Expand' and
 -- 'IncMasterN'.
@@ -84,10 +84,7 @@ instance PureLayout Tall a where
 
     description' _ = "Tall"
 
-instance LayoutClass Tall a where
-    pureLayout = pureLayout'
-    pureMessage = pureMessage'
-    description = description'
+deriving via Pure Tall a instance LayoutClass Tall a
 
 -- | Compute the positions for windows using the default two-pane tiling
 -- algorithm.
