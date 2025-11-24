@@ -8,7 +8,7 @@ jobs:
   hlint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
 
     - name: 'Set up HLint'
       uses: haskell-actions/hlint-setup@v2
