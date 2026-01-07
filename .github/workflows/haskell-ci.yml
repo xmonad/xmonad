@@ -8,9 +8,9 @@
 #
 # For more information, see https://github.com/haskell-CI/haskell-ci
 #
-# version: 0.19.20251211
+# version: 0.19.20260102
 #
-# REGENDATA ("0.19.20251211",["github","cabal.project"])
+# REGENDATA ("0.19.20260102",["github","cabal.project"])
 #
 name: Haskell-CI
 on:
@@ -36,6 +36,11 @@ jobs:
     strategy:
       matrix:
         include:
+          - compiler: ghc-9.14.1
+            compilerKind: ghc
+            compilerVersion: 9.14.1
+            setup-method: ghcup
+            allow-failure: false
           - compiler: ghc-9.12.2
             compilerKind: ghc
             compilerVersion: 9.12.2
@@ -127,7 +132,7 @@ jobs:
           echo "HCNUMVER=$HCNUMVER" >> "$GITHUB_ENV"
           echo "ARG_TESTS=--enable-tests" >> "$GITHUB_ENV"
           echo "ARG_BENCH=--enable-benchmarks" >> "$GITHUB_ENV"
-          echo "HEADHACKAGE=false" >> "$GITHUB_ENV"
+          if [ $((HCNUMVER >= 91400)) -ne 0 ] ; then echo "HEADHACKAGE=true" >> "$GITHUB_ENV" ; else echo "HEADHACKAGE=false" >> "$GITHUB_ENV" ; fi
           echo "ARG_COMPILER=--$HCKIND --with-compiler=$HC" >> "$GITHUB_ENV"
         env:
           HCKIND: ${{ matrix.compilerKind }}
@@ -155,6 +160,18 @@ jobs:
           repository hackage.haskell.org
             url: http://hackage.haskell.org/
           EOF
+          if $HEADHACKAGE; then
+          cat >> $CABAL_CONFIG <<EOF
+          repository head.hackage.ghc.haskell.org
+             url: https://ghc.gitlab.haskell.org/head.hackage/
+             secure: True
+             root-keys: 7541f32a4ccca4f97aea3b22f5e593ba2c0267546016b992dfadcd2fe944e55d
+                        26021a13b401500c8eb2761ca95c61f2d625bfef951b939a8124ed12ecf07329
+                        f76d08be13e9a61a377a85e2fb63f4c5435d40f8feb3e12eb05905edb8cdea89
+             key-threshold: 3
+          active-repositories: hackage.haskell.org, head.hackage.ghc.haskell.org:override
+          EOF
+          fi
           cat >> $CABAL_CONFIG <<EOF
           program-default-options
             ghc-options: $GHCJOBS +RTS -M3G -RTS
@@ -210,6 +227,9 @@ jobs:
           package xmonad
             flags: +pedantic
           EOF
+          if $HEADHACKAGE; then
+          echo "allow-newer: $($HCPKG list --simple-output | sed -E 's/([a-zA-Z-]+)-[0-9.]+/*:\1,/g')" >> cabal.project
+          fi
           $HCPKG list --simple-output --names-only | perl -ne 'for (split /\s+/) { print "constraints: any.$_ installed\n" unless /^(xmonad)$/; }' >> cabal.project.local
           cat cabal.project
           cat cabal.project.local

@@ -27,7 +27,7 @@ author:             Spencer Janssen, Don Stewart, Adam Vogt, David Roundy, Jason
                     Ondřej Súkup, Paul Hebble, Shachaf Ben-Kiki, Siim Põder, Tim McIver,
                     Trevor Elliott, Wouter Swierstra, Conrad Irwin, Tim Thelion, Tony Zorman
 maintainer:         xmonad@haskell.org
-tested-with:        GHC == 8.6.5 || == 8.8.4 || == 8.10.7 || == 9.0.2 || == 9.2.8 || == 9.4.8 || == 9.6.7 || == 9.8.4 || == 9.10.3 || == 9.12.2
+tested-with:        GHC == 8.6.5 || == 8.8.4 || == 8.10.7 || == 9.0.2 || == 9.2.8 || == 9.4.8 || == 9.6.7 || == 9.8.4 || == 9.10.3 || == 9.12.2 || == 9.14.1
 category:           System
 homepage:           http://xmonad.org
 bug-reports:        https://github.com/xmonad/xmonad/issues
@@ -88,6 +88,8 @@ library
 
   if flag(pedantic)
     ghc-options:   -Werror
+    if impl(ghc >= 9.10)
+       ghc-options: -Wno-incomplete-record-selectors
 
 executable xmonad
   main-is:       Main.hs
@@ -101,6 +103,8 @@ executable xmonad
 
   if flag(pedantic)
     ghc-options:   -Werror
+    if impl(ghc >= 9.10)
+       ghc-options: -Wno-incomplete-record-selectors
 
 test-suite properties
   type:           exitcode-stdio-1.0
@@ -140,3 +144,5 @@ test-suite properties
 
   if flag(pedantic)
     ghc-options:   -Werror
+    if impl(ghc >= 9.10)
+       ghc-options: -Wno-incomplete-record-selectors
