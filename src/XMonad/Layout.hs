@@ -1,6 +1,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DerivingVia #-}
 
 -- --------------------------------------------------------------------------
 -- |
@@ -48,8 +50,10 @@ instance Message IncMasterN
 
 -- | Simple fullscreen mode. Renders the focused window fullscreen.
 data Full a = Full deriving (Show, Read)
+    -- deriving LayoutClass via (Pure Full)
 
-instance LayoutClass Full a
+instance PureLayout Full a
+deriving via Pure Full a instance LayoutClass Full a
 
 -- | The builtin tiling mode of xmonad. Supports 'Shrink', 'Expand' and
 -- 'IncMasterN'.
@@ -61,8 +65,8 @@ data Tall a = Tall { tallNMaster :: !Int               -- ^ The default number o
                         -- TODO should be capped [0..1] ..
 
 -- a nice pure layout, lots of properties for the layout, and its messages, in Properties.hs
-instance LayoutClass Tall a where
-    pureLayout (Tall nmaster _ frac) r s
+instance PureLayout Tall a where
+    pureLayout' (Tall nmaster _ frac) r s
         | frac == 0 = drop nmaster layout
         | frac == 1 = take nmaster layout
         | otherwise = layout
@@ -70,7 +74,7 @@ instance LayoutClass Tall a where
             rs = tile frac r nmaster (length ws)
             layout = zip ws rs
 
-    pureMessage (Tall nmaster delta frac) m =
+    pureMessage' (Tall nmaster delta frac) m =
             msum [fmap resize     (fromMessage m)
                  ,fmap incmastern (fromMessage m)]
 
@@ -78,7 +82,9 @@ instance LayoutClass Tall a where
             resize Expand             = Tall nmaster delta (min 1 $ frac+delta)
             incmastern (IncMasterN d) = Tall (max 0 (nmaster+d)) delta frac
 
-    description _ = "Tall"
+    description' _ = "Tall"
+
+deriving via Pure Tall a instance LayoutClass Tall a
 
 -- | Compute the positions for windows using the default two-pane tiling
 -- algorithm.
@@ -123,6 +129,11 @@ splitVerticallyBy f = (mirrorRect *** mirrorRect) . splitHorizontallyBy f . mirr
 
 -- | Mirror a layout, compute its 90 degree rotated form.
 newtype Mirror l a = Mirror (l a) deriving (Show, Read)
+
+instance PureLayout l a => PureLayout (Mirror l) a where
+    pureLayout' (Mirror l) r = pureLayout' l (mirrorRect r)
+    pureMessage' (Mirror l) = fmap Mirror . pureMessage' l
+    description' (Mirror l) = "Mirror "++ description' l
 
 instance LayoutClass l a => LayoutClass (Mirror l) a where
     runLayout (W.Workspace i (Mirror l) ms) r = (map (second mirrorRect) *** fmap Mirror)
