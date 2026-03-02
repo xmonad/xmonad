@@ -282,13 +282,13 @@ jobs:
       # https://github.com/actions/upload-artifact/issues/457
       - name: upload artifact (sdist)
         if: matrix.upload
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: sdist
           path: ${{ github.workspace }}/sdist/*.tar.gz
       - name: upload artifact (haddock)
         if: matrix.upload
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: haddock
           path: ${{ github.workspace }}/haddock/*-docs.tar.gz
