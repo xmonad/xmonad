@@ -183,7 +183,7 @@ jobs:
           chmod a+x $HOME/.cabal/bin/cabal-plan
           cabal-plan --version
       - name: checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: source
       - name: initial cabal.project for sdist
