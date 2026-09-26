@@ -36,7 +36,7 @@ to understand, and easy to modify.
 # Usage
 
 _xmonad_ places each window into a "workspace". Each workspace can have
-any number of windows, which you can cycle though with mod-j and mod-k.
+any number of windows, which you can cycle through with mod-j and mod-k.
 Windows are either displayed full screen, tiled horizontally, or tiled
 vertically. You can toggle the layout mode with mod-space, which will cycle
 through the available modes.
