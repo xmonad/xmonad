@@ -54,6 +54,11 @@ flag pedantic
   default:     False
   manual:      True
 
+flag xcursor
+  description: Link Xcursor
+  default:     False
+  manual:      True
+
 library
   exposed-modules: XMonad
                    XMonad.Config
@@ -90,6 +95,9 @@ library
     ghc-options:   -Werror
     if impl(ghc >= 9.10)
        ghc-options: -Wno-incomplete-record-selectors
+
+  if flag(xcursor)
+    extra-libraries: Xcursor
 
 executable xmonad
   main-is:       Main.hs

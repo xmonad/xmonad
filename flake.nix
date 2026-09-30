@@ -27,9 +27,14 @@
         ${root} = recursiveUpdate prev.${root} (setAttrByPath branch hpkgs');
       };
     hoverlay = final: prev: hself: hsuper:
-      with prev.haskell.lib.compose; {
-        xmonad = hself.callCabal2nix "xmonad"
-          (git-ignore-nix.lib.gitignoreSource ./.) { };
+      with prev.haskell.lib.compose;
+      let pkg = hself.callCabal2nix "xmonad" (git-ignore-nix.lib.gitignoreSource ./.) { };
+          libXcursor = final.libxcursor or final.xorg.libXcursor;
+      in {
+        xmonad =
+          if final.stdenv.hostPlatform.isLinux
+          then addExtraLibrary libXcursor (enableCabalFlag "xcursor" pkg)
+          else pkg;
       };
     defComp = if builtins.pathExists ./comp.nix
       then import ./comp.nix
