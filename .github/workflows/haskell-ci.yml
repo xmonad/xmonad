@@ -8,9 +8,9 @@
 #
 # For more information, see https://github.com/haskell-CI/haskell-ci
 #
-# version: 0.19.20260624
+# version: 0.19.20260927
 #
-# REGENDATA ("0.19.20260624",["github","cabal.project"])
+# REGENDATA ("0.19.20260927",["github","cabal.project"])
 #
 name: Haskell-CI
 on:
@@ -31,7 +31,7 @@ jobs:
     timeout-minutes:
       60
     container:
-      image: buildpack-deps:jammy
+      image: buildpack-deps:noble
     continue-on-error: ${{ matrix.allow-failure }}
     strategy:
       matrix:
@@ -97,7 +97,7 @@ jobs:
       - name: apt-get install
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends gnupg ca-certificates dirmngr curl git software-properties-common libtinfo5
+          apt-get install -y --no-install-recommends gnupg ca-certificates dirmngr curl git software-properties-common
           apt-get install -y libx11-dev libxext-dev libxinerama-dev libxrandr-dev libxss-dev
       - name: Install GHCup
         run: |
