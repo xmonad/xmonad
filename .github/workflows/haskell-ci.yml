@@ -8,9 +8,9 @@
 #
 # For more information, see https://github.com/haskell-CI/haskell-ci
 #
-# version: 0.19.20260927
+# version: 0.19.20261010
 #
-# REGENDATA ("0.19.20260927",["github","cabal.project"])
+# REGENDATA ("0.19.20261010",["github","cabal.project"])
 #
 name: Haskell-CI
 on:
@@ -225,9 +225,9 @@ jobs:
       - name: restore cache
         uses: actions/cache/restore@v6
         with:
-          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ github.sha }}
+          key: noble-${{ matrix.compiler }}-${{ github.sha }}
           path: ~/.cabal/store
-          restore-keys: ${{ runner.os }}-${{ matrix.compiler }}-
+          restore-keys: noble-${{ matrix.compiler }}-
       - name: install dependencies
         run: |
           $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --dependencies-only -j2 all
@@ -260,7 +260,7 @@ jobs:
         if: always()
         uses: actions/cache/save@v6
         with:
-          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ github.sha }}
+          key: noble-${{ matrix.compiler }}-${{ github.sha }}
           path: ~/.cabal/store
       # must be separate artifacts because GitHub Actions are still broken:
       # https://github.com/actions/upload-artifact/issues/441
