@@ -4,9 +4,8 @@
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
     git-ignore-nix.url = "github:hercules-ci/gitignore.nix/master";
-    unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
-  outputs = { self, flake-utils, nixpkgs, unstable, git-ignore-nix }:
+  outputs = { self, flake-utils, nixpkgs, git-ignore-nix }:
   let
     hpath = { prefix ? null, compiler ? null }:
       (if prefix == null then [] else [ prefix ]) ++
@@ -84,21 +83,9 @@
       packages = p: [ p.xmonad ];
     });
     defaultPackage = hpkg.xmonad;
-    # An auxiliary NixOS module that modernises the standard xmonad NixOS module
-    # and wrapper script used, replacing them with versions from unstable.
-    # Currently, due to the NIX_GHC --> XMONAD_GHC env var change, this is
-    # necessary in order for Mod-q recompilation to work out-of-the-box.
-    modernise =
-      let
-        xmonadModFile = "services/x11/window-managers/xmonad.nix";
-        unpkgs = import unstable { inherit system; };
-        replaceWrapper = _: _:
-          { xmonad-with-packages = unpkgs.xmonad-with-packages; };
-      in {
-        disabledModules = [ xmonadModFile ];
-        imports = [ (unstable + "/nixos/modules/" + xmonadModFile) ];
-        nixpkgs.overlays = [ replaceWrapper ];
-      };
+    modernise = nixpkgs.lib.warn
+      "xmonad.modernise is deprecated and does nothing; you can safely remove it."
+      { };
   }) // {
     inherit hoverlay overlay overlays nixosModule nixosModules;
     lib = { inherit hpath fromHOL; };

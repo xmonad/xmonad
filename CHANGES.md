@@ -6,7 +6,10 @@
 
 ### Enhancements
 
-### Bug Fixes
+### Bug Fixes and Minor Changes
+
+  * The `modernise` flake output is deprecated and a noop, as nixpkgs
+    added the required recompiling functionality.
 
 ## 0.18.1 (March 7, 2026)
 
